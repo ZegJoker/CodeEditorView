@@ -31,6 +31,10 @@ public final class LayoutEngine {
     private var typingAttributes: [NSAttributedString.Key: Any] = [:]
     private var transactionDepth = 0
     private var needsFullRebuild = false
+    private var pendingEdits: [(range: NSRange, delta: Int)] = []
+
+    /// Inline attachments participating in typeset and hit-testing.
+    public let attachments = AttachmentStore()
 
     public init() {}
 
@@ -52,8 +56,16 @@ public final class LayoutEngine {
 
     public func endTransaction() {
         transactionDepth = max(0, transactionDepth - 1)
-        if transactionDepth == 0, needsFullRebuild {
+        guard transactionDepth == 0 else { return }
+        if needsFullRebuild {
+            pendingEdits.removeAll()
             rebuildFromDocument()
+            return
+        }
+        let edits = pendingEdits
+        pendingEdits.removeAll()
+        for edit in edits {
+            applyLocalizedEdit(range: edit.range, delta: edit.delta)
         }
     }
 
@@ -67,8 +79,22 @@ public final class LayoutEngine {
 
     /// Reacts to a text replacement that already landed in the document store.
     public func documentDidReplace(range: NSRange, delta: Int) {
-        // MVP: full rebuild. Phase 2 can do localized line surgery.
-        invalidateAll()
+        attachments.shift(forEditAt: range.location, delta: delta, replacedLength: range.length)
+        if transactionDepth > 0 {
+            pendingEdits.append((range, delta))
+            return
+        }
+        applyLocalizedEdit(range: range, delta: delta)
+    }
+
+    /// Forces typeset refresh for lines intersecting `range`.
+    public func invalidateTypeset(in range: NSRange) {
+        guard let start = lineIndex.line(atUTF16Offset: range.location) else { return }
+        let endOffset = max(range.location, range.location + max(0, range.length) - 1)
+        let end = lineIndex.line(atUTF16Offset: endOffset) ?? start
+        for index in start.index...end.index {
+            lineIndex.line(atIndex: index)?.payload.markNeedsTypeset()
+        }
     }
 
     public func layoutViewport(
@@ -182,8 +208,85 @@ public final class LayoutEngine {
 
     // MARK: - Private
 
+    private func applyLocalizedEdit(range: NSRange, delta: Int) {
+        guard let document else {
+            rebuildFromDocument()
+            return
+        }
+        if lineIndex.isEmpty || document.length == 0 {
+            rebuildFromDocument()
+            return
+        }
+
+        // Tree still reflects pre-edit lengths; `range` is the pre-edit mutation range.
+        let preDocLength = lineIndex.length
+        guard preDocLength + delta == document.length else {
+            rebuildFromDocument()
+            return
+        }
+
+        let endProbe = max(range.location, range.location + max(0, range.length) - (range.length > 0 ? 1 : 0))
+        guard
+            let startLine = lineIndex.line(atUTF16Offset: min(range.location, max(0, preDocLength - 1))),
+            let endLine = lineIndex.line(atUTF16Offset: min(endProbe, max(0, preDocLength - 1)))
+        else {
+            rebuildFromDocument()
+            return
+        }
+
+        let firstLineIndex = max(0, min(startLine.index, endLine.index))
+        let lastLineIndex = min(lineIndex.count - 1, max(startLine.index, endLine.index))
+        let dirtyCount = lastLineIndex - firstLineIndex + 1
+        if dirtyCount > 200 || dirtyCount > lineIndex.count / 2 {
+            rebuildFromDocument()
+            return
+        }
+
+        guard
+            let firstPos = lineIndex.line(atIndex: firstLineIndex),
+            let lastPos = lineIndex.line(atIndex: lastLineIndex)
+        else {
+            rebuildFromDocument()
+            return
+        }
+
+        let oldBlockStart = firstPos.utf16Offset
+        let oldBlockEnd = lastPos.utf16Offset + lastPos.metrics.utf16Length
+        // Map old block end into post-edit document coordinates.
+        let newBlockStart = oldBlockStart
+        let newBlockEnd = oldBlockEnd + delta
+        guard newBlockStart >= 0, newBlockEnd >= newBlockStart, newBlockEnd <= document.length else {
+            rebuildFromDocument()
+            return
+        }
+
+        let substring = document.substring(
+            from: NSRange(location: newBlockStart, length: newBlockEnd - newBlockStart)
+        ) ?? ""
+        let newMetrics = LayoutInvalidation.splitLines(
+            in: substring,
+            estimatedHeight: estimatedLineHeight * lineHeightMultiplier
+        )
+
+        for index in stride(from: lastLineIndex, through: firstLineIndex, by: -1) {
+            lineIndex.remove(atIndex: index)
+        }
+        for (offset, metrics) in newMetrics.enumerated() {
+            let line = TextLine()
+            line.markNeedsTypeset()
+            lineIndex.insert(payload: line, metrics: metrics, atIndex: firstLineIndex + offset)
+        }
+
+        if lineIndex.length != document.length {
+            rebuildFromDocument()
+            return
+        }
+        contentSize = CGSize(width: contentSize.width, height: lineIndex.height)
+    }
+
     private func rebuildFromDocument() {
         needsFullRebuild = false
+        pendingEdits.removeAll()
         guard let document else {
             lineIndex.removeAll()
             contentSize = .zero
@@ -212,12 +315,18 @@ public final class LayoutEngine {
 
         // Strip trailing line endings from typesetting width calculations, keep range metadata intact.
         let displayString = stripLineEnding(substring)
+        let lineAttachments = attachments.attachments(overlapping: range)
         let display = TypesetDisplayData(
             maxWidth: maxWidth,
             lineHeightMultiplier: lineHeightMultiplier,
             estimatedLineHeight: estimatedLineHeight
         )
-        let result = typesetter.typeset(displayString, documentRange: range, display: display)
+        let result = typesetter.typeset(
+            displayString,
+            documentRange: range,
+            display: display,
+            attachments: lineAttachments
+        )
         position.payload.applyTypeset(fragments: result.fragments, height: result.totalHeight)
         if abs(result.totalHeight - position.metrics.height) > 0.5 {
             lineIndex.updateMetrics(

@@ -2,17 +2,19 @@ import CoreGraphics
 import Foundation
 import TextStory
 
-/// Manages selection state and keyboard/pointer-driven navigation.
+/// Manages multi-range selection state and keyboard/pointer-driven navigation.
 @MainActor
 public final class SelectionEngine {
-    public private(set) var selection: TextRangeSelection
+    /// Ordered selections; index 0 is the primary caret for chrome defaults.
+    public private(set) var selections: [TextRangeSelection]
     public var isEnabled: Bool = true
+    public var mode: SelectionMode = .character
 
     private weak var document: DocumentStore?
     private weak var layout: LayoutEngine?
 
     public init(selection: TextRangeSelection = .insertionPoint(0)) {
-        self.selection = selection
+        self.selections = [selection]
     }
 
     public func attach(document: DocumentStore, layout: LayoutEngine) {
@@ -21,16 +23,42 @@ public final class SelectionEngine {
         clampToDocument()
     }
 
-    public var selectedRange: NSRange { selection.range }
+    public var selectedRange: NSRange { selections.first?.range ?? NSRange(location: 0, length: 0) }
+
+    public var selectedRanges: [NSRange] { selections.map(\.range) }
+
+    public var primarySelection: TextRangeSelection {
+        selections.first ?? .insertionPoint(0)
+    }
 
     public func setSelectedRange(_ range: NSRange, preferredX: CGFloat? = nil) {
+        setSelectedRanges([range], preferredX: preferredX)
+    }
+
+    public func setSelectedRanges(_ ranges: [NSRange], preferredX: CGFloat? = nil) {
         guard isEnabled else { return }
-        let clamped = clamp(range)
-        selection = TextRangeSelection(range: clamped, preferredX: preferredX ?? selection.preferredX)
+        let length = document?.length ?? 0
+        let normalized = MultiRangeEdit.normalize(ranges, documentLength: length)
+        selections = normalized.map { TextRangeSelection(range: $0, preferredX: preferredX) }
+        if selections.isEmpty {
+            selections = [.insertionPoint(0)]
+        }
     }
 
     public func setInsertionPoint(_ location: Int, preferredX: CGFloat? = nil) {
         setSelectedRange(NSRange(location: location, length: 0), preferredX: preferredX)
+    }
+
+    /// Adds a caret/selection without clearing existing ones (multi-cursor).
+    public func addSelection(_ range: NSRange, preferredX: CGFloat? = nil) {
+        guard isEnabled else { return }
+        var ranges = selectedRanges
+        ranges.append(range)
+        setSelectedRanges(ranges, preferredX: preferredX)
+    }
+
+    public func collapseToPrimary() {
+        setSelectedRange(selectedRange)
     }
 
     public func selectAll() {
@@ -46,13 +74,74 @@ public final class SelectionEngine {
     ) {
         guard isEnabled, let document, let layout else { return }
 
+        var next: [TextRangeSelection] = []
+        for selection in selections {
+            next.append(
+                movedSelection(
+                    selection,
+                    direction: direction,
+                    granularity: granularity,
+                    extending: extending,
+                    containerWidth: containerWidth,
+                    document: document,
+                    layout: layout
+                )
+            )
+        }
+        let ranges = next.map(\.range)
+        let preferred = next.first?.preferredX
+        setSelectedRanges(ranges, preferredX: preferred)
+        // Restore per-selection preferred X where possible.
+        if next.count == selections.count {
+            for i in selections.indices {
+                selections[i].preferredX = next[i].preferredX
+            }
+        }
+    }
+
+    /// Replaces every selection with `string` (high → low). Returns edits in application order.
+    @discardableResult
+    public func replaceAllSelections(with string: String) -> [TextEdit] {
+        guard isEnabled, let document else { return [] }
+        var edits: [TextEdit] = []
+        let working = selectedRanges.sorted { $0.location > $1.location }
+        var carets: [Int] = []
+
+        for range in working {
+            let edit = document.replaceCharacters(in: range, with: string)
+            edits.append(edit)
+            carets.append(MultiRangeEdit.caretAfterReplace(range: range, replacementUTF16Count: string.utf16.count))
+            // Remap remaining lower ranges? We iterate high→low so lower locations are unaffected.
+        }
+
+        // Carets collected high→low; reverse to document order.
+        let orderedCarets = carets.reversed().map { NSRange(location: $0, length: 0) }
+        setSelectedRanges(orderedCarets)
+        return edits
+    }
+
+    /// Legacy single-selection replace.
+    public func replaceSelection(with string: String) -> TextEdit? {
+        replaceAllSelections(with: string).last
+    }
+
+    // MARK: - Private
+
+    private func movedSelection(
+        _ selection: TextRangeSelection,
+        direction: NavigationDirection,
+        granularity: NavigationGranularity,
+        extending: Bool,
+        containerWidth: CGFloat,
+        document: DocumentStore,
+        layout: LayoutEngine
+    ) -> TextRangeSelection {
         let anchor: Int
         let head: Int
         if extending {
             anchor = selection.range.location
             head = selection.end
         } else {
-            // Collapse to edge in movement direction when not extending.
             switch direction {
             case .left, .up:
                 head = selection.range.location
@@ -63,91 +152,92 @@ public final class SelectionEngine {
             }
         }
 
-        let newHead: Int
-        switch (direction, granularity) {
-        case (.left, .character):
-            newHead = max(0, head - 1)
-        case (.right, .character):
-            newHead = min(document.length, head + 1)
-        case (.left, .word):
-            newHead = document.findPrecedingOccurrenceOfCharacter(
-                in: .alphanumerics.inverted,
-                from: head
-            ) ?? 0
-        case (.right, .word):
-            newHead = document.findNextOccurrenceOfCharacter(
-                in: .alphanumerics.inverted,
-                from: head
-            ) ?? document.length
-        case (.left, .line), (.up, .line):
-            newHead = document.findStartOfLine(containing: head)
-        case (.right, .line), (.down, .line):
-            let end = document.findEndOfLine(containing: head)
-            // Prefer before trailing newline when present.
-            if end > 0, end <= document.length {
-                let prev = end - 1
-                if let ch = document.substring(from: NSRange(location: prev, length: 1)),
-                   ch == "\n" || ch == "\r" {
-                    newHead = prev
-                } else {
-                    newHead = end
-                }
-            } else {
-                newHead = end
-            }
-        case (.left, .document), (.up, .document):
-            newHead = 0
-        case (.right, .document), (.down, .document):
-            newHead = document.length
-        case (.up, .character), (.up, .word), (.up, .paragraph):
-            newHead = verticalMove(from: head, direction: .up, containerWidth: containerWidth, layout: layout)
-        case (.down, .character), (.down, .word), (.down, .paragraph):
-            newHead = verticalMove(from: head, direction: .down, containerWidth: containerWidth, layout: layout)
-        case (_, .paragraph):
-            // Paragraph treated as line for MVP.
-            if direction == .left || direction == .up {
-                newHead = document.findStartOfLine(containing: head)
-            } else {
-                newHead = document.findEndOfLine(containing: head)
-            }
-        }
+        let newHead = computeHead(
+            from: head,
+            direction: direction,
+            granularity: granularity,
+            preferredX: selection.preferredX,
+            containerWidth: containerWidth,
+            document: document,
+            layout: layout
+        )
 
         if extending {
             let location = min(anchor, newHead)
             let length = abs(anchor - newHead)
-            setSelectedRange(NSRange(location: location, length: length), preferredX: selection.preferredX)
+            return TextRangeSelection(
+                range: NSRange(location: location, length: length),
+                preferredX: selection.preferredX
+            )
+        }
+
+        let preferred: CGFloat?
+        if direction == .up || direction == .down {
+            preferred = selection.preferredX
+                ?? layout.caretRect(atUTF16Offset: head, containerWidth: containerWidth)?.minX
         } else {
-            let preferred: CGFloat?
-            if direction == .up || direction == .down {
-                preferred = selection.preferredX ?? layout.caretRect(atUTF16Offset: head, containerWidth: containerWidth)?.minX
-            } else {
-                preferred = layout.caretRect(atUTF16Offset: newHead, containerWidth: containerWidth)?.minX
+            preferred = layout.caretRect(atUTF16Offset: newHead, containerWidth: containerWidth)?.minX
+        }
+        return TextRangeSelection(range: NSRange(location: newHead, length: 0), preferredX: preferred)
+    }
+
+    private func computeHead(
+        from head: Int,
+        direction: NavigationDirection,
+        granularity: NavigationGranularity,
+        preferredX: CGFloat?,
+        containerWidth: CGFloat,
+        document: DocumentStore,
+        layout: LayoutEngine
+    ) -> Int {
+        switch (direction, granularity) {
+        case (.left, .character):
+            return max(0, head - 1)
+        case (.right, .character):
+            return min(document.length, head + 1)
+        case (.left, .word):
+            return document.findPrecedingOccurrenceOfCharacter(in: .alphanumerics.inverted, from: head) ?? 0
+        case (.right, .word):
+            return document.findNextOccurrenceOfCharacter(in: .alphanumerics.inverted, from: head) ?? document.length
+        case (.left, .line), (.up, .line):
+            return document.findStartOfLine(containing: head)
+        case (.right, .line), (.down, .line):
+            let end = document.findEndOfLine(containing: head)
+            if end > 0, end <= document.length {
+                let prev = end - 1
+                if let ch = document.substring(from: NSRange(location: prev, length: 1)),
+                   ch == "\n" || ch == "\r" {
+                    return prev
+                }
             }
-            setInsertionPoint(newHead, preferredX: preferred)
+            return end
+        case (.left, .document), (.up, .document):
+            return 0
+        case (.right, .document), (.down, .document):
+            return document.length
+        case (.up, .character), (.up, .word), (.up, .paragraph):
+            return verticalMove(from: head, direction: .up, preferredX: preferredX, containerWidth: containerWidth, layout: layout)
+        case (.down, .character), (.down, .word), (.down, .paragraph):
+            return verticalMove(from: head, direction: .down, preferredX: preferredX, containerWidth: containerWidth, layout: layout)
+        case (_, .paragraph):
+            if direction == .left || direction == .up {
+                return document.findStartOfLine(containing: head)
+            }
+            return document.findEndOfLine(containing: head)
         }
     }
-
-    public func replaceSelection(with string: String) -> TextEdit? {
-        guard isEnabled, let document else { return nil }
-        let edit = document.replaceCharacters(in: selection.range, with: string)
-        let newLocation = selection.range.location + string.utf16.count
-        setInsertionPoint(newLocation)
-        return edit
-    }
-
-    // MARK: - Private
 
     private func verticalMove(
         from head: Int,
         direction: NavigationDirection,
+        preferredX: CGFloat?,
         containerWidth: CGFloat,
         layout: LayoutEngine
     ) -> Int {
         guard let caret = layout.caretRect(atUTF16Offset: head, containerWidth: containerWidth) else {
             return head
         }
-        let preferredX = selection.preferredX ?? caret.minX
-        selection.preferredX = preferredX
+        let x = preferredX ?? caret.minX
         let targetY: CGFloat
         switch direction {
         case .up:
@@ -157,21 +247,10 @@ public final class SelectionEngine {
         default:
             return head
         }
-        return layout.utf16Offset(
-            at: CGPoint(x: preferredX, y: max(0, targetY)),
-            containerWidth: containerWidth
-        )
+        return layout.utf16Offset(at: CGPoint(x: x, y: max(0, targetY)), containerWidth: containerWidth)
     }
 
     private func clampToDocument() {
-        selection.range = clamp(selection.range)
-    }
-
-    private func clamp(_ range: NSRange) -> NSRange {
-        let length = document?.length ?? 0
-        let location = min(max(0, range.location), length)
-        let maxLen = length - location
-        let len = min(max(0, range.length), maxLen)
-        return NSRange(location: location, length: len)
+        setSelectedRanges(selectedRanges)
     }
 }

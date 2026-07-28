@@ -1,25 +1,23 @@
 #if canImport(UIKit) && !os(macOS)
 import UIKit
 import CoreGraphics
+import CoreText
 
-/// UIKit host view for ``EditorController`` with a minimal `UITextInput` surface.
-open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
+/// UIKit host view for ``EditorController`` with `UITextInput` and accessibility.
+open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDelegate, UIDropInteractionDelegate {
     public let controller: EditorController
 
     private let blink = CursorBlinkController()
     private var containerWidth: CGFloat = 0
     private var inputDelegateStorage: UITextInputDelegate?
     private var tokenizerStorage: UITextInputTokenizer!
+    private var selectionAnchor: Int?
 
     public var onTextChange: ((String) -> Void)?
     public var onSelectionChange: ((NSRange) -> Void)?
 
-    // UITextInput required storage
     public var selectedTextRange: UITextRange? {
-        get {
-            let range = controller.selectedRange
-            return EditorTextRange(range: range)
-        }
+        get { EditorTextRange(range: controller.selectedRange) }
         set {
             if let editorRange = newValue as? EditorTextRange {
                 controller.setSelectedRange(editorRange.range)
@@ -45,16 +43,21 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
         super.init(frame: .zero)
         backgroundColor = .systemBackground
         isMultipleTouchEnabled = false
+        isAccessibilityElement = true
+        accessibilityTraits = .updatesFrequently
         tokenizerStorage = UITextInputStringTokenizer(textInput: self)
 
-        blink.onChange = { [weak self] _ in
-            self?.setNeedsDisplay()
-        }
+        blink.onChange = { [weak self] _ in self?.setNeedsDisplay() }
+        controller.emphasis.onChange = { [weak self] in self?.setNeedsDisplay() }
 
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        addGestureRecognizer(tap)
+        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap(_:))))
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         addGestureRecognizer(pan)
+
+        let drag = UIDragInteraction(delegate: self)
+        addInteraction(drag)
+        let drop = UIDropInteraction(delegate: self)
+        addInteraction(drop)
     }
 
     @available(*, unavailable)
@@ -73,12 +76,7 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
 
     public func relayout() {
         containerWidth = bounds.width
-        let visible = bounds
-        let snapshot = controller.layoutViewport(visibleRect: visible, containerWidth: containerWidth)
-        let height = max(snapshot.contentSize.height, bounds.height)
-        if abs(bounds.height - height) > 0.5 {
-            // Hosts may observe contentSize via controller.
-        }
+        _ = controller.layoutViewport(visibleRect: bounds, containerWidth: containerWidth)
         invalidateIntrinsicContentSize()
         setNeedsDisplay()
     }
@@ -90,13 +88,19 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
 
     open override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
-        let snapshot = controller.layoutViewport(
-            visibleRect: rect.union(bounds),
-            containerWidth: containerWidth > 0 ? containerWidth : bounds.width
+        let width = containerWidth > 0 ? containerWidth : bounds.width
+        let snapshot = controller.layoutViewport(visibleRect: rect.union(bounds), containerWidth: width)
+
+        EmphasisRenderer.draw(
+            controller.emphasis.items,
+            fragments: snapshot.fragments,
+            in: context,
+            standardFill: controller.configuration.emphasisFillColor.cgColor,
+            outlineStroke: controller.configuration.emphasisStrokeColor.cgColor
         )
 
         LineFragmentRenderer.drawSelection(
-            range: controller.selectedRange,
+            ranges: controller.selectedRanges,
             fragments: snapshot.fragments,
             in: context,
             color: controller.configuration.selectionColor.cgColor
@@ -106,12 +110,27 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
             LineFragmentRenderer.draw(item.fragment, in: context, origin: item.frame.origin)
         }
 
-        if isFirstResponder,
-           controller.selectedRange.length == 0,
-           blink.isVisible,
-           let caret = controller.caretRect(containerWidth: containerWidth > 0 ? containerWidth : bounds.width) {
-            context.setFillColor(controller.configuration.caretColor.cgColor)
-            context.fill(CGRect(x: caret.minX, y: caret.minY, width: 2, height: caret.height))
+        if controller.configuration.showInvisibleCharacters,
+           let delegate = controller.invisibleCharactersDelegate {
+            InvisibleCharacterRenderer.draw(
+                delegate: delegate,
+                document: controller.document,
+                fragments: snapshot.fragments,
+                in: context,
+                font: controller.configuration.font as CTFont
+            )
+        }
+
+        if isFirstResponder {
+            let offsets = controller.selectedRanges.filter { $0.length == 0 }.map(\.location)
+            LineFragmentRenderer.drawCarets(
+                offsets: offsets,
+                layout: controller.layout,
+                containerWidth: width,
+                in: context,
+                color: controller.configuration.caretColor.cgColor,
+                visible: blink.isVisible
+            )
         }
     }
 
@@ -121,7 +140,12 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
         _ = becomeFirstResponder()
         let point = gesture.location(in: self)
         let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
-        controller.setSelectedRange(NSRange(location: offset, length: 0))
+        if gesture.numberOfTouches > 1 {
+            controller.addCursor(at: offset)
+        } else {
+            selectionAnchor = offset
+            controller.setSelectedRange(NSRange(location: offset, length: 0))
+        }
         blink.reset()
         onSelectionChange?(controller.selectedRange)
         setNeedsDisplay()
@@ -132,9 +156,10 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
         let point = gesture.location(in: self)
         let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
         if gesture.state == .began {
+            selectionAnchor = offset
             controller.setSelectedRange(NSRange(location: offset, length: 0))
         } else {
-            let anchor = controller.selectedRange.location
+            let anchor = selectionAnchor ?? controller.selectedRange.location
             controller.setSelectedRange(NSRange(location: min(anchor, offset), length: abs(anchor - offset)))
         }
         blink.reset()
@@ -193,10 +218,7 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
     }
 
     public func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
-        // Minimal marked text: treat as insert for MVP.
-        if let markedText {
-            insertText(markedText)
-        }
+        if let markedText { insertText(markedText) }
     }
 
     public func unmarkText() {}
@@ -205,8 +227,7 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
         guard let from = fromPosition as? EditorTextPosition,
               let to = toPosition as? EditorTextPosition else { return nil }
         let location = min(from.offset, to.offset)
-        let length = abs(from.offset - to.offset)
-        return EditorTextRange(range: NSRange(location: location, length: length))
+        return EditorTextRange(range: NSRange(location: location, length: abs(from.offset - to.offset)))
     }
 
     public func position(from position: UITextPosition, offset: Int) -> UITextPosition? {
@@ -261,25 +282,18 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
 
     public func firstRect(for range: UITextRange) -> CGRect {
         guard let editorRange = range as? EditorTextRange else { return .zero }
-        return controller.layout.caretRect(
-            atUTF16Offset: editorRange.range.location,
-            containerWidth: containerWidth
-        ) ?? .zero
+        return controller.layout.caretRect(atUTF16Offset: editorRange.range.location, containerWidth: containerWidth) ?? .zero
     }
 
     public func caretRect(for position: UITextPosition) -> CGRect {
         guard let pos = position as? EditorTextPosition else { return .zero }
-        return controller.layout.caretRect(
-            atUTF16Offset: pos.offset,
-            containerWidth: containerWidth
-        ) ?? .zero
+        return controller.layout.caretRect(atUTF16Offset: pos.offset, containerWidth: containerWidth) ?? .zero
     }
 
     public func selectionRects(for range: UITextRange) -> [UITextSelectionRect] { [] }
 
     public func closestPosition(to point: CGPoint) -> UITextPosition? {
-        let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
-        return EditorTextPosition(offset: offset)
+        EditorTextPosition(offset: controller.hitTestOffset(at: point, containerWidth: containerWidth))
     }
 
     public func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {
@@ -291,9 +305,53 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput {
         let end = min(offset + 1, controller.document.length)
         return EditorTextRange(range: NSRange(location: offset, length: max(0, end - offset)))
     }
-}
 
-// MARK: - UITextInput helpers
+    // MARK: - Drag / Drop
+
+    public func dragInteraction(_ interaction: UIDragInteraction, itemsForBeginning session: UIDragSession) -> [UIDragItem] {
+        let text = controller.text(in: controller.selectedRanges)
+        guard !text.isEmpty else { return [] }
+        let provider = NSItemProvider(object: text as NSString)
+        return [UIDragItem(itemProvider: provider)]
+    }
+
+    public func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+        session.hasItemsConforming(toTypeIdentifiers: ["public.plain-text", "public.utf8-plain-text"])
+    }
+
+    public func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+        UIDropProposal(operation: .copy)
+    }
+
+    public func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+        session.loadObjects(ofClass: NSString.self) { [weak self] items in
+            guard let self, let text = items.first as? String else { return }
+            let point = session.location(in: self)
+            let offset = self.controller.hitTestOffset(at: point, containerWidth: self.containerWidth)
+            self.controller.setSelectedRange(NSRange(location: offset, length: 0))
+            self.controller.insertText(text)
+            self.onTextChange?(self.controller.text)
+            self.relayout()
+        }
+    }
+
+    // MARK: - Accessibility
+
+    open override var accessibilityLabel: String? {
+        get { "Code editor" }
+        set {}
+    }
+
+    open override var accessibilityValue: String? {
+        get { controller.text }
+        set {}
+    }
+
+    open override var accessibilityAttributedValue: NSAttributedString? {
+        get { NSAttributedString(string: controller.text) }
+        set {}
+    }
+}
 
 @MainActor
 final class EditorTextPosition: UITextPosition {
@@ -305,7 +363,6 @@ final class EditorTextPosition: UITextPosition {
 final class EditorTextRange: UITextRange {
     let range: NSRange
     init(range: NSRange) { self.range = range }
-
     override var start: UITextPosition { EditorTextPosition(offset: range.location) }
     override var end: UITextPosition { EditorTextPosition(offset: range.location + range.length) }
     override var isEmpty: Bool { range.length == 0 }

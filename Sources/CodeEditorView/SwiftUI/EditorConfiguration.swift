@@ -7,6 +7,8 @@ public struct EditorConfiguration: Equatable {
     public var textColor: PlatformColor
     public var caretColor: PlatformColor
     public var selectionColor: PlatformColor
+    public var emphasisFillColor: PlatformColor
+    public var emphasisStrokeColor: PlatformColor
     public var lineHeightMultiplier: CGFloat
     public var wrapLines: Bool
     public var isEditable: Bool
@@ -14,24 +16,30 @@ public struct EditorConfiguration: Equatable {
     public var letterSpacing: CGFloat
     public var edgeInsets: HorizontalEdgeInsets
     public var lineBreakStrategy: LineBreakStrategy
+    public var showInvisibleCharacters: Bool
 
     public init(
         font: PlatformFont = PlatformDefaults.monospacedFont,
         textColor: PlatformColor = PlatformDefaults.textColor,
         caretColor: PlatformColor = PlatformDefaults.caretColor,
         selectionColor: PlatformColor = PlatformDefaults.selectionColor,
+        emphasisFillColor: PlatformColor = PlatformDefaults.selectionColor,
+        emphasisStrokeColor: PlatformColor = PlatformDefaults.caretColor,
         lineHeightMultiplier: CGFloat = 1.2,
         wrapLines: Bool = true,
         isEditable: Bool = true,
         isSelectable: Bool = true,
         letterSpacing: CGFloat = 1.0,
         edgeInsets: HorizontalEdgeInsets = HorizontalEdgeInsets(leading: 4, trailing: 4),
-        lineBreakStrategy: LineBreakStrategy = .word
+        lineBreakStrategy: LineBreakStrategy = .word,
+        showInvisibleCharacters: Bool = false
     ) {
         self.font = font
         self.textColor = textColor
         self.caretColor = caretColor
         self.selectionColor = selectionColor
+        self.emphasisFillColor = emphasisFillColor
+        self.emphasisStrokeColor = emphasisStrokeColor
         self.lineHeightMultiplier = lineHeightMultiplier
         self.wrapLines = wrapLines
         self.isEditable = isEditable
@@ -39,6 +47,7 @@ public struct EditorConfiguration: Equatable {
         self.letterSpacing = letterSpacing
         self.edgeInsets = edgeInsets
         self.lineBreakStrategy = lineBreakStrategy
+        self.showInvisibleCharacters = showInvisibleCharacters
     }
 
     public var typingAttributes: [NSAttributedString.Key: Any] {
@@ -54,5 +63,4 @@ public struct EditorConfiguration: Equatable {
     }
 }
 
-// PlatformFont/Color are not formally Sendable; configuration is main-actor consumed.
 extension EditorConfiguration: @unchecked Sendable {}

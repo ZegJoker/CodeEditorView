@@ -3,7 +3,7 @@ import Foundation
 import Observation
 import TextStory
 
-/// Central editor model: document, layout, selection, undo, and event streams.
+/// Central editor model: document, layout, multi-range selection, undo, emphasis, and event streams.
 @MainActor
 @Observable
 public final class EditorController {
@@ -12,9 +12,14 @@ public final class EditorController {
     public let selection: SelectionEngine
     public let undoCoordinator: UndoCoordinator
     public let events: EditorEventStream
+    public let emphasis: EmphasisManager
 
     public var configuration: EditorConfiguration {
         didSet { applyConfiguration() }
+    }
+
+    public var invisibleCharactersDelegate: InvisibleCharactersDelegate? {
+        didSet { /* hosts redraw */ }
     }
 
     /// Observable full document string.
@@ -31,8 +36,15 @@ public final class EditorController {
         set { setSelectedRange(newValue) }
     }
 
+    public var selectedRanges: [NSRange] {
+        get { selection.selectedRanges }
+        set { setSelectedRanges(newValue) }
+    }
+
     public private(set) var contentSize: CGSize = .zero
     public private(set) var latestSnapshot: LayoutSnapshot = .empty
+    /// Suggested scroll target after edits/navigation (hosts may consume).
+    public private(set) var scrollTarget: CGRect?
 
     public var textChanges: AsyncStream<String> { events.makeTextStream() }
     public var selectionChanges: AsyncStream<[NSRange]> { events.makeSelectionStream() }
@@ -48,9 +60,16 @@ public final class EditorController {
         self.selection = SelectionEngine()
         self.undoCoordinator = UndoCoordinator()
         self.events = EditorEventStream()
+        self.emphasis = EmphasisManager()
 
         layout.attach(document: document, typingAttributes: configuration.typingAttributes)
         selection.attach(document: document, layout: layout)
+        emphasis.onChange = { [weak self] in
+            self?.events.yield(.selectionDidChange)
+        }
+        if configuration.showInvisibleCharacters {
+            invisibleCharactersDelegate = DefaultInvisibleCharactersDelegate()
+        }
         applyConfiguration()
     }
 
@@ -59,55 +78,97 @@ public final class EditorController {
     public func replaceCharacters(in range: NSRange, with string: String) {
         guard configuration.isEditable else { return }
         events.yield(.willChangeText)
-
         layout.beginTransaction()
         let edit = document.replaceCharacters(in: range, with: string)
         undoCoordinator.register(edit: edit)
         layout.documentDidReplace(range: range, delta: edit.mutation.delta)
         layout.endTransaction()
-
-        let newLocation = range.location + string.utf16.count
-        selection.setInsertionPoint(newLocation)
+        selection.setInsertionPoint(range.location + string.utf16.count)
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
         publishTextChange()
         publishSelectionChange()
     }
 
     public func insertText(_ string: String) {
         guard configuration.isEditable else { return }
-        if let edit = selection.replaceSelection(with: string) {
-            events.yield(.willChangeText)
-            layout.beginTransaction()
-            // SelectionEngine already applied the mutation via document.
-            // Re-register: DocumentStore was mutated inside replaceSelection.
-            // Rebuild layout for the applied mutation.
+        let ranges = selection.selectedRanges
+        guard !ranges.isEmpty else { return }
+
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+        let edits = selection.replaceAllSelections(with: string)
+        for edit in edits {
             undoCoordinator.register(edit: edit)
             layout.documentDidReplace(range: edit.range, delta: edit.mutation.delta)
-            layout.endTransaction()
-            publishTextChange()
-            publishSelectionChange()
         }
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishTextChange()
+        publishSelectionChange()
     }
 
     public func deleteBackward() {
         guard configuration.isEditable else { return }
-        let range = selection.selectedRange
-        if range.length > 0 {
-            replaceCharacters(in: range, with: "")
-            return
+        let ranges = selection.selectedRanges
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+
+        let working = ranges.sorted { $0.location > $1.location }
+        var carets: [Int] = []
+        for range in working {
+            let deleteRange: NSRange
+            if range.length > 0 {
+                deleteRange = range
+            } else if range.location > 0 {
+                deleteRange = NSRange(location: range.location - 1, length: 1)
+            } else {
+                carets.append(0)
+                continue
+            }
+            let edit = document.replaceCharacters(in: deleteRange, with: "")
+            undoCoordinator.register(edit: edit)
+            layout.documentDidReplace(range: deleteRange, delta: edit.mutation.delta)
+            carets.append(deleteRange.location)
         }
-        guard range.location > 0 else { return }
-        replaceCharacters(in: NSRange(location: range.location - 1, length: 1), with: "")
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        selection.setSelectedRanges(carets.reversed().map { NSRange(location: $0, length: 0) })
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishTextChange()
+        publishSelectionChange()
     }
 
     public func deleteForward() {
         guard configuration.isEditable else { return }
-        let range = selection.selectedRange
-        if range.length > 0 {
-            replaceCharacters(in: range, with: "")
-            return
+        let ranges = selection.selectedRanges
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+
+        var carets: [Int] = []
+        for range in ranges.sorted(by: { $0.location > $1.location }) {
+            let deleteRange: NSRange
+            if range.length > 0 {
+                deleteRange = range
+            } else if range.location < document.length {
+                deleteRange = NSRange(location: range.location, length: 1)
+            } else {
+                carets.append(range.location)
+                continue
+            }
+            let edit = document.replaceCharacters(in: deleteRange, with: "")
+            undoCoordinator.register(edit: edit)
+            layout.documentDidReplace(range: deleteRange, delta: edit.mutation.delta)
+            carets.append(deleteRange.location)
         }
-        guard range.location < document.length else { return }
-        replaceCharacters(in: NSRange(location: range.location, length: 1), with: "")
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        selection.setSelectedRanges(carets.reversed().map { NSRange(location: $0, length: 0) })
+        publishTextChange()
+        publishSelectionChange()
     }
 
     public func undo() {
@@ -142,6 +203,23 @@ public final class EditorController {
 
     public func setSelectedRange(_ range: NSRange) {
         selection.setSelectedRange(range)
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishSelectionChange()
+    }
+
+    public func setSelectedRanges(_ ranges: [NSRange]) {
+        selection.setSelectedRanges(ranges)
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishSelectionChange()
+    }
+
+    public func addCursor(at offset: Int) {
+        selection.addSelection(NSRange(location: offset, length: 0))
+        publishSelectionChange()
+    }
+
+    public func collapseCursors() {
+        selection.collapseToPrimary()
         publishSelectionChange()
     }
 
@@ -157,12 +235,34 @@ public final class EditorController {
             extending: extending,
             containerWidth: containerWidth
         )
+        updateScrollTarget(containerWidth: containerWidth)
         publishSelectionChange()
     }
 
     public func selectAll() {
         selection.selectAll()
         publishSelectionChange()
+    }
+
+    public func applyColumnSelection(rect: CGRect, containerWidth: CGFloat) {
+        let snapshot = layoutViewport(
+            visibleRect: rect.insetBy(dx: -10, dy: -10),
+            containerWidth: containerWidth
+        )
+        let ranges = ColumnSelectionBuilder.ranges(
+            in: rect,
+            fragments: snapshot.fragments,
+            documentLength: document.length
+        )
+        selection.mode = .column
+        setSelectedRanges(ranges)
+    }
+
+    // MARK: - Attachments
+
+    public func addAttachment(_ attachment: any TextAttachment, range: NSRange) {
+        layout.attachments.add(attachment, range: range)
+        layout.invalidateTypeset(in: range)
     }
 
     // MARK: - Layout
@@ -178,8 +278,64 @@ public final class EditorController {
         layout.caretRect(atUTF16Offset: selection.selectedRange.location, containerWidth: containerWidth)
     }
 
+    public func caretRects(containerWidth: CGFloat) -> [CGRect] {
+        selection.selectedRanges.compactMap {
+            layout.caretRect(atUTF16Offset: $0.location, containerWidth: containerWidth)
+        }
+    }
+
     public func hitTestOffset(at point: CGPoint, containerWidth: CGFloat) -> Int {
         layout.utf16Offset(at: point, containerWidth: containerWidth)
+    }
+
+    public func updateScrollTarget(containerWidth: CGFloat) {
+        if let caret = caretRect(containerWidth: containerWidth) {
+            scrollTarget = caret.insetBy(dx: -20, dy: -40)
+        } else {
+            scrollTarget = nil
+        }
+    }
+
+    // MARK: - Drag session helpers
+
+    public func text(in ranges: [NSRange]) -> String {
+        ranges.sorted { $0.location < $1.location }.compactMap { document.substring(from: $0) }.joined(separator: "\n")
+    }
+
+    public func moveText(from ranges: [NSRange], to dropOffset: Int) {
+        guard configuration.isEditable else { return }
+        let ordered = ranges.sorted { $0.location < $1.location }
+        let pieces = ordered.compactMap { document.substring(from: $0) }
+        let payload = pieces.joined(separator: "\n")
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+
+        // Delete high → low
+        var adjustedDrop = dropOffset
+        for range in ordered.reversed() {
+            let edit = document.replaceCharacters(in: range, with: "")
+            undoCoordinator.register(edit: edit)
+            layout.documentDidReplace(range: range, delta: edit.mutation.delta)
+            if range.location + range.length <= dropOffset {
+                adjustedDrop += edit.mutation.delta
+            } else if range.location < dropOffset {
+                adjustedDrop = range.location
+            }
+        }
+        let insert = document.replaceCharacters(
+            in: NSRange(location: max(0, min(adjustedDrop, document.length)), length: 0),
+            with: payload
+        )
+        undoCoordinator.register(edit: insert)
+        layout.documentDidReplace(range: insert.range, delta: insert.mutation.delta)
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        selection.setSelectedRange(
+            NSRange(location: insert.range.location, length: payload.utf16.count)
+        )
+        publishTextChange()
+        publishSelectionChange()
     }
 
     // MARK: - Private
@@ -202,6 +358,9 @@ public final class EditorController {
         layout.edgeInsets = configuration.edgeInsets
         layout.updateTypingAttributes(configuration.typingAttributes)
         selection.isEnabled = configuration.isSelectable
+        if configuration.showInvisibleCharacters, invisibleCharactersDelegate == nil {
+            invisibleCharactersDelegate = DefaultInvisibleCharactersDelegate()
+        }
         layout.invalidateAll()
     }
 
@@ -212,6 +371,6 @@ public final class EditorController {
 
     private func publishSelectionChange() {
         events.yield(.selectionDidChange)
-        events.yieldSelection([selection.selectedRange])
+        events.yieldSelection(selection.selectedRanges)
     }
 }

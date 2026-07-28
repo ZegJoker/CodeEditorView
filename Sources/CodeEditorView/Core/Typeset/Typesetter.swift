@@ -13,16 +13,22 @@ public struct Typesetter: Sendable {
     public func typeset(
         _ string: NSAttributedString,
         documentRange: NSRange,
-        display: TypesetDisplayData
+        display: TypesetDisplayData,
+        attachments: [AnyTextAttachment] = []
     ) -> (fragments: [LineFragment], totalHeight: CGFloat) {
+        let attachmentWidth = attachments.reduce(CGFloat(0)) { $0 + $1.width }
+        let textMaxWidth = max(1, display.maxWidth - attachmentWidth)
+
         if string.length == 0 || display.maxWidth <= 0 {
+            let height = display.estimatedLineHeight * display.lineHeightMultiplier
             let fragment = LineFragment(
                 lineRelativeRange: NSRange(location: 0, length: 0),
                 documentRange: NSRange(location: documentRange.location, length: 0),
-                width: 0,
-                height: display.estimatedLineHeight * display.lineHeightMultiplier,
+                width: attachmentWidth,
+                height: height,
                 descent: 0,
-                ctLine: nil
+                ctLine: nil,
+                attachments: attachments
             )
             return ([fragment], fragment.height)
         }
@@ -32,7 +38,8 @@ public struct Typesetter: Sendable {
         var start: CFIndex = 0
         let length = string.length
         var totalHeight: CGFloat = 0
-        let maxWidth = Double(display.maxWidth)
+        let maxWidth = Double(textMaxWidth)
+        var remainingAttachments = attachments
 
         while start < length {
             let count: CFIndex
@@ -48,20 +55,25 @@ public struct Typesetter: Sendable {
             var ascent: CGFloat = 0
             var descent: CGFloat = 0
             var leading: CGFloat = 0
-            let width = CGFloat(CTLineGetTypographicBounds(ctLine, &ascent, &descent, &leading))
+            let textWidth = CGFloat(CTLineGetTypographicBounds(ctLine, &ascent, &descent, &leading))
             let naturalHeight = ascent + descent + leading
             let height = max(naturalHeight, display.estimatedLineHeight) * display.lineHeightMultiplier
 
             let relative = NSRange(location: start, length: take)
             let absolute = NSRange(location: documentRange.location + start, length: take)
+            // Place all line attachments on the first fragment for drawing.
+            let fragAttachments = start == 0 ? remainingAttachments : []
+            if start == 0 { remainingAttachments = [] }
+
             fragments.append(
                 LineFragment(
                     lineRelativeRange: relative,
                     documentRange: absolute,
-                    width: width,
+                    width: textWidth + (start == 0 ? attachmentWidth : 0),
                     height: height,
                     descent: descent,
-                    ctLine: ctLine
+                    ctLine: ctLine,
+                    attachments: fragAttachments
                 )
             )
             totalHeight += height

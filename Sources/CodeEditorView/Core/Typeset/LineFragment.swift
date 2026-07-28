@@ -13,6 +13,8 @@ public final class LineFragment: LinePayload, Identifiable {
     public let height: CGFloat
     public let descent: CGFloat
     public let ctLine: CTLine?
+    /// Attachments drawn on this fragment (document-relative).
+    public let attachments: [AnyTextAttachment]
 
     public init(
         lineRelativeRange: NSRange,
@@ -20,7 +22,8 @@ public final class LineFragment: LinePayload, Identifiable {
         width: CGFloat,
         height: CGFloat,
         descent: CGFloat,
-        ctLine: CTLine?
+        ctLine: CTLine?,
+        attachments: [AnyTextAttachment] = []
     ) {
         self.id = UUID()
         self.lineRelativeRange = lineRelativeRange
@@ -29,6 +32,7 @@ public final class LineFragment: LinePayload, Identifiable {
         self.height = height
         self.descent = descent
         self.ctLine = ctLine
+        self.attachments = attachments
     }
 }
 

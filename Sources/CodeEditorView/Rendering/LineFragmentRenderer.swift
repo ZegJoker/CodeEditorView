@@ -10,7 +10,10 @@ public enum LineFragmentRenderer {
         origin: CGPoint,
         textColor: CGColor? = nil
     ) {
-        guard let ctLine = fragment.ctLine else { return }
+        guard let ctLine = fragment.ctLine else {
+            drawAttachments(fragment.attachments, in: context, origin: origin, height: fragment.height)
+            return
+        }
 
         context.saveGState()
         context.textMatrix = .identity
@@ -22,6 +25,19 @@ public enum LineFragmentRenderer {
         }
         CTLineDraw(ctLine, context)
         context.restoreGState()
+
+        drawAttachments(fragment.attachments, in: context, origin: origin, height: fragment.height)
+    }
+
+    public static func drawSelection(
+        ranges: [NSRange],
+        fragments: [LaidOutFragment],
+        in context: CGContext,
+        color: CGColor
+    ) {
+        for range in ranges where range.length > 0 {
+            drawSelection(range: range, fragments: fragments, in: context, color: color)
+        }
     }
 
     public static func drawSelection(
@@ -58,6 +74,38 @@ public enum LineFragmentRenderer {
             context.fill(rect)
         }
         context.restoreGState()
+    }
+
+    @MainActor
+    public static func drawCarets(
+        offsets: [Int],
+        layout: LayoutEngine,
+        containerWidth: CGFloat,
+        in context: CGContext,
+        color: CGColor,
+        visible: Bool
+    ) {
+        guard visible else { return }
+        context.setFillColor(color)
+        for offset in offsets {
+            if let caret = layout.caretRect(atUTF16Offset: offset, containerWidth: containerWidth) {
+                context.fill(CGRect(x: caret.minX, y: caret.minY, width: 1.5, height: caret.height))
+            }
+        }
+    }
+
+    private static func drawAttachments(
+        _ attachments: [AnyTextAttachment],
+        in context: CGContext,
+        origin: CGPoint,
+        height: CGFloat
+    ) {
+        var x = origin.x
+        for item in attachments {
+            let rect = CGRect(x: x, y: origin.y, width: item.width, height: height)
+            item.attachment.draw(in: context, rect: rect)
+            x += item.width
+        }
     }
 }
 
