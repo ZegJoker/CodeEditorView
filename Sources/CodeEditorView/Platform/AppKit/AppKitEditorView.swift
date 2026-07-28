@@ -199,6 +199,9 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     private func scrollToSelectionIfNeeded() {
         guard let target = controller.scrollTarget else { return }
+        // Consume first so a clip-bounds → relayout loop cannot keep re-applying
+        // the target and pin the scroll position to the caret.
+        controller.consumeScrollTarget()
         scrollToVisible(target)
     }
 

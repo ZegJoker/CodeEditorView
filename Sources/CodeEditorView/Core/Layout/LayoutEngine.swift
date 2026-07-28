@@ -349,7 +349,40 @@ public final class LayoutEngine {
             rebuildFromDocument()
             return
         }
+        // Localized slices never invent a trailing empty row (mid-document `\n` would
+        // create phantoms). After the edit, restore full-document trailing-caret
+        // semantics: if the buffer ends with a line ending, the caret needs a final
+        // zero-length line — otherwise the first Return at EOF only bumps column
+        // (caret sits on the terminator of the last content line with no new row).
+        ensureTrailingCaretLine()
         contentSize = CGSize(width: contentSize.width, height: lineIndex.height)
+    }
+
+    /// Matches full-rebuild behavior: a document that ends with `\n`/`\r` gets a final
+    /// zero-length line so the caret can sit after the last terminator.
+    private func ensureTrailingCaretLine() {
+        guard let document, document.length > 0, lineIndex.count > 0 else { return }
+        let ns = document.fullString as NSString
+        let lastUnit = ns.character(at: document.length - 1)
+        let endsWithTerminator = lastUnit == 0x0A || lastUnit == 0x0D
+        let estimated = estimatedLineHeight * lineHeightMultiplier
+
+        if endsWithTerminator {
+            if let last = lineIndex.last, last.metrics.utf16Length > 0 {
+                let line = TextLine()
+                line.markNeedsTypeset()
+                lineIndex.insert(
+                    payload: line,
+                    metrics: LineMetrics(utf16Length: 0, height: estimated),
+                    atIndex: lineIndex.count
+                )
+            }
+        } else if let last = lineIndex.last,
+                  last.metrics.utf16Length == 0,
+                  lineIndex.count > 1 {
+            // Document no longer ends with a terminator — drop a stale trailing empty.
+            lineIndex.remove(atIndex: lineIndex.count - 1)
+        }
     }
 
     private func rebuildFromDocument() {

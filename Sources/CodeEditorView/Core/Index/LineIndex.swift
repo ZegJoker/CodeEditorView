@@ -104,7 +104,14 @@ public final class LineIndex<Payload: LinePayload> {
 
     public func line(atUTF16Offset offset: Int) -> LinePosition<Payload>? {
         guard count > 0 else { return nil }
-        let clamped = min(max(0, offset), max(0, length - 1))
+        // Caret at/after EOF must resolve to the last line (often the trailing
+        // zero-length caret row after a final `\n`). Clamping to `length - 1`
+        // would pin the caret on the previous line's terminator so Return only
+        // advances column without a visible new line.
+        if offset >= length {
+            return last
+        }
+        let clamped = max(0, offset)
         guard let node = nodeAtUTF16Offset(clamped) else { return nil }
         return position(for: node)
     }

@@ -18,6 +18,7 @@ final class EditorChromeView: NSView {
     private var wasShowingFindPanel = false
     private var lastPanelMode: FindPanelMode?
     private let completionPanel = AppKitCompletionPanelController()
+    private let minimapView = AppKitMinimapView()
 
     init(controller: EditorController, editorView: AppKitEditorView, wrapLines: Bool) {
         self.controller = controller
@@ -43,14 +44,25 @@ final class EditorChromeView: NSView {
             self?.cancelPendingPanelFieldFocus()
         }
 
-        addSubview(scrollView)
+        // Minimap is a sibling stacked above the scroll view. Frame is set in `layout()`
+        // so the strip always matches the editor’s vertical span (Auto Layout previously
+        // allowed the strip to collapse toward content height).
+        minimapView.translatesAutoresizingMaskIntoConstraints = true
+        minimapView.autoresizingMask = []
+        minimapView.attach(controller: controller, editorScrollView: scrollView)
 
+        addSubview(scrollView)
+        addSubview(minimapView) // above scroll so it receives hits
+
+        // Scroll fills chrome; document trailing inset reserves space for the strip
+        // (see `updateMinimapTrailingInset`) so text does not draw under it.
         NSLayoutConstraint.activate([
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
             scrollView.topAnchor.constraint(equalTo: topAnchor),
         ])
+        syncMinimap()
 
         controller.onFindSessionChange = { [weak self] in
             guard let self else { return }
@@ -64,6 +76,11 @@ final class EditorChromeView: NSView {
             if shouldFocus, self.controller.findSession.isShowing {
                 self.schedulePanelFieldFocus()
             }
+        }
+        let previousNeedsDisplay = controller.onNeedsDisplay
+        controller.onNeedsDisplay = { [weak self] in
+            previousNeedsDisplay?()
+            self?.minimapView.reload()
         }
         syncFindPanel()
     }
@@ -123,6 +140,51 @@ final class EditorChromeView: NSView {
         scrollView.hasHorizontalScroller = !wrap
         scrollView.horizontalScrollElasticity = wrap ? .none : .allowed
         editorView.autoresizingMask = wrap ? [.width] : []
+    }
+
+    func syncMinimap() {
+        let show = controller.configuration.peripherals.showMinimap
+        let hostW = max(bounds.width, 1)
+        minimapView.setVisible(show)
+        controller.updateMinimapTrailingInset(hostWidth: hostW)
+        layoutMinimapFrame()
+        minimapView.reload()
+        needsLayout = true
+    }
+
+    /// Place the minimap on the trailing edge of the *scroll view* rect so it always
+    /// fills the editor height (find panel sits above the scroll view).
+    private func layoutMinimapFrame() {
+        let show = controller.configuration.peripherals.showMinimap
+        guard show else {
+            minimapView.frame = .zero
+            return
+        }
+        let hostW = max(bounds.width, 1)
+        let width = MinimapGeometry.width(hostWidth: hostW)
+        // Use the scroll view’s laid-out frame so the strip matches the editor span
+        // even when a find panel is open above it.
+        let scrollFrame = scrollView.frame
+        let height = max(scrollFrame.height, 0)
+        let y = scrollFrame.minY
+        // EditorChromeView is not flipped (AppKit default: y=0 at bottom).
+        minimapView.frame = CGRect(
+            x: bounds.width - width,
+            y: y,
+            width: width,
+            height: height
+        )
+    }
+
+    override func layout() {
+        super.layout()
+        if controller.configuration.peripherals.showMinimap {
+            layoutMinimapFrame()
+            // Only push trailing inset when host width actually changes (reload does that).
+            minimapView.reload()
+        } else {
+            minimapView.frame = .zero
+        }
     }
 
     // MARK: - AppKit field focus

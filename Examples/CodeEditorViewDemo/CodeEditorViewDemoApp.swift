@@ -435,6 +435,7 @@ struct DemoRootView: View {
     @State private var showInvisibles = false
     @State private var showGutter = true
     @State private var showGuide = true
+    @State private var showMinimap = false
     @State private var useRegexFallback = false
     @State private var coordinator = DemoCoordinator()
     @State private var completionDelegate = DemoCompletionDelegate()
@@ -477,6 +478,7 @@ struct DemoRootView: View {
                     ),
                     peripherals: .init(
                         showGutter: showGutter,
+                        showMinimap: showMinimap,
                         showReformattingGuide: showGuide,
                         showInvisibleCharacters: showInvisibles
                     )
@@ -510,6 +512,7 @@ struct DemoRootView: View {
 
                 Toggle("Wrap", isOn: $wrapLines)
                 Toggle("Gutter", isOn: $showGutter)
+                Toggle("Minimap", isOn: $showMinimap)
                 Toggle("Column 40", isOn: $showGuide)
                 Toggle("Invisibles", isOn: $showInvisibles)
                 Toggle("Regex", isOn: $useRegexFallback)

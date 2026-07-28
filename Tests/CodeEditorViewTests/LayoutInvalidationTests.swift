@@ -42,6 +42,21 @@ struct LayoutInvalidationTests {
         }
     }
 
+    @Test func enterAtEndOfFileAddsTrailingCaretLine() async {
+        await MainActor.run {
+            let controller = EditorController(text: "abc")
+            #expect(controller.layout.lineIndex.count == 1)
+            controller.setSelectedRange(NSRange(location: 3, length: 0))
+            controller.insertNewline()
+            #expect(controller.text == "abc\n")
+            // "abc\n" + trailing empty caret line
+            #expect(controller.layout.lineIndex.count == 2)
+            #expect(controller.layout.lineIndex.last?.metrics.utf16Length == 0)
+            #expect(controller.cursorPositions.first?.line == 1)
+            #expect(controller.cursorPositions.first?.column == 0)
+        }
+    }
+
     @Test func localizedEditPreservesDocumentLength() async {
         await MainActor.run {
             let controller = EditorController(text: "line1\nline2\nline3\nline4")

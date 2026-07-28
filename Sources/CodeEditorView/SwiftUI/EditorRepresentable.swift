@@ -143,6 +143,7 @@ struct EditorRepresentable: NSViewRepresentable {
             context.coordinator.editorView?.relayout()
         }
         chrome.syncFindPanel()
+        chrome.syncMinimap()
     }
 
     @MainActor
@@ -322,7 +323,7 @@ struct EditorRepresentable: UIViewRepresentable {
         Coordinator(text: $text, selection: $selection, editorState: $editorState)
     }
 
-    func makeUIView(context: Context) -> UIScrollView {
+    func makeUIView(context: Context) -> UIView {
         let controller = EditorController(
             text: text,
             configuration: configuration,
@@ -349,23 +350,50 @@ struct EditorRepresentable: UIViewRepresentable {
         context.coordinator.editorView = editor
         context.coordinator.completionPanel.attach(controller: controller, editorView: editor)
 
+        let chrome = UIView()
         let scroll = UIScrollView()
         scroll.addSubview(editor)
         editor.translatesAutoresizingMaskIntoConstraints = false
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        chrome.addSubview(scroll)
+
+        let minimap = UIKitMinimapView()
+        minimap.translatesAutoresizingMaskIntoConstraints = false
+        minimap.attach(controller: controller, editorScrollView: scroll)
+        chrome.addSubview(minimap)
+        context.coordinator.minimapView = minimap
+        context.coordinator.scrollView = scroll
+
         NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: chrome.topAnchor),
+            scroll.bottomAnchor.constraint(equalTo: chrome.bottomAnchor),
+            scroll.leadingAnchor.constraint(equalTo: chrome.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: minimap.leadingAnchor),
+            minimap.topAnchor.constraint(equalTo: chrome.topAnchor),
+            minimap.bottomAnchor.constraint(equalTo: chrome.bottomAnchor),
+            minimap.trailingAnchor.constraint(equalTo: chrome.trailingAnchor),
+            minimap.widthAnchor.constraint(equalToConstant: 0),
             editor.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor),
             editor.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor),
             editor.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor),
             editor.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor),
             editor.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor),
         ])
+        if let widthConstraint = minimap.constraints.first(where: { $0.firstAttribute == .width }) {
+            context.coordinator.minimapWidthConstraint = widthConstraint
+        }
+        // Store width constraint created above
+        for c in chrome.constraints where c.firstItem as? UIView === minimap && c.firstAttribute == .width {
+            context.coordinator.minimapWidthConstraint = c
+        }
+
         if configuration.appearance.useThemeBackground {
             scroll.backgroundColor = configuration.theme.background
         }
-        return scroll
+        return chrome
     }
 
-    func updateUIView(_ scrollView: UIScrollView, context: Context) {
+    func updateUIView(_ chrome: UIView, context: Context) {
         guard let controller = context.coordinator.controller else { return }
         if controller.completionDelegate !== completionDelegate {
             controller.completionDelegate = completionDelegate
@@ -386,17 +414,25 @@ struct EditorRepresentable: UIViewRepresentable {
         }
         context.coordinator.applyInboundEditorState(editorState)
         context.coordinator.editorView?.relayout()
-        if let editor = context.coordinator.editorView {
+        if let editor = context.coordinator.editorView, let scrollView = context.coordinator.scrollView {
             let wrap = configuration.wrapLines
-            let width = wrap ? scrollView.bounds.width : max(scrollView.bounds.width, controller.contentSize.width)
+            let showMini = configuration.peripherals.showMinimap
+            let miniW = showMini ? MinimapGeometry.width(hostWidth: max(chrome.bounds.width, 1)) : 0
+            context.coordinator.minimapWidthConstraint?.constant = miniW
+            context.coordinator.minimapView?.setVisible(showMini)
+            controller.updateMinimapTrailingInset(hostWidth: max(chrome.bounds.width, 1))
+            let width = wrap
+                ? max(1, chrome.bounds.width - miniW)
+                : max(chrome.bounds.width - miniW, controller.contentSize.width)
             scrollView.contentSize = CGSize(
                 width: width,
                 height: max(controller.contentSize.height, scrollView.bounds.height)
             )
             editor.frame = CGRect(origin: .zero, size: scrollView.contentSize)
+            context.coordinator.minimapView?.reload()
         }
         if configuration.appearance.useThemeBackground {
-            scrollView.backgroundColor = configuration.theme.background
+            context.coordinator.scrollView?.backgroundColor = configuration.theme.background
             context.coordinator.editorView?.backgroundColor = configuration.theme.background
         }
         context.coordinator.pushStateFromControllerIfNeeded()
@@ -409,6 +445,9 @@ struct EditorRepresentable: UIViewRepresentable {
         var editorState: Binding<EditorState>
         var controller: EditorController?
         var editorView: UIKitEditorView?
+        var scrollView: UIScrollView?
+        var minimapView: UIKitMinimapView?
+        var minimapWidthConstraint: NSLayoutConstraint?
         let completionPanel = UIKitCompletionPanelController()
         private var coordinatorIDs: [ObjectIdentifier] = []
         fileprivate var providerIDs: [ObjectIdentifier] = []

@@ -64,6 +64,25 @@ public final class Highlighter {
         self.hooks = hooks
     }
 
+    /// Capture runs for a UTF-16 range (local run offsets mapped to document coordinates).
+    public func captureRuns(in range: NSRange) -> [(range: NSRange, capture: CaptureName?)] {
+        let runs = styleContainer.runs(in: range)
+        var result: [(range: NSRange, capture: CaptureName?)] = []
+        var offset = range.location
+        for run in runs {
+            result.append((NSRange(location: offset, length: run.length), run.value))
+            offset += run.length
+        }
+        return result
+    }
+
+    /// Expand the visible invalidation window (e.g. minimap-visible range).
+    public func expandVisibleRange(_ range: NSRange) {
+        guard range.length > 0 else { return }
+        let union = NSUnionRange(visibleRange, range)
+        setVisibleUTF16Range(union)
+    }
+
     public func setLanguageID(_ languageID: String?) {
         guard self.languageID != languageID else { return }
         self.languageID = languageID

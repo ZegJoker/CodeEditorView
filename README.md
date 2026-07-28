@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 8 complete** — code completion UI (CESE-aligned `CodeSuggestionDelegate`, trigger characters, async load + sync filter, floating list on AppKit & UIKit). Keys: Escape / Ctrl-Space; type letters to open. Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter; Phase 3–4 chrome & highlighting.
+**Phase 9 complete** — minimap overview strip (syntax-colored bubbles, viewport indicator, drag/click to scroll) via `peripherals.showMinimap` on AppKit & UIKit. Phase 8 completions; Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter.
 
 ## Requirements
 

@@ -879,6 +879,12 @@ public final class EditorController {
         }
     }
 
+    /// Hosts call this after applying ``scrollTarget`` so later layout/scroll passes
+    /// do not keep re-centering on the caret (which freezes free scrolling).
+    public func consumeScrollTarget() {
+        scrollTarget = nil
+    }
+
     // MARK: - Drag session helpers
 
     public func text(in ranges: [NSRange]) -> String {
@@ -952,14 +958,14 @@ public final class EditorController {
         layout.updateTypingAttributes(configuration.typingAttributes)
         selection.isEnabled = configuration.isSelectable
 
-        // Gutter width contributes to leading content inset.
+        // Gutter + minimap contribute to horizontal content insets.
+        let hostWidth = contentSize.width > 0 ? contentSize.width : 800
         let model = makeGutterModel()
-        gutterWidth = configuration.peripherals.showGutter ? model.width : 0
-        let content = configuration.layout.contentInsets
-        layout.edgeInsets = HorizontalEdgeInsets(
-            leading: content.leading + gutterWidth,
-            trailing: content.trailing
-        )
+        let gutter = configuration.peripherals.showGutter ? model.width : 0
+        let mini = configuration.peripherals.showMinimap
+            ? MinimapGeometry.width(hostWidth: hostWidth)
+            : 0
+        applyHorizontalInsets(gutterWidth: gutter, minimapWidth: mini)
 
         if configuration.showInvisibleCharacters {
             if invisibleCharactersDelegate == nil {
@@ -977,6 +983,7 @@ public final class EditorController {
             || old?.appearance.lineHeightMultiple != configuration.appearance.lineHeightMultiple
             || old?.layout.lineBreakStrategy != configuration.layout.lineBreakStrategy
             || old?.peripherals.showGutter != configuration.peripherals.showGutter
+            || old?.peripherals.showMinimap != configuration.peripherals.showMinimap
         {
             layout.invalidateAll()
         }
@@ -997,12 +1004,11 @@ public final class EditorController {
         let model = makeGutterModel()
         let newGutter = configuration.peripherals.showGutter ? model.width : 0
         if abs(newGutter - gutterWidth) > 0.5 {
-            gutterWidth = newGutter
-            let content = configuration.layout.contentInsets
-            layout.edgeInsets = HorizontalEdgeInsets(
-                leading: content.leading + gutterWidth,
-                trailing: content.trailing
-            )
+            let hostWidth = contentSize.width > 0 ? contentSize.width : 800
+            let mini = configuration.peripherals.showMinimap
+                ? MinimapGeometry.width(hostWidth: hostWidth)
+                : 0
+            applyHorizontalInsets(gutterWidth: newGutter, minimapWidth: mini)
             layout.invalidateAll()
         }
         for coordinator in liveCoordinators {
@@ -1034,6 +1040,16 @@ public final class EditorController {
 
     private func syncEditorStateCursors() {
         editorState.cursorPositions = cursorPositions
+    }
+
+    /// Updates gutter width storage and horizontal layout insets (gutter leading + minimap trailing).
+    func applyHorizontalInsets(gutterWidth: CGFloat, minimapWidth: CGFloat) {
+        self.gutterWidth = gutterWidth
+        let content = configuration.layout.contentInsets
+        layout.edgeInsets = HorizontalEdgeInsets(
+            leading: content.leading + gutterWidth,
+            trailing: content.trailing + minimapWidth
+        )
     }
 
     func syncEditorStateFind() {
