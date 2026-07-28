@@ -53,6 +53,71 @@ final class DemoCoordinator: EditorCoordinator {
     }
 }
 
+/// Demo completion provider (CESE-style mock).
+@MainActor
+final class DemoCompletionDelegate: CodeSuggestionDelegate {
+    private let catalog: [SimpleCodeSuggestion] = [
+        SimpleCodeSuggestion(label: "greet", detail: "func", systemImage: "function", imageColorToken: .purple),
+        SimpleCodeSuggestion(label: "print", detail: "func", systemImage: "function", imageColorToken: .purple),
+        SimpleCodeSuggestion(label: "return", detail: "keyword", systemImage: "k.square", imageColorToken: .pink),
+        SimpleCodeSuggestion(label: "String", detail: "struct", systemImage: "s.square", imageColorToken: .blue),
+        SimpleCodeSuggestion(label: "isEmpty", detail: "var", systemImage: "v.square", imageColorToken: .blue),
+        SimpleCodeSuggestion(label: "name", detail: "param", systemImage: "p.square", imageColorToken: .green),
+        SimpleCodeSuggestion(label: "world", detail: "literal", systemImage: "textformat", imageColorToken: .orange),
+    ]
+
+    func completionTriggerCharacters() -> Set<String> { ["."] }
+
+    func completionSuggestionsRequested(
+        textView: EditorController,
+        cursorPosition: CursorPosition
+    ) async -> (windowPosition: CursorPosition, items: [any CodeSuggestionEntry])? {
+        try? await Task.sleep(for: .milliseconds(80))
+        let prefix = Self.wordPrefix(at: cursorPosition.range.location, in: textView.text)
+        let items = catalog.filter { prefix.isEmpty || $0.label.lowercased().hasPrefix(prefix.lowercased()) }
+        return (cursorPosition, items)
+    }
+
+    func completionOnCursorMove(
+        textView: EditorController,
+        cursorPosition: CursorPosition
+    ) -> [any CodeSuggestionEntry]? {
+        // Empty prefix (e.g. user deleted the typed character) → dismiss.
+        // Note: `String.hasPrefix("")` is true for every string, so we must not filter on "".
+        let prefix = Self.wordPrefix(at: cursorPosition.range.location, in: textView.text)
+        guard !prefix.isEmpty else { return nil }
+        let items = catalog.filter { $0.label.lowercased().hasPrefix(prefix.lowercased()) }
+        return items.isEmpty ? nil : items
+    }
+
+    func completionWindowApplyCompletion(
+        item: any CodeSuggestionEntry,
+        textView: EditorController,
+        cursorPosition: CursorPosition?
+    ) {
+        let loc = cursorPosition?.range.location ?? textView.selectedRange.location
+        let prefix = Self.wordPrefix(at: loc, in: textView.text)
+        let start = loc - prefix.utf16.count
+        textView.replaceCharacters(
+            in: NSRange(location: max(0, start), length: prefix.utf16.count),
+            with: item.label
+        )
+    }
+
+    private static func wordPrefix(at location: Int, in text: String) -> String {
+        let ns = text as NSString
+        var i = min(max(0, location), ns.length)
+        var chars: [Character] = []
+        while i > 0 {
+            let ch = ns.substring(with: NSRange(location: i - 1, length: 1))
+            guard let c = ch.first, c.isLetter || c.isNumber || c == "_" else { break }
+            chars.insert(c, at: 0)
+            i -= 1
+        }
+        return String(chars)
+    }
+}
+
 // MARK: - Catalog
 
 /// Full language catalog for the picker (highlightable + plain text), sorted by display name.
@@ -372,6 +437,7 @@ struct DemoRootView: View {
     @State private var showGuide = true
     @State private var useRegexFallback = false
     @State private var coordinator = DemoCoordinator()
+    @State private var completionDelegate = DemoCompletionDelegate()
     @State private var regexProvider = RegexHighlightProvider.swiftLike()
     @State private var languageFilter = ""
 
@@ -417,7 +483,8 @@ struct DemoRootView: View {
                 ),
                 language: selectedLanguage.id == .plainText ? nil : selectedLanguage,
                 highlightProviders: useRegexFallback ? [regexProvider] : [],
-                coordinators: [coordinator]
+                coordinators: [coordinator],
+                completionDelegate: completionDelegate
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .focusable()
@@ -456,7 +523,7 @@ struct DemoRootView: View {
 
                 Spacer()
 
-                Text("⌘F find · ⌘R replace · ⌘G next · Tab · ⌘/ · \(DemoCatalog.languages.count) langs · \(text.split(separator: "\n").count) lines")
+                Text("Esc/⌃Space complete · ⌘F find · ⌘R replace · \(DemoCatalog.languages.count) langs · \(text.split(separator: "\n").count) lines")
                     .foregroundStyle(.secondary)
                     .font(.caption)
                     .lineLimit(1)

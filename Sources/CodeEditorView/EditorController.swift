@@ -35,6 +35,18 @@ public final class EditorController {
     /// Hosts observe to show/hide panel chrome and refresh find UI.
     public var onFindSessionChange: (() -> Void)?
 
+    /// Code completion session (items, selection, visibility).
+    public let completionSession = CompletionSession()
+
+    /// App-supplied completion provider (weak; host must retain the delegate).
+    public weak var completionDelegate: (any CodeSuggestionDelegate)?
+
+    /// Hosts observe to present/update the completion panel UI.
+    public var onCompletionSessionChange: (() -> Void)?
+
+    /// In-flight async completion load (cancelled on re-open/hide).
+    var completionRequestTask: Task<Void, Never>?
+
     /// Width of the line-number gutter (0 when hidden).
     public private(set) var gutterWidth: CGFloat = 0
 
@@ -424,6 +436,7 @@ public final class EditorController {
         updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
         publishTextChange()
         publishSelectionChange()
+        noteTextInsertedForCompletions(string)
     }
 
     // MARK: - Formation / structure
@@ -1014,6 +1027,9 @@ public final class EditorController {
         }
         updateBracketEmphasis()
         syncEditorStateCursors()
+        if completionSession.isVisible {
+            noteCursorMovedForCompletions()
+        }
     }
 
     private func syncEditorStateCursors() {

@@ -502,10 +502,45 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
                 controller.hideFindPanel()
                 return
             }
+            // CESE: Escape toggles completions when find is closed.
+            if controller.completionsVisible {
+                controller.hideCompletions()
+                return
+            }
+            if controller.completionDelegate != nil {
+                controller.showCompletions()
+                return
+            }
             controller.collapseCursors()
             onSelectionChange?(controller.selectedRange)
             needsDisplay = true
             return
+        }
+        // Ctrl-Space: show completions
+        if flags.contains(.control), !flags.contains(.command), !flags.contains(.option),
+           chars == " " || event.keyCode == 49 {
+            if controller.completionsVisible {
+                controller.hideCompletions()
+            } else {
+                controller.showCompletions()
+            }
+            return
+        }
+        // Completion list navigation while visible
+        if controller.completionsVisible {
+            if event.keyCode == 125 { // Down
+                controller.moveCompletionSelection(delta: 1)
+                return
+            }
+            if event.keyCode == 126 { // Up
+                controller.moveCompletionSelection(delta: -1)
+                return
+            }
+            if event.keyCode == 36 || event.keyCode == 76 { // Return / keypad Enter
+                controller.applyCompletionSelection()
+                finishEdit()
+                return
+            }
         }
         // Structure shortcuts
         if flags.contains(.command), chars == "]" {

@@ -12,6 +12,7 @@ struct EditorRepresentable: NSViewRepresentable {
     var language: CodeLanguage?
     var highlightProviders: [any HighlightProviding]
     var coordinators: [any EditorCoordinator]
+    var completionDelegate: (any CodeSuggestionDelegate)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, selection: $selection, editorState: $editorState)
@@ -25,6 +26,7 @@ struct EditorRepresentable: NSViewRepresentable {
             highlightProviders: highlightProviders,
             language: language
         )
+        controller.completionDelegate = completionDelegate
         context.coordinator.controller = controller
 
         let editor = AppKitEditorView(controller: controller)
@@ -68,6 +70,9 @@ struct EditorRepresentable: NSViewRepresentable {
 
     func updateNSView(_ chrome: EditorChromeView, context: Context) {
         guard let controller = context.coordinator.controller else { return }
+        if controller.completionDelegate !== completionDelegate {
+            controller.completionDelegate = completionDelegate
+        }
         let wrapChanged = controller.configuration.wrapLines != configuration.wrapLines
         if controller.configuration != configuration {
             controller.configuration = configuration
@@ -311,6 +316,7 @@ struct EditorRepresentable: UIViewRepresentable {
     var language: CodeLanguage?
     var highlightProviders: [any HighlightProviding]
     var coordinators: [any EditorCoordinator]
+    var completionDelegate: (any CodeSuggestionDelegate)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, selection: $selection, editorState: $editorState)
@@ -324,6 +330,7 @@ struct EditorRepresentable: UIViewRepresentable {
             highlightProviders: highlightProviders,
             language: language
         )
+        controller.completionDelegate = completionDelegate
         context.coordinator.controller = controller
 
         let editor = UIKitEditorView(controller: controller)
@@ -340,6 +347,7 @@ struct EditorRepresentable: UIViewRepresentable {
             coordinator?.pushStateFromControllerIfNeeded()
         }
         context.coordinator.editorView = editor
+        context.coordinator.completionPanel.attach(controller: controller, editorView: editor)
 
         let scroll = UIScrollView()
         scroll.addSubview(editor)
@@ -359,6 +367,9 @@ struct EditorRepresentable: UIViewRepresentable {
 
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
         guard let controller = context.coordinator.controller else { return }
+        if controller.completionDelegate !== completionDelegate {
+            controller.completionDelegate = completionDelegate
+        }
         if controller.configuration != configuration {
             controller.configuration = configuration
         }
@@ -398,6 +409,7 @@ struct EditorRepresentable: UIViewRepresentable {
         var editorState: Binding<EditorState>
         var controller: EditorController?
         var editorView: UIKitEditorView?
+        let completionPanel = UIKitCompletionPanelController()
         private var coordinatorIDs: [ObjectIdentifier] = []
         fileprivate var providerIDs: [ObjectIdentifier] = []
         fileprivate var hadExplicitProviders = false

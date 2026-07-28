@@ -287,14 +287,61 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     }
 
     open override var keyCommands: [UIKeyCommand]? {
-        [
+        var commands: [UIKeyCommand] = [
             UIKeyCommand(input: "\t", modifierFlags: .shift, action: #selector(handleBacktab)),
             UIKeyCommand(input: "[", modifierFlags: .command, action: #selector(handleOutdent)),
             UIKeyCommand(input: "]", modifierFlags: .command, action: #selector(handleIndent)),
             UIKeyCommand(input: "/", modifierFlags: .command, action: #selector(handleToggleComment)),
             UIKeyCommand(input: UIKeyCommand.inputUpArrow, modifierFlags: .alternate, action: #selector(handleMoveLinesUp)),
             UIKeyCommand(input: UIKeyCommand.inputDownArrow, modifierFlags: .alternate, action: #selector(handleMoveLinesDown)),
+            UIKeyCommand(input: " ", modifierFlags: .control, action: #selector(handleToggleCompletions)),
+            UIKeyCommand(input: UIKeyCommand.inputEscape, modifierFlags: [], action: #selector(handleEscape)),
         ]
+        if controller.completionsVisible {
+            commands.append(contentsOf: [
+                UIKeyCommand(input: UIKeyCommand.inputUpArrow, modifierFlags: [], action: #selector(handleCompletionUp)),
+                UIKeyCommand(input: UIKeyCommand.inputDownArrow, modifierFlags: [], action: #selector(handleCompletionDown)),
+                UIKeyCommand(input: "\r", modifierFlags: [], action: #selector(handleCompletionApply)),
+            ])
+        }
+        return commands
+    }
+
+    @objc private func handleToggleCompletions() {
+        if controller.completionsVisible {
+            controller.hideCompletions()
+        } else {
+            controller.showCompletions()
+        }
+        setNeedsDisplay()
+    }
+
+    @objc private func handleEscape() {
+        if controller.findSession.isShowing {
+            controller.hideFindPanel()
+        } else if controller.completionsVisible {
+            controller.hideCompletions()
+        } else if controller.completionDelegate != nil {
+            controller.showCompletions()
+        }
+        setNeedsDisplay()
+    }
+
+    @objc private func handleCompletionUp() {
+        controller.moveCompletionSelection(delta: -1)
+        setNeedsDisplay()
+    }
+
+    @objc private func handleCompletionDown() {
+        controller.moveCompletionSelection(delta: 1)
+        setNeedsDisplay()
+    }
+
+    @objc private func handleCompletionApply() {
+        controller.applyCompletionSelection()
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
     }
 
     @objc private func handleBacktab() {

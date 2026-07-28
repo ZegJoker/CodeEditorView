@@ -17,6 +17,7 @@ final class EditorChromeView: NSView {
     private var focusGeneration: Int = 0
     private var wasShowingFindPanel = false
     private var lastPanelMode: FindPanelMode?
+    private let completionPanel = AppKitCompletionPanelController()
 
     init(controller: EditorController, editorView: AppKitEditorView, wrapLines: Bool) {
         self.controller = controller
@@ -26,6 +27,7 @@ final class EditorChromeView: NSView {
 
         wantsLayer = true
         findBridge.controller = controller
+        completionPanel.attach(controller: controller, editorView: editorView)
 
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = !wrapLines

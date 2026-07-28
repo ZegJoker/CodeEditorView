@@ -10,6 +10,7 @@ public struct CodeEditor: View {
     private var coordinators: [any EditorCoordinator]
     private var highlightProviders: [any HighlightProviding]
     private var language: CodeLanguage?
+    private var completionDelegate: (any CodeSuggestionDelegate)?
 
     public init(
         text: Binding<String>,
@@ -19,7 +20,8 @@ public struct CodeEditor: View {
         language: CodeLanguage? = nil,
         languageID: String? = nil,
         highlightProviders: [any HighlightProviding] = [],
-        coordinators: [any EditorCoordinator] = []
+        coordinators: [any EditorCoordinator] = [],
+        completionDelegate: (any CodeSuggestionDelegate)? = nil
     ) {
         self._text = text
         self._selection = selection
@@ -28,6 +30,7 @@ public struct CodeEditor: View {
         self.language = language ?? languageID.flatMap { CodeLanguages.language(id: $0) }
         self.highlightProviders = highlightProviders
         self.coordinators = coordinators
+        self.completionDelegate = completionDelegate
     }
 
     public var body: some View {
@@ -38,7 +41,8 @@ public struct CodeEditor: View {
             configuration: configuration,
             language: language,
             highlightProviders: highlightProviders,
-            coordinators: coordinators
+            coordinators: coordinators,
+            completionDelegate: completionDelegate
         )
     }
 }

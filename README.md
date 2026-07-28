@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 7 complete** — find & replace panel (CESE-aligned methods: contains / word / startsWith / endsWith / regex, match case, wrap, next/prev, replace/all) with match emphasis and `EditorState` bindings. Keys: ⌘F / ⌥⌘F / ⌘G / ⇧⌘G / Escape. Earlier: Phase 6 formation; Phase 5 tree-sitter; Phase 3–4 chrome & highlighting.
+**Phase 8 complete** — code completion UI (CESE-aligned `CodeSuggestionDelegate`, trigger characters, async load + sync filter, floating list on AppKit & UIKit). Keys: Escape / Ctrl-Space; type letters to open. Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter; Phase 3–4 chrome & highlighting.
 
 ## Requirements
 
@@ -72,6 +72,10 @@ controller.setFindQuery("print")
 controller.findNext()
 controller.setReplaceText("debugPrint")
 controller.replaceCurrentMatch()
+
+// Completions (app supplies CodeSuggestionDelegate)
+controller.completionDelegate = myCompletionDelegate
+controller.showCompletions()
 
 // Emphasis (flash via Task/Clock)
 controller.emphasis.add(
