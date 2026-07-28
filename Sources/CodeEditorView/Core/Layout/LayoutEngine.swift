@@ -190,20 +190,44 @@ public final class LayoutEngine {
         var y = line.yOffset
         let localX = point.x - edgeInsets.leading
 
+        // Click in the gutter / left margin → column 0 of this line (not end of previous).
+        if localX <= 0 {
+            return line.utf16Offset
+        }
+
         let fragments = line.payload.fragments
+        // Content length excludes trailing line ending so clicks past text land before `\n`.
+        let contentLength = contentUTF16Length(of: line)
+
         for (fragmentIndex, fragment) in fragments.enumerated() {
             let maxY = y + fragment.height
             if point.y <= maxY || fragmentIndex == fragments.count - 1 {
                 if let ctLine = fragment.ctLine {
                     let index = CTLineGetStringIndexForPosition(ctLine, CGPoint(x: localX, y: 0))
-                    let clamped = min(max(0, index), fragment.lineRelativeRange.length)
-                    return line.utf16Offset + fragment.lineRelativeRange.location + clamped
+                    let fragLen = fragment.lineRelativeRange.length
+                    let clamped = min(max(0, index), fragLen)
+                    let absolute = line.utf16Offset + fragment.lineRelativeRange.location + clamped
+                    // Don't place the caret on the trailing newline character itself.
+                    return min(absolute, line.utf16Offset + contentLength)
                 }
                 return line.utf16Offset + fragment.lineRelativeRange.location
             }
             y = maxY
         }
-        return line.utf16Offset + line.metrics.utf16Length
+        return line.utf16Offset + contentLength
+    }
+
+    /// UTF-16 length of a line excluding a trailing `\n` / `\r\n` / `\r`.
+    private func contentUTF16Length(of line: LinePosition<TextLine>) -> Int {
+        guard let document, line.metrics.utf16Length > 0 else { return 0 }
+        let range = line.utf16Range
+        guard range.location + range.length <= document.length else {
+            return max(0, document.length - line.utf16Offset)
+        }
+        let text = document.substring(from: range) ?? ""
+        if text.hasSuffix("\r\n") { return max(0, line.metrics.utf16Length - 2) }
+        if text.hasSuffix("\n") || text.hasSuffix("\r") { return max(0, line.metrics.utf16Length - 1) }
+        return line.metrics.utf16Length
     }
 
     // MARK: - Private
@@ -234,8 +258,12 @@ public final class LayoutEngine {
             return
         }
 
-        let firstLineIndex = max(0, min(startLine.index, endLine.index))
-        let lastLineIndex = min(lineIndex.count - 1, max(startLine.index, endLine.index))
+        // Expand by one line of context on each side. Deleting a line terminator only
+        // dirties that line by offset, but the next line must be re-merged into the
+        // block or we leave a terminator-less row + a lone `\n` phantom blank
+        // (the CESE-style "Delete at col 0 of blank" path).
+        let firstLineIndex = max(0, min(startLine.index, endLine.index) - 1)
+        let lastLineIndex = min(lineIndex.count - 1, max(startLine.index, endLine.index) + 1)
         let dirtyCount = lastLineIndex - firstLineIndex + 1
         if dirtyCount > 200 || dirtyCount > lineIndex.count / 2 {
             rebuildFromDocument()
@@ -263,21 +291,61 @@ public final class LayoutEngine {
         let substring = document.substring(
             from: NSRange(location: newBlockStart, length: newBlockEnd - newBlockStart)
         ) ?? ""
+        // Never append a trailing empty line for a localized slice — only full rebuilds do that.
         let newMetrics = LayoutInvalidation.splitLines(
             in: substring,
-            estimatedHeight: estimatedLineHeight * lineHeightMultiplier
+            estimatedHeight: estimatedLineHeight * lineHeightMultiplier,
+            includeTrailingEmptyLine: false
         )
 
         for index in stride(from: lastLineIndex, through: firstLineIndex, by: -1) {
             lineIndex.remove(atIndex: index)
         }
+        // newMetrics may be empty when a whole line was deleted (e.g. blank-line Delete).
         for (offset, metrics) in newMetrics.enumerated() {
             let line = TextLine()
             line.markNeedsTypeset()
             lineIndex.insert(payload: line, metrics: metrics, atIndex: firstLineIndex + offset)
         }
 
+        // Never leave the index empty if the document still has content or needs a caret row.
+        if lineIndex.isEmpty {
+            rebuildFromDocument()
+            return
+        }
+
+        // Coverage check: every document UTF-16 unit must belong to exactly one line,
+        // and there must be no zero-length phantom rows mid-document (offset collisions).
+        // Non-final lines must end with a terminator — otherwise a prior join left a
+        // terminator-less row and a following lone-`\n` "blank" that cannot be deleted.
         if lineIndex.length != document.length {
+            rebuildFromDocument()
+            return
+        }
+        var covered = 0
+        var ok = true
+        var seenEmptyMid = false
+        var seenBareMidLine = false
+        let lineCount = lineIndex.count
+        lineIndex.forEach { pos in
+            if pos.utf16Offset != covered { ok = false }
+            if pos.metrics.utf16Length == 0 {
+                // Trailing empty after final newline is OK; mid-document empty is not.
+                if covered != document.length {
+                    seenEmptyMid = true
+                }
+            } else if pos.index < lineCount - 1 {
+                // Non-final line must consume a trailing line ending.
+                let r = pos.utf16Range
+                if r.location + r.length <= document.length,
+                   let text = document.substring(from: r),
+                   !(text.hasSuffix("\n") || text.hasSuffix("\r")) {
+                    seenBareMidLine = true
+                }
+            }
+            covered += pos.metrics.utf16Length
+        }
+        if !ok || covered != document.length || seenEmptyMid || seenBareMidLine {
             rebuildFromDocument()
             return
         }
@@ -306,6 +374,14 @@ public final class LayoutEngine {
         maxWidth: CGFloat
     ) {
         let range = position.utf16Range
+        // Guard against transient line-index/document desync (would throw in attributedSubstring).
+        guard range.location >= 0,
+              range.location <= document.length,
+              range.location + range.length <= document.length
+        else {
+            position.payload.applyTypeset(fragments: [], height: estimatedLineHeight * lineHeightMultiplier)
+            return
+        }
         let substring: NSAttributedString
         if range.length == 0 {
             substring = NSAttributedString(string: "", attributes: typingAttributes)

@@ -51,7 +51,7 @@ public extension LineIndex {
         if lines.isEmpty {
             lines.append((makePayload(0), LineMetrics(utf16Length: 0, height: estimatedLineHeight)))
         } else {
-            // Ensure a trailing empty line when the document ends with a newline.
+            // Ensure a trailing empty line when the *document* ends with a newline (caret after last \n).
             let last = lines[lines.count - 1]
             let lastLen = last.1.utf16Length
             if lastLen > 0 {
@@ -64,6 +64,25 @@ public extension LineIndex {
             }
         }
 
+        index.rebuild(lines: lines)
+        return index
+    }
+
+    /// Convenience using ``LayoutInvalidation/splitLines`` with trailing empty-line semantics.
+    static func buildUsingSplitLines(
+        from string: String,
+        estimatedLineHeight: CGFloat,
+        makePayload: (Int) -> Payload
+    ) -> LineIndex<Payload> {
+        let metrics = LayoutInvalidation.splitLines(
+            in: string,
+            estimatedHeight: estimatedLineHeight,
+            includeTrailingEmptyLine: true
+        )
+        let index = LineIndex<Payload>()
+        let lines = metrics.enumerated().map { ($0.offset, $0.element) }.map { i, m in
+            (makePayload(i), m)
+        }
         index.rebuild(lines: lines)
         return index
     }

@@ -2,11 +2,42 @@ import SwiftUI
 import CodeEditorView
 import CodeEditorLanguages
 
+#if os(macOS)
+import AppKit
+
+/// SPM executables are not .app bundles; without an activation policy they never become
+/// the key app and keystrokes keep going to Terminal / the previous frontmost app.
+final class DemoAppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        // Bring any already-created windows forward.
+        for window in NSApp.windows {
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
+    }
+}
+#endif
+
 @main
 struct CodeEditorViewDemoApp: App {
+    #if os(macOS)
+    @NSApplicationDelegateAdaptor(DemoAppDelegate.self) private var appDelegate
+    #endif
+
     var body: some Scene {
         WindowGroup {
             DemoRootView()
+                #if os(macOS)
+                .onAppear {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+                #endif
         }
     }
 }
@@ -372,7 +403,12 @@ struct DemoRootView: View {
                         wrapLines: wrapLines,
                         bracketPairEmphasis: .flash
                     ),
-                    behavior: .init(reformatAtColumn: 40),
+                    behavior: .init(
+                        isEditable: true,
+                        isSelectable: true,
+                        indentOption: .spaces(count: 4),
+                        reformatAtColumn: 40
+                    ),
                     peripherals: .init(
                         showGutter: showGutter,
                         showReformattingGuide: showGuide,
@@ -384,6 +420,7 @@ struct DemoRootView: View {
                 coordinators: [coordinator]
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .focusable()
 
             statusBar
         }
@@ -412,9 +449,10 @@ struct DemoRootView: View {
 
                 Spacer()
 
-                Text("\(DemoCatalog.languages.count) languages · \(text.split(separator: "\n").count) lines")
+                Text("Tab indent · ⌘/ comment · ⌥↑↓ move · \(DemoCatalog.languages.count) langs · \(text.split(separator: "\n").count) lines")
                     .foregroundStyle(.secondary)
                     .font(.caption)
+                    .lineLimit(1)
             }
         }
         .padding(8)

@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 5 complete** — pluggable highlight pipeline (`HighlightProviding`, `RangeStore`, `Highlighter`), regex provider, tree-sitter highlighting via `tree-sitter/swift-tree-sitter`, and our multiplatform `CodeEditorLanguages` product (Swift / JSON / Python). Earlier phases: multi-cursor chrome, themes, gutter, brackets, coordinators.
+**Phase 6 complete** — formation & structure editing (Tab/Shift-Tab indent, newline auto-indent, auto-pairs, move lines, toggle comments) with multi-cursor + undo. Earlier: Phase 5 tree-sitter / `CodeEditorLanguages`; Phase 3–4 chrome, themes, gutter, highlight pipeline.
 
 ## Requirements
 
@@ -87,6 +87,10 @@ Task {
 | Column select | Option+Shift drag | Use `applyColumnSelection` API |
 | Drag & drop | Drop string onto view | UIDrag / UIDrop interactions |
 | Invisibles | `showInvisibleCharacters` | same |
+| Indent | Tab / ⇧Tab · ⌘] / ⌘[ | Tab / ⇧Tab · ⌘] / ⌘[ |
+| Comment | ⌘/ | ⌘/ |
+| Move line | ⌥↑ / ⌥↓ | ⌥↑ / ⌥↓ |
+| Auto-pairs | `()[]{}""` skip-over | same |
 
 ## Architecture
 

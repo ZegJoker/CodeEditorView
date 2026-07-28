@@ -271,6 +271,14 @@ extension LineIndex {
         while let current = node {
             if remaining < current.leftLength {
                 node = current.left
+            } else if current.metrics.utf16Length == 0 {
+                // Zero-length (trailing empty) line sits at this offset — prefer it when remaining
+                // lands exactly on the boundary so caret-after-final-newline resolves correctly.
+                if remaining == current.leftLength {
+                    return current
+                }
+                remaining -= current.leftLength
+                node = current.right
             } else if remaining < current.leftLength + current.metrics.utf16Length {
                 return current
             } else {
@@ -492,12 +500,25 @@ extension LineIndex {
     }
 
     private func delete(_ node: Node) {
-        length -= node.metrics.utf16Length
-        height -= node.metrics.height
-        count -= 1
+        // Two children: copy successor line data into this node, then splice out the successor
+        // (≤1 child). Never transplant the successor while overwriting its metrics with the
+        // deleted line — that discarded the successor line and desynced `length` from the tree.
+        if node.left != nil, node.right != nil {
+            let succ = minimum(node.right!)
+            node.payload = succ.payload
+            node.metrics = succ.metrics
+            spliceOutNodeWithAtMostOneChild(succ)
+            recomputeTotals()
+            return
+        }
 
-        var y = node
-        var yOriginalColor = y.color
+        spliceOutNodeWithAtMostOneChild(node)
+        recomputeTotals()
+    }
+
+    /// Remove a node that has at most one child (RB-tree splice).
+    private func spliceOutNodeWithAtMostOneChild(_ node: Node) {
+        let yOriginalColor = node.color
         let x: Node?
         let xParent: Node?
 
@@ -505,29 +526,11 @@ extension LineIndex {
             x = node.right
             xParent = node.parent
             transplant(u: node, v: node.right)
-        } else if node.right == nil {
+        } else {
+            // node.right == nil (or both nil handled by left == nil first when both nil)
             x = node.left
             xParent = node.parent
             transplant(u: node, v: node.left)
-        } else {
-            y = minimum(node.right!)
-            yOriginalColor = y.color
-            x = y.right
-            if y.parent === node {
-                xParent = y
-                x?.parent = y
-            } else {
-                xParent = y.parent
-                transplant(u: y, v: y.right)
-                y.right = node.right
-                y.right?.parent = y
-            }
-            transplant(u: node, v: y)
-            y.left = node.left
-            y.left?.parent = y
-            y.color = node.color
-            y.metrics = node.metrics
-            y.payload = node.payload
         }
 
         fixupAggregates(from: xParent ?? root)
@@ -535,6 +538,14 @@ extension LineIndex {
             deleteFixup(x, parent: xParent)
         }
         fixupAggregates(from: x ?? xParent ?? root)
+    }
+
+    /// Recompute count/length/height and left-* aggregates from the live tree (repairs drift).
+    private func recomputeTotals() {
+        let stats = recount(root)
+        count = stats.count
+        length = stats.length
+        height = stats.height
     }
 
     private func minimum(_ node: Node) -> Node {

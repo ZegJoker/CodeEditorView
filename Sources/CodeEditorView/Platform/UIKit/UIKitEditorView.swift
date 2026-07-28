@@ -247,7 +247,13 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
 
     public func insertText(_ text: String) {
         inputDelegate?.textWillChange(self)
-        controller.insertText(text)
+        if text == "\t" {
+            controller.insertTab()
+        } else if text == "\n" || text == "\r" {
+            controller.insertNewline()
+        } else {
+            controller.insertText(text)
+        }
         inputDelegate?.textDidChange(self)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
@@ -258,6 +264,59 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         inputDelegate?.textWillChange(self)
         controller.deleteBackward()
         inputDelegate?.textDidChange(self)
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    open override var keyCommands: [UIKeyCommand]? {
+        [
+            UIKeyCommand(input: "\t", modifierFlags: .shift, action: #selector(handleBacktab)),
+            UIKeyCommand(input: "[", modifierFlags: .command, action: #selector(handleOutdent)),
+            UIKeyCommand(input: "]", modifierFlags: .command, action: #selector(handleIndent)),
+            UIKeyCommand(input: "/", modifierFlags: .command, action: #selector(handleToggleComment)),
+            UIKeyCommand(input: UIKeyCommand.inputUpArrow, modifierFlags: .alternate, action: #selector(handleMoveLinesUp)),
+            UIKeyCommand(input: UIKeyCommand.inputDownArrow, modifierFlags: .alternate, action: #selector(handleMoveLinesDown)),
+        ]
+    }
+
+    @objc private func handleBacktab() {
+        controller.insertBacktab()
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    @objc private func handleIndent() {
+        controller.indentSelection()
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    @objc private func handleOutdent() {
+        controller.outdentSelection()
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    @objc private func handleToggleComment() {
+        controller.toggleLineComment()
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    @objc private func handleMoveLinesUp() {
+        controller.moveSelectedLines(up: true)
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    @objc private func handleMoveLinesDown() {
+        controller.moveSelectedLines(up: false)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()

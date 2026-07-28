@@ -50,6 +50,14 @@ struct EditorRepresentable: NSViewRepresentable {
             scroll.backgroundColor = configuration.theme.background
             scroll.drawsBackground = true
         }
+        // Focus the editor once the scroll view is in a window (needed for SPM CLI launches).
+        DispatchQueue.main.async { [weak editor, weak scroll] in
+            guard let editor, let window = scroll?.window else { return }
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            window.makeFirstResponder(editor)
+        }
         return scroll
     }
 
@@ -60,37 +68,49 @@ struct EditorRepresentable: NSViewRepresentable {
             controller.configuration = configuration
         }
 
-        // Apply language + text + providers off the representable update stack so a heavy
-        // language teardown (e.g. Zig → Plain Text) cannot re-enter SwiftUI and freeze.
         let languageChanged = controller.language != language
         let textChanged = controller.text != text
         let providers = highlightProviders
         let lang = language
         let newText = text
         let newSelection = selection
+        let isEditing = context.coordinator.editorView?.window?.firstResponder
+            === context.coordinator.editorView
 
-        if languageChanged || textChanged || context.coordinator.needsProviderSync(providers) {
+        // Host → controller text/language: apply when language changes, or when text is
+        // updated externally while the editor is not first responder. Never clobber live typing.
+        let shouldPushHostText = languageChanged
+            || (textChanged && !isEditing)
+            || context.coordinator.needsProviderSync(providers)
+
+        if shouldPushHostText {
             context.coordinator.scheduleModelApply { [weak coordinator = context.coordinator] in
                 guard let coordinator, let controller = coordinator.controller else { return }
+                let stillEditing = coordinator.editorView?.window?.firstResponder
+                    === coordinator.editorView
                 if controller.language != lang {
                     controller.language = lang
                 }
                 coordinator.syncHighlightProviders(providers, language: lang, on: controller)
-                if controller.text != newText {
+                // Always accept host text on language change; otherwise only if not actively editing.
+                if controller.text != newText, languageChanged || !stillEditing {
                     controller.text = newText
                 }
-                if controller.selectedRange != newSelection {
+                if !stillEditing || languageChanged,
+                   controller.selectedRange != newSelection {
                     controller.setSelectedRange(newSelection)
                 }
                 coordinator.editorView?.relayout()
                 coordinator.pushStateFromControllerIfNeeded()
             }
         } else {
+            // Live editing: controller is source of truth for text/selection.
             context.coordinator.updateCoordinatorsIfNeeded(coordinators, on: controller)
-            if controller.selectedRange != selection {
+            context.coordinator.applyInboundEditorState(editorState)
+            // Avoid selection thrash while the user is typing/navigating in the view.
+            if !isEditing, controller.selectedRange != selection {
                 controller.setSelectedRange(selection)
             }
-            context.coordinator.applyInboundEditorState(editorState)
             context.coordinator.editorView?.relayout()
             context.coordinator.pushStateFromControllerIfNeeded()
         }

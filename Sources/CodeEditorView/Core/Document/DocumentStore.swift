@@ -45,7 +45,16 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
     public var fullString: String { storage.string }
 
     public func attributedSubstring(from range: NSRange) -> NSAttributedString {
-        storage.attributedSubstring(from: range)
+        let loc = max(0, range.location)
+        let maxLen = max(0, storage.length - loc)
+        let len = min(max(0, range.length), maxLen)
+        guard loc <= storage.length, len >= 0 else {
+            return NSAttributedString(string: "", attributes: defaultAttributes)
+        }
+        if len == 0 {
+            return NSAttributedString(string: "", attributes: defaultAttributes)
+        }
+        return storage.attributedSubstring(from: NSRange(location: loc, length: len))
     }
 
     public func setFullText(_ string: String) {

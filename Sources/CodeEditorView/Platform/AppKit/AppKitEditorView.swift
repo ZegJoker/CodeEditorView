@@ -57,14 +57,24 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         dragScrollTask?.cancel()
     }
 
-    open override var acceptsFirstResponder: Bool { controller.configuration.isSelectable }
+    open override var acceptsFirstResponder: Bool {
+        controller.configuration.isSelectable || controller.configuration.isEditable
+    }
     open override var isFlipped: Bool { true }
+
+    open override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     open override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window != nil {
+        if let window {
             controller.notifyDidAppear()
             installClipViewObserver()
+            // Ensure a command-line / SPM-launched host can type into the editor.
+            DispatchQueue.main.async { [weak self, weak window] in
+                guard let self else { return }
+                window?.makeKeyAndOrderFront(nil)
+                window?.makeFirstResponder(self)
+            }
         } else {
             controller.notifyDidDisappear()
             removeClipViewObserver()
@@ -327,6 +337,7 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     // MARK: - Mouse
 
     open override func mouseDown(with event: NSEvent) {
+        window?.makeKeyAndOrderFront(nil)
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
         let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
@@ -420,7 +431,10 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     // MARK: - Keyboard
 
     open override func keyDown(with event: NSEvent) {
-        if event.modifierFlags.contains(.command), event.charactersIgnoringModifiers == "a" {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let chars = event.charactersIgnoringModifiers ?? ""
+
+        if flags.contains(.command), chars == "a" {
             selectAll(nil)
             return
         }
@@ -430,7 +444,48 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
             needsDisplay = true
             return
         }
+        // Structure shortcuts
+        if flags.contains(.command), chars == "]" {
+            controller.indentSelection()
+            finishEdit()
+            return
+        }
+        if flags.contains(.command), chars == "[" {
+            controller.outdentSelection()
+            finishEdit()
+            return
+        }
+        if flags.contains(.command), chars == "/" {
+            controller.toggleLineComment()
+            finishEdit()
+            return
+        }
+        if flags.contains(.option), event.keyCode == 126 { // Up
+            controller.moveSelectedLines(up: true)
+            finishEdit()
+            return
+        }
+        if flags.contains(.option), event.keyCode == 125 { // Down
+            controller.moveSelectedLines(up: false)
+            finishEdit()
+            return
+        }
         interpretKeyEvents([event])
+    }
+
+    open override func insertTab(_ sender: Any?) {
+        controller.insertTab()
+        finishEdit()
+    }
+
+    open override func insertBacktab(_ sender: Any?) {
+        controller.insertBacktab()
+        finishEdit()
+    }
+
+    open override func insertNewline(_ sender: Any?) {
+        controller.insertNewline()
+        finishEdit()
     }
 
     open override func insertText(_ insertString: Any) {

@@ -390,6 +390,13 @@ public final class EditorController {
         let ranges = selection.selectedRanges
         guard !ranges.isEmpty else { return }
 
+        // Single-char auto-pair / skip-over when all carets are empty.
+        if string.count == 1, ranges.allSatisfy({ $0.length == 0 }) {
+            if applyAutoPairOrSkip(typed: string, carets: ranges) {
+                return
+            }
+        }
+
         events.yield(.willChangeText)
         for range in ranges { noteWillEdit(range) }
         undoCoordinator.beginGrouping()
@@ -407,6 +414,237 @@ public final class EditorController {
         publishSelectionChange()
     }
 
+    // MARK: - Formation / structure
+
+    public func insertTab() {
+        guard configuration.isEditable else { return }
+        let ranges = selection.selectedRanges
+        let hasSelection = ranges.contains { $0.length > 0 }
+        if hasSelection {
+            indentSelection()
+            return
+        }
+        insertText(TextFilters.expandTab(indent: configuration.behavior.indentOption))
+    }
+
+    public func insertBacktab() {
+        guard configuration.isEditable else { return }
+        outdentSelection()
+    }
+
+    public func insertNewline() {
+        guard configuration.isEditable else { return }
+        let ranges = selection.selectedRanges
+        guard !ranges.isEmpty else { return }
+
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+
+        // High → low so earlier carets stay valid.
+        var newCarets: [Int] = []
+        for range in ranges.sorted(by: { $0.location > $1.location }) {
+            let insertion = newlineInsertion(at: range.location, replacing: range)
+            noteWillEdit(range)
+            let edit = document.replaceCharacters(in: range, with: insertion.payload)
+            undoCoordinator.register(edit: edit)
+            layout.documentDidReplace(range: range, delta: edit.mutation.delta)
+            noteDidEdit(range: range, delta: edit.mutation.delta)
+            newCarets.append(range.location + insertion.caretOffsetInPayload)
+        }
+
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        selection.setSelectedRanges(newCarets.sorted().map { NSRange(location: $0, length: 0) })
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishTextChange()
+        publishSelectionChange()
+    }
+
+    public func indentSelection() {
+        applyStructureReplacements(
+            StructureCommands.indentLines(
+                selections: selection.selectedRanges,
+                document: document.fullString,
+                indent: configuration.behavior.indentOption
+            )
+        )
+    }
+
+    public func outdentSelection() {
+        applyStructureReplacements(
+            StructureCommands.outdentLines(
+                selections: selection.selectedRanges,
+                document: document.fullString,
+                indent: configuration.behavior.indentOption
+            )
+        )
+    }
+
+    public func moveSelectedLines(up: Bool) {
+        guard configuration.isEditable else { return }
+        guard let plan = StructureCommands.moveLines(
+            selections: selection.selectedRanges,
+            document: document.fullString,
+            up: up
+        ) else { return }
+        applyStructureReplacements(plan.replacements, forceSelection: plan.newSelection)
+    }
+
+    public func toggleLineComment() {
+        let marker = language?.lineComment ?? ""
+        guard !marker.isEmpty else { return }
+        applyStructureReplacements(
+            StructureCommands.toggleLineComment(
+                selections: selection.selectedRanges,
+                document: document.fullString,
+                lineComment: marker
+            )
+        )
+    }
+
+    public func toggleBlockComment() {
+        guard configuration.isEditable else { return }
+        let open = language?.rangeComment.0 ?? ""
+        let close = language?.rangeComment.1 ?? ""
+        guard !open.isEmpty, !close.isEmpty else { return }
+        let primary = selection.selectedRange
+        guard primary.length > 0,
+              let rep = StructureCommands.toggleBlockComment(
+                  selection: primary,
+                  document: document.fullString,
+                  open: open,
+                  close: close
+              )
+        else { return }
+        applyStructureReplacements([rep])
+    }
+
+    /// Applies auto-pair or skip-over for single-character typing at empty carets.
+    /// - Returns: `true` if the insert was fully handled.
+    private func applyAutoPairOrSkip(typed: String, carets: [NSRange]) -> Bool {
+        let ns = document.fullString as NSString
+        var anyPair = false
+        var anySkip = false
+        var payloads: [(range: NSRange, insert: String, inside: Bool, skip: Bool)] = []
+
+        for caret in carets {
+            let next: Character?
+            if caret.location < ns.length {
+                let s = ns.substring(with: NSRange(location: caret.location, length: 1))
+                next = s.first
+            } else {
+                next = nil
+            }
+            if let result = TextFilters.autoPair(inserted: typed, nextCharacter: next) {
+                anyPair = anyPair || result.placeCaretInside
+                anySkip = anySkip || result.skipOver
+                payloads.append((caret, result.insert, result.placeCaretInside, result.skipOver))
+            } else {
+                return false
+            }
+        }
+        // Only handle when every caret got a pair/skip result of the same kind.
+        let allSkip = payloads.allSatisfy(\.skip)
+        let allPair = payloads.allSatisfy { $0.inside && !$0.skip }
+        guard allSkip || allPair else { return false }
+
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+
+        var newCarets: [Int] = []
+        for item in payloads.sorted(by: { $0.range.location > $1.range.location }) {
+            if item.skip {
+                newCarets.append(item.range.location + 1)
+                continue
+            }
+            noteWillEdit(item.range)
+            let edit = document.replaceCharacters(in: item.range, with: item.insert)
+            undoCoordinator.register(edit: edit)
+            layout.documentDidReplace(range: item.range, delta: edit.mutation.delta)
+            noteDidEdit(range: item.range, delta: edit.mutation.delta)
+            // Caret between pair: after first character.
+            let inside = item.inside ? 1 : item.insert.utf16.count
+            newCarets.append(item.range.location + inside)
+        }
+
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        selection.setSelectedRanges(newCarets.sorted().map { NSRange(location: $0, length: 0) })
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishTextChange()
+        publishSelectionChange()
+        return true
+    }
+
+    private func newlineInsertion(at utf16Offset: Int, replacing range: NSRange) -> TextFilters.NewlineInsertion {
+        let ns = document.fullString as NSString
+        let length = ns.length
+        let loc = min(max(0, utf16Offset), length)
+        var lineStart = 0, lineEnd = 0, contentsEnd = 0
+        ns.getLineStart(
+            &lineStart,
+            end: &lineEnd,
+            contentsEnd: &contentsEnd,
+            for: NSRange(location: min(loc, max(0, length - 1)), length: 0)
+        )
+        // Text on this line before the caret (ignore selection body).
+        let prefixLen = max(0, min(loc, contentsEnd) - lineStart)
+        let beforeCaret = prefixLen > 0
+            ? ns.substring(with: NSRange(location: lineStart, length: prefixLen))
+            : ""
+        // Character immediately after the selection/caret (drives brace-split Enter).
+        let afterLoc = range.location + range.length
+        let next: Character?
+        if afterLoc < length {
+            next = ns.substring(with: NSRange(location: afterLoc, length: 1)).first
+        } else {
+            next = nil
+        }
+        return TextFilters.newlineInsertion(
+            lineTextBeforeCaret: beforeCaret,
+            nextCharacter: next,
+            indent: configuration.behavior.indentOption
+        )
+    }
+
+    /// Applies precomputed replacements (must already be high→low). Adjusts selection to carets after each edit.
+    private func applyStructureReplacements(
+        _ replacements: [TextReplacement],
+        forceSelection: NSRange? = nil
+    ) {
+        guard configuration.isEditable, !replacements.isEmpty else { return }
+        events.yield(.willChangeText)
+        undoCoordinator.beginGrouping()
+        layout.beginTransaction()
+
+        var carets = selection.selectedRanges
+        for rep in replacements.sorted(by: { $0.range.location > $1.range.location }) {
+            noteWillEdit(rep.range)
+            let edit = document.replaceCharacters(in: rep.range, with: rep.string)
+            undoCoordinator.register(edit: edit)
+            layout.documentDidReplace(range: rep.range, delta: edit.mutation.delta)
+            noteDidEdit(range: rep.range, delta: edit.mutation.delta)
+            carets = MultiRangeEdit.remap(
+                ranges: carets,
+                editLocation: rep.range.location,
+                delta: edit.mutation.delta
+            )
+        }
+
+        layout.endTransaction()
+        undoCoordinator.endGrouping()
+        if let forceSelection {
+            selection.setSelectedRange(forceSelection)
+        } else {
+            selection.setSelectedRanges(carets)
+        }
+        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        publishTextChange()
+        publishSelectionChange()
+    }
+
     public func deleteBackward() {
         guard configuration.isEditable else { return }
         let ranges = selection.selectedRanges
@@ -416,12 +654,18 @@ public final class EditorController {
 
         let working = ranges.sorted { $0.location > $1.location }
         var carets: [Int] = []
+        // Snapshot once; high→low edits keep earlier carets valid in this snapshot only for planning.
+        var full = document.fullString
         for range in working {
             let deleteRange: NSRange
             if range.length > 0 {
                 deleteRange = range
-            } else if range.location > 0 {
-                deleteRange = NSRange(location: range.location - 1, length: 1)
+            } else if let planned = TextFilters.deleteBackwardRange(
+                caret: range.location,
+                in: full,
+                indent: configuration.behavior.indentOption
+            ) {
+                deleteRange = planned
             } else {
                 carets.append(0)
                 continue
@@ -432,10 +676,11 @@ public final class EditorController {
             layout.documentDidReplace(range: deleteRange, delta: edit.mutation.delta)
             noteDidEdit(range: deleteRange, delta: edit.mutation.delta)
             carets.append(deleteRange.location)
+            full = document.fullString
         }
         layout.endTransaction()
         undoCoordinator.endGrouping()
-        selection.setSelectedRanges(carets.reversed().map { NSRange(location: $0, length: 0) })
+        selection.setSelectedRanges(carets.sorted().map { NSRange(location: $0, length: 0) })
         updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
         publishTextChange()
         publishSelectionChange()

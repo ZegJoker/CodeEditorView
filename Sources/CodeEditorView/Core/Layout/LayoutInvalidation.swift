@@ -19,8 +19,17 @@ public enum LayoutInvalidation {
         return lower..<max(lower + 1, upper)
     }
 
-    /// Splits a UTF-16 string slice into line metrics (including terminators), using estimated height.
-    public static func splitLines(in string: String, estimatedHeight: CGFloat) -> [LineMetrics] {
+    /// Splits a UTF-16 string into line metrics (including terminators), using estimated height.
+    ///
+    /// - Parameter includeTrailingEmptyLine: When `true` (full-document rebuild only), a document that
+    ///   ends with a newline also gets a final zero-length line so the caret can sit after the last `\n`.
+    ///   **Must be `false` for localized edit slices** — every mid-document line ends with `\n`, and
+    ///   appending a phantom empty line there invents blank rows, desyncs hit-testing, and can crash draw.
+    public static func splitLines(
+        in string: String,
+        estimatedHeight: CGFloat,
+        includeTrailingEmptyLine: Bool = false
+    ) -> [LineMetrics] {
         let utf16 = string.utf16
         var metrics: [LineMetrics] = []
         var start = utf16.startIndex
@@ -52,8 +61,14 @@ public enum LayoutInvalidation {
         }
 
         if metrics.isEmpty {
-            metrics.append(LineMetrics(utf16Length: 0, height: estimatedHeight))
-        } else if let last = metrics.last, last.utf16Length > 0 {
+            // Full-document empty buffer needs one caret line.
+            // Localized edits of a fully-deleted line must return *no* metrics — otherwise we
+            // re-insert a zero-length phantom line that cannot be deleted and breaks hit-testing
+            // (blank row that "won't go away", Delete eating `{` on the previous line).
+            if includeTrailingEmptyLine {
+                metrics.append(LineMetrics(utf16Length: 0, height: estimatedHeight))
+            }
+        } else if includeTrailingEmptyLine, let last = metrics.last, last.utf16Length > 0 {
             let ns = string as NSString
             let lastRange = NSRange(location: ns.length - last.utf16Length, length: last.utf16Length)
             let lastString = ns.substring(with: lastRange)
