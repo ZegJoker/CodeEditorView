@@ -41,7 +41,9 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     public init(controller: EditorController) {
         self.controller = controller
         super.init(frame: .zero)
-        backgroundColor = .systemBackground
+        backgroundColor = controller.configuration.appearance.useThemeBackground
+            ? controller.configuration.theme.background
+            : .systemBackground
         isMultipleTouchEnabled = false
         isAccessibilityElement = true
         accessibilityTraits = .updatesFrequently
@@ -49,6 +51,7 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
 
         blink.onChange = { [weak self] _ in self?.setNeedsDisplay() }
         controller.emphasis.onChange = { [weak self] in self?.setNeedsDisplay() }
+        controller.onNeedsDisplay = { [weak self] in self?.setNeedsDisplay() }
 
         addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap(_:))))
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
@@ -58,6 +61,15 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         addInteraction(drag)
         let drop = UIDropInteraction(delegate: self)
         addInteraction(drop)
+    }
+
+    open override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            controller.notifyDidAppear()
+        } else {
+            controller.notifyDidDisappear()
+        }
     }
 
     @available(*, unavailable)
@@ -75,8 +87,12 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     }
 
     public func relayout() {
-        containerWidth = bounds.width
-        _ = controller.layoutViewport(visibleRect: bounds, containerWidth: containerWidth)
+        let layoutWidth = max(1, bounds.width)
+        if abs(containerWidth - layoutWidth) > 0.5, controller.configuration.wrapLines {
+            controller.layout.invalidateAll()
+        }
+        containerWidth = layoutWidth
+        _ = controller.layoutViewport(visibleRect: bounds, containerWidth: layoutWidth)
         invalidateIntrinsicContentSize()
         setNeedsDisplay()
     }
@@ -90,6 +106,37 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         guard let context = UIGraphicsGetCurrentContext() else { return }
         let width = containerWidth > 0 ? containerWidth : bounds.width
         let snapshot = controller.layoutViewport(visibleRect: rect.union(bounds), containerWidth: width)
+        let theme = controller.configuration.theme
+        let gutterWidth = controller.gutterWidth
+        let selectedLines = controller.selectedLineIndices
+        let visible = rect.union(bounds)
+
+        if controller.configuration.appearance.useThemeBackground {
+            context.setFillColor(theme.background.cgColor)
+            context.fill(visible)
+        }
+
+        if controller.configuration.isEditable {
+            ChromeRenderer.drawLineHighlights(
+                lineIndices: selectedLines,
+                lineIndex: controller.layout.lineIndex,
+                contentWidth: max(width, bounds.width),
+                gutterWidth: gutterWidth,
+                color: theme.lineHighlight.cgColor,
+                in: context
+            )
+        }
+
+        if controller.configuration.peripherals.showReformattingGuide {
+            ChromeRenderer.drawReformattingGuide(
+                column: controller.configuration.behavior.reformatAtColumn,
+                characterWidth: controller.configuration.characterWidth,
+                textLeadingInset: controller.layout.edgeInsets.leading,
+                visibleRect: visible,
+                color: theme.reformattingGuide.cgColor,
+                in: context
+            )
+        }
 
         EmphasisRenderer.draw(
             controller.emphasis.items,
@@ -118,6 +165,21 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
                 fragments: snapshot.fragments,
                 in: context,
                 font: controller.configuration.font as CTFont
+            )
+        }
+
+        if controller.configuration.peripherals.showGutter {
+            let model = controller.makeGutterModel()
+            GutterRenderer.draw(
+                model: model,
+                lineIndex: controller.layout.lineIndex,
+                visibleRect: visible,
+                selectedLineIndices: selectedLines,
+                textColor: theme.gutterText.cgColor,
+                selectedTextColor: theme.text.color.cgColor,
+                backgroundColor: theme.gutterBackground.cgColor,
+                selectedLineColor: theme.lineHighlight.cgColor,
+                in: context
             )
         }
 

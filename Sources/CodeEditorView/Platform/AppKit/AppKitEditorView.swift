@@ -15,6 +15,11 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     private var columnAnchor: CGPoint?
     nonisolated(unsafe) private var dragScrollTask: Task<Void, Never>?
     private var isReceivingDrag = false
+    private var observedClipView: NSClipView?
+    /// Guards against setFrameSize → frameDidChange → relayout feedback (UI freeze).
+    private var isRelayouting = false
+    /// Last content size applied to the document view (hysteresis against sub-pixel thrash).
+    private var lastAppliedContentSize: CGSize = .zero
 
     public var onTextChange: ((String) -> Void)?
     public var onSelectionChange: ((NSRange) -> Void)?
@@ -23,7 +28,10 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         self.controller = controller
         super.init(frame: .zero)
         wantsLayer = true
-        postsFrameChangedNotifications = true
+        // Avoid frame notifications for self: we resize the document view inside relayout.
+        // Observing our own frame changes caused setFrameSize → frameDidChange → relayout loops
+        // (especially on language switch / wrap toggle) that freeze the app.
+        postsFrameChangedNotifications = false
         postsBoundsChangedNotifications = true
         canDrawConcurrently = false
         registerForDraggedTypes([.string])
@@ -34,13 +42,9 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         controller.emphasis.onChange = { [weak self] in
             self?.needsDisplay = true
         }
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(frameDidChange),
-            name: NSView.frameDidChangeNotification,
-            object: self
-        )
+        controller.onNeedsDisplay = { [weak self] in
+            self?.needsDisplay = true
+        }
     }
 
     @available(*, unavailable)
@@ -58,30 +62,125 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     open override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        if window != nil {
+            controller.notifyDidAppear()
+            installClipViewObserver()
+        } else {
+            controller.notifyDidDisappear()
+            removeClipViewObserver()
+        }
+        relayout()
+    }
+
+    open override func viewDidMoveToSuperview() {
+        super.viewDidMoveToSuperview()
+        installClipViewObserver()
         relayout()
     }
 
     open override func layout() {
         super.layout()
+        // Skip if we're already driving layout from relayout (setFrameSize → layout → …).
+        guard !isRelayouting else { return }
         relayout()
     }
 
-    @objc private func frameDidChange() {
+    @objc private func clipViewBoundsDidChange(_ note: Notification) {
+        // Clip bounds change when the window resizes or scrollers appear — re-wrap.
+        guard !isRelayouting else { return }
         relayout()
+    }
+
+    private func installClipViewObserver() {
+        removeClipViewObserver()
+        guard let clip = enclosingScrollView?.contentView else { return }
+        clip.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(clipViewBoundsDidChange(_:)),
+            name: NSView.boundsDidChangeNotification,
+            object: clip
+        )
+        observedClipView = clip
+    }
+
+    private func removeClipViewObserver() {
+        if let clip = observedClipView {
+            NotificationCenter.default.removeObserver(
+                self,
+                name: NSView.boundsDidChangeNotification,
+                object: clip
+            )
+        }
+        observedClipView = nil
+    }
+
+    /// Visible content width of the enclosing scroll view (fallback to own bounds).
+    /// Uses the clip view bounds only — never the document view width — so wrap tracks the window.
+    private var clipWidth: CGFloat {
+        if let scroll = enclosingScrollView {
+            // Prefer contentView.bounds (stable clip width). Avoid documentVisibleRect while
+            // the document is mid-resize; it can echo the document width and defeat wrapping.
+            let content = scroll.contentView.bounds.width
+            if content > 1 { return content }
+            let visible = scroll.documentVisibleRect.width
+            if visible > 1 { return visible }
+        }
+        if let w = superview?.bounds.width, w > 1 {
+            return w
+        }
+        return max(bounds.width, 1)
     }
 
     public func relayout() {
-        containerWidth = bounds.width
-        let visible = visibleRect.isEmpty ? bounds : visibleRect
-        let snapshot = controller.layoutViewport(visibleRect: visible, containerWidth: containerWidth)
-        let size = snapshot.contentSize
-        let width = controller.configuration.wrapLines
-            ? (superview?.bounds.width ?? bounds.width)
-            : max(bounds.width, size.width)
-        let height = max(size.height, superview?.bounds.height ?? size.height)
-        if abs(frame.height - height) > 0.5 || abs(frame.width - width) > 0.5 {
-            setFrameSize(NSSize(width: width, height: height))
+        guard !isRelayouting else { return }
+        isRelayouting = true
+        defer { isRelayouting = false }
+
+        // Keep layout engine wrap flag in sync even if configuration was assigned without didSet path.
+        let wrap = controller.configuration.wrapLines
+        if controller.layout.wrapLines != wrap {
+            controller.layout.wrapLines = wrap
         }
+
+        let clip = max(clipWidth, 1)
+
+        // Autoresizing must match wrap mode: track clip width when wrapping; free width otherwise.
+        autoresizingMask = wrap ? [.width] : []
+
+        // When wrapping, layout width is always the visible clip — never the (possibly stale) document width.
+        let layoutWidth: CGFloat = wrap ? clip : max(clip, bounds.width, 1)
+        if abs(containerWidth - layoutWidth) > 0.5 {
+            controller.layout.invalidateAll()
+        }
+        containerWidth = layoutWidth
+
+        let visible = visibleRect.isEmpty
+            ? CGRect(x: 0, y: 0, width: layoutWidth, height: max(bounds.height, 1))
+            : visibleRect
+        let snapshot = controller.layoutViewport(visibleRect: visible, containerWidth: layoutWidth)
+        let size = snapshot.contentSize
+
+        // Pin document width to the clip while wrapping so NSScrollView cannot grow horizontally.
+        let width: CGFloat = wrap ? clip : max(clip, size.width, 1)
+        let clipHeight = enclosingScrollView?.contentView.bounds.height ?? 0
+        let height = max(size.height, clipHeight, 1)
+        let newSize = CGSize(width: width, height: height)
+        // Hysteresis: ignore sub-pixel / 1pt thrash that causes layout → setFrameSize loops (freezes).
+        let widthDelta = abs(lastAppliedContentSize.width - newSize.width)
+        let heightDelta = abs(lastAppliedContentSize.height - newSize.height)
+        if widthDelta > 1.0 || heightDelta > 1.0 {
+            lastAppliedContentSize = newSize
+            if abs(frame.height - height) > 1.0 || abs(frame.width - width) > 1.0 {
+                setFrameSize(NSSize(width: width, height: height))
+            }
+        }
+
+        if let scroll = enclosingScrollView {
+            scroll.hasHorizontalScroller = !wrap
+            scroll.horizontalScrollElasticity = wrap ? .none : .allowed
+        }
+
         scrollToSelectionIfNeeded()
         needsDisplay = true
     }
@@ -91,6 +190,10 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         scrollToVisible(target)
     }
 
+    private func contentSizeHeight() -> CGFloat {
+        max(controller.contentSize.height, bounds.height)
+    }
+
     // MARK: - Drawing
 
     open override func draw(_ dirtyRect: NSRect) {
@@ -98,8 +201,47 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         guard let context = NSGraphicsContext.current?.cgContext else { return }
 
         let visible = dirtyRect.union(visibleRect)
-        let width = containerWidth > 0 ? containerWidth : bounds.width
+        let width = containerWidth > 0 ? containerWidth : clipWidth
         let snapshot = controller.layoutViewport(visibleRect: visible, containerWidth: width)
+        let theme = controller.configuration.theme
+        let gutterWidth = controller.gutterWidth
+        let selectedLines = controller.selectedLineIndices
+
+        if controller.configuration.appearance.useThemeBackground {
+            context.setFillColor(theme.background.cgColor)
+            context.fill(visible)
+        }
+
+        // Current line highlight (behind text, right of gutter).
+        if controller.configuration.isEditable {
+            ChromeRenderer.drawLineHighlights(
+                lineIndices: selectedLines,
+                lineIndex: controller.layout.lineIndex,
+                contentWidth: max(width, bounds.width),
+                gutterWidth: gutterWidth,
+                color: theme.lineHighlight.cgColor,
+                in: context
+            )
+        }
+
+        if controller.configuration.peripherals.showReformattingGuide {
+            let guideColor = theme.reformattingGuide.cgColor
+            // Full document bounds so the guide is not clipped to a partial dirty rect.
+            let guideRect = CGRect(
+                x: 0,
+                y: 0,
+                width: max(bounds.width, width, clipWidth),
+                height: max(contentSizeHeight(), bounds.height, 1)
+            )
+            ChromeRenderer.drawReformattingGuide(
+                column: controller.configuration.behavior.reformatAtColumn,
+                characterWidth: max(controller.configuration.characterWidth, 1),
+                textLeadingInset: controller.layout.edgeInsets.leading,
+                visibleRect: guideRect,
+                color: guideColor,
+                in: context
+            )
+        }
 
         EmphasisRenderer.draw(
             controller.emphasis.items,
@@ -129,6 +271,21 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
                 fragments: snapshot.fragments,
                 in: context,
                 font: ctFont
+            )
+        }
+
+        if controller.configuration.peripherals.showGutter {
+            let model = controller.makeGutterModel()
+            GutterRenderer.draw(
+                model: model,
+                lineIndex: controller.layout.lineIndex,
+                visibleRect: visible,
+                selectedLineIndices: selectedLines,
+                textColor: theme.gutterText.cgColor,
+                selectedTextColor: theme.text.color.cgColor,
+                backgroundColor: theme.gutterBackground.cgColor,
+                selectedLineColor: theme.lineHighlight.cgColor,
+                in: context
             )
         }
 
@@ -176,7 +333,6 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
         if event.modifierFlags.contains(.option) {
             if event.modifierFlags.contains(.shift) {
-                // Start column selection
                 columnAnchor = point
                 controller.selection.mode = .column
                 controller.applyColumnSelection(

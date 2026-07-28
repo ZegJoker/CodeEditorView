@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 2 complete** — multi-cursor, column selection, attachments, emphasis, invisible characters, drag-and-drop, accessibility baseline, localized layout invalidation, and platform polish.
+**Phase 5 complete** — pluggable highlight pipeline (`HighlightProviding`, `RangeStore`, `Highlighter`), regex provider, tree-sitter highlighting via `tree-sitter/swift-tree-sitter`, and our multiplatform `CodeEditorLanguages` product (Swift / JSON / Python). Earlier phases: multi-cursor chrome, themes, gutter, brackets, coordinators.
 
 ## Requirements
 
@@ -33,21 +33,26 @@ import CodeEditorView
 struct EditorScreen: View {
     @State private var text = "func hello() {\n    print(\"hi\")\n}\n"
     @State private var selection = NSRange(location: 0, length: 0)
+    @State private var editorState = EditorState()
 
     var body: some View {
         CodeEditor(
             text: $text,
             selection: $selection,
+            editorState: $editorState,
             configuration: EditorConfiguration(
-                wrapLines: true,
-                isEditable: true,
-                showInvisibleCharacters: false
-            )
+                appearance: .init(theme: .default, wrapLines: true),
+                behavior: .init(isEditable: true, indentOption: .spaces(count: 4)),
+                peripherals: .init(showGutter: true, showReformattingGuide: true)
+            ),
+            language: .swift // auto tree-sitter highlighting
         )
         .frame(minHeight: 300)
     }
 }
 ```
+
+Flat `EditorConfiguration` initializers (e.g. `wrapLines:`, `showInvisibleCharacters:`) still work for simple call sites. Pass custom `highlightProviders:` to override the default tree-sitter provider (e.g. `RegexHighlightProvider.swiftLike()`).
 
 ## Programmatic control
 
@@ -105,6 +110,17 @@ cd Examples/CodeEditorViewDemo
 
 - [TextStory](https://github.com/ChimeHQ/TextStory) — text mutations / inverses
 - [swift-collections](https://github.com/apple/swift-collections)
+- [swift-tree-sitter](https://github.com/tree-sitter/swift-tree-sitter) — incremental parsing / queries
+- **CodeEditorLanguages** vendors multiplatform C grammars under `Grammars/src/` (no CodeEditLanguages binary container) and query files under `Sources/CodeEditorLanguages/Resources/tree-sitter-{name}/` (same `.scm` layout as CodeEditLanguages)
+
+### Products
+
+| Product | Role |
+|---|---|
+| `CodeEditorView` | Editor UI + highlight orchestration |
+| `CodeEditorLanguages` | Full language registry (CEL-aligned), vendored parsers, `tree-sitter-*` query resources |
+
+Refresh grammars with `scripts/update-grammars.sh` (see `scripts/grammars.tsv`).
 
 ## Prior art
 

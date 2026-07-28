@@ -9,10 +9,16 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - Shared layout core (line index, CoreText typesetter, viewport layout)
 - Multi-range selection and multi-cursor editing
 - Column selection (macOS Option-drag)
+- Nested ``EditorConfiguration`` (appearance, behavior, layout, peripherals)
+- ``EditorTheme``, line gutter, current-line highlight, reformatting guide
+- Bracket pair emphasis via ``BracketMatcher``
+- Syntax highlighting: ``HighlightProviding``, ``Highlighter``, ``RegexHighlightProvider``, ``TreeSitterHighlightProvider``
+- ``EditorCoordinator`` injection (structured concurrency — no Combine)
+- ``EditorState`` for cursors / find-panel bindings
 - Emphasis overlays and invisible characters
 - Text attachments
 - AppKit / UIKit hosts and a SwiftUI ``CodeEditor`` wrapper
-- Structured concurrency event streams — no Combine
+- `AsyncStream` event streams — no Combine
 
 ## Topics
 
@@ -21,6 +27,20 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - ``CodeEditor``
 - ``EditorConfiguration``
 - ``EditorController``
+- ``EditorState``
+- ``EditorTheme``
+- ``EditorCoordinator``
+
+### Highlighting
+
+- ``HighlightProviding``
+- ``HighlightRange``
+- ``Highlighter``
+- ``RegexHighlightProvider``
+- ``TreeSitterHighlightProvider``
+- ``RangeStore``
+- ``StyledRangeContainer``
+- ``CaptureName``
 
 ### Selection
 
@@ -28,6 +48,7 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - ``SelectionMode``
 - ``TextRangeSelection``
 - ``MultiRangeEdit``
+- ``CursorPosition``
 
 ### Layout
 
@@ -36,6 +57,14 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - ``Typesetter``
 - ``TextAttachment``
 - ``AttachmentStore``
+- ``GutterModel``
+
+### Brackets & chrome
+
+- ``BracketMatcher``
+- ``BracketPairEmphasis``
+- ``BracketPairs``
+- ``IndentOption``
 
 ### Emphasis & invisibles
 

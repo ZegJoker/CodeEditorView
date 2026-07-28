@@ -42,10 +42,20 @@ public struct Typesetter: Sendable {
         var remainingAttachments = attachments
 
         while start < length {
-            let count: CFIndex
+            var count: CFIndex
             switch breakStrategy {
             case .word:
                 count = CTTypesetterSuggestLineBreak(typesetter, start, maxWidth)
+                // Word breaks can return the whole remainder for long tokens (e.g. URLs, identifiers).
+                // Fall back to cluster breaks so wrap mode still constrains to maxWidth.
+                if count > 0 {
+                    let probe = CTTypesetterCreateLine(typesetter, CFRange(location: start, length: count))
+                    let probeWidth = CGFloat(CTLineGetTypographicBounds(probe, nil, nil, nil))
+                    if probeWidth > textMaxWidth + 0.5, count > 1 {
+                        let cluster = CTTypesetterSuggestClusterBreak(typesetter, start, maxWidth)
+                        count = max(cluster, 1)
+                    }
+                }
             case .character:
                 count = CTTypesetterSuggestClusterBreak(typesetter, start, maxWidth)
             }

@@ -15,6 +15,7 @@ let package = Package(
             name: "CodeEditorViewDemo",
             dependencies: [
                 .product(name: "CodeEditorView", package: "CodeEditorView"),
+                .product(name: "CodeEditorLanguages", package: "CodeEditorView"),
             ],
             path: ".",
             exclude: ["Package.swift"]

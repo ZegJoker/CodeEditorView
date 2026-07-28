@@ -55,7 +55,26 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
 
     public func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange) {
         guard range.length > 0, range.location >= 0, range.max <= storage.length else { return }
-        storage.addAttributes(attributes, range: range)
+        // Replace keys (especially foregroundColor) instead of only adding, so language
+        // switches cannot leave mixed/stale attribute runs inside a token.
+        storage.enumerateAttributes(in: range, options: []) { existing, subrange, _ in
+            var merged = existing
+            for (key, value) in attributes {
+                merged[key] = value
+            }
+            // Drop bold/italic from previous capture fonts unless a font is provided.
+            if attributes[.font] == nil, let font = existing[.font] as? PlatformFont {
+                merged[.font] = font
+            }
+            self.storage.setAttributes(merged, range: subrange)
+        }
+    }
+
+    /// Resets the whole document to the current typing attributes (clears syntax colors).
+    public func resetAttributesToDefaults() {
+        let full = NSRange(location: 0, length: storage.length)
+        guard full.length > 0 else { return }
+        storage.setAttributes(defaultAttributes, range: full)
     }
 
     /// Builds a forward mutation and its inverse for the given replacement.
