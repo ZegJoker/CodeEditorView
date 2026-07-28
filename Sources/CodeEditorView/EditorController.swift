@@ -29,6 +29,12 @@ public final class EditorController {
     /// Two-way UI state (cursors, scroll, find panel fields).
     public var editorState: EditorState = .empty
 
+    /// Find / replace session (panel visibility, query, matches).
+    public let findSession = FindSession()
+
+    /// Hosts observe to show/hide panel chrome and refresh find UI.
+    public var onFindSessionChange: (() -> Void)?
+
     /// Width of the line-number gutter (0 when hidden).
     public private(set) var gutterWidth: CGFloat = 0
 
@@ -175,8 +181,14 @@ public final class EditorController {
     /// Hosts set this to trigger redraw after highlight paints.
     public var onNeedsDisplay: (() -> Void)?
 
+    /// Hosts set this to mirror document text into SwiftUI/`@State` (and other) bindings.
+    /// Called from every successful edit path via ``publishTextChange``.
+    public var onTextDidChange: ((String) -> Void)?
+
     private var weakCoordinators: [WeakCoordinator] = []
-    private let bracketEmphasisGroup = "bracket-pairs"
+    private let bracketEmphasisGroup = EmphasisGroup.bracketPairs
+    /// Suppress re-entrant find while applying a replace from the find session.
+    var isApplyingFindReplace = false
 
     /// Observable full document string.
     public var text: String {
@@ -299,11 +311,11 @@ public final class EditorController {
         )
     }
 
-    private func noteWillEdit(_ range: NSRange) {
+    func noteWillEdit(_ range: NSRange) {
         highlighter?.willApplyEdit(range: range)
     }
 
-    private func noteDidEdit(range: NSRange, delta: Int) {
+    func noteDidEdit(range: NSRange, delta: Int) {
         highlighter?.documentDidEdit(range: range, delta: delta)
     }
 
@@ -764,6 +776,12 @@ public final class EditorController {
         publishSelectionChange()
     }
 
+    /// Selects the word (identifier-style) containing `offset`, used for double-click.
+    public func selectWord(atUTF16Offset offset: Int) {
+        let range = WordSelection.range(atUTF16Offset: offset, in: document.fullString)
+        setSelectedRange(range)
+    }
+
     public func addCursor(at offset: Int) {
         selection.addSelection(NSRange(location: offset, length: 0))
         publishSelectionChange()
@@ -958,9 +976,10 @@ public final class EditorController {
         updateBracketEmphasis()
     }
 
-    private func publishTextChange() {
+    func publishTextChange() {
         events.yield(.textDidChange)
-        events.yieldText(document.fullString)
+        let full = document.fullString
+        events.yieldText(full)
         // Gutter width may change with line count digit growth.
         let model = makeGutterModel()
         let newGutter = configuration.peripherals.showGutter ? model.width : 0
@@ -976,11 +995,17 @@ public final class EditorController {
         for coordinator in liveCoordinators {
             coordinator.textDidChange(controller: self)
         }
+        // Keep host bindings in sync even when focus is in the find panel (not the editor view).
+        onTextDidChange?(full)
         updateBracketEmphasis()
+        if findSession.isShowing, !findSession.findText.isEmpty, !isApplyingFindReplace {
+            recomputeFindMatches(selectCurrent: false, flashCurrent: false)
+        }
         syncEditorStateCursors()
+        syncEditorStateFind()
     }
 
-    private func publishSelectionChange() {
+    func publishSelectionChange() {
         events.yield(.selectionDidChange)
         events.yieldSelection(selection.selectedRanges)
         let cursors = cursorPositions
@@ -993,6 +1018,18 @@ public final class EditorController {
 
     private func syncEditorStateCursors() {
         editorState.cursorPositions = cursorPositions
+    }
+
+    func syncEditorStateFind() {
+        editorState.findText = findSession.findText
+        editorState.replaceText = findSession.replaceText
+        editorState.findPanelVisible = findSession.isShowing
+    }
+
+    func notifyFindSessionChange() {
+        syncEditorStateFind()
+        onFindSessionChange?()
+        onNeedsDisplay?()
     }
 
     /// Emphasizes matching brackets around each caret when configured.

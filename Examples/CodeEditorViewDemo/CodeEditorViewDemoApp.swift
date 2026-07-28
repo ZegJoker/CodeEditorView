@@ -447,9 +447,16 @@ struct DemoRootView: View {
                 Toggle("Invisibles", isOn: $showInvisibles)
                 Toggle("Regex", isOn: $useRegexFallback)
 
+                Button("Find") {
+                    var state = editorState
+                    state.findPanelVisible = !(state.findPanelVisible ?? false)
+                    editorState = state
+                }
+                .help("Find (⌘F)")
+
                 Spacer()
 
-                Text("Tab indent · ⌘/ comment · ⌥↑↓ move · \(DemoCatalog.languages.count) langs · \(text.split(separator: "\n").count) lines")
+                Text("⌘F find · ⌘R replace · ⌘G next · Tab · ⌘/ · \(DemoCatalog.languages.count) langs · \(text.split(separator: "\n").count) lines")
                     .foregroundStyle(.secondary)
                     .font(.caption)
                     .lineLimit(1)

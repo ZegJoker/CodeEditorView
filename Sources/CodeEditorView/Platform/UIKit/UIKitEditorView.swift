@@ -53,7 +53,13 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         controller.emphasis.onChange = { [weak self] in self?.setNeedsDisplay() }
         controller.onNeedsDisplay = { [weak self] in self?.setNeedsDisplay() }
 
-        addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTap(_:))))
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        singleTap.numberOfTapsRequired = 1
+        addGestureRecognizer(singleTap)
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+        doubleTap.numberOfTapsRequired = 2
+        singleTap.require(toFail: doubleTap)
+        addGestureRecognizer(doubleTap)
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         addGestureRecognizer(pan)
 
@@ -208,6 +214,17 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
             selectionAnchor = offset
             controller.setSelectedRange(NSRange(location: offset, length: 0))
         }
+        blink.reset()
+        onSelectionChange?(controller.selectedRange)
+        setNeedsDisplay()
+    }
+
+    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
+        _ = becomeFirstResponder()
+        let point = gesture.location(in: self)
+        let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
+        controller.selectWord(atUTF16Offset: offset)
+        selectionAnchor = controller.selectedRange.location
         blink.reset()
         onSelectionChange?(controller.selectedRange)
         setNeedsDisplay()

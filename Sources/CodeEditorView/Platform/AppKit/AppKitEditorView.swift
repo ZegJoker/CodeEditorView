@@ -23,6 +23,8 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     public var onTextChange: ((String) -> Void)?
     public var onSelectionChange: ((NSRange) -> Void)?
+    /// Fired just before this view becomes first responder (e.g. user clicked the document).
+    public var onWillBecomeFirstResponder: (() -> Void)?
 
     public init(controller: EditorController) {
         self.controller = controller
@@ -315,6 +317,7 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     // MARK: - First responder
 
     open override func becomeFirstResponder() -> Bool {
+        onWillBecomeFirstResponder?()
         let ok = super.becomeFirstResponder()
         if ok {
             isFirstResponderFlag = true
@@ -338,9 +341,41 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     open override func mouseDown(with event: NSEvent) {
         window?.makeKeyAndOrderFront(nil)
+        onWillBecomeFirstResponder?()
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
         let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
+
+        // Double-click: select word at click point.
+        if event.clickCount == 2,
+           !event.modifierFlags.contains(.option),
+           !event.modifierFlags.contains(.command),
+           !event.modifierFlags.contains(.control) {
+            controller.selection.mode = .character
+            controller.selectWord(atUTF16Offset: offset)
+            selectionAnchor = controller.selectedRange.location
+            columnAnchor = nil
+            blink.reset()
+            onSelectionChange?(controller.selectedRange)
+            needsDisplay = true
+            return
+        }
+
+        // Triple-click: select whole line.
+        if event.clickCount >= 3,
+           !event.modifierFlags.contains(.option),
+           !event.modifierFlags.contains(.command) {
+            let lineStart = controller.document.findStartOfLine(containing: offset)
+            let lineEnd = controller.document.findEndOfLine(containing: offset)
+            controller.selection.mode = .character
+            controller.setSelectedRange(NSRange(location: lineStart, length: max(0, lineEnd - lineStart)))
+            selectionAnchor = lineStart
+            columnAnchor = nil
+            blink.reset()
+            onSelectionChange?(controller.selectedRange)
+            needsDisplay = true
+            return
+        }
 
         if event.modifierFlags.contains(.option) {
             if event.modifierFlags.contains(.shift) {
@@ -438,7 +473,35 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
             selectAll(nil)
             return
         }
+        // Find / replace (⌘F find, ⌘R expand/show replace, ⌥⌘F replace, ⌘G / ⇧⌘G next/prev)
+        if flags.contains(.command), !flags.contains(.shift), !flags.contains(.option), chars == "f" {
+            controller.showFindPanel(mode: .find)
+            return
+        }
+        if flags.contains(.command), !flags.contains(.shift), !flags.contains(.option), chars == "r" {
+            // When find is already open, expand to replace; otherwise open replace mode.
+            controller.showReplacePanel()
+            return
+        }
+        if flags.contains(.command), flags.contains(.option), !flags.contains(.shift), chars == "f" {
+            controller.showReplacePanel()
+            return
+        }
+        if flags.contains(.command), !flags.contains(.shift), chars == "g" {
+            controller.findNext()
+            finishSelection()
+            return
+        }
+        if flags.contains(.command), flags.contains(.shift), chars == "g" {
+            controller.findPrevious()
+            finishSelection()
+            return
+        }
         if event.keyCode == 53 { // Escape
+            if controller.findSession.isShowing {
+                controller.hideFindPanel()
+                return
+            }
             controller.collapseCursors()
             onSelectionChange?(controller.selectedRange)
             needsDisplay = true

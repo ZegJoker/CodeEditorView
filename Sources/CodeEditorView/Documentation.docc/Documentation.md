@@ -14,6 +14,7 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - Bracket pair emphasis via ``BracketMatcher``
 - Syntax highlighting: ``HighlightProviding``, ``Highlighter``, ``RegexHighlightProvider``, ``TreeSitterHighlightProvider``
 - Formation: Tab/Shift-Tab indent, newline auto-indent, auto-pairs, move lines, toggle comments
+- Find & replace: ``FindEngine``, ``FindSession``, panel chrome, match emphasis
 - ``EditorCoordinator`` injection (structured concurrency — no Combine)
 - ``EditorState`` for cursors / find-panel bindings
 - Emphasis overlays and invisible characters
@@ -69,6 +70,16 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - ``TextFilters``
 - ``StructureCommands``
 - ``TextReplacement``
+
+### Find & replace
+
+- ``FindEngine``
+- ``FindMethod``
+- ``FindPanelMode``
+- ``FindSession``
+- ``FindPanelView``
+- ``FindPanelBridge``
+- ``EmphasisGroup``
 
 ### Emphasis & invisibles
 

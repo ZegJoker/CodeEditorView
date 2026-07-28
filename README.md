@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 6 complete** — formation & structure editing (Tab/Shift-Tab indent, newline auto-indent, auto-pairs, move lines, toggle comments) with multi-cursor + undo. Earlier: Phase 5 tree-sitter / `CodeEditorLanguages`; Phase 3–4 chrome, themes, gutter, highlight pipeline.
+**Phase 7 complete** — find & replace panel (CESE-aligned methods: contains / word / startsWith / endsWith / regex, match case, wrap, next/prev, replace/all) with match emphasis and `EditorState` bindings. Keys: ⌘F / ⌥⌘F / ⌘G / ⇧⌘G / Escape. Earlier: Phase 6 formation; Phase 5 tree-sitter; Phase 3–4 chrome & highlighting.
 
 ## Requirements
 
@@ -65,6 +65,13 @@ controller.setSelectedRanges([
     NSRange(location: 10, length: 0),
 ])
 controller.insertText("x")
+
+// Find / replace
+controller.showFindPanel(mode: .find)
+controller.setFindQuery("print")
+controller.findNext()
+controller.setReplaceText("debugPrint")
+controller.replaceCurrentMatch()
 
 // Emphasis (flash via Task/Clock)
 controller.emphasis.add(
