@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 10 complete** — line folding (indent provider, collapse storage, gutter ribbon, placeholders) via `peripherals.showFoldingRibbon` on AppKit & UIKit. Phase 9 minimap; Phase 8 completions; Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter.
+**Phase 11 complete** — jump to definition (delegate, ⌘-hover / long-press, multi-target popover). Phase 10 folding; Phase 9 minimap; Phase 8 completions; Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter.
 
 ## Requirements
 
@@ -76,6 +76,11 @@ controller.replaceCurrentMatch()
 // Completions (app supplies CodeSuggestionDelegate)
 controller.completionDelegate = myCompletionDelegate
 controller.showCompletions()
+
+// Jump to definition (app supplies JumpToDefinitionDelegate)
+controller.jumpToDefinitionDelegate = myJumpDelegate
+// macOS: ⌘-hover + ⌘-click, or ⌃⌘J · iOS: long-press
+controller.jumpToDefinition()
 
 // Emphasis (flash via Task/Clock)
 controller.emphasis.add(

@@ -13,6 +13,7 @@ struct EditorRepresentable: NSViewRepresentable {
     var highlightProviders: [any HighlightProviding]
     var coordinators: [any EditorCoordinator]
     var completionDelegate: (any CodeSuggestionDelegate)?
+    var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, selection: $selection, editorState: $editorState)
@@ -27,6 +28,7 @@ struct EditorRepresentable: NSViewRepresentable {
             language: language
         )
         controller.completionDelegate = completionDelegate
+        controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
         context.coordinator.controller = controller
 
         let editor = AppKitEditorView(controller: controller)
@@ -43,6 +45,12 @@ struct EditorRepresentable: NSViewRepresentable {
         // re-pushes stale host text and undoes the edit (and desyncs match ranges).
         controller.onTextDidChange = { [weak coordinator = context.coordinator] newText in
             coordinator?.text.wrappedValue = newText
+            coordinator?.pushStateFromControllerIfNeeded()
+        }
+        // Controller-driven selection (jump-to-definition, find) must update the host
+        // selection binding or updateNSView will stomp the new caret with the old one.
+        controller.onSelectionDidChange = { [weak coordinator = context.coordinator] range in
+            coordinator?.selection.wrappedValue = range
             coordinator?.pushStateFromControllerIfNeeded()
         }
         context.coordinator.editorView = editor
@@ -72,6 +80,9 @@ struct EditorRepresentable: NSViewRepresentable {
         guard let controller = context.coordinator.controller else { return }
         if controller.completionDelegate !== completionDelegate {
             controller.completionDelegate = completionDelegate
+        }
+        if controller.jumpToDefinitionDelegate !== jumpToDefinitionDelegate {
+            controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
         }
         let wrapChanged = controller.configuration.wrapLines != configuration.wrapLines
         if controller.configuration != configuration {
@@ -318,6 +329,7 @@ struct EditorRepresentable: UIViewRepresentable {
     var highlightProviders: [any HighlightProviding]
     var coordinators: [any EditorCoordinator]
     var completionDelegate: (any CodeSuggestionDelegate)?
+    var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, selection: $selection, editorState: $editorState)
@@ -332,6 +344,7 @@ struct EditorRepresentable: UIViewRepresentable {
             language: language
         )
         controller.completionDelegate = completionDelegate
+        controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
         context.coordinator.controller = controller
 
         let editor = UIKitEditorView(controller: controller)
@@ -345,6 +358,10 @@ struct EditorRepresentable: UIViewRepresentable {
         }
         controller.onTextDidChange = { [weak coordinator = context.coordinator] newText in
             coordinator?.text.wrappedValue = newText
+            coordinator?.pushStateFromControllerIfNeeded()
+        }
+        controller.onSelectionDidChange = { [weak coordinator = context.coordinator] range in
+            coordinator?.selection.wrappedValue = range
             coordinator?.pushStateFromControllerIfNeeded()
         }
         context.coordinator.editorView = editor
@@ -397,6 +414,9 @@ struct EditorRepresentable: UIViewRepresentable {
         guard let controller = context.coordinator.controller else { return }
         if controller.completionDelegate !== completionDelegate {
             controller.completionDelegate = completionDelegate
+        }
+        if controller.jumpToDefinitionDelegate !== jumpToDefinitionDelegate {
+            controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
         }
         if controller.configuration != configuration {
             controller.configuration = configuration

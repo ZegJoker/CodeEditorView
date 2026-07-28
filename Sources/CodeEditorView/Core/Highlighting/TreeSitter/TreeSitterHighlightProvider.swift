@@ -259,6 +259,35 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         return invalid
     }
 
+    /// Nearest tree-sitter node whose type contains `"identifier"` at a UTF-16 offset.
+    ///
+    /// Used by jump-to-definition hover (CESE: `nodesAt` + `nodeType.contains("identifier")`).
+    public func identifierRange(atUTF16Offset location: Int) -> NSRange? {
+        guard let root = tree?.rootNode else { return nil }
+        let length = max(source.utf16.count, documentLength)
+        guard length > 0 else { return nil }
+        let clamped = min(max(0, location), length - 1)
+        // SwiftTreeSitter UTF-16 encoding: 2 bytes per code unit.
+        let byteStart = UInt32(clamped * 2)
+        let byteEnd = UInt32((clamped + 1) * 2)
+        guard let node = root.descendant(in: byteStart..<byteEnd) else { return nil }
+
+        // Walk up looking for an identifier-like node type.
+        var current: Node? = node
+        while let n = current {
+            if let type = n.nodeType, type.localizedCaseInsensitiveContains("identifier") {
+                return n.range
+            }
+            current = n.parent
+        }
+
+        // Fallback: named leaf-ish node under the cursor (not the whole file root).
+        if node.isNamed, node.range.length > 0, node.range.length < length {
+            return node.range
+        }
+        return nil
+    }
+
     public func queryHighlights(in range: NSRange, text: String) async throws -> [HighlightRange] {
         try Task.checkCancellation()
         guard let configuration,

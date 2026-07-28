@@ -41,11 +41,25 @@ public final class EditorController {
     /// App-supplied completion provider (weak; host must retain the delegate).
     public weak var completionDelegate: (any CodeSuggestionDelegate)?
 
+    /// App-supplied jump-to-definition provider (weak; host must retain the delegate).
+    public weak var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)? {
+        didSet {
+            if jumpToDefinitionDelegate == nil {
+                cancelJumpHover()
+            }
+        }
+    }
+
     /// Hosts observe to present/update the completion panel UI.
     public var onCompletionSessionChange: (() -> Void)?
 
     /// In-flight async completion load (cancelled on re-open/hide).
     var completionRequestTask: Task<Void, Never>?
+
+    /// Jump-to-definition model (Phase 11).
+    let _jumpToDefinitionModel = JumpToDefinitionModel()
+    var _onJumpFailed: (() -> Void)?
+    var _onRequestScrollToSelection: (() -> Void)?
 
     /// Line folding model (Phase 10).
     let _foldModel = LineFoldModel()
@@ -206,6 +220,11 @@ public final class EditorController {
     /// Called from every successful edit path via ``publishTextChange``.
     public var onTextDidChange: ((String) -> Void)?
 
+    /// Hosts set this to mirror selection into SwiftUI/`@State` bindings.
+    /// Required for controller-driven navigation (find, jump-to-definition) so
+    /// `updateNSView` cannot re-apply a stale host selection.
+    public var onSelectionDidChange: ((NSRange) -> Void)?
+
     private var weakCoordinators: [WeakCoordinator] = []
     private let bracketEmphasisGroup = EmphasisGroup.bracketPairs
     /// Suppress re-entrant find while applying a replace from the find session.
@@ -279,6 +298,7 @@ public final class EditorController {
         }
 
         installFoldingIfNeeded()
+        installJumpToDefinitionIfNeeded()
     }
 
     // MARK: - Highlighting
@@ -902,6 +922,22 @@ public final class EditorController {
         layout.caretRect(atUTF16Offset: selection.selectedRange.location, containerWidth: containerWidth)
     }
 
+    /// Caret/placement rect for an arbitrary UTF-16 offset (e.g. jump-to-definition anchor).
+    public func caretRect(atUTF16Offset offset: Int, containerWidth: CGFloat) -> CGRect? {
+        layout.caretRect(atUTF16Offset: offset, containerWidth: containerWidth)
+    }
+
+    /// Placement rect for the completion / jump popover (prefers session anchor over selection).
+    public func completionAnchorRect(containerWidth: CGFloat) -> CGRect? {
+        if let anchor = completionSession.anchorPosition {
+            let offset = max(0, min(anchor.range.location, document.length))
+            if let rect = layout.caretRect(atUTF16Offset: offset, containerWidth: containerWidth) {
+                return rect
+            }
+        }
+        return caretRect(containerWidth: containerWidth)
+    }
+
     public func caretRects(containerWidth: CGFloat) -> [CGRect] {
         selection.selectedRanges.compactMap {
             layout.caretRect(atUTF16Offset: $0.location, containerWidth: containerWidth)
@@ -1089,7 +1125,11 @@ public final class EditorController {
         }
         updateBracketEmphasis()
         syncEditorStateCursors()
-        if completionSession.isVisible {
+        // Keep SwiftUI / host selection bindings in sync (jump panel, find, API).
+        onSelectionDidChange?(selection.selectedRange)
+        // Jump multi-target popover reuses the completion session — do not treat
+        // selection changes as typing-completion filter updates.
+        if completionSession.isVisible, !isJumpLinkPopoverVisible {
             noteCursorMovedForCompletions()
         }
     }

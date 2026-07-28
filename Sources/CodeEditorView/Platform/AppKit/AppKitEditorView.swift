@@ -20,6 +20,10 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     private var isRelayouting = false
     /// Last content size applied to the document view (hysteresis against sub-pixel thrash).
     private var lastAppliedContentSize: CGSize = .zero
+    /// Local tracking for ⌘-hover jump-to-definition.
+    private var jumpTrackingArea: NSTrackingArea?
+    /// After ⌘-click jump, ignore mouseDragged until mouseUp (avoids selecting from old caret → click).
+    private var suppressDragSelection = false
 
     public var onTextChange: ((String) -> Void)?
     public var onSelectionChange: ((NSRange) -> Void)?
@@ -45,6 +49,15 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
             self?.needsDisplay = true
         }
         controller.onNeedsDisplay = { [weak self] in
+            self?.scrollToSelectionIfNeeded()
+            self?.needsDisplay = true
+        }
+        controller.onJumpFailed = { [weak self] in
+            NSSound.beep()
+            self?.needsDisplay = true
+        }
+        controller.onRequestScrollToSelection = { [weak self] in
+            self?.scrollToSelectionIfNeeded()
             self?.needsDisplay = true
         }
     }
@@ -366,11 +379,113 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     // MARK: - Mouse
 
+    open override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let jumpTrackingArea {
+            removeTrackingArea(jumpTrackingArea)
+        }
+        let options: NSTrackingArea.Options = [
+            .activeInKeyWindow,
+            .mouseMoved,
+            .inVisibleRect,
+            .cursorUpdate,
+        ]
+        let area = NSTrackingArea(rect: bounds, options: options, owner: self, userInfo: nil)
+        addTrackingArea(area)
+        jumpTrackingArea = area
+    }
+
+    open override func flagsChanged(with event: NSEvent) {
+        super.flagsChanged(with: event)
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if flags.contains(.command), controller.jumpToDefinitionDelegate != nil {
+            let point = convert(window?.mouseLocationOutsideOfEventStream ?? .zero, from: nil)
+            let offset = controller.hitTestOffset(at: point, containerWidth: max(containerWidth, 1))
+            controller.jumpHover(atUTF16Offset: offset)
+            updateJumpCursor()
+        } else {
+            controller.cancelJumpHover()
+            NSCursor.iBeam.set()
+        }
+        needsDisplay = true
+    }
+
+    open override func mouseMoved(with event: NSEvent) {
+        super.mouseMoved(with: event)
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags.contains(.command), controller.jumpToDefinitionDelegate != nil else {
+            if controller.jumpHoveredRange != nil {
+                controller.cancelJumpHover()
+                NSCursor.iBeam.set()
+                needsDisplay = true
+            }
+            return
+        }
+        let point = convert(event.locationInWindow, from: nil)
+        let offset = controller.hitTestOffset(at: point, containerWidth: max(containerWidth, 1))
+        controller.jumpHover(atUTF16Offset: offset)
+        updateJumpCursor()
+        needsDisplay = true
+    }
+
+    open override func cursorUpdate(with event: NSEvent) {
+        if controller.jumpHoveredRange != nil,
+           event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command)
+        {
+            NSCursor.pointingHand.set()
+        } else {
+            super.cursorUpdate(with: event)
+        }
+    }
+
+    private func updateJumpCursor() {
+        if controller.jumpHoveredRange != nil {
+            NSCursor.pointingHand.set()
+        } else {
+            NSCursor.iBeam.set()
+        }
+    }
+
     open override func mouseDown(with event: NSEvent) {
         window?.makeKeyAndOrderFront(nil)
         onWillBecomeFirstResponder?()
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
+
+        // Clicking the document dismisses completion / jump-to-definition popovers
+        // (the floating panel is a separate window, so its clicks never reach here).
+        if controller.completionsVisible {
+            controller.hideCompletions()
+        }
+
+        // ⌘-click jump-to-definition when hovering an identifier.
+        // Do not place/extend the caret on this gesture — otherwise a tiny drag after
+        // ⌘-click selects from the previous caret through the click site.
+        if event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command),
+           controller.jumpToDefinitionDelegate != nil
+        {
+            let offset = controller.hitTestOffset(at: point, containerWidth: max(containerWidth, 1))
+            let range = controller.jumpHoveredRange
+                ?? JumpToDefinitionModel.findDefinitionRange(at: offset, controller: controller)
+            if let range {
+                suppressDragSelection = true
+                columnAnchor = nil
+                // Keep selection where it is until the user picks a jump target.
+                controller.performJumpToDefinition(at: range)
+                needsDisplay = true
+                return
+            }
+            // ⌘-click with no identifier: still suppress drag-select from prior caret.
+            suppressDragSelection = true
+            selectionAnchor = offset
+            columnAnchor = nil
+            controller.selection.mode = .character
+            controller.setSelectedRange(NSRange(location: offset, length: 0))
+            blink.reset()
+            onSelectionChange?(controller.selectedRange)
+            needsDisplay = true
+            return
+        }
 
         // Fold ribbon click (trailing strip of the gutter).
         if controller.configuration.peripherals.showGutter,
@@ -463,6 +578,12 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     }
 
     open override func mouseDragged(with event: NSEvent) {
+        // ⌘-click jump / post-jump: do not extend selection from the previous caret.
+        if suppressDragSelection
+            || event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command)
+        {
+            return
+        }
         let point = convert(event.locationInWindow, from: nil)
         startDragScrollIfNeeded(point: point)
 
@@ -491,6 +612,7 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         dragScrollTask?.cancel()
         dragScrollTask = nil
         columnAnchor = nil
+        suppressDragSelection = false
     }
 
     private func startDragScrollIfNeeded(point: CGPoint) {
@@ -583,6 +705,15 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
             } else {
                 controller.showCompletions()
             }
+            return
+        }
+        // Jump to definition: ⌃⌘J (CESE)
+        if flags.contains(.command), flags.contains(.control), !flags.contains(.shift),
+           !flags.contains(.option), chars.lowercased() == "j",
+           controller.jumpToDefinitionDelegate != nil
+        {
+            controller.jumpToDefinition()
+            finishSelection()
             return
         }
         // Completion list navigation while visible
@@ -880,6 +1011,16 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     open override func isAccessibilityElement() -> Bool { true }
     open override func accessibilityRole() -> NSAccessibility.Role? { .textArea }
+    open override func accessibilityCustomActions() -> [NSAccessibilityCustomAction]? {
+        guard controller.jumpToDefinitionDelegate != nil else {
+            return super.accessibilityCustomActions()
+        }
+        let jump = NSAccessibilityCustomAction(name: "Jump to Definition") { [weak self] in
+            self?.controller.jumpToDefinition()
+            return true
+        }
+        return [jump]
+    }
     open override func accessibilityValue() -> Any? { controller.text }
     open override func accessibilitySelectedText() -> String? {
         controller.text(in: controller.selectedRanges)

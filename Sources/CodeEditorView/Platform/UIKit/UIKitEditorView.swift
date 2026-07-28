@@ -51,7 +51,14 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
 
         blink.onChange = { [weak self] _ in self?.setNeedsDisplay() }
         controller.emphasis.onChange = { [weak self] in self?.setNeedsDisplay() }
-        controller.onNeedsDisplay = { [weak self] in self?.setNeedsDisplay() }
+        controller.onNeedsDisplay = { [weak self] in
+            self?.scrollToSelectionIfNeeded()
+            self?.setNeedsDisplay()
+        }
+        controller.onRequestScrollToSelection = { [weak self] in
+            self?.scrollToSelectionIfNeeded()
+            self?.setNeedsDisplay()
+        }
 
         let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         singleTap.numberOfTapsRequired = 1
@@ -62,11 +69,21 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         addGestureRecognizer(doubleTap)
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         addGestureRecognizer(pan)
+        // Long-press → jump to definition (iOS equivalent of ⌘-click).
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPressJump(_:)))
+        longPress.minimumPressDuration = 0.55
+        addGestureRecognizer(longPress)
 
         let drag = UIDragInteraction(delegate: self)
         addInteraction(drag)
         let drop = UIDropInteraction(delegate: self)
         addInteraction(drop)
+
+        controller.onJumpFailed = { [weak self] in
+            let gen = UINotificationFeedbackGenerator()
+            gen.notificationOccurred(.warning)
+            self?.setNeedsDisplay()
+        }
     }
 
     open override func didMoveToWindow() {
@@ -105,7 +122,26 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         }
         _ = controller.layoutViewport(visibleRect: bounds, containerWidth: layoutWidth)
         invalidateIntrinsicContentSize()
+        scrollToSelectionIfNeeded()
         setNeedsDisplay()
+    }
+
+    private func scrollToSelectionIfNeeded() {
+        guard let target = controller.scrollTarget else { return }
+        controller.consumeScrollTarget()
+        // Scroll the enclosing UIScrollView (chrome) so the caret is visible.
+        if let scroll = enclosingScrollView {
+            scroll.scrollRectToVisible(convert(target, to: scroll), animated: true)
+        }
+    }
+
+    private var enclosingScrollView: UIScrollView? {
+        var v: UIView? = superview
+        while let cur = v {
+            if let scroll = cur as? UIScrollView { return scroll }
+            v = cur.superview
+        }
+        return nil
     }
 
     open override var intrinsicContentSize: CGSize {
@@ -227,6 +263,11 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         _ = becomeFirstResponder()
         let point = gesture.location(in: self)
 
+        // Dismiss completion / jump popover when tapping the document.
+        if controller.completionsVisible {
+            controller.hideCompletions()
+        }
+
         if controller.configuration.peripherals.showGutter,
            controller.configuration.peripherals.showFoldingRibbon {
             let model = controller.makeGutterModel()
@@ -271,6 +312,22 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         controller.selectWord(atUTF16Offset: offset)
         selectionAnchor = controller.selectedRange.location
         blink.reset()
+        onSelectionChange?(controller.selectedRange)
+        setNeedsDisplay()
+    }
+
+    @objc private func handleLongPressJump(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        guard controller.jumpToDefinitionDelegate != nil else { return }
+        _ = becomeFirstResponder()
+        let point = gesture.location(in: self)
+        let offset = controller.hitTestOffset(at: point, containerWidth: max(containerWidth, 1))
+        if let range = JumpToDefinitionModel.findDefinitionRange(at: offset, controller: controller) {
+            controller.jumpHover(atUTF16Offset: offset)
+            controller.performJumpToDefinition(at: range)
+        } else {
+            controller.notifyJumpFailed()
+        }
         onSelectionChange?(controller.selectedRange)
         setNeedsDisplay()
     }
@@ -566,6 +623,18 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     }
 
     // MARK: - Accessibility
+
+    open override var accessibilityCustomActions: [UIAccessibilityCustomAction]? {
+        guard controller.jumpToDefinitionDelegate != nil else {
+            return super.accessibilityCustomActions
+        }
+        return [
+            UIAccessibilityCustomAction(name: "Jump to Definition") { [weak self] _ in
+                self?.controller.jumpToDefinition()
+                return true
+            },
+        ]
+    }
 
     open override var accessibilityLabel: String? {
         get { "Code editor" }

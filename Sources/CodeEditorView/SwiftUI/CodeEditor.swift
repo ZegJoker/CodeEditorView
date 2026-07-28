@@ -11,6 +11,7 @@ public struct CodeEditor: View {
     private var highlightProviders: [any HighlightProviding]
     private var language: CodeLanguage?
     private var completionDelegate: (any CodeSuggestionDelegate)?
+    private var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
 
     public init(
         text: Binding<String>,
@@ -21,7 +22,8 @@ public struct CodeEditor: View {
         languageID: String? = nil,
         highlightProviders: [any HighlightProviding] = [],
         coordinators: [any EditorCoordinator] = [],
-        completionDelegate: (any CodeSuggestionDelegate)? = nil
+        completionDelegate: (any CodeSuggestionDelegate)? = nil,
+        jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)? = nil
     ) {
         self._text = text
         self._selection = selection
@@ -31,6 +33,7 @@ public struct CodeEditor: View {
         self.highlightProviders = highlightProviders
         self.coordinators = coordinators
         self.completionDelegate = completionDelegate
+        self.jumpToDefinitionDelegate = jumpToDefinitionDelegate
     }
 
     public var body: some View {
@@ -42,7 +45,8 @@ public struct CodeEditor: View {
             language: language,
             highlightProviders: highlightProviders,
             coordinators: coordinators,
-            completionDelegate: completionDelegate
+            completionDelegate: completionDelegate,
+            jumpToDefinitionDelegate: jumpToDefinitionDelegate
         )
     }
 }

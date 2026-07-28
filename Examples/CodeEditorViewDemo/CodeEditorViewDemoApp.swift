@@ -4,7 +4,11 @@ import CodeEditorLanguages
 
 #if os(macOS)
 import AppKit
+#elseif canImport(UIKit)
+import UIKit
+#endif
 
+#if os(macOS)
 /// SPM executables are not .app bundles; without an activation policy they never become
 /// the key app and keystrokes keep going to Terminal / the previous frontmost app.
 final class DemoAppDelegate: NSObject, NSApplicationDelegate {
@@ -50,6 +54,46 @@ final class DemoCoordinator: EditorCoordinator {
 
     func selectionDidChange(controller: EditorController, cursors: [CursorPosition]) {
         lastCursorLine = cursors.first?.line
+    }
+}
+
+/// Demo jump-to-definition provider (CESE-style mock).
+@MainActor
+final class DemoJumpToDefinitionDelegate: JumpToDefinitionDelegate {
+    func queryLinks(forRange range: NSRange, textView: EditorController) async -> [JumpToDefinitionLink]? {
+        let snip = (textView.text as NSString).substring(with: range)
+        return [
+            JumpToDefinitionLink(
+                url: nil,
+                targetRange: CursorPosition(range: NSRange(location: 0, length: 0), line: 0, column: 0),
+                label: "Start of document",
+                documentation: "Demo local jump for “\(snip)” — moves to the top of the buffer.",
+                sourcePreview: textView.text.split(separator: "\n").first.map(String.init),
+                systemImage: "arrow.up.to.line",
+                imageColorToken: .blue
+            ),
+            JumpToDefinitionLink(
+                url: URL(string: "https://github.com/ZegJoker/CodeEditorView"),
+                targetRange: CursorPosition(range: NSRange(location: 0, length: 0), line: 0, column: 0),
+                label: "CodeEditorView repo",
+                documentation: "Demo remote link — opens the project homepage.",
+                sourcePreview: "https://github.com/ZegJoker/CodeEditorView",
+                systemImage: "link",
+                imageColorToken: .purple
+            ),
+        ]
+    }
+
+    func openLink(link: JumpToDefinitionLink) {
+        #if os(macOS)
+        if let url = link.url {
+            NSWorkspace.shared.open(url)
+        }
+        #else
+        if let url = link.url {
+            UIApplication.shared.open(url)
+        }
+        #endif
     }
 }
 
@@ -440,6 +484,7 @@ struct DemoRootView: View {
     @State private var useRegexFallback = false
     @State private var coordinator = DemoCoordinator()
     @State private var completionDelegate = DemoCompletionDelegate()
+    @State private var jumpToDefinitionDelegate = DemoJumpToDefinitionDelegate()
     @State private var regexProvider = RegexHighlightProvider.swiftLike()
     @State private var languageFilter = ""
 
@@ -488,7 +533,8 @@ struct DemoRootView: View {
                 language: selectedLanguage.id == .plainText ? nil : selectedLanguage,
                 highlightProviders: useRegexFallback ? [regexProvider] : [],
                 coordinators: [coordinator],
-                completionDelegate: completionDelegate
+                completionDelegate: completionDelegate,
+                jumpToDefinitionDelegate: jumpToDefinitionDelegate
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .focusable()

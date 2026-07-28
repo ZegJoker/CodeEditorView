@@ -36,16 +36,24 @@ final class UIKitCompletionPanelController {
         lastRevision = session.revision
         let items = session.items.map { CompletionListItem(entry: $0) }
         let selected = session.selectedIndex
+        let applyOnSelect = controller.isJumpLinkPopoverVisible
         let root = CompletionListView(
             items: items,
             selectedIndex: selected,
+            applyOnSelect: applyOnSelect,
             onSelect: { [weak self, weak controller] index in
                 controller?.selectCompletionIndex(index)
                 self?.sync()
             },
-            onApply: { [weak controller] index in
-                controller?.selectCompletionIndex(index)
-                controller?.applyCompletionSelection()
+            onApply: { [weak self, weak controller] index in
+                guard let controller else { return }
+                controller.completionSession.selectIndex(index)
+                if let item = controller.completionSession.selectedItem as? JumpToDefinitionLink {
+                    controller.jumpToDefinitionModel.open(link: item)
+                } else {
+                    controller.applyCompletionSelection()
+                }
+                self?.sync()
             }
         )
         ensureContainer(in: editorView)
@@ -66,6 +74,7 @@ final class UIKitCompletionPanelController {
         let hosting = UIHostingController(rootView: CompletionListView(
             items: [],
             selectedIndex: 0,
+            applyOnSelect: false,
             onSelect: { _ in },
             onApply: { _ in }
         ))
@@ -86,7 +95,8 @@ final class UIKitCompletionPanelController {
     private func positionPanel(in editorView: UIView, controller: EditorController) {
         guard let container, let parent = container.superview else { return }
         let width = max(1, editorView.bounds.width)
-        guard let caret = controller.caretRect(containerWidth: width) else { return }
+        // Prefer session anchor (jump-to-definition press site) over the live caret.
+        guard let caret = controller.completionAnchorRect(containerWidth: width) else { return }
         let caretInParent = editorView.convert(caret, to: parent)
 
         let panelWidth: CGFloat = min(320, parent.bounds.width - 16)
@@ -126,6 +136,8 @@ struct CompletionListItem: Identifiable {
 struct CompletionListView: View {
     var items: [CompletionListItem]
     var selectedIndex: Int
+    /// When true (jump-to-definition), a single click applies the row immediately.
+    var applyOnSelect: Bool = false
     var onSelect: (Int) -> Void
     var onApply: (Int) -> Void
 
@@ -135,32 +147,40 @@ struct CompletionListView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                            HStack(spacing: 8) {
-                                Image(systemName: item.systemImage)
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 16)
-                                Text(item.label)
-                                    .font(.system(.body, design: .monospaced))
-                                    .strikethrough(item.deprecated)
-                                if let detail = item.detail {
-                                    Text(detail)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
+                            Button {
+                                if applyOnSelect {
+                                    onApply(index)
+                                } else {
+                                    onSelect(index)
                                 }
-                                Spacer(minLength: 0)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: item.systemImage)
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 16)
+                                    Text(item.label)
+                                        .font(.system(.body, design: .monospaced))
+                                        .strikethrough(item.deprecated)
+                                    if let detail = item.detail {
+                                        Text(detail)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .buttonStyle(.plain)
                             .background(index == selectedIndex ? Color.accentColor.opacity(0.2) : Color.clear)
-                            .contentShape(Rectangle())
                             .id(index)
-                            .onTapGesture {
-                                onSelect(index)
-                            }
                             .onTapGesture(count: 2) {
-                                onApply(index)
+                                if !applyOnSelect {
+                                    onApply(index)
+                                }
                             }
                         }
                     }

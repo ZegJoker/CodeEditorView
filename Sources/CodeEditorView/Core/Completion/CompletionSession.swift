@@ -49,6 +49,8 @@ public final class CompletionSession {
 
     public func selectIndex(_ index: Int) {
         guard items.indices.contains(index) else { return }
+        // Always bump so hosts refresh even when re-selecting the same row
+        // (e.g. applying "Start of document" while already at offset 0).
         selectedIndex = index
         bump()
     }
