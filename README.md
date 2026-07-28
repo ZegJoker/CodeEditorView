@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 9 complete** — minimap overview strip (syntax-colored bubbles, viewport indicator, drag/click to scroll) via `peripherals.showMinimap` on AppKit & UIKit. Phase 8 completions; Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter.
+**Phase 10 complete** — line folding (indent provider, collapse storage, gutter ribbon, placeholders) via `peripherals.showFoldingRibbon` on AppKit & UIKit. Phase 9 minimap; Phase 8 completions; Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter.
 
 ## Requirements
 

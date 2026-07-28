@@ -94,10 +94,15 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
 
     public func relayout() {
         let layoutWidth = max(1, bounds.width)
+        var didInvalidate = false
         if abs(containerWidth - layoutWidth) > 0.5, controller.configuration.wrapLines {
             controller.layout.invalidateAll()
+            didInvalidate = true
         }
         containerWidth = layoutWidth
+        if didInvalidate, !controller.foldModel.collapsedFolds.isEmpty {
+            controller.syncFoldPlaceholdersAndHeights()
+        }
         _ = controller.layoutViewport(visibleRect: bounds, containerWidth: layoutWidth)
         invalidateIntrinsicContentSize()
         setNeedsDisplay()
@@ -176,6 +181,19 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
 
         if controller.configuration.peripherals.showGutter {
             let model = controller.makeGutterModel()
+            let visibleFolds: [FoldRange]
+            if controller.configuration.peripherals.showFoldingRibbon {
+                if let first = controller.layout.lineIndex.line(atY: visible.minY),
+                   let last = controller.layout.lineIndex.line(atY: visible.maxY) {
+                    let start = first.utf16Offset
+                    let end = last.utf16Offset + last.metrics.utf16Length
+                    visibleFolds = controller.folds(in: NSRange(location: start, length: max(0, end - start)))
+                } else {
+                    visibleFolds = controller.foldModel.foldCache.allFolds
+                }
+            } else {
+                visibleFolds = []
+            }
             GutterRenderer.draw(
                 model: model,
                 lineIndex: controller.layout.lineIndex,
@@ -185,6 +203,7 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
                 selectedTextColor: theme.text.color.cgColor,
                 backgroundColor: theme.gutterBackground.cgColor,
                 selectedLineColor: theme.lineHighlight.cgColor,
+                folds: visibleFolds,
                 in: context
             )
         }
@@ -207,6 +226,32 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         _ = becomeFirstResponder()
         let point = gesture.location(in: self)
+
+        if controller.configuration.peripherals.showGutter,
+           controller.configuration.peripherals.showFoldingRibbon {
+            let model = controller.makeGutterModel()
+            if point.x >= model.foldingRibbonMinX, point.x <= model.width,
+               let line = controller.layout.lineIndex.line(atY: point.y),
+               line.metrics.height >= 0.5 {
+                controller.toggleFold(atLine: line.index)
+                relayout()
+                setNeedsDisplay()
+                return
+            }
+        }
+
+        if controller.configuration.peripherals.showFoldingRibbon,
+           let placeholder = controller.layout.foldPlaceholder(
+            at: point,
+            containerWidth: max(containerWidth, 1)
+           ) {
+            controller.handleFoldPlaceholderClick(placeholder.fold)
+            relayout()
+            setNeedsDisplay()
+            return
+        }
+        controller.clearFoldPlaceholderSelection()
+
         let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
         if gesture.numberOfTouches > 1 {
             controller.addCursor(at: offset)

@@ -47,6 +47,15 @@ public final class EditorController {
     /// In-flight async completion load (cancelled on re-open/hide).
     var completionRequestTask: Task<Void, Never>?
 
+    /// Line folding model (Phase 10).
+    let _foldModel = LineFoldModel()
+    var _foldingInstalled = false
+    /// Selected fold placeholder id (Xcode first-click selection).
+    public internal(set) var selectedFoldPlaceholderID: FoldRange.FoldIdentifier?
+    /// Fold animation progress 0...1 (hosts may use for polish).
+    public internal(set) var foldAnimationProgress: CGFloat = 1
+    var foldAnimationTask: Task<Void, Never>?
+
     /// Width of the line-number gutter (0 when hidden).
     public private(set) var gutterWidth: CGFloat = 0
 
@@ -268,18 +277,21 @@ public final class EditorController {
         } else if let resolvedLanguage, let provider = TreeSitterHighlightProvider.make(for: resolvedLanguage) {
             setHighlightProviders([provider])
         }
+
+        installFoldingIfNeeded()
     }
 
     // MARK: - Highlighting
 
     public func setHighlightProviders(_ providers: [any HighlightProviding]) {
         highlightProviders = providers
-        highlighter.updateHooks(makeHighlightHooks())
-        highlighter.setProviders(providers)
+        highlighter?.updateHooks(makeHighlightHooks())
+        highlighter?.setProviders(providers)
     }
 
     /// Call from hosts when the visible document UTF-16 range changes.
     public func setVisibleUTF16RangeForHighlighting(_ range: NSRange) {
+        guard let highlighter else { return }
         highlighter.updateHooks(makeHighlightHooks())
         highlighter.setVisibleUTF16Range(range)
     }
@@ -329,6 +341,7 @@ public final class EditorController {
 
     func noteDidEdit(range: NSRange, delta: Int) {
         highlighter?.documentDidEdit(range: range, delta: delta)
+        noteFoldingEdit(range: range, delta: delta)
     }
 
     // MARK: - Coordinators
@@ -385,9 +398,11 @@ public final class EditorController {
     }
 
     public func makeGutterModel() -> GutterModel {
-        GutterModel(
+        let ribbon = configuration.peripherals.showFoldingRibbon ? FoldRibbonMetrics.width : 0
+        return GutterModel(
             lineCount: max(1, layout.lineIndex.count),
-            font: configuration.font
+            font: configuration.font,
+            foldingRibbonWidth: ribbon
         )
     }
 
@@ -684,17 +699,25 @@ public final class EditorController {
         for range in working {
             let deleteRange: NSRange
             if range.length > 0 {
-                deleteRange = range
+                // Expand through any collapsed fold the selection touches.
+                deleteRange = selectionExpandedForCollapsedFolds(range)
+            } else if selectedFoldPlaceholderID != nil,
+                      let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID }) {
+                // Selected ··· bubble + Delete removes the whole folded body.
+                deleteRange = fold.nsRange
+                selectedFoldPlaceholderID = nil
             } else if let planned = TextFilters.deleteBackwardRange(
                 caret: range.location,
                 in: full,
                 indent: configuration.behavior.indentOption
             ) {
-                deleteRange = planned
+                deleteRange = selectionExpandedForCollapsedFolds(planned)
             } else {
                 carets.append(0)
                 continue
             }
+            // Don't re-collapse folds whose body is being deleted (preserve-by-start would revive them).
+            expandCollapsedFoldsIntersecting(deleteRange)
             noteWillEdit(deleteRange)
             let edit = document.replaceCharacters(in: deleteRange, with: "")
             undoCoordinator.register(edit: edit)
@@ -722,13 +745,20 @@ public final class EditorController {
         for range in ranges.sorted(by: { $0.location > $1.location }) {
             let deleteRange: NSRange
             if range.length > 0 {
-                deleteRange = range
+                deleteRange = selectionExpandedForCollapsedFolds(range)
+            } else if selectedFoldPlaceholderID != nil,
+                      let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID }) {
+                deleteRange = fold.nsRange
+                selectedFoldPlaceholderID = nil
             } else if range.location < document.length {
-                deleteRange = NSRange(location: range.location, length: 1)
+                // Forward-delete into a collapsed fold removes the whole body.
+                let one = NSRange(location: range.location, length: 1)
+                deleteRange = selectionExpandedForCollapsedFolds(one)
             } else {
                 carets.append(range.location)
                 continue
             }
+            expandCollapsedFoldsIntersecting(deleteRange)
             noteWillEdit(deleteRange)
             let edit = document.replaceCharacters(in: deleteRange, with: "")
             undoCoordinator.register(edit: edit)
@@ -857,6 +887,17 @@ public final class EditorController {
         return snapshot
     }
 
+    /// Updates ``contentSize`` / ``latestSnapshot`` from the layout engine without highlight work.
+    func syncContentSizeFromLayout() {
+        let width = contentSize.width > 0 ? contentSize.width : 400
+        let snapshot = layout.layoutViewport(
+            visibleRect: CGRect(x: 0, y: 0, width: width, height: max(layout.contentSize.height, 1)),
+            containerWidth: width
+        )
+        latestSnapshot = snapshot
+        contentSize = snapshot.contentSize
+    }
+
     public func caretRect(containerWidth: CGFloat) -> CGRect? {
         layout.caretRect(atUTF16Offset: selection.selectedRange.location, containerWidth: containerWidth)
     }
@@ -983,6 +1024,7 @@ public final class EditorController {
             || old?.appearance.lineHeightMultiple != configuration.appearance.lineHeightMultiple
             || old?.layout.lineBreakStrategy != configuration.layout.lineBreakStrategy
             || old?.peripherals.showGutter != configuration.peripherals.showGutter
+            || old?.peripherals.showFoldingRibbon != configuration.peripherals.showFoldingRibbon
             || old?.peripherals.showMinimap != configuration.peripherals.showMinimap
         {
             layout.invalidateAll()
@@ -991,6 +1033,20 @@ public final class EditorController {
         if old != nil, old?.appearance.theme != configuration.appearance.theme {
             highlighter?.updateHooks(makeHighlightHooks())
             highlighter?.themeDidChange()
+        }
+
+        if old?.peripherals.showFoldingRibbon != configuration.peripherals.showFoldingRibbon {
+            if configuration.peripherals.showFoldingRibbon {
+                rebuildFolds()
+            } else {
+                // Expand all and clear placeholders when ribbon is turned off.
+                for fold in _foldModel.collapsedFolds {
+                    _foldModel.setCollapsed(false, forFold: fold)
+                }
+                layout.attachments.remove { $0.attachment is LineFoldPlaceholder }
+                layout.applyCollapsedFoldHeights(collapsedFolds: [], hideCloserLines: false, document: "")
+                selectedFoldPlaceholderID = nil
+            }
         }
 
         updateBracketEmphasis()

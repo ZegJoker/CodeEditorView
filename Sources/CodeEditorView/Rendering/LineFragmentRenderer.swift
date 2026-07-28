@@ -11,6 +11,7 @@ public enum LineFragmentRenderer {
         textColor: CGColor? = nil
     ) {
         guard let ctLine = fragment.ctLine else {
+            // No text — attachments start at origin (e.g. empty prefix + fold bubble).
             drawAttachments(fragment.attachments, in: context, origin: origin, height: fragment.height)
             return
         }
@@ -26,7 +27,15 @@ public enum LineFragmentRenderer {
         CTLineDraw(ctLine, context)
         context.restoreGState()
 
-        drawAttachments(fragment.attachments, in: context, origin: origin, height: fragment.height)
+        // Fold placeholders (and other attachments) sit *after* the typeset text — Xcode-style
+        // `func f() { ··· }`, not stacked under the glyphs.
+        let textWidth = CGFloat(CTLineGetTypographicBounds(ctLine, nil, nil, nil))
+        drawAttachments(
+            fragment.attachments,
+            in: context,
+            origin: CGPoint(x: origin.x + textWidth, y: origin.y),
+            height: fragment.height
+        )
     }
 
     public static func drawSelection(

@@ -25,6 +25,8 @@ public final class LayoutEngine {
 
     public private(set) var contentSize: CGSize = .zero
     public private(set) var estimatedLineHeight: CGFloat = 16
+    /// Collapsed fold ranges currently applied to line heights (Phase 10).
+    public private(set) var collapsedFolds: [FoldRange] = []
 
     private var typesetter = Typesetter()
     private weak var document: DocumentStore?
@@ -74,7 +76,17 @@ public final class LayoutEngine {
             needsFullRebuild = true
             return
         }
+        // Preserve collapsed fold set across full rebuild (heights are wiped).
+        let preserved = collapsedFolds
         rebuildFromDocument()
+        if !preserved.isEmpty {
+            let doc = document?.fullString ?? ""
+            applyCollapsedFoldHeights(
+                collapsedFolds: preserved,
+                hideCloserLines: false,
+                document: doc
+            )
+        }
     }
 
     /// Reacts to a text replacement that already landed in the document store.
@@ -113,7 +125,25 @@ public final class LayoutEngine {
         var laidOut: [LaidOutFragment] = []
         var maxContentWidth: CGFloat = 0
 
+        let docNS = document.fullString as NSString
+        // Ensure collapsed heights survive wrap/resize rebuilds that reintroduce estimated heights.
+        if !collapsedFolds.isEmpty {
+            reassertCollapsedHeightsIfNeeded(document: docNS)
+        }
+
         lineIndex.enumerateLines(inYRange: minY, maxY: maxY) { position in
+            // Skip / re-zero collapsed body lines only — keep real closer lines (`}`) visible.
+            if self.isLineHiddenByCollapsedFold(position.utf16Range) {
+                if position.metrics.height >= 0.5 {
+                    self.lineIndex.updateMetrics(
+                        atIndex: position.index,
+                        metrics: LineMetrics(utf16Length: position.metrics.utf16Length, height: 0)
+                    )
+                    position.payload.applyTypeset(fragments: [], height: 0)
+                }
+                return
+            }
+            if position.metrics.height < 0.5 { return }
             let line = position.payload
             if line.needsTypeset || line.fragments.isEmpty {
                 typesetLine(position: position, document: document, maxWidth: layoutWidth)
@@ -121,6 +151,7 @@ public final class LayoutEngine {
 
             // Re-read position after potential height update.
             guard let refreshed = self.lineIndex.line(atIndex: position.index) else { return }
+            if refreshed.metrics.height < 0.5 { return }
             var y = refreshed.yOffset
             for fragment in refreshed.payload.fragments {
                 let frame = CGRect(
@@ -141,6 +172,149 @@ public final class LayoutEngine {
             : max(containerWidth, maxContentWidth, maxLineWidth())
         contentSize = CGSize(width: width, height: lineIndex.height)
         return LayoutSnapshot(contentSize: contentSize, fragments: laidOut)
+    }
+
+    /// If any collapsed fold line has non-zero height (e.g. after wrap resize), re-zero them.
+    private func reassertCollapsedHeightsIfNeeded(document: NSString) {
+        var needsPass = false
+        for fold in collapsedFolds where fold.isCollapsed {
+            // Probe a few offsets inside the fold body.
+            let mid = (fold.range.lowerBound + fold.range.upperBound) / 2
+            if let line = lineIndex.line(atUTF16Offset: mid),
+               line.metrics.height >= 0.5,
+               isLineHiddenByCollapsedFold(line.utf16Range)
+                || isCloserLineHiddenByCollapsedFold(line.utf16Range, document: document) {
+                needsPass = true
+                break
+            }
+        }
+        guard needsPass else { return }
+        applyCollapsedFoldHeights(
+            collapsedFolds: collapsedFolds,
+            hideCloserLines: false,
+            document: document as String
+        )
+    }
+
+    /// Zero height for lines strictly inside collapsed folds; restore others via typeset.
+    ///
+    /// - Parameter hideCloserLines: When true, also hide a following line that is only a
+    ///   closing delimiter (`}`, `)`, …) so it can be drawn after the `···` bubble (Xcode).
+    public func applyCollapsedFoldHeights(
+        collapsedFolds: [FoldRange],
+        hideCloserLines: Bool = false,
+        document: String = ""
+    ) {
+        self.collapsedFolds = collapsedFolds
+        guard lineIndex.count > 0 else { return }
+        let estimated = estimatedLineHeight * lineHeightMultiplier
+        let ns = document as NSString
+        for index in 0..<lineIndex.count {
+            guard let pos = lineIndex.line(atIndex: index) else { continue }
+            var hidden = isLineHiddenByCollapsedFold(pos.utf16Range)
+            if !hidden, hideCloserLines, !document.isEmpty {
+                hidden = isCloserLineHiddenByCollapsedFold(pos.utf16Range, document: ns)
+            }
+            if hidden {
+                if pos.metrics.height > 0.5 {
+                    lineIndex.updateMetrics(
+                        atIndex: index,
+                        metrics: LineMetrics(utf16Length: pos.metrics.utf16Length, height: 0)
+                    )
+                }
+                pos.payload.applyTypeset(fragments: [], height: 0)
+            } else if pos.metrics.height < 0.5 {
+                // Was hidden — restore a provisional height; typeset will refine.
+                lineIndex.updateMetrics(
+                    atIndex: index,
+                    metrics: LineMetrics(utf16Length: pos.metrics.utf16Length, height: estimated)
+                )
+                pos.payload.markNeedsTypeset()
+            } else {
+                // Ensure fold-start lines re-typeset to pick up placeholders.
+                if collapsedFolds.contains(where: { fold in
+                    fold.isCollapsed && NSLocationInRange(fold.range.lowerBound, pos.utf16Range)
+                }) {
+                    pos.payload.markNeedsTypeset()
+                }
+            }
+        }
+        contentSize = CGSize(width: contentSize.width, height: lineIndex.height)
+    }
+
+    /// Whether a line lies strictly inside a collapsed fold (not the fold-start line).
+    ///
+    /// Any line that **starts** inside the fold range (after the header) is hidden, including
+    /// whole body lines whose ranges are covered by a line-snapped fold end.
+    public func isLineHiddenByCollapsedFold(_ lineRange: NSRange) -> Bool {
+        guard !collapsedFolds.isEmpty, lineRange.length >= 0 else { return false }
+        let lineStart = lineRange.location
+        let lineEnd = lineRange.location + lineRange.length
+        for fold in collapsedFolds where fold.isCollapsed {
+            let fStart = fold.range.lowerBound
+            let fEnd = fold.range.upperBound
+            // Header line (contains fold start) stays visible — shows prefix + bubble.
+            if lineStart <= fStart && fStart < lineEnd {
+                continue
+            }
+            // Line starts inside the fold body.
+            if lineStart >= fStart && lineStart < fEnd {
+                return true
+            }
+            // Line fully covered by fold (belt-and-suspenders).
+            if lineStart > fStart && lineEnd <= fEnd {
+                return true
+            }
+        }
+        return false
+    }
+
+    /// Hide a simple closer line (`}`, `fi`, …) that immediately follows a collapsed fold end
+    /// (that glyph is re-drawn after the bubble on the header line).
+    func isCloserLineHiddenByCollapsedFold(_ lineRange: NSRange, document: NSString) -> Bool {
+        for fold in collapsedFolds where fold.isCollapsed {
+            if let info = closerLineInfo(for: fold, document: document),
+               info.lineRange.location == lineRange.location {
+                return true
+            }
+        }
+        return false
+    }
+
+    /// Hit-test fold placeholders using laid-out fragment frames.
+    public func foldPlaceholder(at point: CGPoint, containerWidth: CGFloat) -> LineFoldPlaceholder? {
+        let snapshot = layoutViewport(
+            visibleRect: CGRect(x: 0, y: max(0, point.y - 2), width: containerWidth, height: 4),
+            containerWidth: containerWidth
+        )
+        for item in snapshot.fragments {
+            guard !item.fragment.attachments.isEmpty else { continue }
+            let textWidth: CGFloat
+            if let ctLine = item.fragment.ctLine {
+                textWidth = CGFloat(CTLineGetTypographicBounds(ctLine, nil, nil, nil))
+            } else {
+                textWidth = 0
+            }
+            var x = item.frame.minX + textWidth
+            for att in item.fragment.attachments {
+                let rect = CGRect(x: x, y: item.frame.minY, width: att.width, height: item.frame.height)
+                if rect.insetBy(dx: -2, dy: -2).contains(point),
+                   let placeholder = att.attachment as? LineFoldPlaceholder {
+                    return placeholder
+                }
+                x += att.width
+            }
+        }
+        return nil
+    }
+
+    public func invalidateTypesetForVisibleLines() {
+        for index in 0..<lineIndex.count {
+            guard let pos = lineIndex.line(atIndex: index) else { continue }
+            if pos.metrics.height >= 0.5 {
+                pos.payload.markNeedsTypeset()
+            }
+        }
     }
 
     public func caretRect(atUTF16Offset offset: Int, containerWidth: CGFloat) -> CGRect? {
@@ -186,7 +360,9 @@ public final class LayoutEngine {
             visibleRect: CGRect(x: 0, y: max(0, point.y - 1), width: containerWidth, height: 2),
             containerWidth: containerWidth
         )
-        guard let line = lineIndex.line(atY: point.y) else { return 0 }
+        // Prefer the first non-zero-height line at/above this Y so ghost collapsed
+        // rows never steal clicks meant for the real closer line below.
+        guard let line = visibleLine(atY: point.y) else { return 0 }
         var y = line.yOffset
         let localX = point.x - edgeInsets.leading
 
@@ -202,6 +378,27 @@ public final class LayoutEngine {
         for (fragmentIndex, fragment) in fragments.enumerated() {
             let maxY = y + fragment.height
             if point.y <= maxY || fragmentIndex == fragments.count - 1 {
+                // Collapsed fold header: text | ··· bubble | (rest of line is fold body).
+                // Clicks past the bubble jump to the end of the fold (start of real `}` line).
+                if let fold = collapsedFoldStarting(on: line) {
+                    let textWidth: CGFloat
+                    if let ctLine = fragment.ctLine {
+                        textWidth = CGFloat(CTLineGetTypographicBounds(ctLine, nil, nil, nil))
+                    } else {
+                        textWidth = 0
+                    }
+                    let bubbleW = fragment.attachments
+                        .filter { $0.attachment is LineFoldPlaceholder }
+                        .reduce(CGFloat(0)) { $0 + $1.width }
+                    // Bubble line is the first body row: indent | ··· | (end of fold body).
+                    if localX > textWidth + bubbleW + 2 {
+                        return fold.range.upperBound
+                    }
+                    if localX >= textWidth {
+                        return fold.range.lowerBound
+                    }
+                }
+
                 if let ctLine = fragment.ctLine {
                     let index = CTLineGetStringIndexForPosition(ctLine, CGPoint(x: localX, y: 0))
                     let fragLen = fragment.lineRelativeRange.length
@@ -215,6 +412,40 @@ public final class LayoutEngine {
             y = maxY
         }
         return line.utf16Offset + contentLength
+    }
+
+    /// First laid-out (non-zero height) line containing or above `y`.
+    private func visibleLine(atY y: CGFloat) -> LinePosition<TextLine>? {
+        if let line = lineIndex.line(atY: y), line.metrics.height >= 0.5 {
+            return line
+        }
+        // Walk upward for a visible line (collapsed rows have height 0).
+        var probe = y
+        for _ in 0..<64 {
+            probe -= max(estimatedLineHeight, 8)
+            if probe < 0 {
+                return lineIndex.first.flatMap { $0.metrics.height >= 0.5 ? $0 : nil }
+            }
+            if let line = lineIndex.line(atY: max(0, probe)), line.metrics.height >= 0.5 {
+                return line
+            }
+        }
+        // Fallback: last visible line at or below y.
+        var best: LinePosition<TextLine>?
+        lineIndex.forEach { pos in
+            if pos.metrics.height >= 0.5, pos.yOffset <= y {
+                best = pos
+            }
+        }
+        return best ?? lineIndex.line(atY: y)
+    }
+
+    private func collapsedFoldStarting(on line: LinePosition<TextLine>) -> FoldRange? {
+        let start = line.utf16Offset
+        let end = start + max(line.metrics.utf16Length, 1)
+        return collapsedFolds.first { fold in
+            fold.isCollapsed && fold.range.lowerBound >= start && fold.range.lowerBound < end
+        }
     }
 
     /// UTF-16 length of a line excluding a trailing `\n` / `\r\n` / `\r`.
@@ -355,7 +586,16 @@ public final class LayoutEngine {
         // zero-length line — otherwise the first Return at EOF only bumps column
         // (caret sits on the terminator of the last content line with no new row).
         ensureTrailingCaretLine()
-        contentSize = CGSize(width: contentSize.width, height: lineIndex.height)
+        // Localized metrics rebuild can restore estimated heights on collapsed lines.
+        if !collapsedFolds.isEmpty {
+            applyCollapsedFoldHeights(
+                collapsedFolds: collapsedFolds,
+                hideCloserLines: false,
+                document: document.fullString
+            )
+        } else {
+            contentSize = CGSize(width: contentSize.width, height: lineIndex.height)
+        }
     }
 
     /// Matches full-rebuild behavior: a document that ends with `\n`/`\r` gets a final
@@ -407,6 +647,16 @@ public final class LayoutEngine {
         maxWidth: CGFloat
     ) {
         let range = position.utf16Range
+        if isLineHiddenByCollapsedFold(range) {
+            position.payload.applyTypeset(fragments: [], height: 0)
+            if position.metrics.height > 0.5 {
+                lineIndex.updateMetrics(
+                    atIndex: position.index,
+                    metrics: LineMetrics(utf16Length: position.metrics.utf16Length, height: 0)
+                )
+            }
+            return
+        }
         // Guard against transient line-index/document desync (would throw in attributedSubstring).
         guard range.location >= 0,
               range.location <= document.length,
@@ -415,16 +665,39 @@ public final class LayoutEngine {
             position.payload.applyTypeset(fragments: [], height: estimatedLineHeight * lineHeightMultiplier)
             return
         }
-        let substring: NSAttributedString
-        if range.length == 0 {
-            substring = NSAttributedString(string: "", attributes: typingAttributes)
-        } else {
-            substring = document.attributedSubstring(from: range)
-        }
 
-        // Strip trailing line endings from typesetting width calculations, keep range metadata intact.
-        let displayString = stripLineEnding(substring)
-        let lineAttachments = attachments.attachments(overlapping: range)
+        // Collapsed fold whose body *starts* on this line: show leading indent + `···` only
+        // (bubble at the folded line start — not after `{` on the header line).
+        let collapsedStart = collapsedFolds.first { fold in
+            fold.isCollapsed && fold.range.lowerBound >= range.location
+                && fold.range.lowerBound < range.location + max(range.length, 1)
+        }
+        let prefixRange: NSRange
+        let displayString: NSAttributedString
+        let lineAttachments: [AnyTextAttachment]
+        if collapsedStart != nil {
+            // Keep original indent spaces/tabs so the bubble aligns with body indent.
+            let indentLen = leadingWhitespaceLength(in: range, document: document)
+            prefixRange = NSRange(location: range.location, length: indentLen)
+            if indentLen > 0 {
+                displayString = stripLineEnding(document.attributedSubstring(from: prefixRange))
+            } else {
+                displayString = NSAttributedString(string: "", attributes: typingAttributes)
+            }
+            lineAttachments = attachments.attachments(overlapping: range).filter {
+                $0.attachment is LineFoldPlaceholder
+            }
+        } else {
+            prefixRange = range
+            let substring: NSAttributedString
+            if range.length == 0 {
+                substring = NSAttributedString(string: "", attributes: typingAttributes)
+            } else {
+                substring = document.attributedSubstring(from: range)
+            }
+            displayString = stripLineEnding(substring)
+            lineAttachments = attachments.attachments(overlapping: range)
+        }
         let display = TypesetDisplayData(
             maxWidth: maxWidth,
             lineHeightMultiplier: lineHeightMultiplier,
@@ -432,7 +705,7 @@ public final class LayoutEngine {
         )
         let result = typesetter.typeset(
             displayString,
-            documentRange: range,
+            documentRange: prefixRange,
             display: display,
             attachments: lineAttachments
         )
@@ -443,6 +716,51 @@ public final class LayoutEngine {
                 metrics: LineMetrics(utf16Length: position.metrics.utf16Length, height: result.totalHeight)
             )
         }
+    }
+
+    /// Locate a simple closer line right after a fold end (`}`, `)`, …).
+    func closerLineInfo(
+        for fold: FoldRange,
+        document: NSString
+    ) -> (lineRange: NSRange, token: String, tokenRange: NSRange)? {
+        let end = fold.range.upperBound
+        guard document.length > 0 else { return nil }
+
+        // Prefer the line that begins at/after the fold end (typical endFold position).
+        let probe = min(max(0, end), document.length - 1)
+        var lineStart = 0, lineEnd = 0, contentsEnd = 0
+        document.getLineStart(
+            &lineStart,
+            end: &lineEnd,
+            contentsEnd: &contentsEnd,
+            for: NSRange(location: probe, length: 0)
+        )
+        // If probe landed on the previous line, step forward to the next line start.
+        if lineEnd <= end, lineEnd < document.length {
+            document.getLineStart(
+                &lineStart,
+                end: &lineEnd,
+                contentsEnd: &contentsEnd,
+                for: NSRange(location: lineEnd, length: 0)
+            )
+        }
+
+        let lineRange = NSRange(location: lineStart, length: lineEnd - lineStart)
+        let contentRange = NSRange(location: lineStart, length: max(0, contentsEnd - lineStart))
+        guard contentRange.length > 0 else { return nil }
+        let content = document.substring(with: contentRange)
+        let trimmed = content.trimmingCharacters(in: .whitespaces)
+        let closers: Set<String> = ["}", ")", "]", "fi", "done", "esac"]
+        guard closers.contains(trimmed) else { return nil }
+
+        // Only accept closers that belong to this fold (line starts near fold end).
+        guard abs(lineStart - end) <= 8 || (lineStart >= end && lineStart <= end + 8) else {
+            return nil
+        }
+
+        let leading = content.prefix { $0 == " " || $0 == "\t" }.count
+        let tokenRange = NSRange(location: lineStart + leading, length: trimmed.utf16.count)
+        return (lineRange, trimmed, tokenRange)
     }
 
     private func stripLineEnding(_ string: NSAttributedString) -> NSAttributedString {
@@ -462,6 +780,19 @@ public final class LayoutEngine {
         }
         if length == string.length { return string }
         return string.attributedSubstring(from: NSRange(location: 0, length: length))
+    }
+
+    private func leadingWhitespaceLength(in range: NSRange, document: DocumentStore) -> Int {
+        guard range.length > 0, let text = document.substring(from: range) else { return 0 }
+        var count = 0
+        for ch in text {
+            if ch == " " || ch == "\t" {
+                count += 1
+            } else {
+                break
+            }
+        }
+        return count
     }
 
     private func recomputeEstimatedLineHeight() {

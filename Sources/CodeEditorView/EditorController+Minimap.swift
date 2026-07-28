@@ -47,23 +47,32 @@ extension EditorController {
         var lines: [MinimapLinePaint] = []
         var utf16Union = NSRange(location: 0, length: 0)
 
+        let docNS = document.fullString as NSString
         layout.lineIndex.enumerateLines(inYRange: editorMinY, maxY: editorMaxY) { line in
+            // Mirror editor folding: skip collapsed body / remapped closer lines so the
+            // minimap matches the visible document map (not the raw source).
+            if line.metrics.height < 0.5 { return }
+            if layout.isLineHiddenByCollapsedFold(line.utf16Range) {
+                return
+            }
             let y = line.yOffset * scale
             let h = max(MinimapMetrics.lineHeight, line.metrics.height * scale)
             let range = line.utf16Range
-            let text = document.substring(from: range) ?? ""
-            let captures = highlighter?.captureRuns(in: range) ?? []
-            // Convert document-absolute capture ranges to line-local.
+            // Fold header: only paint the visible prefix before the fold start (not nested body).
+            let paintRange = minimapPaintRange(for: line)
+            let text = document.substring(from: paintRange) ?? ""
+            let captures = highlighter?.captureRuns(in: paintRange) ?? []
+            // Convert document-absolute capture ranges to paint-range-local.
             let local: [(NSRange, CaptureName?)] = captures.map { run in
-                let loc = run.range.location - range.location
+                let loc = run.range.location - paintRange.location
                 return (NSRange(location: max(0, loc), length: run.range.length), run.capture)
             }
             let bubbles = MinimapRunBuilder.bubbles(lineText: text, captureRuns: local)
             lines.append(MinimapLinePaint(y: y, height: h, bubbles: bubbles, lineIndex: line.index))
             if utf16Union.length == 0 {
-                utf16Union = range
+                utf16Union = paintRange
             } else {
-                utf16Union = NSUnionRange(utf16Union, range)
+                utf16Union = NSUnionRange(utf16Union, paintRange)
             }
         }
 
@@ -94,6 +103,26 @@ extension EditorController {
         let editorH = max(layout.lineIndex.height, contentSize.height, 1)
         let miniH = max(minimapContentHeight(), 1)
         return MinimapGeometry.editorY(minimapY: minimapY, editorHeight: editorH, minimapHeight: miniH)
+    }
+
+    /// UTF-16 range to paint for a minimap row (indent only on collapsed bubble rows).
+    private func minimapPaintRange(for line: LinePosition<TextLine>) -> NSRange {
+        let full = line.utf16Range
+        guard layout.collapsedFolds.contains(where: { fold in
+            fold.isCollapsed
+                && fold.range.lowerBound >= full.location
+                && fold.range.lowerBound < full.location + max(full.length, 1)
+        }) else {
+            return full
+        }
+        // Bubble row: don't paint body glyphs (indent only).
+        var indent = 0
+        if let text = document.substring(from: full) {
+            for ch in text {
+                if ch == " " || ch == "\t" { indent += 1 } else { break }
+            }
+        }
+        return NSRange(location: full.location, length: indent)
     }
 
     /// Apply trailing inset for minimap width (call when host width known).

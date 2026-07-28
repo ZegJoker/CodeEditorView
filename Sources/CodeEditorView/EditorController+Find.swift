@@ -340,6 +340,8 @@ extension EditorController {
 
     func selectCurrentFindMatch(scroll: Bool) {
         guard let match = findSession.currentMatch else { return }
+        // Expand any collapsed folds so the match is visible.
+        expandFolds(containing: match.location)
         selection.setSelectedRange(match)
         if scroll {
             updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)

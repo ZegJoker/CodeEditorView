@@ -8,7 +8,7 @@ import AppKit
 import UIKit
 #endif
 
-/// Draws the line-number gutter into a Core Graphics context.
+/// Draws the line-number gutter (+ optional fold ribbon) into a Core Graphics context.
 public enum GutterRenderer {
     public static func draw(
         model: GutterModel,
@@ -19,6 +19,7 @@ public enum GutterRenderer {
         selectedTextColor: CGColor,
         backgroundColor: CGColor,
         selectedLineColor: CGColor,
+        folds: [FoldRange] = [],
         in context: CGContext
     ) {
         let width = model.width
@@ -28,7 +29,7 @@ public enum GutterRenderer {
         context.setFillColor(backgroundColor)
         context.fill(CGRect(x: 0, y: visibleRect.minY, width: width, height: visibleRect.height))
 
-        // Divider
+        // Divider at trailing edge of gutter
         context.setStrokeColor(textColor.copy(alpha: 0.15) ?? textColor)
         context.setLineWidth(1)
         context.move(to: CGPoint(x: width - 0.5, y: visibleRect.minY))
@@ -40,7 +41,10 @@ public enum GutterRenderer {
             return
         }
 
+        let numbersWidth = model.numbersWidth
+
         lineIndex.enumerateLines(inYRange: visibleRect.minY, maxY: visibleRect.maxY) { line in
+            if line.metrics.height < 0.5 { return }
             let isSelected = selectedLineIndices.contains(line.index)
             if isSelected {
                 context.setFillColor(selectedLineColor)
@@ -54,12 +58,103 @@ public enum GutterRenderer {
                 .foregroundColor: platformColor(from: color),
             ]
             let size = label.size(withAttributes: attributes)
-            let x = width - model.horizontalPadding - size.width
+            // Numbers sit in the numbers column (left of ribbon).
+            let x = numbersWidth - model.horizontalPadding - size.width
             let y = line.yOffset + (line.metrics.height - size.height) / 2
             label.draw(at: CGPoint(x: x, y: y), withAttributes: attributes)
         }
 
+        if model.foldingRibbonWidth > 0.5 {
+            drawFoldRibbon(
+                model: model,
+                lineIndex: lineIndex,
+                visibleRect: visibleRect,
+                folds: folds,
+                textColor: textColor,
+                in: context
+            )
+        }
+
         context.restoreGState()
+    }
+
+    /// Xcode-style disclosure markers on fold-start lines (not full-height bands that misread as the block).
+    private static func drawFoldRibbon(
+        model: GutterModel,
+        lineIndex: LineIndex<some LinePayload>,
+        visibleRect: CGRect,
+        folds: [FoldRange],
+        textColor: CGColor,
+        in context: CGContext
+    ) {
+        let ribbonX = model.foldingRibbonMinX
+        let ribbonW = model.foldingRibbonWidth
+        guard ribbonW > 0 else { return }
+
+        // Faint vertical guide
+        context.setStrokeColor(textColor.copy(alpha: 0.08) ?? textColor)
+        context.setLineWidth(1)
+        context.move(to: CGPoint(x: ribbonX + 0.5, y: visibleRect.minY))
+        context.addLine(to: CGPoint(x: ribbonX + 0.5, y: visibleRect.maxY))
+        context.strokePath()
+
+        let openChevron = textColor.copy(alpha: 0.45) ?? textColor
+        let collapsedFill = textColor.copy(alpha: 0.3) ?? textColor
+        let collapsedChevron = textColor.copy(alpha: 0.95) ?? textColor
+
+        // Disclosure on the **header** line (line before the first body line where the
+        // fold range starts). The `···` bubble lives on the first body line when collapsed.
+        var headerMarkers: [Int: FoldRange] = [:]
+        for fold in folds {
+            guard let bodyStart = lineIndex.line(atUTF16Offset: fold.range.lowerBound) else { continue }
+            // Walk up to previous visible non-empty header line.
+            var headerIdx = bodyStart.index - 1
+            while headerIdx >= 0 {
+                guard let header = lineIndex.line(atIndex: headerIdx) else { break }
+                if header.metrics.height >= 0.5 {
+                    if let existing = headerMarkers[headerIdx] {
+                        if fold.depth < existing.depth {
+                            headerMarkers[headerIdx] = fold
+                        }
+                    } else {
+                        headerMarkers[headerIdx] = fold
+                    }
+                    break
+                }
+                headerIdx -= 1
+            }
+        }
+
+        for (lineIdx, fold) in headerMarkers {
+            guard let headerLine = lineIndex.line(atIndex: lineIdx) else { continue }
+            guard headerLine.metrics.height >= 0.5 else { continue }
+            let cy = headerLine.yOffset + headerLine.metrics.height / 2
+            let cx = ribbonX + ribbonW / 2
+            guard cy >= visibleRect.minY - 4, cy <= visibleRect.maxY + 4 else { continue }
+
+            if fold.isCollapsed {
+                let r: CGFloat = 3.5
+                context.setFillColor(collapsedFill)
+                context.fillEllipse(in: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2))
+                context.setStrokeColor(collapsedChevron)
+                context.setLineWidth(1.2)
+                context.setLineCap(.round)
+                context.setLineJoin(.round)
+                context.move(to: CGPoint(x: cx - 1.0, y: cy - 1.8))
+                context.addLine(to: CGPoint(x: cx + 1.5, y: cy))
+                context.addLine(to: CGPoint(x: cx - 1.0, y: cy + 1.8))
+                context.strokePath()
+            } else {
+                context.setStrokeColor(openChevron)
+                context.setLineWidth(1.25)
+                context.setLineCap(.round)
+                context.setLineJoin(.round)
+                context.move(to: CGPoint(x: cx - 2.2, y: cy - 0.8))
+                context.addLine(to: CGPoint(x: cx, y: cy + 1.6))
+                context.addLine(to: CGPoint(x: cx + 2.2, y: cy - 0.8))
+                context.strokePath()
+            }
+        }
     }
 
     private static func platformColor(from cgColor: CGColor) -> PlatformColor {

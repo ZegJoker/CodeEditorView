@@ -162,10 +162,18 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
         // When wrapping, layout width is always the visible clip — never the (possibly stale) document width.
         let layoutWidth: CGFloat = wrap ? clip : max(clip, bounds.width, 1)
+        var didInvalidate = false
         if abs(containerWidth - layoutWidth) > 0.5 {
             controller.layout.invalidateAll()
+            didInvalidate = true
         }
         containerWidth = layoutWidth
+
+        // After a full rebuild (resize/wrap), re-apply fold collapse so line numbers
+        // and heights stay in sync with collapsed folds.
+        if didInvalidate, !controller.foldModel.collapsedFolds.isEmpty {
+            controller.syncFoldPlaceholdersAndHeights()
+        }
 
         let visible = visibleRect.isEmpty
             ? CGRect(x: 0, y: 0, width: layoutWidth, height: max(bounds.height, 1))
@@ -291,6 +299,21 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
         if controller.configuration.peripherals.showGutter {
             let model = controller.makeGutterModel()
+            let visibleFolds: [FoldRange]
+            if controller.configuration.peripherals.showFoldingRibbon {
+                let yRange = visible
+                // Query folds covering the visible vertical span via first/last visible lines.
+                if let first = controller.layout.lineIndex.line(atY: yRange.minY),
+                   let last = controller.layout.lineIndex.line(atY: yRange.maxY) {
+                    let start = first.utf16Offset
+                    let end = last.utf16Offset + last.metrics.utf16Length
+                    visibleFolds = controller.folds(in: NSRange(location: start, length: max(0, end - start)))
+                } else {
+                    visibleFolds = controller.foldModel.foldCache.allFolds
+                }
+            } else {
+                visibleFolds = []
+            }
             GutterRenderer.draw(
                 model: model,
                 lineIndex: controller.layout.lineIndex,
@@ -300,6 +323,7 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
                 selectedTextColor: theme.text.color.cgColor,
                 backgroundColor: theme.gutterBackground.cgColor,
                 selectedLineColor: theme.lineHighlight.cgColor,
+                folds: visibleFolds,
                 in: context
             )
         }
@@ -347,6 +371,38 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         onWillBecomeFirstResponder?()
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
+
+        // Fold ribbon click (trailing strip of the gutter).
+        if controller.configuration.peripherals.showGutter,
+           controller.configuration.peripherals.showFoldingRibbon {
+            let model = controller.makeGutterModel()
+            let ribbonMinX = model.foldingRibbonMinX
+            let ribbonMaxX = model.width
+            if point.x >= ribbonMinX, point.x <= ribbonMaxX,
+               let line = controller.layout.lineIndex.line(atY: point.y),
+               line.metrics.height >= 0.5 {
+                controller.toggleFold(atLine: line.index)
+                relayout()
+                needsDisplay = true
+                return
+            }
+        }
+
+        // Fold placeholder bubble (Xcode: first click selects, second expands).
+        if controller.configuration.peripherals.showFoldingRibbon,
+           let placeholder = controller.layout.foldPlaceholder(
+            at: point,
+            containerWidth: max(containerWidth, 1)
+           ) {
+            controller.handleFoldPlaceholderClick(placeholder.fold)
+            relayout()
+            needsDisplay = true
+            return
+        }
+
+        // Click elsewhere clears placeholder selection.
+        controller.clearFoldPlaceholderSelection()
+
         let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
 
         // Double-click: select word at click point.

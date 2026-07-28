@@ -17,6 +17,7 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - Find & replace: ``FindEngine``, ``FindSession``, panel chrome, match emphasis
 - Code completion: ``CodeSuggestionDelegate``, ``CodeSuggestionEntry``, floating list (AppKit + UIKit)
 - Minimap overview: ``MinimapGeometry``, ``MinimapRunBuilder``, ``peripherals.showMinimap``
+- Line folding: ``LineFoldProvider``, ``LineIndentationFoldProvider``, ``LineFoldStorage``, ribbon via ``peripherals.showFoldingRibbon``
 - ``EditorCoordinator`` injection (structured concurrency — no Combine)
 - ``EditorState`` for cursors / find-panel bindings
 - Emphasis overlays and invisible characters
