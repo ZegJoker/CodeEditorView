@@ -78,7 +78,7 @@ public enum GutterRenderer {
         context.restoreGState()
     }
 
-    /// Xcode-style disclosure markers on fold-start lines (not full-height bands that misread as the block).
+    /// Disclosure markers on fold-start lines using SF Symbol chevrons.
     private static func drawFoldRibbon(
         model: GutterModel,
         lineIndex: LineIndex<some LinePayload>,
@@ -91,16 +91,16 @@ public enum GutterRenderer {
         let ribbonW = model.foldingRibbonWidth
         guard ribbonW > 0 else { return }
 
-        // Faint vertical guide
+        // Faint vertical guide at the leading edge of the ribbon.
         context.setStrokeColor(textColor.copy(alpha: 0.08) ?? textColor)
         context.setLineWidth(1)
         context.move(to: CGPoint(x: ribbonX + 0.5, y: visibleRect.minY))
         context.addLine(to: CGPoint(x: ribbonX + 0.5, y: visibleRect.maxY))
         context.strokePath()
 
-        let openChevron = textColor.copy(alpha: 0.45) ?? textColor
-        let collapsedFill = textColor.copy(alpha: 0.3) ?? textColor
-        let collapsedChevron = textColor.copy(alpha: 0.95) ?? textColor
+        let openTint = platformColor(from: textColor.copy(alpha: 0.55) ?? textColor)
+        let collapsedTint = platformColor(from: textColor.copy(alpha: 0.9) ?? textColor)
+        let iconSize = FoldRibbonMetrics.iconPointSize
 
         // Disclosure on the **header** line (line before the first body line where the
         // fold range starts). The `···` bubble lives on the first body line when collapsed.
@@ -125,6 +125,8 @@ public enum GutterRenderer {
             }
         }
 
+        // NSString line labels already rely on the view’s NSGraphicsContext; keep the same
+        // context for SF Symbols so upright drawing works in flipped AppKit editors.
         for (lineIdx, fold) in headerMarkers {
             guard let headerLine = lineIndex.line(atIndex: lineIdx) else { continue }
             guard headerLine.metrics.height >= 0.5 else { continue }
@@ -132,27 +134,28 @@ public enum GutterRenderer {
             let cx = ribbonX + ribbonW / 2
             guard cy >= visibleRect.minY - 4, cy <= visibleRect.maxY + 4 else { continue }
 
+            let iconRect = CGRect(
+                x: cx - iconSize / 2,
+                y: cy - iconSize / 2,
+                width: iconSize,
+                height: iconSize
+            )
             if fold.isCollapsed {
-                let r: CGFloat = 3.5
-                context.setFillColor(collapsedFill)
-                context.fillEllipse(in: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2))
-                context.setStrokeColor(collapsedChevron)
-                context.setLineWidth(1.2)
-                context.setLineCap(.round)
-                context.setLineJoin(.round)
-                context.move(to: CGPoint(x: cx - 1.0, y: cy - 1.8))
-                context.addLine(to: CGPoint(x: cx + 1.5, y: cy))
-                context.addLine(to: CGPoint(x: cx - 1.0, y: cy + 1.8))
-                context.strokePath()
+                SFSymbolDrawing.draw(
+                    name: FoldRibbonMetrics.collapsedSymbolName,
+                    tint: collapsedTint,
+                    in: iconRect,
+                    pointSize: iconSize,
+                    weight: .ultraLight
+                )
             } else {
-                context.setStrokeColor(openChevron)
-                context.setLineWidth(1.25)
-                context.setLineCap(.round)
-                context.setLineJoin(.round)
-                context.move(to: CGPoint(x: cx - 2.2, y: cy - 0.8))
-                context.addLine(to: CGPoint(x: cx, y: cy + 1.6))
-                context.addLine(to: CGPoint(x: cx + 2.2, y: cy - 0.8))
-                context.strokePath()
+                SFSymbolDrawing.draw(
+                    name: FoldRibbonMetrics.expandedSymbolName,
+                    tint: openTint,
+                    in: iconRect,
+                    pointSize: iconSize,
+                    weight: .ultraLight
+                )
             }
         }
     }

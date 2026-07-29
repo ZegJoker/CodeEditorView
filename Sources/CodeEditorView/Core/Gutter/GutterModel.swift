@@ -7,7 +7,7 @@ public struct GutterModel: Equatable {
     public var font: PlatformFont
     public var minimumDigitCount: Int
     public var horizontalPadding: CGFloat
-    /// CESE fold ribbon width (~7pt). Zero when folding is off.
+    /// Fold ribbon width (SF Symbol chevrons). Zero when folding is off.
     public var foldingRibbonWidth: CGFloat
 
     public init(
@@ -50,7 +50,14 @@ public struct GutterModel: Equatable {
     }
 }
 
-/// Shared fold ribbon metrics (CESE `LineFoldRibbonView.width`).
+/// Shared fold ribbon metrics for disclosure SF Symbols.
 public enum FoldRibbonMetrics: Sendable {
-    public static let width: CGFloat = 7
+    /// Column width — wide enough for a ~12pt chevron and comfortable click target.
+    public static let width: CGFloat = 16
+    /// SF Symbol point size for fold disclosure chevrons.
+    public static let iconPointSize: CGFloat = 11
+    /// Expanded fold (body visible).
+    public static let expandedSymbolName = "chevron.compact.down"
+    /// Collapsed fold (body hidden).
+    public static let collapsedSymbolName = "chevron.compact.right"
 }
