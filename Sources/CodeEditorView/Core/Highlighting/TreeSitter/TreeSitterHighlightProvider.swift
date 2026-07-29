@@ -262,6 +262,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
     /// Nearest tree-sitter node whose type contains `"identifier"` at a UTF-16 offset.
     ///
     /// Used by jump-to-definition hover (CESE: `nodesAt` + `nodeType.contains("identifier")`).
+    /// Rejects oversized ranges so hover never underlines whole functions/files.
     public func identifierRange(atUTF16Offset location: Int) -> NSRange? {
         guard let root = tree?.rootNode else { return nil }
         let length = max(source.utf16.count, documentLength)
@@ -276,16 +277,24 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         var current: Node? = node
         while let n = current {
             if let type = n.nodeType, type.localizedCaseInsensitiveContains("identifier") {
-                return n.range
+                return Self.clampedIdentifierRange(n.range, documentLength: length)
             }
             current = n.parent
         }
 
-        // Fallback: named leaf-ish node under the cursor (not the whole file root).
-        if node.isNamed, node.range.length > 0, node.range.length < length {
-            return node.range
+        // Fallback: only tiny named leaves (identifiers / keywords), never statements.
+        if node.isNamed, node.range.length > 0, node.range.length <= 64 {
+            return Self.clampedIdentifierRange(node.range, documentLength: length)
         }
         return nil
+    }
+
+    private static func clampedIdentifierRange(_ range: NSRange, documentLength: Int) -> NSRange? {
+        guard range.location >= 0, range.location < documentLength else { return nil }
+        let maxLen = 64
+        let len = min(range.length, maxLen, documentLength - range.location)
+        guard len > 0 else { return nil }
+        return NSRange(location: range.location, length: len)
     }
 
     public func queryHighlights(in range: NSRange, text: String) async throws -> [HighlightRange] {

@@ -17,11 +17,26 @@ public enum EmphasisRenderer {
 
             switch emphasis.style {
             case .standard, .fill:
-                fill(range: emphasis.range, fragments: fragments, in: context, color: standardFill)
+                fill(
+                    range: emphasis.range,
+                    fragments: fragments,
+                    in: context,
+                    color: emphasis.color ?? standardFill
+                )
             case .outline:
-                outline(range: emphasis.range, fragments: fragments, in: context, color: outlineStroke)
+                outline(
+                    range: emphasis.range,
+                    fragments: fragments,
+                    in: context,
+                    color: emphasis.color ?? outlineStroke
+                )
             case .underline:
-                underline(range: emphasis.range, fragments: fragments, in: context, color: outlineStroke)
+                underline(
+                    range: emphasis.range,
+                    fragments: fragments,
+                    in: context,
+                    color: emphasis.color ?? outlineStroke
+                )
             }
             context.restoreGState()
         }
@@ -44,9 +59,10 @@ public enum EmphasisRenderer {
 
     private static func underline(range: NSRange, fragments: [LaidOutFragment], in context: CGContext, color: CGColor) {
         context.setStrokeColor(color)
-        context.setLineWidth(1.5)
+        context.setLineWidth(2)
+        context.setLineCap(.round)
         for rect in rects(for: range, fragments: fragments) {
-            let y = rect.maxY - 1
+            let y = rect.maxY - 1.5
             context.move(to: CGPoint(x: rect.minX, y: y))
             context.addLine(to: CGPoint(x: rect.maxX, y: y))
             context.strokePath()

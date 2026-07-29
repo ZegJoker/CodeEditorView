@@ -61,6 +61,9 @@ public final class EditorController {
     var _onJumpFailed: (() -> Void)?
     var _onRequestScrollToSelection: (() -> Void)?
 
+    /// Line annotations / diagnostics (Phase 12).
+    let _annotationStore = LineAnnotationStore()
+
     /// Line folding model (Phase 10).
     let _foldModel = LineFoldModel()
     var _foldingInstalled = false
@@ -362,6 +365,7 @@ public final class EditorController {
     func noteDidEdit(range: NSRange, delta: Int) {
         highlighter?.documentDidEdit(range: range, delta: delta)
         noteFoldingEdit(range: range, delta: delta)
+        noteAnnotationEdit(range: range, delta: delta)
     }
 
     // MARK: - Coordinators

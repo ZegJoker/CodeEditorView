@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 public enum EmphasisStyle: Sendable, Hashable {
@@ -16,6 +17,8 @@ public struct Emphasis: Equatable, Sendable, Identifiable {
     public let inactive: Bool
     public let selectInDocument: Bool
     public let group: String
+    /// Optional stroke/fill override (e.g. red diagnostic underline). When nil, hosts use theme colors.
+    public let color: CGColor?
 
     public init(
         range: NSRange,
@@ -24,6 +27,7 @@ public struct Emphasis: Equatable, Sendable, Identifiable {
         inactive: Bool = false,
         selectInDocument: Bool = false,
         group: String = "default",
+        color: CGColor? = nil,
         id: UUID = UUID()
     ) {
         self.id = id
@@ -33,5 +37,17 @@ public struct Emphasis: Equatable, Sendable, Identifiable {
         self.inactive = inactive
         self.selectInDocument = selectInDocument
         self.group = group
+        self.color = color
+    }
+
+    public static func == (lhs: Emphasis, rhs: Emphasis) -> Bool {
+        lhs.id == rhs.id
+            && lhs.range == rhs.range
+            && lhs.style == rhs.style
+            && lhs.flash == rhs.flash
+            && lhs.inactive == rhs.inactive
+            && lhs.selectInDocument == rhs.selectInDocument
+            && lhs.group == rhs.group
+        // CGColor identity ignored for Equatable (group+id is enough for management).
     }
 }

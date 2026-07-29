@@ -6,4 +6,6 @@ public enum EmphasisGroup {
     public static let bracketPairs = "bracket-pairs"
     /// ⌘-hover / jump-to-definition link highlight.
     public static let jumpToDefinition = "jump-to-definition"
+    /// Diagnostic / line-annotation underlines (Phase 12).
+    public static let diagnostics = "diagnostics"
 }

@@ -2,6 +2,7 @@
 import AppKit
 import CoreGraphics
 import CoreText
+import SwiftUI
 
 /// AppKit host view for ``EditorController``.
 open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggingSource {
@@ -24,6 +25,11 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     private var jumpTrackingArea: NSTrackingArea?
     /// After ⌘-click jump, ignore mouseDragged until mouseUp (avoids selecting from old caret → click).
     private var suppressDragSelection = false
+    /// Expanded message popup (mchakravarty style — floating SwiftUI subview, not NSPopover).
+    private var annotationPopupContainer: AnnotationPopupContainer?
+    private var annotationPopupLine: Int? {
+        annotationPopupContainer?.lineIndex
+    }
 
     public var onTextChange: ((String) -> Void)?
     public var onSelectionChange: ((NSRange) -> Void)?
@@ -215,6 +221,7 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         }
 
         scrollToSelectionIfNeeded()
+        layoutAnnotationPopup()
         needsDisplay = true
     }
 
@@ -296,6 +303,20 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
         for item in snapshot.fragments {
             LineFragmentRenderer.draw(item.fragment, in: context, origin: item.frame.origin)
+        }
+
+        // Trailing inline message chips (mchakravarty MessageInlineView style).
+        // Hide the chip for the line that is currently expanded to the full popup.
+        if !controller.annotationsByLine.isEmpty {
+            AnnotationRenderer.draw(
+                annotationsByLine: controller.annotationsByLine,
+                lineIndex: controller.layout.lineIndex,
+                textLeading: controller.layout.edgeInsets.leading,
+                contentWidth: max(width, bounds.width),
+                visibleRect: visible,
+                excludingLine: annotationPopupLine,
+                in: context
+            )
         }
 
         if controller.configuration.showInvisibleCharacters,
@@ -448,14 +469,47 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     open override func mouseDown(with event: NSEvent) {
         window?.makeKeyAndOrderFront(nil)
+        let point = convert(event.locationInWindow, from: nil)
+
+        // Clicks inside the open message popup are handled by the popup (text selection /
+        // copy). Do not steal first responder or dismiss.
+        if let popup = annotationPopupContainer, popup.frame.contains(point) {
+            return
+        }
+
         onWillBecomeFirstResponder?()
         window?.makeFirstResponder(self)
-        let point = convert(event.locationInWindow, from: nil)
 
         // Clicking the document dismisses completion / jump-to-definition popovers
         // (the floating panel is a separate window, so its clicks never reach here).
         if controller.completionsVisible {
             controller.hideCompletions()
+        }
+
+        // Trailing message chip click → unfold full popup (mchakravarty MessageView toggle).
+        // Exclude the line already expanded (its chip is hidden; hit-testing that rect
+        // would immediately toggle-dismiss when the user aims near the popup).
+        if !controller.annotationsByLine.isEmpty,
+           let lineIdx = AnnotationRenderer.hitTestLine(
+            at: point,
+            annotationsByLine: controller.annotationsByLine,
+            lineIndex: controller.layout.lineIndex,
+            textLeading: controller.layout.edgeInsets.leading,
+            contentWidth: max(containerWidth, bounds.width),
+            excludingLine: annotationPopupLine
+           ),
+           let anns = controller.annotationsByLine[lineIdx], !anns.isEmpty
+        {
+            // Prevent mouseDragged from selecting from the old caret → chip (end of line).
+            suppressDragSelection = true
+            columnAnchor = nil
+            presentAnnotationPopup(annotations: anns, line: lineIdx)
+            return
+        }
+
+        // Click elsewhere collapses an open message popup.
+        if annotationPopupContainer != nil {
+            dismissAnnotationPopup()
         }
 
         // ⌘-click jump-to-definition when hovering an identifier.
@@ -1005,6 +1059,65 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
 
     open override func draggingExited(_ sender: (any NSDraggingInfo)?) {
         isReceivingDrag = false
+    }
+
+    // MARK: - Annotations (Phase 12)
+
+    /// Unfold the mchakravarty-style message popup for a line.
+    ///
+    /// Hosts ``AnnotationPopupView`` as a floating subview — right-aligned under the line.
+    /// Does **not** move the text caret (avoids selecting from old caret → chip on drag).
+    private func presentAnnotationPopup(annotations: [LineAnnotation], line lineIdx: Int) {
+        // Replace any existing popup (animated out).
+        if annotationPopupContainer != nil {
+            dismissAnnotationPopup(animated: false)
+        }
+
+        guard controller.layout.lineIndex.line(atIndex: lineIdx) != nil else { return }
+
+        let container = AnnotationPopupContainer(annotations: annotations, lineIndex: lineIdx)
+        addSubview(container)
+        annotationPopupContainer = container
+
+        let frame = annotationPopupFrame(for: container, line: lineIdx)
+        container.animateIn(to: frame)
+        needsDisplay = true // hide the chip for this line
+    }
+
+    private func dismissAnnotationPopup(animated: Bool = true) {
+        guard let container = annotationPopupContainer else { return }
+        annotationPopupContainer = nil
+        needsDisplay = true // restore chip immediately
+        if animated {
+            container.animateOut()
+        } else {
+            container.removeFromSuperview()
+        }
+    }
+
+    /// Position the expanded popup under the line, offset from the trailing edge
+    /// (mchakravarty `popupRightSideOffset` + `popupOffset` below the line).
+    private func layoutAnnotationPopup() {
+        guard let container = annotationPopupContainer,
+              let lineIdx = annotationPopupLine
+        else { return }
+        let frame = annotationPopupFrame(for: container, line: lineIdx)
+        // Keep on-screen without re-playing the intro animation during scroll/relayout.
+        container.frame = frame
+    }
+
+    private func annotationPopupFrame(for container: AnnotationPopupContainer, line lineIdx: Int) -> CGRect {
+        let size = container.measureFittingSize()
+        let rightInset = AnnotationRenderer.popupRightSideOffset
+        let x = max(controller.layout.edgeInsets.leading, bounds.width - size.width - rightInset)
+        let y: CGFloat
+        if let line = controller.layout.lineIndex.line(atIndex: lineIdx) {
+            // Sit just under the annotated line (flipped coords: larger y is lower).
+            y = line.yOffset + line.metrics.height + 2
+        } else {
+            y = 0
+        }
+        return CGRect(x: x, y: y, width: size.width, height: size.height)
     }
 
     // MARK: - Accessibility

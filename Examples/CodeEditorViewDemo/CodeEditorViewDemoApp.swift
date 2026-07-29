@@ -49,11 +49,84 @@ struct CodeEditorViewDemoApp: App {
 @MainActor
 final class DemoCoordinator: EditorCoordinator {
     var lastCursorLine: Int?
+    /// Inject sample line annotations when enabled (Phase 12).
+    var showAnnotations: Bool = false {
+        didSet { applyAnnotations() }
+    }
+    private weak var controller: EditorController?
 
-    func prepare(controller: EditorController) {}
+    func prepare(controller: EditorController) {
+        self.controller = controller
+        applyAnnotations()
+    }
 
     func selectionDidChange(controller: EditorController, cursors: [CursorPosition]) {
         lastCursorLine = cursors.first?.line
+    }
+
+    private func applyAnnotations() {
+        guard let controller else { return }
+        guard showAnnotations else {
+            controller.clearAnnotations()
+            return
+        }
+        // Sample diagnostics — line indices match token ranges (0-based).
+        //   0: // Swift…
+        //   1: func greet…
+        //   2:     print…
+        //   3:     if name.isEmpty {
+        let text = controller.text as NSString
+        let printRange = text.range(of: "print")
+        let emptyRange = text.range(of: "isEmpty")
+        func lineOf(_ range: NSRange) -> Int {
+            guard range.location != NSNotFound,
+                  let line = controller.layout.lineIndex.line(atUTF16Offset: range.location)
+            else { return 0 }
+            return line.index
+        }
+        func columnOf(_ range: NSRange) -> Int {
+            guard range.location != NSNotFound,
+                  let line = controller.layout.lineIndex.line(atUTF16Offset: range.location)
+            else { return 0 }
+            return max(0, range.location - line.utf16Offset)
+        }
+
+        var items: [LineAnnotation] = []
+        if printRange.location != NSNotFound {
+            items.append(
+                LineAnnotation(
+                    line: lineOf(printRange),
+                    column: columnOf(printRange),
+                    severity: .warning,
+                    message: "This is a warning!",
+                    detail: "Function body should not be empty (demo sample).",
+                    range: NSRange(location: printRange.location, length: printRange.length)
+                )
+            )
+        }
+        if emptyRange.location != NSNotFound {
+            items.append(
+                LineAnnotation(
+                    line: lineOf(emptyRange),
+                    column: columnOf(emptyRange),
+                    severity: .error,
+                    message: "Unknown identifier 'isEmpty'",
+                    detail: "Value of type 'String' has no member 'isEmpty' (demo).",
+                    range: NSRange(location: emptyRange.location, length: emptyRange.length)
+                )
+            )
+            // Second message on the same line (info) — no underline (no range).
+            items.append(
+                LineAnnotation(
+                    line: lineOf(emptyRange),
+                    column: 0,
+                    severity: .info,
+                    message: "Consider early return for clarity",
+                    detail: "Demo informational note stacked with the error card."
+                )
+            )
+        }
+        controller.setAnnotations(items)
     }
 }
 
@@ -481,6 +554,7 @@ struct DemoRootView: View {
     @State private var showGuide = true
     @State private var showMinimap = false
     @State private var showFolding = false
+    @State private var showAnnotations = false
     @State private var useRegexFallback = false
     @State private var coordinator = DemoCoordinator()
     @State private var completionDelegate = DemoCompletionDelegate()
@@ -545,6 +619,11 @@ struct DemoRootView: View {
             let language = DemoCatalog.language(id: newValue)
             text = DemoSamples.source(for: language)
             selection = NSRange(location: 0, length: 0)
+            // Re-apply sample annotations after language/text swap.
+            coordinator.showAnnotations = showAnnotations
+        }
+        .onChange(of: showAnnotations) { _, enabled in
+            coordinator.showAnnotations = enabled
         }
     }
 
@@ -562,6 +641,7 @@ struct DemoRootView: View {
                 Toggle("Gutter", isOn: $showGutter)
                 Toggle("Minimap", isOn: $showMinimap)
                 Toggle("Folding", isOn: $showFolding)
+                Toggle("Annotations", isOn: $showAnnotations)
                 Toggle("Column 40", isOn: $showGuide)
                 Toggle("Invisibles", isOn: $showInvisibles)
                 Toggle("Regex", isOn: $useRegexFallback)

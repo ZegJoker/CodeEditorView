@@ -75,13 +75,21 @@ public final class JumpToDefinitionModel {
     }
 
     private func updateHoveredRange(to newRange: NSRange) {
-        hoveredRange = newRange
+        // Never paint a huge hover span (avoids underlining the rest of the document).
+        let maxHoverLen = 64
+        var range = newRange
+        if range.length > maxHoverLen {
+            range = NSRange(location: range.location, length: maxHoverLen)
+        }
+        hoveredRange = range
         guard let controller else { return }
         controller.emphasis.removeAll(in: Self.emphasisGroup)
+        // Outline (not underline) so ⌘-hover never looks like a diagnostic squiggle
+        // and does not stack with diagnostic underlines.
         controller.emphasis.add(
             Emphasis(
-                range: newRange,
-                style: .underline,
+                range: range,
+                style: .outline,
                 flash: false,
                 inactive: false,
                 selectInDocument: false,
@@ -234,10 +242,10 @@ public final class JumpToDefinitionModel {
     /// Prefer tree-sitter identifier node; fall back to word range.
     public static func findDefinitionRange(at location: Int, controller: EditorController) -> NSRange? {
         if let ts = controller.identifierRangeFromTreeSitter(atUTF16Offset: location), ts.length > 0 {
-            return ts
+            return ts.length <= 64 ? ts : NSRange(location: ts.location, length: 64)
         }
         let word = WordSelection.range(atUTF16Offset: location, in: controller.document.fullString)
-        guard word.length > 0 else { return nil }
+        guard word.length > 0, word.length <= 64 else { return nil }
         // Reject pure whitespace / empty.
         let snip = (controller.document.fullString as NSString).substring(with: word)
         if snip.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return nil }

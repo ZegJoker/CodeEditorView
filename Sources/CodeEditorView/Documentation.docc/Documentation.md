@@ -19,6 +19,7 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - Minimap overview: ``MinimapGeometry``, ``MinimapRunBuilder``, ``peripherals.showMinimap``
 - Line folding: ``LineFoldProvider``, ``LineIndentationFoldProvider``, ``LineFoldStorage``, ribbon via ``peripherals.showFoldingRibbon``
 - Jump to definition: ``JumpToDefinitionDelegate``, ``JumpToDefinitionLink``, ⌘-hover (macOS) / long-press (iOS)
+- Line annotations / diagnostics: ``LineAnnotation``, ``DiagnosticSeverity``, ``EditorController/setAnnotations(_:)``
 - ``EditorCoordinator`` injection (structured concurrency — no Combine)
 - ``EditorState`` for cursors / find-panel bindings
 - Emphasis overlays and invisible characters
@@ -107,6 +108,13 @@ A multiplatform code text editor for iOS 18 and macOS 15.
 - ``JumpToDefinitionDelegate``
 - ``JumpToDefinitionLink``
 - ``JumpToDefinitionModel``
+
+### Diagnostics / line annotations
+
+- ``LineAnnotation``
+- ``DiagnosticSeverity``
+- ``LineAnnotationStore``
+- ``AnnotationMetrics``
 
 ### Emphasis & invisibles
 

@@ -8,7 +8,7 @@ Built with **structured concurrency** and **Observation** (`@Observable` + `Asyn
 
 ## Status
 
-**Phase 11 complete** — jump to definition (delegate, ⌘-hover / long-press, multi-target popover). Phase 10 folding; Phase 9 minimap; Phase 8 completions; Phase 7 find/replace; Phase 6 formation; Phase 5 tree-sitter.
+**Phase 12 complete** — line annotations (diagnostics bands under lines, severity icons, click for full message). Diff deferred. Phase 11 jump-to-definition; Phase 10 folding; Phase 9 minimap; Phase 8 completions; Phase 7 find/replace.
 
 ## Requirements
 
@@ -81,6 +81,13 @@ controller.showCompletions()
 controller.jumpToDefinitionDelegate = myJumpDelegate
 // macOS: ⌘-hover + ⌘-click, or ⌃⌘J · iOS: long-press
 controller.jumpToDefinition()
+
+// Line annotations / diagnostics (host supplies issues; no built-in LSP)
+controller.setAnnotations([
+    LineAnnotation(line: 2, column: 0, severity: .error, message: "Missing return"),
+    LineAnnotation(line: 2, severity: .warning, message: "Unused result"),
+])
+// controller.clearAnnotations()
 
 // Emphasis (flash via Task/Clock)
 controller.emphasis.add(

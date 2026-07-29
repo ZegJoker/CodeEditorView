@@ -27,6 +27,8 @@ public final class LayoutEngine {
     public private(set) var estimatedLineHeight: CGFloat = 16
     /// Collapsed fold ranges currently applied to line heights (Phase 10).
     public private(set) var collapsedFolds: [FoldRange] = []
+    /// Extra height under lines that show diagnostic annotation bands (Phase 12).
+    public private(set) var annotationBandHeights: [Int: CGFloat] = [:]
 
     private var typesetter = Typesetter()
     private weak var document: DocumentStore?
@@ -709,13 +711,40 @@ public final class LayoutEngine {
             display: display,
             attachments: lineAttachments
         )
-        position.payload.applyTypeset(fragments: result.fragments, height: result.totalHeight)
-        if abs(result.totalHeight - position.metrics.height) > 0.5 {
+        let band = annotationBandHeights[position.index] ?? 0
+        // Keep fragment heights as code-only; total line height includes annotation band.
+        let totalHeight = result.totalHeight + band
+        position.payload.applyTypeset(fragments: result.fragments, height: totalHeight)
+        if abs(totalHeight - position.metrics.height) > 0.5 {
             lineIndex.updateMetrics(
                 atIndex: position.index,
-                metrics: LineMetrics(utf16Length: position.metrics.utf16Length, height: result.totalHeight)
+                metrics: LineMetrics(utf16Length: position.metrics.utf16Length, height: totalHeight)
             )
         }
+    }
+
+    /// Apply under-line annotation band heights (line index → extra height).
+    /// Re-typesets affected lines so scroll metrics stay consistent.
+    public func setAnnotationBandHeights(_ heights: [Int: CGFloat]) {
+        let old = annotationBandHeights
+        annotationBandHeights = heights
+        let keys = Set(old.keys).union(heights.keys)
+        for index in keys {
+            guard let pos = lineIndex.line(atIndex: index) else { continue }
+            if isLineHiddenByCollapsedFold(pos.utf16Range) { continue }
+            pos.payload.markNeedsTypeset()
+            // Provisional height bump so content size updates before next viewport typeset.
+            let codeEstimate = max(pos.metrics.height - (old[index] ?? 0), estimatedLineHeight * lineHeightMultiplier)
+            let band = heights[index] ?? 0
+            let newH = codeEstimate + band
+            if abs(newH - pos.metrics.height) > 0.5 {
+                lineIndex.updateMetrics(
+                    atIndex: index,
+                    metrics: LineMetrics(utf16Length: pos.metrics.utf16Length, height: newH)
+                )
+            }
+        }
+        contentSize = CGSize(width: contentSize.width, height: lineIndex.height)
     }
 
     /// Locate a simple closer line right after a fold end (`}`, `)`, …).

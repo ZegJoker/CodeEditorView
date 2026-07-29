@@ -1,5 +1,6 @@
 #if canImport(UIKit) && !os(macOS)
 import UIKit
+import SwiftUI
 import CoreGraphics
 import CoreText
 
@@ -204,6 +205,19 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
             LineFragmentRenderer.draw(item.fragment, in: context, origin: item.frame.origin)
         }
 
+        // Trailing inline message chips (mchakravarty MessageInlineView style).
+        if !controller.annotationsByLine.isEmpty {
+            AnnotationRenderer.draw(
+                annotationsByLine: controller.annotationsByLine,
+                lineIndex: controller.layout.lineIndex,
+                textLeading: controller.layout.edgeInsets.leading,
+                contentWidth: max(width, bounds.width),
+                visibleRect: rect.union(bounds),
+                excludingLine: annotationPopupLine,
+                in: context
+            )
+        }
+
         if controller.configuration.showInvisibleCharacters,
            let delegate = controller.invisibleCharactersDelegate {
             InvisibleCharacterRenderer.draw(
@@ -268,6 +282,25 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
             controller.hideCompletions()
         }
 
+        // Trailing message chip tap → unfold full popup.
+        if !controller.annotationsByLine.isEmpty,
+           let lineIdx = AnnotationRenderer.hitTestLine(
+            at: point,
+            annotationsByLine: controller.annotationsByLine,
+            lineIndex: controller.layout.lineIndex,
+            textLeading: controller.layout.edgeInsets.leading,
+            contentWidth: max(containerWidth, bounds.width)
+           ),
+           let anns = controller.annotationsByLine[lineIdx], !anns.isEmpty
+        {
+            presentAnnotationAlert(annotations: anns)
+            return
+        }
+
+        if annotationPopupHost != nil {
+            dismissAnnotationPopup()
+        }
+
         if controller.configuration.peripherals.showGutter,
            controller.configuration.peripherals.showFoldingRibbon {
             let model = controller.makeGutterModel()
@@ -313,6 +346,56 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         selectionAnchor = controller.selectedRange.location
         blink.reset()
         onSelectionChange?(controller.selectedRange)
+        setNeedsDisplay()
+    }
+
+    /// Floating expanded message popup (mchakravarty style — not a system sheet when possible).
+    private var annotationPopupHost: UIView?
+    private var annotationPopupLine: Int?
+
+    private func presentAnnotationAlert(annotations: [LineAnnotation]) {
+        let lineIdx = annotations.first?.line
+        // Toggle same line.
+        if let lineIdx, annotationPopupLine == lineIdx {
+            dismissAnnotationPopup()
+            return
+        }
+        dismissAnnotationPopup()
+
+        let host = UIHostingController(rootView: AnnotationPopupView(annotations: annotations))
+        host.view.backgroundColor = .clear
+        host.view.translatesAutoresizingMaskIntoConstraints = true
+        addSubview(host.view)
+        annotationPopupHost = host.view
+        annotationPopupLine = lineIdx
+
+        if let lineIdx, let line = controller.layout.lineIndex.line(atIndex: lineIdx) {
+            let size = host.sizeThatFits(CGSize(width: 300, height: UIView.layoutFittingCompressedSize.height))
+            let width = min(320, max(180, size.width.isFinite ? size.width : 288))
+            var height = size.height.isFinite ? size.height : 48
+            if height < 24 || height > 480 {
+                height = min(480, max(36, CGFloat(annotations.count) * 44))
+            }
+            let x = max(8, bounds.width - width - AnnotationRenderer.popupRightSideOffset)
+            let y = line.yOffset + line.metrics.height + 2
+            host.view.frame = CGRect(x: x, y: y, width: width, height: height)
+        }
+
+        if let first = annotations.first,
+           let line = controller.layout.lineIndex.line(atIndex: first.line)
+        {
+            let offset = min(line.utf16Offset + first.column, controller.document.length)
+            controller.setSelectedRange(NSRange(location: offset, length: 0))
+            onSelectionChange?(controller.selectedRange)
+            scrollToSelectionIfNeeded()
+        }
+        setNeedsDisplay()
+    }
+
+    private func dismissAnnotationPopup() {
+        annotationPopupHost?.removeFromSuperview()
+        annotationPopupHost = nil
+        annotationPopupLine = nil
         setNeedsDisplay()
     }
 
