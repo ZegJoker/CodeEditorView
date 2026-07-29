@@ -27,9 +27,17 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
     public var length: Int { storage.length }
 
     public func substring(from range: NSRange) -> String? {
-        let max = range.location + range.length
-        guard range.location >= 0, max <= storage.length else { return nil }
-        return storage.attributedSubstring(from: range).string
+        guard let clamped = Self.clampedRange(range, documentLength: storage.length),
+              clamped.length > 0
+        else {
+            // Empty-but-valid range (e.g. caret at end) → empty string; invalid → nil.
+            if range.length == 0, range.location >= 0, range.location <= storage.length {
+                return ""
+            }
+            return nil
+        }
+        // Use NSString — never hit NSAttributedString's throwing range API for plain text.
+        return (storage.string as NSString).substring(with: clamped)
     }
 
     public func applyMutation(_ mutation: TextMutation) {
@@ -45,16 +53,40 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
     public var fullString: String { storage.string }
 
     public func attributedSubstring(from range: NSRange) -> NSAttributedString {
-        let loc = max(0, range.location)
-        let maxLen = max(0, storage.length - loc)
-        let len = min(max(0, range.length), maxLen)
-        guard loc <= storage.length, len >= 0 else {
-            return NSAttributedString(string: "", attributes: defaultAttributes)
+        // Never call Foundation's throwing `attributedSubstring(from:)` with an untrusted
+        // range — out-of-bounds raises NSException and kills the process during draw
+        // (seen after Enter on blank lines with fold/annotation/minimap enabled).
+        let empty = NSAttributedString(string: "", attributes: defaultAttributes)
+        guard let clamped = Self.clampedRange(range, documentLength: storage.length) else {
+            return empty
         }
-        if len == 0 {
-            return NSAttributedString(string: "", attributes: defaultAttributes)
+        if clamped.length == 0 {
+            return empty
         }
-        return storage.attributedSubstring(from: NSRange(location: loc, length: len))
+        // Copy via NSString + attribute enumeration so we never pass a bad range into
+        // NSAttributedString's range API even if storage mutates mid-flight.
+        let ns = storage.string as NSString
+        guard NSMaxRange(clamped) <= ns.length else { return empty }
+        let plain = ns.substring(with: clamped)
+        let result = NSMutableAttributedString(string: plain, attributes: defaultAttributes)
+        storage.enumerateAttributes(in: clamped, options: []) { attrs, subrange, _ in
+            let localLoc = subrange.location - clamped.location
+            let localLen = subrange.length
+            guard localLoc >= 0, localLen > 0, localLoc + localLen <= result.length else { return }
+            result.addAttributes(attrs, range: NSRange(location: localLoc, length: localLen))
+        }
+        return result
+    }
+
+    /// Clamp `range` to `[0, documentLength)`. Returns `nil` if the range is unusable.
+    private static func clampedRange(_ range: NSRange, documentLength docLen: Int) -> NSRange? {
+        guard docLen >= 0 else { return nil }
+        guard range.location >= 0, range.location <= docLen else { return nil }
+        let maxLen = docLen - range.location
+        // `range.length` can be negative / NSNotFound-sized; keep it non-negative.
+        let rawLen = range.length
+        let len = rawLen < 0 ? 0 : min(rawLen, maxLen)
+        return NSRange(location: range.location, length: len)
     }
 
     public func setFullText(_ string: String) {
@@ -63,7 +95,10 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
     }
 
     public func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange) {
-        guard range.length > 0, range.location >= 0, range.max <= storage.length else { return }
+        guard let clamped = Self.clampedRange(range, documentLength: storage.length),
+              clamped.length > 0
+        else { return }
+        let range = clamped
         // Replace keys (especially foregroundColor) instead of only adding, so language
         // switches cannot leave mixed/stale attribute runs inside a token.
         storage.enumerateAttributes(in: range, options: []) { existing, subrange, _ in

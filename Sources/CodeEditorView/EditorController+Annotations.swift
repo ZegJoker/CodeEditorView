@@ -26,6 +26,9 @@ extension EditorController {
 
     func noteAnnotationEdit(range: NSRange, delta: Int) {
         guard !_annotationStore.items.isEmpty else { return }
+        // Must not run while the layout transaction is open — line offsets are stale.
+        // Callers should go through `noteDidEdit` which defers until `onTransactionEnded`.
+        guard !layout.isInTransaction else { return }
         _annotationStore.documentDidEdit(editedRange: range, delta: delta)
         // Re-map line indices from ranges when possible.
         remapAnnotationLinesFromRanges()

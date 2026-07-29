@@ -20,6 +20,8 @@ final class AppKitMinimapView: NSView {
     private var isAttached = false
     /// Avoid re-entrant reload while we scroll the editor clip view.
     private var isUpdatingViewport = false
+    /// Avoid layout → reload → inset → layout recursion.
+    private var isReloading = false
 
     override var isFlipped: Bool { true }
 
@@ -95,6 +97,10 @@ final class AppKitMinimapView: NSView {
 
     func reload() {
         guard let controller, !isHidden else { return }
+        guard !isReloading else { return }
+        isReloading = true
+        defer { isReloading = false }
+
         layoutStripSubviews()
 
         let hostW = hostWidth()
@@ -244,8 +250,10 @@ final class AppKitMinimapView: NSView {
     override func layout() {
         super.layout()
         layoutStripSubviews()
-        if !isHidden {
-            reload()
+        // Do not call reload() from layout — that re-entered via trailing-inset
+        // updates and could stack-overflow. Hosts call reload() on content changes.
+        if !isHidden, !isReloading {
+            updateViewport()
         }
     }
 

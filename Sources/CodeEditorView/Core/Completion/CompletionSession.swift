@@ -49,8 +49,9 @@ public final class CompletionSession {
 
     public func selectIndex(_ index: Int) {
         guard items.indices.contains(index) else { return }
-        // Always bump so hosts refresh even when re-selecting the same row
-        // (e.g. applying "Start of document" while already at offset 0).
+        // Skip no-op selection changes — re-notifying on the same row re-entered
+        // AppKit panel sync via tableViewSelectionDidChange and overflowed the stack.
+        guard selectedIndex != index else { return }
         selectedIndex = index
         bump()
     }

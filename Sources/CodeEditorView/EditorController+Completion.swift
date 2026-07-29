@@ -64,6 +64,8 @@ extension EditorController {
 
     public func selectCompletionIndex(_ index: Int) {
         guard completionSession.isVisible else { return }
+        // No-op when unchanged: avoids completion-panel sync ↔ selection feedback loops.
+        if completionSession.selectedIndex == index { return }
         completionSession.selectIndex(index)
         if !isJumpLinkPopoverVisible, let item = completionSession.selectedItem {
             completionDelegate?.completionWindowDidSelect(item: item)
@@ -99,19 +101,14 @@ extension EditorController {
     func noteTextInsertedForCompletions(_ inserted: String) {
         guard let delegate = completionDelegate else { return }
         if isJumpLinkPopoverVisible { return }
+        // While open, `publishSelectionChange` refilters once for this keystroke —
+        // do not setItems/notify again here (was part of the panel re-entrancy storm).
+        if completionSession.isVisible { return }
         let triggers = delegate.completionTriggerCharacters()
         guard SuggestionTrigger.shouldPresent(afterInserting: inserted, triggerCharacters: triggers) else {
-            // Deleting or non-trigger insert: filter if already open.
-            if completionSession.isVisible {
-                noteCursorMovedForCompletions()
-            }
             return
         }
-        if completionSession.isVisible {
-            noteCursorMovedForCompletions(presentIfClosed: false)
-        } else {
-            showCompletions()
-        }
+        showCompletions()
     }
 
     /// Sync filter while the popup is open (or optionally present).
@@ -144,6 +141,9 @@ extension EditorController {
     }
 
     func notifyCompletionSessionChange() {
+        guard !isNotifyingCompletionSessionChange else { return }
+        isNotifyingCompletionSessionChange = true
+        defer { isNotifyingCompletionSessionChange = false }
         onCompletionSessionChange?()
         onNeedsDisplay?()
     }

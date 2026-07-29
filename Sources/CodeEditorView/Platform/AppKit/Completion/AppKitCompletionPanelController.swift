@@ -5,6 +5,11 @@ import AppKit
 ///
 /// Uses a nonactivating `NSPanel` + `NSTableView` (not SwiftUI hosting, which delayed clicks).
 /// Jump multi-target and typing completions share this panel.
+///
+/// **Re-entrancy:** `NSTableView.selectRowIndexes` posts `tableViewSelectionDidChange`
+/// synchronously. Calling back into `EditorController.notifyCompletionSessionChange` from
+/// that callback used to recurse until stack overflow when typing. Selection callbacks only
+/// update the model *silently* and never re-notify.
 @MainActor
 final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     private weak var controller: EditorController?
@@ -17,6 +22,10 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
     private var cachedRows: [Row] = []
     /// Jump mode: single click applies. Typing completions: single click selects, double applies.
     private var applyOnSelect = false
+    /// True for the entire body of `sync()` (including nested AppKit selection notifications).
+    private var isSyncing = false
+    /// Coalesce bursty session notifies onto one panel refresh per turn.
+    private var syncScheduled = false
 
     private struct Row {
         let label: String
@@ -33,7 +42,7 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
         self.controller = controller
         self.editorView = editorView
         controller.onCompletionSessionChange = { [weak self] in
-            self?.sync()
+            self?.scheduleSync()
         }
     }
 
@@ -44,14 +53,33 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
         editorView = nil
     }
 
+    /// Always async — never run panel table mutations on the same stack as a table
+    /// selection notification or typing insert.
+    private func scheduleSync() {
+        guard !syncScheduled else { return }
+        syncScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.syncScheduled = false
+            self.sync()
+        }
+    }
+
     func sync() {
+        guard !isSyncing else { return }
+        isSyncing = true
+        defer { isSyncing = false }
+
         guard let controller else { return }
         let session = controller.completionSession
         guard session.isVisible, !session.items.isEmpty else {
             hide()
             return
         }
-        lastRevision = session.revision
+
+        let revision = session.revision
+        let needsReload = revision != lastRevision || cachedRows.count != session.items.count
+        lastRevision = revision
         applyOnSelect = controller.isJumpLinkPopoverVisible
         cachedRows = session.items.map { entry in
             Row(
@@ -62,11 +90,25 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
             )
         }
         ensurePanel()
-        tableView?.reloadData()
-        let selected = min(max(0, session.selectedIndex), max(0, cachedRows.count - 1))
-        if !cachedRows.isEmpty {
-            tableView?.selectRowIndexes(IndexSet(integer: selected), byExtendingSelection: false)
-            tableView?.scrollRowToVisible(selected)
+        if needsReload {
+            // Temporarily drop delegate so reload/select cannot re-enter controller.
+            let table = tableView
+            table?.delegate = nil
+            table?.reloadData()
+            let selected = min(max(0, session.selectedIndex), max(0, cachedRows.count - 1))
+            if !cachedRows.isEmpty {
+                table?.selectRowIndexes(IndexSet(integer: selected), byExtendingSelection: false)
+                table?.scrollRowToVisible(selected)
+            }
+            table?.delegate = self
+        } else if let tableView {
+            let selected = min(max(0, session.selectedIndex), max(0, cachedRows.count - 1))
+            if tableView.selectedRow != selected {
+                tableView.delegate = nil
+                tableView.selectRowIndexes(IndexSet(integer: selected), byExtendingSelection: false)
+                tableView.scrollRowToVisible(selected)
+                tableView.delegate = self
+            }
         }
         positionPanel()
         panel?.orderFront(nil)
@@ -191,13 +233,16 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
         if applyOnSelect || controller.isJumpLinkPopoverVisible {
             applyRow(row)
         } else {
-            controller.selectCompletionIndex(row)
+            // Silent model update — table already shows the selection.
+            controller.completionSession.selectIndex(row)
+            if let item = controller.completionSession.selectedItem {
+                controller.completionDelegate?.completionWindowDidSelect(item: item)
+            }
         }
     }
 
     @objc private func tableDoubleClicked(_ sender: Any?) {
         guard let tableView, tableView.clickedRow >= 0 else { return }
-        // Jump already applies on single click; double-click is for typing completions.
         if applyOnSelect || controller?.isJumpLinkPopoverVisible == true { return }
         applyRow(tableView.clickedRow)
     }
@@ -214,7 +259,6 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
         } else {
             controller.applyCompletionSelection()
         }
-        // Always force panel hide after an explicit mouse apply.
         hide()
     }
 
@@ -238,10 +282,19 @@ final class AppKitCompletionPanelController: NSObject, NSTableViewDataSource, NS
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
+        // CRITICAL: never call notifyCompletionSessionChange / sync from here.
+        // That path was a stack-overflow when typing (selectRowIndexes → didChange → notify → sync → …).
+        guard !isSyncing else { return }
+        guard !applyOnSelect else { return }
         guard let tableView, tableView.selectedRow >= 0 else { return }
-        // Keyboard navigation updates selection only (apply via Enter / click).
-        if !applyOnSelect {
-            controller?.selectCompletionIndex(tableView.selectedRow)
+        let row = tableView.selectedRow
+        guard let controller, row < controller.completionSession.items.count else { return }
+        // Silent model update only.
+        if controller.completionSession.selectedIndex != row {
+            controller.completionSession.selectIndex(row)
+            if let item = controller.completionSession.selectedItem {
+                controller.completionDelegate?.completionWindowDidSelect(item: item)
+            }
         }
     }
 }

@@ -52,6 +52,8 @@ public final class EditorController {
 
     /// Hosts observe to present/update the completion panel UI.
     public var onCompletionSessionChange: (() -> Void)?
+    /// Blocks nested `notifyCompletionSessionChange` (panel sync ↔ selection feedback).
+    var isNotifyingCompletionSessionChange = false
 
     /// In-flight async completion load (cancelled on re-open/hide).
     var completionRequestTask: Task<Void, Never>?
@@ -63,6 +65,8 @@ public final class EditorController {
 
     /// Line annotations / diagnostics (Phase 12).
     let _annotationStore = LineAnnotationStore()
+    /// Fold/annotation updates deferred until the layout transaction ends (avoids typeset OOB).
+    var pendingPostEditSideEffects: [(range: NSRange, delta: Int)] = []
 
     /// Line folding model (Phase 10).
     let _foldModel = LineFoldModel()
@@ -282,6 +286,11 @@ public final class EditorController {
 
         layout.attach(document: document, typingAttributes: configuration.typingAttributes)
         selection.attach(document: document, layout: layout)
+        // Fold/annotation work must run only after the line index matches the document.
+        // Running it mid-transaction left stale utf16 ranges → typeset attributedSubstring crash.
+        layout.onTransactionEnded = { [weak self] in
+            self?.flushPostEditSideEffects()
+        }
         emphasis.onChange = { [weak self] in
             self?.events.yield(.selectionDidChange)
         }
@@ -363,9 +372,25 @@ public final class EditorController {
     }
 
     func noteDidEdit(range: NSRange, delta: Int) {
+        // Highlighter needs ordered incremental edits immediately (tree-sitter).
         highlighter?.documentDidEdit(range: range, delta: delta)
-        noteFoldingEdit(range: range, delta: delta)
-        noteAnnotationEdit(range: range, delta: delta)
+        // Fold + annotations depend on a consistent line index. Defer until the
+        // layout transaction ends (or flush now if we are not in one).
+        pendingPostEditSideEffects.append((range, delta))
+        if !layout.isInTransaction {
+            flushPostEditSideEffects()
+        }
+    }
+
+    /// Applies deferred fold/annotation updates after the line index has absorbed edits.
+    func flushPostEditSideEffects() {
+        let batch = pendingPostEditSideEffects
+        guard !batch.isEmpty else { return }
+        pendingPostEditSideEffects.removeAll(keepingCapacity: true)
+        for item in batch {
+            noteFoldingEdit(range: item.range, delta: item.delta)
+            noteAnnotationEdit(range: item.range, delta: item.delta)
+        }
     }
 
     // MARK: - Coordinators
@@ -1132,7 +1157,8 @@ public final class EditorController {
         // Keep SwiftUI / host selection bindings in sync (jump panel, find, API).
         onSelectionDidChange?(selection.selectedRange)
         // Jump multi-target popover reuses the completion session — do not treat
-        // selection changes as typing-completion filter updates.
+        // selection changes as typing-completion filter updates for that mode.
+        // Single refilter while the popup is open (covers typing + arrow keys).
         if completionSession.isVisible, !isJumpLinkPopoverVisible {
             noteCursorMovedForCompletions()
         }

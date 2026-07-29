@@ -80,7 +80,10 @@ final class EditorChromeView: NSView {
         let previousNeedsDisplay = controller.onNeedsDisplay
         controller.onNeedsDisplay = { [weak self] in
             previousNeedsDisplay?()
-            self?.minimapView.reload()
+            // Only reload when the strip is visible — avoids work (and past recursion)
+            // when minimap is off.
+            guard let self, self.controller.configuration.peripherals.showMinimap else { return }
+            self.minimapView.reload()
         }
         syncFindPanel()
     }

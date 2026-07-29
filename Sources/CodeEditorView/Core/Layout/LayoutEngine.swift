@@ -54,6 +54,13 @@ public final class LayoutEngine {
         recomputeEstimatedLineHeight()
     }
 
+    /// True while a `beginTransaction`/`endTransaction` pair is open.
+    public var isInTransaction: Bool { transactionDepth > 0 }
+
+    /// Invoked after the outermost transaction ends and pending line-index edits are applied.
+    /// Use this for fold/annotation side effects that must see a consistent line index.
+    public var onTransactionEnded: (() -> Void)?
+
     public func beginTransaction() {
         transactionDepth += 1
     }
@@ -63,7 +70,9 @@ public final class LayoutEngine {
         guard transactionDepth == 0 else { return }
         if needsFullRebuild {
             pendingEdits.removeAll()
+            needsFullRebuild = false
             rebuildFromDocument()
+            onTransactionEnded?()
             return
         }
         let edits = pendingEdits
@@ -71,6 +80,7 @@ public final class LayoutEngine {
         for edit in edits {
             applyLocalizedEdit(range: edit.range, delta: edit.delta)
         }
+        onTransactionEnded?()
     }
 
     public func invalidateAll() {
@@ -116,6 +126,19 @@ public final class LayoutEngine {
         containerWidth: CGFloat
     ) -> LayoutSnapshot {
         guard let document else { return .empty }
+
+        // Self-heal: if the line index no longer covers the document (e.g. after a
+        // fold+annotation race on Enter), rebuild before typesetting/draw.
+        if lineIndex.length != document.length {
+            rebuildFromDocument()
+            if !collapsedFolds.isEmpty {
+                applyCollapsedFoldHeights(
+                    collapsedFolds: collapsedFolds,
+                    hideCloserLines: false,
+                    document: document.fullString
+                )
+            }
+        }
 
         let layoutWidth = wrapLines
             ? max(1, containerWidth - edgeInsets.horizontal)
@@ -660,10 +683,14 @@ public final class LayoutEngine {
             return
         }
         // Guard against transient line-index/document desync (would throw in attributedSubstring).
+        // Use overflow-safe end check — `location + length` can trap on bogus metrics.
+        let rangeEnd = range.location.addingReportingOverflow(max(0, range.length))
         guard range.location >= 0,
               range.location <= document.length,
-              range.location + range.length <= document.length
+              !rangeEnd.overflow,
+              rangeEnd.partialValue <= document.length
         else {
+            // Self-heal: mark for rebuild on next edit rather than crashing draw.
             position.payload.applyTypeset(fragments: [], height: estimatedLineHeight * lineHeightMultiplier)
             return
         }
@@ -795,7 +822,7 @@ public final class LayoutEngine {
     private func stripLineEnding(_ string: NSAttributedString) -> NSAttributedString {
         guard string.length > 0 else { return string }
         let ns = string.string as NSString
-        var length = string.length
+        var length = min(string.length, ns.length)
         if length > 0 {
             let last = ns.character(at: length - 1)
             if last == 0x0A {
@@ -808,7 +835,19 @@ public final class LayoutEngine {
             }
         }
         if length == string.length { return string }
-        return string.attributedSubstring(from: NSRange(location: 0, length: length))
+        guard length > 0, length <= string.length else {
+            return NSAttributedString(string: "", attributes: typingAttributes)
+        }
+        // Build without Foundation's throwing attributedSubstring.
+        let plain = ns.substring(with: NSRange(location: 0, length: length))
+        let result = NSMutableAttributedString(string: plain)
+        string.enumerateAttributes(
+            in: NSRange(location: 0, length: length),
+            options: []
+        ) { attrs, subrange, _ in
+            result.addAttributes(attrs, range: subrange)
+        }
+        return result
     }
 
     private func leadingWhitespaceLength(in range: NSRange, document: DocumentStore) -> Int {
