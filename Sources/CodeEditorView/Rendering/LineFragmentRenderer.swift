@@ -18,7 +18,8 @@ public enum LineFragmentRenderer {
 
         context.saveGState()
         context.textMatrix = .identity
-        context.translateBy(x: origin.x, y: origin.y + fragment.height - fragment.descent)
+        // Center glyphs in the line box when lineHeightMultiple adds padding (Xcode-like).
+        context.translateBy(x: origin.x, y: origin.y + fragment.baselineFromTop)
         context.scaleBy(x: 1, y: -1)
 
         if let textColor {

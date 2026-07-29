@@ -865,14 +865,24 @@ public final class LayoutEngine {
 
     private func recomputeEstimatedLineHeight() {
         let font = typingAttributes[.font] as? PlatformFont
+        // Prefer Core Text typographic metrics (ascent+descent+leading). Platform
+        // `boundingRectForFont` / some `lineHeight` values are much taller and left
+        // glyphs floating in half-empty line boxes compared to Xcode.
+        if let font {
+            let ct = font as CTFont
+            let typo = CTFontGetAscent(ct) + CTFontGetDescent(ct) + CTFontGetLeading(ct)
+            if typo > 0.5 {
+                estimatedLineHeight = typo
+                return
+            }
+        }
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        let lineHeight = font?.boundingRectForFont.height ?? 16
+        estimatedLineHeight = max(font?.boundingRectForFont.height ?? 16, 1)
         #elseif canImport(UIKit)
-        let lineHeight = font?.lineHeight ?? 16
+        estimatedLineHeight = max(font?.lineHeight ?? 16, 1)
         #else
-        let lineHeight: CGFloat = 16
+        estimatedLineHeight = 16
         #endif
-        estimatedLineHeight = max(lineHeight, 1)
     }
 
     private func maxLineWidth() -> CGFloat {

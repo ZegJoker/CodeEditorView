@@ -26,7 +26,9 @@ public struct Typesetter: Sendable {
                 documentRange: NSRange(location: documentRange.location, length: 0),
                 width: attachmentWidth,
                 height: height,
-                descent: 0,
+                ascent: display.estimatedLineHeight * 0.8,
+                descent: display.estimatedLineHeight * 0.2,
+                leading: 0,
                 ctLine: nil,
                 attachments: attachments
             )
@@ -66,8 +68,9 @@ public struct Typesetter: Sendable {
             var descent: CGFloat = 0
             var leading: CGFloat = 0
             let textWidth = CGFloat(CTLineGetTypographicBounds(ctLine, &ascent, &descent, &leading))
-            let naturalHeight = ascent + descent + leading
-            let height = max(naturalHeight, display.estimatedLineHeight) * display.lineHeightMultiplier
+            // Typographic bounds only — do not use font bounding-box height (often ~1.5× larger).
+            let naturalHeight = max(ascent + descent + leading, 1)
+            let height = max(naturalHeight, display.estimatedLineHeight) * max(display.lineHeightMultiplier, 0.5)
 
             let relative = NSRange(location: start, length: take)
             let absolute = NSRange(location: documentRange.location + start, length: take)
@@ -81,7 +84,9 @@ public struct Typesetter: Sendable {
                     documentRange: absolute,
                     width: textWidth + (start == 0 ? attachmentWidth : 0),
                     height: height,
+                    ascent: ascent,
                     descent: descent,
+                    leading: leading,
                     ctLine: ctLine,
                     attachments: fragAttachments
                 )

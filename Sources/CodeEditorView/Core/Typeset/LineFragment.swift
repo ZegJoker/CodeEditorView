@@ -11,7 +11,11 @@ public final class LineFragment: LinePayload, Identifiable {
     public let documentRange: NSRange
     public let width: CGFloat
     public let height: CGFloat
+    /// Typographic ascent used for baseline placement.
+    public let ascent: CGFloat
     public let descent: CGFloat
+    /// Typographic leading from Core Text.
+    public let leading: CGFloat
     public let ctLine: CTLine?
     /// Attachments drawn on this fragment (document-relative).
     public let attachments: [AnyTextAttachment]
@@ -21,7 +25,9 @@ public final class LineFragment: LinePayload, Identifiable {
         documentRange: NSRange,
         width: CGFloat,
         height: CGFloat,
+        ascent: CGFloat = 0,
         descent: CGFloat,
+        leading: CGFloat = 0,
         ctLine: CTLine?,
         attachments: [AnyTextAttachment] = []
     ) {
@@ -30,9 +36,19 @@ public final class LineFragment: LinePayload, Identifiable {
         self.documentRange = documentRange
         self.width = width
         self.height = height
+        self.ascent = ascent
         self.descent = descent
+        self.leading = leading
         self.ctLine = ctLine
         self.attachments = attachments
+    }
+
+    /// Distance from the top of the fragment box to the text baseline (flipped Y grows down).
+    /// Extra line-height padding is split above and below the glyphs (Xcode-like).
+    public var baselineFromTop: CGFloat {
+        let natural = ascent + descent + leading
+        let extra = max(0, height - natural)
+        return extra / 2 + ascent
     }
 }
 
