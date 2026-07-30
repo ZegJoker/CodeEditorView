@@ -69,6 +69,11 @@ check_no_imports "Sources/CodeEditorCommands" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLanguageSupport|CodeEditorView)' \
   "Commands has no UI / Tree-sitter / View imports"
 
+echo "== CodeEditorWorkspace import allowlist =="
+check_no_imports "Sources/CodeEditorWorkspace" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLanguageSupport|CodeEditorView|CodeEditorCommands)' \
+  "Workspace has no UI / Tree-sitter / View / Commands imports"
+
 echo "== CodeEditorLanguageSupport import allowlist =="
 check_no_imports "Sources/CodeEditorLanguageSupport" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter)' \
