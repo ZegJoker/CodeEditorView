@@ -92,6 +92,27 @@ check_no_imports "Sources/CodeEditorView" \
 echo "== Package.swift product graph =="
 check_package_view_deps || true
 
+echo "== CodeEditorWorkbench dependency isolation =="
+python3 - <<'PY' || fail=1
+import re, sys
+text = open("Package.swift").read()
+m = re.search(
+    r'\.target\(\s*name:\s*"CodeEditorWorkbench",\s*dependencies:\s*\[(.*?)\]',
+    text,
+    re.S,
+)
+if not m:
+    print("FAIL: CodeEditorWorkbench target not found")
+    sys.exit(1)
+deps = m.group(1)
+forbidden = ["CodeEditorLSP", "CodeEditorSearch", "CodeEditorTerminal", "CodeEditorSourceControl", "CodeEditorLanguages", "TreeSitter"]
+bad = [f for f in forbidden if f in deps]
+if bad:
+    print("FAIL: Workbench dependencies include forbidden:", ", ".join(bad))
+    sys.exit(1)
+print("OK:   Workbench Package.swift deps exclude LSP/search/terminal/SCM/all-grammars")
+PY
+
 if [[ "$fail" -ne 0 ]]; then
   echo
   echo "Product isolation checks FAILED."
