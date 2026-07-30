@@ -79,6 +79,11 @@ check_no_imports "Sources/CodeEditorLanguageSupport" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter)' \
   "LanguageSupport has no UI / Tree-sitter imports"
 
+echo "== CodeEditorLanguageServices import allowlist =="
+check_no_imports "Sources/CodeEditorLanguageServices" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP)' \
+  "LanguageServices has no UI / View / Workbench / Tree-sitter / LSP imports"
+
 echo "== CodeEditorTreeSitter grammar isolation =="
 check_no_imports "Sources/CodeEditorTreeSitter" \
   'import TreeSitter\w+Grammar' \
@@ -91,6 +96,33 @@ check_no_imports "Sources/CodeEditorView" \
 
 echo "== Package.swift product graph =="
 check_package_view_deps || true
+
+echo "== CodeEditorLanguageServices Package.swift deps =="
+python3 - <<'PY' || fail=1
+import re, sys
+text = open("Package.swift").read()
+m = re.search(
+    r'\.target\(\s*name:\s*"CodeEditorLanguageServices",\s*dependencies:\s*\[(.*?)\]',
+    text,
+    re.S,
+)
+if not m:
+    print("FAIL: CodeEditorLanguageServices target not found")
+    sys.exit(1)
+deps = m.group(1)
+allowed = {"CodeEditorCore", "CodeEditorDocuments", "CodeEditorLanguageSupport"}
+# strip quotes/commas
+found = set(re.findall(r'"([^"]+)"', deps))
+bad = found - allowed
+if bad:
+    print("FAIL: LanguageServices unexpected deps:", ", ".join(sorted(bad)))
+    sys.exit(1)
+missing = allowed - found
+if missing:
+    print("FAIL: LanguageServices missing deps:", ", ".join(sorted(missing)))
+    sys.exit(1)
+print("OK:   LanguageServices Package.swift deps are Core+Documents+LanguageSupport only")
+PY
 
 echo "== CodeEditorWorkbench dependency isolation =="
 python3 - <<'PY' || fail=1
