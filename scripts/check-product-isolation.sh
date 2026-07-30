@@ -84,6 +84,11 @@ check_no_imports "Sources/CodeEditorLanguageServices" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP)' \
   "LanguageServices has no UI / View / Workbench / Tree-sitter / LSP imports"
 
+echo "== CodeEditorExtensions import allowlist =="
+check_no_imports "Sources/CodeEditorExtensions" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|ExtensionKit)' \
+  "Extensions has no UI / View / Workbench / Tree-sitter / LSP / ExtensionKit imports"
+
 echo "== CodeEditorTreeSitter grammar isolation =="
 check_no_imports "Sources/CodeEditorTreeSitter" \
   'import TreeSitter\w+Grammar' \
@@ -122,6 +127,38 @@ if missing:
     print("FAIL: LanguageServices missing deps:", ", ".join(sorted(missing)))
     sys.exit(1)
 print("OK:   LanguageServices Package.swift deps are Core+Documents+LanguageSupport only")
+PY
+
+echo "== CodeEditorExtensions Package.swift deps =="
+python3 - <<'PY' || fail=1
+import re, sys
+text = open("Package.swift").read()
+m = re.search(
+    r'\.target\(\s*name:\s*"CodeEditorExtensions",\s*dependencies:\s*\[(.*?)\]',
+    text,
+    re.S,
+)
+if not m:
+    print("FAIL: CodeEditorExtensions target not found")
+    sys.exit(1)
+deps = m.group(1)
+allowed = {
+    "CodeEditorCore",
+    "CodeEditorDocuments",
+    "CodeEditorCommands",
+    "CodeEditorLanguageSupport",
+    "CodeEditorLanguageServices",
+}
+found = set(re.findall(r'"([^"]+)"', deps))
+bad = found - allowed
+if bad:
+    print("FAIL: Extensions unexpected deps:", ", ".join(sorted(bad)))
+    sys.exit(1)
+missing = allowed - found
+if missing:
+    print("FAIL: Extensions missing deps:", ", ".join(sorted(missing)))
+    sys.exit(1)
+print("OK:   Extensions Package.swift deps are Core+Documents+Commands+LanguageSupport+LanguageServices")
 PY
 
 echo "== CodeEditorWorkbench dependency isolation =="
