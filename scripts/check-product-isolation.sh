@@ -56,8 +56,13 @@ PY
 
 echo "== CodeEditorCore import allowlist =="
 check_no_imports "Sources/CodeEditorCore" \
-  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLanguageSupport)' \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLanguageSupport|CodeEditorDocuments)' \
   "Core has no UI / Tree-sitter / language-pack imports"
+
+echo "== CodeEditorDocuments import allowlist =="
+check_no_imports "Sources/CodeEditorDocuments" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLanguageSupport|CodeEditorView)' \
+  "Documents has no UI / Tree-sitter / View imports"
 
 echo "== CodeEditorLanguageSupport import allowlist =="
 check_no_imports "Sources/CodeEditorLanguageSupport" \

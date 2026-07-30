@@ -1,0 +1,84 @@
+import Foundation
+
+/// Stable identity for a shared text document.
+public struct DocumentID: Hashable, Codable, Sendable, RawRepresentable {
+    public let rawValue: UUID
+
+    public init(rawValue: UUID) {
+        self.rawValue = rawValue
+    }
+
+    public init() {
+        self.rawValue = UUID()
+    }
+}
+
+/// Stable identity for an editor presentation session on a document.
+public struct EditorSessionID: Hashable, Codable, Sendable, RawRepresentable {
+    public let rawValue: UUID
+
+    public init(rawValue: UUID) {
+        self.rawValue = rawValue
+    }
+
+    public init() {
+        self.rawValue = UUID()
+    }
+}
+
+/// Document location (file URL string, `inmemory:…`, or host-defined scheme).
+public struct DocumentURI: Hashable, Codable, Sendable, RawRepresentable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    public init(fileURL url: URL) {
+        self.rawValue = url.absoluteString
+    }
+
+    public static func inMemory(id: DocumentID = DocumentID()) -> DocumentURI {
+        DocumentURI(rawValue: "inmemory:\(id.rawValue.uuidString)")
+    }
+
+    public var fileURL: URL? {
+        guard let url = URL(string: rawValue), url.isFileURL else { return nil }
+        return url
+    }
+
+    public var isInMemory: Bool {
+        rawValue.hasPrefix("inmemory:")
+    }
+}
+
+/// Text encoding used when loading/saving document bytes.
+public enum DocumentEncoding: Sendable, Hashable, Codable {
+    case utf8
+    case utf16
+    case utf16LittleEndian
+    case utf16BigEndian
+    case other(String)
+
+    public var stringEncoding: String.Encoding {
+        switch self {
+        case .utf8: return .utf8
+        case .utf16: return .utf16
+        case .utf16LittleEndian: return .utf16LittleEndian
+        case .utf16BigEndian: return .utf16BigEndian
+        case .other:
+            return .utf8
+        }
+    }
+
+    public static func detect(from data: Data) -> DocumentEncoding {
+        if data.starts(with: [0xFF, 0xFE]) { return .utf16LittleEndian }
+        if data.starts(with: [0xFE, 0xFF]) { return .utf16BigEndian }
+        if data.starts(with: [0xEF, 0xBB, 0xBF]) { return .utf8 }
+        return .utf8
+    }
+}

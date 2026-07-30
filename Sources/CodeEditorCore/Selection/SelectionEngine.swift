@@ -109,25 +109,33 @@ public final class SelectionEngine {
         }
     }
 
-    /// Replaces every selection with `string` (high → low). Returns edits in application order.
+    /// Replaces every selection with `string` (high → low) as **one** versioned transaction.
+    /// Returns edits in application order.
     @discardableResult
     public func replaceAllSelections(with string: String) -> [TextEdit] {
         guard isEnabled, let document else { return [] }
-        var edits: [TextEdit] = []
         let working = selectedRanges.sorted { $0.location > $1.location }
-        var carets: [Int] = []
+        guard !working.isEmpty else { return [] }
 
-        for range in working {
-            let edit = document.replaceCharacters(in: range, with: string)
-            edits.append(edit)
-            carets.append(MultiRangeEdit.caretAfterReplace(range: range, replacementUTF16Count: string.utf16.count))
-            // Remap remaining lower ranges? We iterate high→low so lower locations are unaffected.
+        let changes = working.map { TextChange(range: $0, replacement: string) }
+        let transaction = EditTransaction(changes: changes, origin: .typing)
+        guard let applied = try? document.apply(transaction) else { return [] }
+
+        var carets: [Int] = []
+        carets.reserveCapacity(applied.textEdits.count)
+        for edit in applied.textEdits {
+            carets.append(
+                MultiRangeEdit.caretAfterReplace(
+                    range: edit.range,
+                    replacementUTF16Count: string.utf16.count
+                )
+            )
         }
 
         // Carets collected high→low; reverse to document order.
         let orderedCarets = carets.reversed().map { NSRange(location: $0, length: 0) }
         setSelectedRanges(orderedCarets)
-        return edits
+        return applied.textEdits
     }
 
     /// Legacy single-selection replace.
