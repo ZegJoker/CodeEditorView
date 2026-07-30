@@ -16,5 +16,6 @@
 
 @_exported import CodeEditorCore
 @_exported import CodeEditorDocuments
+@_exported import CodeEditorCommands
 @_exported import CodeEditorLanguageSupport
 @_exported import CodeEditorTreeSitter
