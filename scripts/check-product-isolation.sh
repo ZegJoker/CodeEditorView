@@ -94,6 +94,26 @@ check_no_imports "Sources/CodeEditorLSP" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorExtensions|CodeEditorLanguages|CodeEditorTreeSitter|ExtensionKit)' \
   "LSP has no UI / View / Workbench / Extensions / Tree-sitter imports"
 
+echo "== CodeEditorSearch import allowlist =="
+check_no_imports "Sources/CodeEditorSearch" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions)' \
+  "Search has no UI / View / Workbench / LSP / Tree-sitter imports"
+
+echo "== CodeEditorTasks import allowlist =="
+check_no_imports "Sources/CodeEditorTasks" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions)' \
+  "Tasks has no UI / View / Workbench / LSP / Tree-sitter imports"
+
+echo "== CodeEditorTerminal import allowlist =="
+check_no_imports "Sources/CodeEditorTerminal" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions)' \
+  "Terminal has no UI / View / Workbench / Workspace / Tree-sitter imports"
+
+echo "== CodeEditorSourceControl import allowlist =="
+check_no_imports "Sources/CodeEditorSourceControl" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions)' \
+  "SourceControl has no UI / View / Workbench / LSP / Tree-sitter imports"
+
 echo "== CodeEditorTreeSitter grammar isolation =="
 check_no_imports "Sources/CodeEditorTreeSitter" \
   'import TreeSitter\w+Grammar' \
