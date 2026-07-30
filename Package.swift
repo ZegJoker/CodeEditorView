@@ -18,6 +18,10 @@ let package = Package(
         .library(name: "CodeEditorLanguageServices", targets: ["CodeEditorLanguageServices"]),
         .library(name: "CodeEditorExtensions", targets: ["CodeEditorExtensions"]),
         .library(name: "CodeEditorLSP", targets: ["CodeEditorLSP"]),
+        .library(name: "CodeEditorSearch", targets: ["CodeEditorSearch"]),
+        .library(name: "CodeEditorTasks", targets: ["CodeEditorTasks"]),
+        .library(name: "CodeEditorTerminal", targets: ["CodeEditorTerminal"]),
+        .library(name: "CodeEditorSourceControl", targets: ["CodeEditorSourceControl"]),
         .library(name: "CodeEditorTreeSitter", targets: ["CodeEditorTreeSitter"]),
         .library(name: "CodeEditorLanguageSwift", targets: ["CodeEditorLanguageSwift"]),
         .library(name: "CodeEditorLanguageJSON", targets: ["CodeEditorLanguageJSON"]),
@@ -560,6 +564,41 @@ let package = Package(
             ]
         ),
         .target(
+            name: "CodeEditorSearch",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+                "CodeEditorCommands",
+                "CodeEditorWorkspace",
+            ]
+        ),
+        .target(
+            name: "CodeEditorTasks",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+                "CodeEditorCommands",
+                "CodeEditorWorkspace",
+                "CodeEditorLanguageServices",
+            ]
+        ),
+        .target(
+            name: "CodeEditorTerminal",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+            ]
+        ),
+        .target(
+            name: "CodeEditorSourceControl",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+                "CodeEditorCommands",
+                "CodeEditorWorkspace",
+            ]
+        ),
+        .target(
             name: "CodeEditorTreeSitter",
             dependencies: [
                 "CodeEditorLanguageSupport",
@@ -703,6 +742,22 @@ let package = Package(
                 "CodeEditorLanguageServices",
                 "CodeEditorDocuments",
             ]
+        ),
+        .testTarget(
+            name: "CodeEditorSearchTests",
+            dependencies: ["CodeEditorSearch", "CodeEditorWorkspace", "CodeEditorDocuments"]
+        ),
+        .testTarget(
+            name: "CodeEditorTasksTests",
+            dependencies: ["CodeEditorTasks", "CodeEditorLanguageServices"]
+        ),
+        .testTarget(
+            name: "CodeEditorTerminalTests",
+            dependencies: ["CodeEditorTerminal"]
+        ),
+        .testTarget(
+            name: "CodeEditorSourceControlTests",
+            dependencies: ["CodeEditorSourceControl"]
         ),
     ],
     swiftLanguageModes: [.v6],
