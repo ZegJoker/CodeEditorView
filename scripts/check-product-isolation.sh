@@ -89,6 +89,19 @@ check_no_imports "Sources/CodeEditorExtensions" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|ExtensionKit)' \
   "Extensions has no UI / View / Workbench / Tree-sitter / LSP / ExtensionKit imports"
 
+echo "== CodeEditorExtensionHost import allowlist =="
+check_no_imports "Sources/CodeEditorExtensionHost" \
+  'import (SwiftUI|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl)' \
+  "ExtensionHost has no View / Workbench / LSP / tooling / Tree-sitter imports"
+# Forbid private LaunchServices mutation APIs
+if rg -n --glob '*.swift' 'LSSetDefault|LSRegisterURL|_LS|kLS' Sources/CodeEditorExtensionHost >/tmp/cev-ls-hits.txt 2>/dev/null; then
+  echo "FAIL: ExtensionHost must not use private LaunchServices APIs:"
+  cat /tmp/cev-ls-hits.txt
+  fail=1
+else
+  echo "OK:   ExtensionHost has no private LaunchServices mutation APIs"
+fi
+
 echo "== CodeEditorLSP import allowlist =="
 check_no_imports "Sources/CodeEditorLSP" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorExtensions|CodeEditorLanguages|CodeEditorTreeSitter|ExtensionKit)' \
