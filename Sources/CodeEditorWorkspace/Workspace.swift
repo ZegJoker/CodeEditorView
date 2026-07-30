@@ -135,6 +135,24 @@ public final class Workspace {
         panes[paneID]?.pin(tab: tabID)
     }
 
+    public func closeOtherTabs(keeping tabID: EditorTabID, in paneID: EditorPaneID) {
+        guard let pane = panes[paneID] else { return }
+        let toClose = pane.tabs.map(\.id).filter { $0 != tabID }
+        for id in toClose {
+            closeTab(id, in: paneID)
+        }
+    }
+
+    public func closeTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID) {
+        guard let pane = panes[paneID],
+              let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
+        else { return }
+        let toClose = pane.tabs.suffix(from: idx + 1).map(\.id)
+        for id in toClose {
+            closeTab(id, in: paneID)
+        }
+    }
+
     public func promotePreviewTabs(for documentID: DocumentID) {
         for pane in panes.values {
             if let tab = pane.tabs.first(where: { $0.documentID == documentID }) {
