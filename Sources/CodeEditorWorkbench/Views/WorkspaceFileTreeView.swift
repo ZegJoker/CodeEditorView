@@ -11,9 +11,12 @@ public struct WorkspaceFileTreeView: View {
     @State private var loadError: String?
     @State private var isPresentingNewFile = false
     @State private var isPresentingNewFolder = false
+    @State private var isPresentingRename = false
     @State private var newItemName = ""
     @State private var createParent: WorkspaceItemID?
     @State private var createParentIsDirectory = true
+    @State private var renameTarget: WorkspaceItemID?
+    @State private var filterText: String = ""
 
     public init(model: WorkbenchModel) {
         self.model = model
@@ -22,6 +25,7 @@ public struct WorkspaceFileTreeView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
+            filterField
             Divider().opacity(0.35)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
@@ -77,6 +81,23 @@ public struct WorkspaceFileTreeView: View {
         } message: {
             Text("The folder will be created under the selected folder (or project root).")
         }
+        .alert("Rename", isPresented: $isPresentingRename) {
+            TextField("Name", text: $newItemName)
+            Button("Cancel", role: .cancel) {
+                renameTarget = nil
+                newItemName = ""
+            }
+            Button("Rename") {
+                if let target = renameTarget {
+                    let name = sanitizedFileName(newItemName, defaultName: target.name)
+                    model.renameItem(target, to: name)
+                }
+                renameTarget = nil
+                newItemName = ""
+            }
+        } message: {
+            Text("Enter a new name.")
+        }
         .alert(
             "Navigator Error",
             isPresented: Binding(
@@ -121,6 +142,30 @@ public struct WorkspaceFileTreeView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
+    }
+
+    private var filterField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+                .foregroundStyle(.secondary)
+                .font(.caption)
+            TextField("Filter", text: $filterText)
+                .textFieldStyle(.plain)
+                .font(.caption)
+            if !filterText.isEmpty {
+                Button {
+                    filterText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.primary.opacity(0.04))
     }
 
     // MARK: - Rows
@@ -181,7 +226,7 @@ public struct WorkspaceFileTreeView: View {
     }
 
     private func childrenStack(for parent: WorkspaceItemID, depth: Int) -> AnyView {
-        let kids = displayedChildren(of: parent)
+        let kids = filteredChildren(of: parent)
         return AnyView(
             ForEach(kids, id: \.id.path) { item in
                 itemRow(item, depth: depth)
@@ -196,6 +241,62 @@ public struct WorkspaceFileTreeView: View {
             return live
         }
         return childrenCache[itemKey(parent)] ?? []
+    }
+
+    private func filteredChildren(of parent: WorkspaceItemID) -> [WorkspaceItem] {
+        let kids = displayedChildren(of: parent)
+        let q = filterText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !q.isEmpty else { return kids }
+        return kids.filter { item in
+            if item.name.lowercased().contains(q) { return true }
+            if item.isDirectory {
+                // Keep folders that have matching descendants already loaded.
+                return filteredChildren(of: item.id).isEmpty == false
+                    || item.name.lowercased().contains(q)
+            }
+            return false
+        }
+    }
+
+    private func itemContextMenu(for item: WorkspaceItem, isDirectory: Bool) -> some View {
+        Group {
+            if !isDirectory {
+                Button("Open") { selectFile(item, preview: false) }
+                Button("Open as Preview") { selectFile(item, preview: true) }
+                Divider()
+            }
+            Button("New File…") {
+                createParent = isDirectory
+                    ? item.id
+                    : WorkspaceItemID(rootID: item.id.rootID, path: item.id.parentPath ?? "")
+                createParentIsDirectory = true
+                newItemName = "Untitled.swift"
+                isPresentingNewFile = true
+            }
+            Button("New Folder…") {
+                createParent = isDirectory
+                    ? item.id
+                    : WorkspaceItemID(rootID: item.id.rootID, path: item.id.parentPath ?? "")
+                createParentIsDirectory = true
+                newItemName = "New Folder"
+                isPresentingNewFolder = true
+            }
+            Divider()
+            Button("Rename…") {
+                renameTarget = item.id
+                newItemName = item.name
+                isPresentingRename = true
+            }
+            Button("Delete", role: .destructive) {
+                model.deleteItem(item.id)
+            }
+            #if os(macOS)
+            Divider()
+            Button("Reveal in Finder") {
+                model.revealInFinder(item.id)
+            }
+            #endif
+        }
     }
 
     private func itemRow(_ item: WorkspaceItem, depth: Int) -> AnyView {
@@ -227,18 +328,8 @@ public struct WorkspaceFileTreeView: View {
                         TapGesture(count: 2).onEnded { toggleExpansion(key) }
                     )
                     .contextMenu {
-                        Button("New File…") {
-                            createParent = item.id
-                            createParentIsDirectory = true
-                            newItemName = "Untitled.swift"
-                            isPresentingNewFile = true
-                        }
-                        Button("New Folder…") {
-                            createParent = item.id
-                            createParentIsDirectory = true
-                            newItemName = "New Folder"
-                            isPresentingNewFolder = true
-                        }
+                        itemContextMenu(for: item, isDirectory: true)
+                        Divider()
                         Button(isExpanded ? "Collapse" : "Expand") {
                             toggleExpansion(key)
                         }
@@ -274,23 +365,7 @@ public struct WorkspaceFileTreeView: View {
                     }
                 )
                 .contextMenu {
-                    Button("Open") {
-                        selectFile(item, preview: false)
-                    }
-                    Button("Open as Preview") {
-                        selectFile(item, preview: true)
-                    }
-                    Divider()
-                    Button("New File Here…") {
-                        let parent = WorkspaceItemID(
-                            rootID: item.id.rootID,
-                            path: item.id.parentPath ?? ""
-                        )
-                        createParent = parent
-                        createParentIsDirectory = true
-                        newItemName = "Untitled.swift"
-                        isPresentingNewFile = true
-                    }
+                    itemContextMenu(for: item, isDirectory: false)
                 }
             )
         }
@@ -533,19 +608,30 @@ struct WorkbenchBreadcrumbBar: View {
         let _ = model.workspace.revision
         HStack(spacing: 4) {
             if let doc = documentForThisPane {
-                let path = doc.uri.fileURL?.path ?? doc.uri.rawValue
-                let parts = path.split(separator: "/").map(String.init)
-                let tail = Array(parts.suffix(3))
+                let fullPath = doc.uri.fileURL?.path ?? doc.uri.rawValue
+                let parts = fullPath.split(separator: "/").map(String.init)
+                let tail = Array(parts.suffix(4))
+                Image(systemName: "doc.text")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 ForEach(Array(tail.enumerated()), id: \.offset) { index, part in
                     if index > 0 {
                         Image(systemName: "chevron.forward")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
+                    let isLast = index == tail.count - 1
                     Text(part)
-                        .font(.caption)
-                        .foregroundStyle(index == tail.count - 1 ? .primary : .secondary)
+                        .font(.caption.weight(isLast ? .medium : .regular))
+                        .foregroundStyle(isLast ? .primary : .secondary)
                         .lineLimit(1)
+                        .help(isLast ? fullPath : part)
+                }
+                if doc.isDirty {
+                    Circle()
+                        .fill(Color.orange.opacity(0.9))
+                        .frame(width: 6, height: 6)
+                        .help("Unsaved changes")
                 }
             } else {
                 Text("No Editor")
@@ -558,6 +644,7 @@ struct WorkbenchBreadcrumbBar: View {
         .padding(.vertical, 5)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.bar.opacity(0.6))
+        .help(documentForThisPane.map { $0.uri.fileURL?.path ?? $0.uri.rawValue } ?? "No editor")
     }
 
     private var documentForThisPane: TextDocument? {

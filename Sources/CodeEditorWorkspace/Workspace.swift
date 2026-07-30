@@ -218,12 +218,73 @@ public final class Workspace {
 
     @discardableResult
     public func splitActivePane(axis: EditorSplitAxis, fraction: Double = 0.5) -> EditorPaneID? {
-        guard let active = activePaneID else { return nil }
+        guard let active = activePaneID, let source = panes[active] else { return nil }
         let newPane = EditorPane()
         panes[newPane.id] = newPane
         layout.split(pane: active, axis: axis, newPane: newPane.id, fraction: fraction)
+        // Clone the active tab into the new pane (Xcode-like), not an empty editor.
+        if let tab = source.selectedTab,
+           let session = sessions[tab.sessionID],
+           let doc = documents.document(id: tab.documentID) {
+            let cloned = EditorSession(documentID: doc.id)
+            cloned.selections = session.selections
+            cloned.scrollPosition = session.scrollPosition
+            sessions[cloned.id] = cloned
+            _ = newPane.open(
+                sessionID: cloned.id,
+                documentID: doc.id,
+                documentURI: doc.uri,
+                preview: false
+            )
+        }
         setActivePane(newPane.id)
+        noteRevision()
         return newPane.id
+    }
+
+    /// Deletes a workspace item from disk and updates the file tree.
+    public func deleteItem(_ id: WorkspaceItemID) async throws {
+        try await fileSystem.delete(item: id)
+        fileTree.apply(.removed(id))
+        // Close tabs for deleted file if open.
+        if let uri = fileSystem.uri(for: id) {
+            for (paneID, pane) in panes {
+                for tab in pane.tabs where tab.documentURI == uri {
+                    closeTab(tab.id, in: paneID)
+                }
+            }
+        }
+        noteRevision()
+    }
+
+    /// Renames a workspace item within its parent directory.
+    @discardableResult
+    public func renameItem(_ id: WorkspaceItemID, to newName: String) async throws -> WorkspaceItem {
+        let parent = WorkspaceItemID(rootID: id.rootID, path: id.parentPath ?? "")
+        let oldURI = fileSystem.uri(for: id)
+        let moved = try await fileSystem.move(item: id, to: parent, newName: newName)
+        fileTree.apply(.renamed(from: id, to: moved))
+        // Retarget open documents that pointed at the old URI.
+        if let oldURI,
+           let doc = documents.document(uri: oldURI) {
+            doc.setURI(moved.uri)
+            documents.reindexURI(for: doc)
+            updateTabURIs(documentID: doc.id, uri: moved.uri)
+        }
+        noteRevision()
+        return moved
+    }
+
+    /// Moves a tab within a pane (drag-reorder).
+    public func moveTab(from: Int, to: Int, in paneID: EditorPaneID) {
+        panes[paneID]?.moveTab(from: from, to: to)
+        noteRevision()
+    }
+
+    /// Updates stored split fractions (user drag or restoration). Bumps ``revision``.
+    public func setSplitFractions(_ id: EditorSplitID, fractions: [Double]) {
+        layout.setFractions(split: id, fractions: fractions)
+        noteRevision()
     }
 
     public func closePane(_ id: EditorPaneID) {

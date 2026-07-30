@@ -7,6 +7,10 @@ import CodeEditorDocuments
 import CodeEditorWorkspace
 import CodeEditorView
 
+#if canImport(AppKit) && !targetEnvironment(macCatalyst)
+import AppKit
+#endif
+
 @MainActor
 @Observable
 public final class WorkbenchModel {
@@ -183,6 +187,7 @@ public final class WorkbenchModel {
     }
 
     public func presentOpenQuickly() {
+        openQuickly.resetPresentation()
         isOpenQuicklyPresented = true
         Task { await openQuickly.recompute(workspace: workspace) }
     }
@@ -245,6 +250,46 @@ public final class WorkbenchModel {
                 statusMessage = "Create folder failed: \(error.localizedDescription)"
             }
         }
+    }
+
+    public func renameItem(_ id: WorkspaceItemID, to newName: String) {
+        Task {
+            do {
+                let item = try await workspace.renameItem(id, to: newName)
+                selectedNavigatorItem = item.id
+                statusMessage = "Renamed to \(item.name)"
+            } catch {
+                navigatorError = error.localizedDescription
+                statusMessage = "Rename failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    public func deleteItem(_ id: WorkspaceItemID) {
+        Task {
+            do {
+                try await workspace.deleteItem(id)
+                if selectedNavigatorItem == id {
+                    selectedNavigatorItem = nil
+                }
+                statusMessage = "Deleted"
+            } catch {
+                navigatorError = error.localizedDescription
+                statusMessage = "Delete failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    public func revealInFinder(_ id: WorkspaceItemID) {
+        guard let uri = workspace.fileSystem.uri(for: id),
+              let url = uri.fileURL
+        else {
+            navigatorError = "Cannot reveal item"
+            return
+        }
+        #if os(macOS)
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+        #endif
     }
 
     private func resolveCreateParent(_ parent: WorkspaceItemID?) async throws -> WorkspaceItemID {

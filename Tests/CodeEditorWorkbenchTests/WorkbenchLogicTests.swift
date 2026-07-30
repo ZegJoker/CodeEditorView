@@ -88,6 +88,49 @@ struct OpenQuicklyModelTests {
         #expect(model.results.count == 1)
         #expect(model.results[0].name == "Alpha.swift")
     }
+
+    @Test func fuzzyRanksPrefixAndSubsequence() {
+        let exact = OpenQuicklyModel.fuzzyScore(
+            query: "Workspace",
+            name: "Workspace.swift",
+            path: "Sources/Workspace.swift"
+        )
+        let fuzzy = OpenQuicklyModel.fuzzyScore(
+            query: "wsv",
+            name: "WorkspaceView.swift",
+            path: "Sources/Views/WorkspaceView.swift"
+        )
+        let miss = OpenQuicklyModel.fuzzyScore(
+            query: "zzzz",
+            name: "Workspace.swift",
+            path: "Sources/Workspace.swift"
+        )
+        #expect(exact != nil)
+        #expect(fuzzy != nil)
+        #expect(miss == nil)
+        #expect((exact ?? 0) > (fuzzy ?? 0))
+    }
+
+    @Test func keyboardSelectionMovesWithinResults() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("OQ-Keys-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try "a".data(using: .utf8)!.write(to: root.appendingPathComponent("A.swift"))
+        try "b".data(using: .utf8)!.write(to: root.appendingPathComponent("B.swift"))
+        try "c".data(using: .utf8)!.write(to: root.appendingPathComponent("C.swift"))
+
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let model = OpenQuicklyModel()
+        await model.recompute(workspace: workspace)
+        #expect(model.results.count >= 3)
+        model.moveSelection(by: 1)
+        #expect(model.selectedIndex == 1)
+        model.moveSelection(by: 10)
+        #expect(model.selectedIndex == model.results.count - 1)
+        model.moveSelection(by: -100)
+        #expect(model.selectedIndex == 0)
+    }
 }
 
 @Suite("Workbench open and create")

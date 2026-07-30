@@ -84,14 +84,14 @@ public struct WorkbenchView: View {
                 .padding(24)
             }
         }
-        .sheet(isPresented: $model.isOpenQuicklyPresented) {
-            OpenQuicklyView(
-                model: model.openQuickly,
-                onSelect: { model.openURI($0, preview: true) },
-                onDismiss: { model.isOpenQuicklyPresented = false }
-            )
-            .padding()
+        .overlay {
+            if model.isOpenQuicklyPresented {
+                OpenQuicklyOverlay(model: model)
+                    .transition(.opacity)
+                    .zIndex(100)
+            }
         }
+        .animation(WorkbenchMotion.chrome, value: model.isOpenQuicklyPresented)
     }
 
     /// Editor + optional utility split (does not span navigator).

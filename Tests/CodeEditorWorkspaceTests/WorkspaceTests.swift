@@ -187,6 +187,67 @@ struct NavigationHistoryTests {
     }
 }
 
+@Suite("Pane split and tabs")
+@MainActor
+struct PaneSplitAndTabsTests {
+    @Test func splitActivePaneClonesSelectedTab() async throws {
+        let root = try makeTempRoot(files: ["Main.swift": "print(1)\n"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let file = root.appendingPathComponent("Main.swift")
+        let opened = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: file),
+            preview: false
+        )
+        let sourcePaneID = try #require(workspace.activePaneID)
+        let newPaneID = try #require(workspace.splitActivePane(axis: .horizontal))
+        #expect(newPaneID != sourcePaneID)
+        #expect(workspace.panes.count == 2)
+        let cloned = try #require(workspace.panes[newPaneID])
+        #expect(cloned.tabs.count == 1)
+        #expect(cloned.tabs[0].documentID == opened.document.id)
+        #expect(cloned.tabs[0].sessionID != opened.session.id)
+        if case .split(_, let axis, let children, let fracs) = workspace.layout.root {
+            #expect(axis == .horizontal)
+            #expect(children.count == 2)
+            #expect(abs(fracs.reduce(0, +) - 1) < 0.001)
+        } else {
+            Issue.record("Expected horizontal split")
+        }
+    }
+
+    @Test func moveTabReordersWithinPane() {
+        let pane = EditorPane()
+        let a = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:a", preview: false)
+        let b = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:b", preview: false)
+        let c = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:c", preview: false)
+        #expect(pane.tabs.map(\.id) == [a.tab.id, b.tab.id, c.tab.id])
+        pane.moveTab(from: 0, to: 2)
+        #expect(pane.tabs.map(\.id) == [b.tab.id, c.tab.id, a.tab.id])
+    }
+
+    @Test func setSplitFractionsPersists() async throws {
+        let root = try makeTempRoot(files: ["a.txt": "a"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let file = root.appendingPathComponent("a.txt")
+        _ = try await workspace.openInActivePane(uri: DocumentURI(fileURL: file), preview: false)
+        _ = workspace.splitActivePane(axis: .vertical, fraction: 0.4)
+        guard case .split(let id, _, _, let before) = workspace.layout.root else {
+            Issue.record("Expected split")
+            return
+        }
+        #expect(abs(before[0] - 0.4) < 0.001)
+        workspace.setSplitFractions(id, fractions: [0.7, 0.3])
+        guard case .split(_, _, _, let after) = workspace.layout.root else {
+            Issue.record("Expected split after set")
+            return
+        }
+        #expect(abs(after[0] - 0.7) < 0.001)
+        #expect(abs(after[1] - 0.3) < 0.001)
+    }
+}
+
 @Suite("Workspace headless")
 @MainActor
 struct WorkspaceHeadlessTests {
