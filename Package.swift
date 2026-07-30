@@ -504,6 +504,7 @@ let package = Package(
             name: "CodeEditorLanguageSwift",
             dependencies: [
                 "CodeEditorLanguageSupport",
+                "CodeEditorTreeSitter",
                 "TreeSitterSwiftGrammar",
             ],
             resources: [
@@ -514,6 +515,7 @@ let package = Package(
             name: "CodeEditorLanguageJSON",
             dependencies: [
                 "CodeEditorLanguageSupport",
+                "CodeEditorTreeSitter",
                 "TreeSitterJsonGrammar",
             ],
             resources: [

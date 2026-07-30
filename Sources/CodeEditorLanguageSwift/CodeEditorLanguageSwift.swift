@@ -1,5 +1,6 @@
 import Foundation
 import CodeEditorLanguageSupport
+import CodeEditorTreeSitter
 import TreeSitterSwiftGrammar
 
 /// Pilot language pack: Swift grammar + highlight queries.
@@ -29,6 +30,10 @@ public enum CodeEditorLanguageSwift: Sendable {
         let tsName = language.tsName
         registry.registerQueryProvider(for: .swift) { queryName in
             queryURL(tsName: tsName, query: queryName)
+        }
+        // Standalone pack hosts: install registry-backed config if nothing else is installed.
+        if TreeSitterLanguageEnvironment.configurationProvider == nil {
+            TreeSitterLanguageEnvironment.install(RegistryTreeSitterConfigurationProvider())
         }
         return true
     }

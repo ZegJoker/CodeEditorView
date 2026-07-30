@@ -8,6 +8,9 @@ import AppKit
 import UIKit
 #endif
 
+// Register all Tree-sitter grammars once for the demo process.
+private let _codeEditorLanguagesBootstrap: Bool = CodeEditorLanguages.bootstrap()
+
 #if os(macOS)
 /// SPM executables are not .app bundles; without an activation policy they never become
 /// the key app and keystrokes keep going to Terminal / the previous frontmost app.

@@ -1,5 +1,6 @@
 import Foundation
 import CodeEditorLanguageSupport
+import CodeEditorTreeSitter
 import TreeSitterJsonGrammar
 
 /// Pilot language pack: JSON grammar + highlight queries.
@@ -29,6 +30,9 @@ public enum CodeEditorLanguageJSON: Sendable {
         let tsName = language.tsName
         registry.registerQueryProvider(for: .json) { queryName in
             queryURL(tsName: tsName, query: queryName)
+        }
+        if TreeSitterLanguageEnvironment.configurationProvider == nil {
+            TreeSitterLanguageEnvironment.install(RegistryTreeSitterConfigurationProvider())
         }
         return true
     }

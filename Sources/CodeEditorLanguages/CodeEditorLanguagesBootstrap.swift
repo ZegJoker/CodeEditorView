@@ -74,6 +74,7 @@ public enum CodeEditorLanguages: Sendable {
         state.phase = .inProgress
         state.condition.unlock()
 
+        _ = codeEditorLanguagesModule
         installOnDemandBootstrapHook()
         registerAllParsers()
         registerAllQueryProvidersAndDefinitions()
