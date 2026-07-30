@@ -25,7 +25,10 @@ let package = Package(
                 .product(name: "CodeEditorTerminal", package: "CodeEditorView"),
                 .product(name: "CodeEditorLanguageSwift", package: "CodeEditorView"),
             ],
-            path: "Sources"
+            path: "Sources",
+            swiftSettings: [
+                .unsafeFlags(["-parse-as-library"]),
+            ]
         ),
     ]
 )

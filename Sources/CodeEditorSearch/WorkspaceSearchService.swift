@@ -39,11 +39,21 @@ public actor WorkspaceSearchService {
 
         var filesScanned = 0
         var matchCount = 0
+        var filesWithMatches = Set<String>()
+
+        // Canonical paths of open docs so disk enumeration does not double-count
+        // the same file when DocumentURI string forms differ (e.g. absoluteString).
+        var openCanonicalPaths = Set<String>()
+        for uri in context.openDocuments.keys {
+            if let path = Self.canonicalPath(for: uri) {
+                openCanonicalPaths.insert(path)
+            }
+        }
 
         // Open documents first (in-memory).
         for (uri, text) in context.openDocuments.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
             try Task.checkCancellation()
-            let path = uri.fileURL?.path ?? uri.rawValue
+            let path = Self.canonicalPath(for: uri) ?? uri.rawValue
             if SearchPathMatching.isExcluded(path: path, excludes: query.excludeGlobs) { continue }
             if !SearchPathMatching.isIncluded(path: path, includes: query.includeGlobs) { continue }
 
@@ -60,18 +70,23 @@ public actor WorkspaceSearchService {
                 regex: regex,
                 fromOpen: true
             )
+            if !matches.isEmpty {
+                filesWithMatches.insert(path)
+            }
             for m in matches {
                 matchCount += 1
                 continuation.yield(.match(m))
                 if matchCount >= query.maxResults {
-                    continuation.yield(.finished(filesScanned: filesScanned, matchCount: matchCount))
+                    continuation.yield(.finished(
+                        filesScanned: filesWithMatches.count,
+                        matchCount: matchCount
+                    ))
                     return
                 }
             }
         }
 
-        // Disk roots
-        let openURIs = Set(context.openDocuments.keys)
+        // Disk roots (skip files already covered via open documents).
         for root in context.rootDirectories {
             try Task.checkCancellation()
             let enumerator = FileManager.default.enumerator(
@@ -81,7 +96,7 @@ public actor WorkspaceSearchService {
             )
             while let item = enumerator?.nextObject() as? URL {
                 try Task.checkCancellation()
-                let path = item.path
+                let path = item.standardizedFileURL.path
                 if SearchPathMatching.isExcluded(path: path, excludes: query.excludeGlobs) {
                     enumerator?.skipDescendants()
                     continue
@@ -98,9 +113,9 @@ public actor WorkspaceSearchService {
                 guard values?.isRegularFile == true else { continue }
                 if let size = values?.fileSize, size > query.maxFileBytes { continue }
 
-                let uri = DocumentURI(fileURL: item)
-                if openURIs.contains(uri) { continue } // already searched in-memory
+                if openCanonicalPaths.contains(path) { continue } // already searched in-memory
 
+                let uri = DocumentURI(fileURL: item.standardizedFileURL)
                 guard let data = try? Data(contentsOf: item) else { continue }
                 if data.count > query.maxFileBytes { continue }
                 if SearchPathMatching.isBinary(data) { continue }
@@ -121,31 +136,62 @@ public actor WorkspaceSearchService {
                     regex: regex,
                     fromOpen: false
                 )
+                if !matches.isEmpty {
+                    filesWithMatches.insert(path)
+                }
                 for m in matches {
                     matchCount += 1
                     continuation.yield(.match(m))
                     if matchCount >= query.maxResults {
-                        continuation.yield(.finished(filesScanned: filesScanned, matchCount: matchCount))
+                        continuation.yield(.finished(
+                            filesScanned: filesWithMatches.count,
+                            matchCount: matchCount
+                        ))
                         return
                     }
                 }
             }
         }
 
-        continuation.yield(.finished(filesScanned: filesScanned, matchCount: matchCount))
+        // `filesScanned` in finished = unique files that produced matches (Xcode-style summary).
+        continuation.yield(.finished(filesScanned: filesWithMatches.count, matchCount: matchCount))
+    }
+
+    /// Normalized filesystem path for open-document / disk de-duplication.
+    static func canonicalPath(for uri: DocumentURI) -> String? {
+        guard let url = uri.fileURL else { return nil }
+        return url.standardizedFileURL.path
     }
 
     static func makeRegex(_ query: SearchQuery) throws -> NSRegularExpression {
+        let mode = query.matchMode
         var pattern = query.pattern
-        if !query.isRegex {
+        if mode != .regularExpression {
             pattern = NSRegularExpression.escapedPattern(for: pattern)
         }
-        if query.wholeWord {
+        switch mode {
+        case .contains:
+            break
+        case .matchesWord:
             pattern = "\\b(?:\(pattern))\\b"
+        case .startsWith:
+            // Start of line (Xcode-style “Starts With” in file search).
+            pattern = "^(?:\(pattern))"
+        case .endsWith:
+            pattern = "(?:\(pattern))$"
+        case .regularExpression:
+            // Whole-word can combine with regex (wrap user pattern).
+            if query.wholeWord {
+                pattern = "\\b(?:\(pattern))\\b"
+            }
         }
+
         var options: NSRegularExpression.Options = []
         if !query.caseSensitive {
             options.insert(.caseInsensitive)
+        }
+        if mode == .startsWith || mode == .endsWith {
+            options.insert(.anchorsMatchLines)
         }
         return try NSRegularExpression(pattern: pattern, options: options)
     }

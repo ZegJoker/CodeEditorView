@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 public indirect enum EditorLayoutNode: Codable, Sendable, Equatable {
     case pane(EditorPaneID)
@@ -7,6 +8,7 @@ public indirect enum EditorLayoutNode: Codable, Sendable, Equatable {
 
 /// Owns the recursive pane/split tree and keeps it normalized.
 @MainActor
+@Observable
 public final class EditorLayoutStore {
     public private(set) var root: EditorLayoutNode
 

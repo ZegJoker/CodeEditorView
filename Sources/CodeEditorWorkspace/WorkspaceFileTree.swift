@@ -1,8 +1,10 @@
 import Foundation
+import Observation
 import CodeEditorDocuments
 
 /// Lazy in-memory cache of expanded workspace directories.
 @MainActor
+@Observable
 public final class WorkspaceFileTree {
     public private(set) var roots: [WorkspaceRoot]
     private let fileSystem: any WorkspaceFileSystem

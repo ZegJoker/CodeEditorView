@@ -37,6 +37,10 @@ public struct SharedCodeEditor: View {
     }
 
     public var body: some View {
+        // Track session selection so Find-in-Files jumps call updateNSView.
+        let _ = session.selections
+        // NSViewRepresentable only runs makeNSView once per identity. Document/session
+        // swaps must remount the platform editor or the first file’s buffer stays visible.
         SharedEditorRepresentable(
             document: document,
             session: session,
@@ -47,7 +51,15 @@ public struct SharedCodeEditor: View {
             completionDelegate: completionDelegate,
             jumpToDefinitionDelegate: jumpToDefinitionDelegate
         )
+        .id(SharedEditorIdentity(documentID: document.id, sessionID: session.id))
     }
+}
+
+/// Stable identity for remounting ``SharedEditorRepresentable`` when the bound
+/// document or session changes (tab switches, open file, etc.).
+private struct SharedEditorIdentity: Hashable {
+    let documentID: DocumentID
+    let sessionID: EditorSessionID
 }
 
 public extension CodeEditor {
@@ -126,14 +138,27 @@ struct SharedEditorRepresentable: NSViewRepresentable {
 
     func updateNSView(_ chrome: EditorChromeView, context: Context) {
         guard let controller = context.coordinator.controller else { return }
+        // Document/session switches are handled by remounting via SharedCodeEditor `.id(...)`.
+        // Do not rebind here: EditorChromeView owns an immutable controller.
         if controller.configuration != configuration {
             controller.configuration = configuration
         }
         if controller.language != language {
             controller.language = language
         }
-        controller.completionDelegate = completionDelegate
-        controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
+        // Apply external selection (Find in Files jump) without remounting.
+        let sessionRanges = session.selectedNSRanges
+        if sessionRanges != controller.selectedRanges, !sessionRanges.isEmpty {
+            controller.setSelectedRanges(sessionRanges)
+        }
+        // Only assign when identity changes. Unconditional writes on @Observable
+        // properties re-enter SwiftUI's update cycle and freeze the main thread.
+        if !sameOptionalObject(controller.completionDelegate, completionDelegate) {
+            controller.completionDelegate = completionDelegate
+        }
+        if !sameOptionalObject(controller.jumpToDefinitionDelegate, jumpToDefinitionDelegate) {
+            controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
+        }
         if !highlightProviders.isEmpty {
             controller.setHighlightProviders(highlightProviders)
         }
@@ -189,6 +214,15 @@ struct SharedEditorRepresentable: UIViewRepresentable {
         if controller.language != language {
             controller.language = language
         }
+        if !sameOptionalObject(controller.completionDelegate, completionDelegate) {
+            controller.completionDelegate = completionDelegate
+        }
+        if !sameOptionalObject(controller.jumpToDefinitionDelegate, jumpToDefinitionDelegate) {
+            controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
+        }
+        if !highlightProviders.isEmpty {
+            controller.setHighlightProviders(highlightProviders)
+        }
     }
 
     final class Coordinator {
@@ -196,3 +230,18 @@ struct SharedEditorRepresentable: UIViewRepresentable {
     }
 }
 #endif
+
+/// Compare weak delegate existentials without forcing an Observable write.
+private func sameOptionalObject(
+    _ lhs: AnyObject?,
+    _ rhs: AnyObject?
+) -> Bool {
+    switch (lhs, rhs) {
+    case (nil, nil):
+        return true
+    case let (l?, r?):
+        return l === r
+    default:
+        return false
+    }
+}

@@ -2,7 +2,13 @@ import SwiftUI
 import CodeEditorCommands
 import CodeEditorView
 
-/// Top-level SwiftUI workbench shell.
+#if canImport(AppKit) && !targetEnvironment(macCatalyst)
+import AppKit
+#elseif canImport(UIKit)
+import UIKit
+#endif
+
+/// Top-level SwiftUI workbench shell with Xcode-like chrome.
 public struct WorkbenchView: View {
     @Bindable public var model: WorkbenchModel
 
@@ -11,38 +17,52 @@ public struct WorkbenchView: View {
     }
 
     public var body: some View {
+        let _ = model.contributionRegistry.revision
         VStack(spacing: 0) {
             if model.configuration.showsToolbar {
                 toolbar
-                Divider()
+                    .transition(.opacity)
             }
+
+            // Xcode layout: utility/debug area sits under the *editor column* only,
+            // not under the project navigator / activity bar.
             HStack(spacing: 0) {
                 if model.configuration.showsActivityBar {
                     activityBar
-                    Divider()
+                        .transition(.move(edge: .leading).combined(with: .opacity))
                 }
                 if model.isNavigatorVisible {
-                    navigator
-                        .frame(minWidth: 180, idealWidth: 220, maxWidth: 320)
-                    Divider()
+                    navigatorChrome
+                        .transition(WorkbenchMotion.navigatorInsert)
                 }
-                WorkbenchEditorArea(model: model)
+
+                editorColumn
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+
                 if model.isInspectorVisible {
-                    Divider()
-                    inspector
-                        .frame(minWidth: 180, idealWidth: 240, maxWidth: 360)
+                    inspectorChrome
+                        .transition(WorkbenchMotion.inspectorInsert)
                 }
             }
-            if model.isUtilityVisible {
-                Divider()
-                utilityArea
-                    .frame(minHeight: 120, idealHeight: 160)
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(WorkbenchMotion.pane, value: model.isNavigatorVisible)
+            .animation(WorkbenchMotion.pane, value: model.isInspectorVisible)
+            .animation(WorkbenchMotion.pane, value: model.isUtilityVisible)
+
             if model.configuration.showsStatusBar {
-                Divider()
                 statusBar
+                    .transition(.opacity)
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(windowBackground)
+        .onAppear {
+            model.ensureActiveNavigator()
+            model.ensureActiveUtility()
+        }
+        .onChange(of: model.contributionRegistry.revision) { _, _ in
+            model.ensureActiveNavigator()
+            model.ensureActiveUtility()
         }
         .sheet(isPresented: $model.isCommandPalettePresented) {
             if let context = model.makeCommandContext() {
@@ -74,91 +94,268 @@ public struct WorkbenchView: View {
         }
     }
 
+    /// Editor + optional utility split (does not span navigator).
+    private var editorColumn: some View {
+        Group {
+            if model.isUtilityVisible {
+                #if os(macOS)
+                VSplitView {
+                    WorkbenchEditorArea(model: model)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .animation(WorkbenchMotion.content, value: model.workspace.revision)
+                    utilityArea
+                        .frame(minHeight: 100)
+                }
+                #else
+                VStack(spacing: 0) {
+                    WorkbenchEditorArea(model: model)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    utilityArea
+                        .frame(height: model.utilityHeight)
+                }
+                #endif
+            } else {
+                WorkbenchEditorArea(model: model)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .animation(WorkbenchMotion.content, value: model.workspace.revision)
+            }
+        }
+    }
+
+    // MARK: - Background
+
+    private var windowBackground: Color {
+        #if os(macOS)
+        Color(nsColor: .windowBackgroundColor)
+        #else
+        Color(uiColor: .systemGroupedBackground)
+        #endif
+    }
+
+    @ViewBuilder
+    private var paneBackground: some View {
+        #if os(macOS)
+        if model.configuration.navigatorStyle == .floating {
+            Rectangle().fill(.regularMaterial)
+        } else {
+            Color(nsColor: .controlBackgroundColor)
+        }
+        #else
+        Color(uiColor: .secondarySystemBackground)
+        #endif
+    }
+
+    // MARK: - Toolbar
+
     private var toolbar: some View {
-        HStack {
+        HStack(spacing: 8) {
             Button {
-                model.isNavigatorVisible.toggle()
+                withAnimation(WorkbenchMotion.pane) {
+                    model.isNavigatorVisible.toggle()
+                }
             } label: {
                 Image(systemName: "sidebar.left")
             }
             .help("Toggle Navigator")
 
             Button {
+                model.navigateBack()
+            } label: {
+                Image(systemName: "chevron.backward")
+            }
+            .help("Go Back")
+            .disabled(!model.canNavigateBack)
+
+            Button {
+                model.navigateForward()
+            } label: {
+                Image(systemName: "chevron.forward")
+            }
+            .help("Go Forward")
+            .disabled(!model.canNavigateForward)
+
+            Button {
                 model.presentOpenQuickly()
             } label: {
-                Label("Open Quickly", systemImage: "magnifyingglass")
+                Image(systemName: "magnifyingglass")
             }
+            .help("Open Quickly")
 
             Button {
                 model.presentCommandPalette()
             } label: {
-                Label("Commands", systemImage: "command")
+                Image(systemName: "command")
             }
+            .help("Command Palette")
 
             Spacer()
 
             Button {
-                _ = model.workspace.splitActivePane(axis: .horizontal)
+                withAnimation(WorkbenchMotion.pane) {
+                    _ = model.workspace.splitActivePane(axis: .horizontal)
+                }
             } label: {
                 Image(systemName: "rectangle.split.2x1")
             }
             .help("Split Right")
 
             Button {
-                _ = model.workspace.splitActivePane(axis: .vertical)
+                withAnimation(WorkbenchMotion.pane) {
+                    _ = model.workspace.splitActivePane(axis: .vertical)
+                }
             } label: {
                 Image(systemName: "rectangle.split.1x2")
             }
             .help("Split Down")
 
             Button {
-                model.isInspectorVisible.toggle()
+                withAnimation(WorkbenchMotion.pane) {
+                    model.isInspectorVisible.toggle()
+                }
             } label: {
                 Image(systemName: "sidebar.right")
             }
             .help("Toggle Inspector")
 
             Button {
-                model.isUtilityVisible.toggle()
+                withAnimation(WorkbenchMotion.pane) {
+                    model.isUtilityVisible.toggle()
+                }
             } label: {
                 Image(systemName: "rectangle.bottomthird.inset.filled")
             }
             .help("Toggle Utility Area")
         }
         .buttonStyle(.borderless)
-        .padding(.horizontal, 10)
+        .labelStyle(.iconOnly)
+        .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(.bar)
     }
 
+    // MARK: - Activity bar
+
     private var activityBar: some View {
-        VStack(spacing: 12) {
-            Button {
-                model.isNavigatorVisible.toggle()
-            } label: {
-                Image(systemName: "folder")
+        let navigators = model.contributionRegistry.contributions(for: .navigator)
+        return VStack(spacing: 4) {
+            ForEach(navigators, id: \.id) { contrib in
+                activityButton(
+                    systemImage: contrib.systemImage,
+                    selected: model.isNavigatorVisible && model.activeNavigatorID == contrib.id,
+                    help: contrib.title
+                ) {
+                    withAnimation(WorkbenchMotion.pane) {
+                        if model.activeNavigatorID == contrib.id, model.isNavigatorVisible {
+                            model.isNavigatorVisible = false
+                        } else {
+                            model.selectNavigator(id: contrib.id)
+                            model.isNavigatorVisible = true
+                        }
+                    }
+                }
             }
-            Button {
+            Spacer(minLength: 8)
+            activityButton(
+                systemImage: "magnifyingglass",
+                selected: false,
+                help: "Open Quickly"
+            ) {
                 model.presentOpenQuickly()
-            } label: {
-                Image(systemName: "doc.text.magnifyingglass")
             }
-            Spacer()
         }
-        .buttonStyle(.borderless)
-        .padding(8)
-        .frame(width: 40)
-        .background(.bar)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .frame(width: 48)
+        .background(.bar.opacity(0.55))
+    }
+
+    private func activityButton(
+        systemImage: String,
+        selected: Bool,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 32, height: 32)
+                .background {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.accentColor.opacity(selected ? 0.18 : 0))
+                }
+                .animation(WorkbenchMotion.chrome, value: selected)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    // MARK: - Navigator
+
+    private var navigatorChrome: some View {
+        Group {
+            if model.configuration.navigatorStyle == .floating {
+                navigator
+                    .frame(minWidth: 200, idealWidth: 240, maxWidth: 340)
+                    .frame(maxHeight: .infinity)
+                    .background { paneBackground }
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 2)
+                    .padding(.leading, 8)
+                    .padding(.vertical, 8)
+                    .padding(.trailing, 4)
+            } else {
+                navigator
+                    .frame(minWidth: 200, idealWidth: 240, maxWidth: 320)
+                    .frame(maxHeight: .infinity)
+                    .background { paneBackground }
+                Divider()
+            }
+        }
     }
 
     private var navigator: some View {
         let contribs = model.contributionRegistry.contributions(for: .navigator)
         let ctx = WorkbenchContributionContext(workspace: model.workspace, model: model)
+        let active = contribs.first(where: { $0.id == model.activeNavigatorID }) ?? contribs.first
         return Group {
-            if let first = contribs.first {
-                first.makeBody(context: ctx)
+            if let active {
+                active.makeBody(context: ctx)
+                    .id(active.id)
             } else {
                 ContentUnavailableView("No Navigator", systemImage: "sidebar.left")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    // MARK: - Inspector
+
+    private var inspectorChrome: some View {
+        Group {
+            if model.configuration.navigatorStyle == .floating {
+                inspector
+                    .frame(minWidth: 200, idealWidth: 260, maxWidth: 360)
+                    .frame(maxHeight: .infinity)
+                    .background { paneBackground }
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 2)
+                    .padding(.trailing, 8)
+                    .padding(.vertical, 8)
+                    .padding(.leading, 4)
+            } else {
+                Divider()
+                inspector
+                    .frame(minWidth: 200, idealWidth: 260, maxWidth: 360)
+                    .frame(maxHeight: .infinity)
+                    .background { paneBackground }
             }
         }
     }
@@ -173,8 +370,9 @@ public struct WorkbenchView: View {
                     systemImage: "sidebar.right",
                     description: Text("No inspector contributions registered.")
                 )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(contribs, id: \.id) { c in
                         c.makeBody(context: ctx)
                     }
@@ -183,42 +381,98 @@ public struct WorkbenchView: View {
         }
     }
 
+    // MARK: - Utility
+
     private var utilityArea: some View {
-        VStack(spacing: 0) {
-            Picker("Utility", selection: $model.utilitySelectedTab) {
-                ForEach(UtilityAreaTab.allCases, id: \.self) { tab in
-                    Text(tab.rawValue.capitalized).tag(tab)
+        let contribs = model.contributionRegistry.contributions(for: .utility)
+        let ctx = WorkbenchContributionContext(workspace: model.workspace, model: model)
+        let activeID = model.activeUtilityID
+        let active = contribs.first(where: { $0.id == activeID }) ?? contribs.first
+
+        return VStack(spacing: 0) {
+            if !contribs.isEmpty {
+                HStack(spacing: 0) {
+                    ForEach(contribs, id: \.id) { c in
+                        Button {
+                            model.selectUtility(id: c.id)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: c.systemImage)
+                                    .font(.caption)
+                                Text(c.title)
+                                    .font(.caption.weight(c.id == active?.id ? .semibold : .regular))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background {
+                                if c.id == active?.id {
+                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                        .fill(Color.primary.opacity(0.08))
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .help(c.title)
+                    }
+                    Spacer(minLength: 0)
+                    Button {
+                        withAnimation(WorkbenchMotion.pane) {
+                            model.isUtilityVisible = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.caption2)
+                            .padding(6)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Hide Utility Area")
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
+                Divider()
+            }
+
+            Group {
+                if let active {
+                    active.makeBody(context: ctx)
+                        .id(active.id)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .transition(WorkbenchMotion.editorContent)
+                } else {
+                    ContentUnavailableView(
+                        "Utility",
+                        systemImage: "terminal",
+                        description: Text("Register utility contributions (problems, terminal, output).")
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .pickerStyle(.segmented)
-            .padding(8)
-            Divider()
-            let contribs = model.contributionRegistry.contributions(for: .utility)
-            if contribs.isEmpty {
-                ContentUnavailableView(
-                    model.utilitySelectedTab.rawValue.capitalized,
-                    systemImage: "terminal",
-                    description: Text("Utility contributions (problems, terminal, …) register here.")
-                )
-            } else {
-                let ctx = WorkbenchContributionContext(workspace: model.workspace, model: model)
-                ForEach(contribs, id: \.id) { c in
-                    c.makeBody(context: ctx)
-                }
-            }
+            .animation(WorkbenchMotion.content, value: model.activeUtilityID)
         }
         .background(.bar)
+        .frame(minHeight: 100)
     }
+
+    // MARK: - Status
 
     private var statusBar: some View {
         let contribs = model.contributionRegistry.contributions(for: .statusBar)
         let ctx = WorkbenchContributionContext(workspace: model.workspace, model: model)
-        return Group {
-            if let first = contribs.first {
-                first.makeBody(context: ctx)
-            } else {
+        // Single shared chrome so host status items (e.g. git branch) match the bar fill.
+        return HStack(spacing: 0) {
+            if contribs.isEmpty {
                 EmptyView()
+            } else {
+                if let first = contribs.first {
+                    first.makeBody(context: ctx)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                ForEach(contribs.dropFirst(), id: \.id) { c in
+                    c.makeBody(context: ctx)
+                }
             }
         }
+        .frame(maxWidth: .infinity)
+        .background(.bar)
     }
 }

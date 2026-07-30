@@ -1,10 +1,12 @@
 import CoreGraphics
 import Foundation
+import Observation
 import CodeEditorCore
 import CodeEditorDocuments
 
 /// Headless multi-root workspace: files, open documents, panes/tabs, layout, history.
 @MainActor
+@Observable
 public final class Workspace {
     public let id: WorkspaceID
     public let fileSystem: any WorkspaceFileSystem
@@ -19,6 +21,8 @@ public final class Workspace {
     public private(set) var focusHistory: [EditorPaneID]
     public let navigationHistory: NavigationHistory
     public let settings: WorkspaceSettings
+    /// Bumped on structural UI-affecting changes so SwiftUI hosts can depend on a single token.
+    public private(set) var revision: UInt64 = 0
 
     public init(
         id: WorkspaceID = WorkspaceID(),
@@ -59,12 +63,14 @@ public final class Workspace {
         let root = try await fileSystem.addRoot(directoryURL: directoryURL)
         fileTree.refreshRoots()
         fileTree.apply(.rootAdded(root))
+        noteRevision()
         return root
     }
 
     public func removeRoot(_ id: WorkspaceRootID) async throws {
         try await fileSystem.removeRoot(id: id)
         fileTree.apply(.rootRemoved(id))
+        noteRevision()
     }
 
     // MARK: - Documents / tabs
@@ -77,6 +83,7 @@ public final class Workspace {
         let doc = TextDocument(uri: uri, text: "")
         try await doc.load(from: documentProvider, uri: uri)
         documents.register(doc)
+        noteRevision()
         return doc
     }
 
@@ -100,22 +107,38 @@ public final class Workspace {
         if let existingTab = pane.tabs.first(where: { $0.documentID == doc.id }),
            let session = sessions[existingTab.sessionID] {
             pane.select(tab: existingTab.id)
+            // Permanent open / double-click must keep the tab (promote preview).
+            if !preview {
+                pane.promotePreviewIfNeeded(tab: existingTab.id)
+            }
             setActivePane(paneID)
             pushNavigation(document: doc, session: session)
-            return (doc, session, existingTab)
+            noteRevision()
+            let tab = pane.tabs.first(where: { $0.documentID == doc.id }) ?? existingTab
+            return (doc, session, tab)
         }
 
         let session = EditorSession(documentID: doc.id)
         sessions[session.id] = session
-        let tab = pane.open(
+        let opened = pane.open(
             sessionID: session.id,
             documentID: doc.id,
             documentURI: doc.uri,
             preview: preview
         )
+        // Dispose session owned only by the replaced preview tab.
+        if let replaced = opened.replacedPreview {
+            let stillUsed = panes.values.contains { p in
+                p.tabs.contains { $0.sessionID == replaced.sessionID }
+            }
+            if !stillUsed {
+                sessions[replaced.sessionID] = nil
+            }
+        }
         setActivePane(paneID)
         pushNavigation(document: doc, session: session)
-        return (doc, session, tab)
+        noteRevision()
+        return (doc, session, opened.tab)
     }
 
     public func closeTab(_ tabID: EditorTabID, in paneID: EditorPaneID) {
@@ -128,11 +151,25 @@ public final class Workspace {
             if !stillUsed {
                 sessions[removed.sessionID] = nil
             }
+            noteRevision()
         }
+    }
+
+    public func selectTab(_ tabID: EditorTabID, in paneID: EditorPaneID) {
+        panes[paneID]?.select(tab: tabID)
+        setActivePane(paneID)
+    }
+
+    /// Promotes a preview tab to a permanent tab (VS Code / Xcode: double-click tab to keep open).
+    /// Does not set pin; use ``pinTab(_:in:)`` for an explicit pin.
+    public func keepTabOpen(_ tabID: EditorTabID, in paneID: EditorPaneID) {
+        panes[paneID]?.promotePreviewIfNeeded(tab: tabID)
+        noteRevision()
     }
 
     public func pinTab(_ tabID: EditorTabID, in paneID: EditorPaneID) {
         panes[paneID]?.pin(tab: tabID)
+        noteRevision()
     }
 
     public func closeOtherTabs(keeping tabID: EditorTabID, in paneID: EditorPaneID) {
@@ -159,12 +196,14 @@ public final class Workspace {
                 pane.promotePreviewIfNeeded(tab: tab.id)
             }
         }
+        noteRevision()
     }
 
     public func updateTabURIs(documentID: DocumentID, uri: DocumentURI) {
         for pane in panes.values {
             pane.updateURI(documentID: documentID, uri: uri)
         }
+        noteRevision()
     }
 
     // MARK: - Layout / focus
@@ -174,6 +213,7 @@ public final class Workspace {
         activePaneID = id
         focusHistory.removeAll { $0 == id }
         focusHistory.insert(id, at: 0)
+        noteRevision()
     }
 
     @discardableResult
@@ -207,6 +247,33 @@ public final class Workspace {
         for paneID in layout.allPaneIDs() where panes[paneID] == nil {
             panes[paneID] = EditorPane(id: paneID)
         }
+        noteRevision()
+    }
+
+    /// Create a file under `parent` (empty path = workspace root item).
+    @discardableResult
+    public func createFile(in parent: WorkspaceItemID, name: String, contents: Data = Data()) async throws -> WorkspaceItem {
+        let item = try await fileSystem.createFile(in: parent, name: name, contents: contents)
+        fileTree.apply(.added(item))
+        fileTree.invalidate(parent)
+        _ = try await fileTree.children(of: parent)
+        noteRevision()
+        return item
+    }
+
+    /// Create a directory under `parent`.
+    @discardableResult
+    public func createDirectory(in parent: WorkspaceItemID, name: String) async throws -> WorkspaceItem {
+        let item = try await fileSystem.createDirectory(in: parent, name: name)
+        fileTree.apply(.added(item))
+        fileTree.invalidate(parent)
+        _ = try await fileTree.children(of: parent)
+        noteRevision()
+        return item
+    }
+
+    private func noteRevision() {
+        revision &+= 1
     }
 
     // MARK: - Navigation

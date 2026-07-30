@@ -94,20 +94,80 @@ struct PreviewTabPolicyTests {
         let d1 = DocumentID()
         let d2 = DocumentID()
         let t1 = pane.open(sessionID: EditorSessionID(), documentID: d1, documentURI: "inmemory:1", preview: true)
-        #expect(t1.isPreview)
+        #expect(t1.tab.isPreview)
+        #expect(t1.replacedPreview == nil)
         let t2 = pane.open(sessionID: EditorSessionID(), documentID: d2, documentURI: "inmemory:2", preview: true)
         #expect(pane.tabs.count == 1)
-        #expect(pane.tabs[0].id == t2.id)
-        #expect(pane.previewTabID == t2.id)
+        #expect(pane.tabs[0].id == t2.tab.id)
+        #expect(pane.previewTabID == t2.tab.id)
+        #expect(t2.replacedPreview?.id == t1.tab.id)
     }
 
     @Test func pinPromotesPreview() {
         let pane = EditorPane()
         let tab = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:x", preview: true)
-        pane.pin(tab: tab.id)
+        pane.pin(tab: tab.tab.id)
         #expect(pane.tabs[0].isPinned)
         #expect(!pane.tabs[0].isPreview)
         #expect(pane.previewTabID == nil)
+    }
+
+    @Test func keepOpenThenSecondPreviewDoesNotReplace() {
+        let pane = EditorPane()
+        let d1 = DocumentID()
+        let d2 = DocumentID()
+        let t1 = pane.open(sessionID: EditorSessionID(), documentID: d1, documentURI: "inmemory:1", preview: true)
+        pane.promotePreviewIfNeeded(tab: t1.tab.id)
+        #expect(!pane.tabs[0].isPreview)
+        #expect(pane.previewTabID == nil)
+
+        let t2 = pane.open(sessionID: EditorSessionID(), documentID: d2, documentURI: "inmemory:2", preview: true)
+        #expect(pane.tabs.count == 2)
+        #expect(pane.tabs.contains { $0.id == t1.tab.id && !$0.isPreview })
+        #expect(pane.tabs.contains { $0.id == t2.tab.id && $0.isPreview })
+        #expect(pane.previewTabID == t2.tab.id)
+    }
+
+    @Test func permanentOpenReusesAndPromotesPreview() {
+        let pane = EditorPane()
+        let d1 = DocumentID()
+        let first = pane.open(sessionID: EditorSessionID(), documentID: d1, documentURI: "inmemory:1", preview: true)
+        #expect(first.tab.isPreview)
+        let second = pane.open(
+            sessionID: EditorSessionID(),
+            documentID: d1,
+            documentURI: "inmemory:1",
+            preview: false
+        )
+        #expect(pane.tabs.count == 1)
+        #expect(second.tab.id == first.tab.id)
+        #expect(!second.tab.isPreview)
+        #expect(pane.previewTabID == nil)
+    }
+
+    @Test func workspaceDoubleOpenPromotesPreview() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PreviewPromote-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("A.swift")
+        try "let x = 1\n".data(using: .utf8)!.write(to: file)
+        let other = root.appendingPathComponent("B.swift")
+        try "let y = 2\n".data(using: .utf8)!.write(to: other)
+
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let a = try await workspace.openInActivePane(uri: DocumentURI(fileURL: file), preview: true)
+        #expect(a.tab.isPreview)
+        // Permanent open of same file (navigator double-click).
+        let a2 = try await workspace.openInActivePane(uri: DocumentURI(fileURL: file), preview: false)
+        #expect(a2.tab.id == a.tab.id)
+        #expect(!a2.tab.isPreview)
+
+        let b = try await workspace.openInActivePane(uri: DocumentURI(fileURL: other), preview: true)
+        #expect(workspace.panes[workspace.activePaneID!]!.tabs.count == 2)
+        #expect(b.tab.isPreview)
+        // A still permanent.
+        #expect(workspace.panes.values.flatMap(\.tabs).contains { $0.documentID == a.document.id && !$0.isPreview })
     }
 }
 

@@ -33,7 +33,9 @@ struct SearchTests {
         let service = WorkspaceSearchService(context: ctx)
 
         var matches: [SearchMatch] = []
-        for try await event in await service.search(SearchQuery(pattern: "cat", caseSensitive: true, wholeWord: true)) {
+        for try await event in await service.search(
+            SearchQuery(pattern: "cat", matchMode: .matchesWord, caseSensitive: true)
+        ) {
             if case .match(let m) = event { matches.append(m) }
         }
         #expect(matches.count == 1)
@@ -43,6 +45,44 @@ struct SearchTests {
             if case .match(let m) = event { matches.append(m) }
         }
         #expect(matches.count == 1)
+    }
+
+    @Test func startsWithAndEndsWith() async throws {
+        let uri = DocumentURI(rawValue: "inmemory:c")
+        let text = "hello world\nworld hello\nhello\n"
+        let ctx = WorkspaceSearchContext(openDocuments: [uri: text])
+        let service = WorkspaceSearchService(context: ctx)
+
+        var matches: [SearchMatch] = []
+        for try await event in await service.search(
+            SearchQuery(pattern: "hello", matchMode: .startsWith)
+        ) {
+            if case .match(let m) = event { matches.append(m) }
+        }
+        // Lines 0 and 2 start with hello
+        #expect(matches.count == 2)
+
+        matches = []
+        for try await event in await service.search(
+            SearchQuery(pattern: "hello", matchMode: .endsWith)
+        ) {
+            if case .match(let m) = event { matches.append(m) }
+        }
+        // Lines 1 ("world hello") and 2 ("hello")
+        #expect(matches.count == 2)
+    }
+
+    @Test func matchModeLegacyFlags() {
+        let regex = SearchQuery(pattern: "a+", isRegex: true)
+        #expect(regex.matchMode == .regularExpression)
+        let word = SearchQuery(pattern: "a", wholeWord: true)
+        #expect(word.matchMode == .matchesWord)
+    }
+
+    @Test func preserveCaseTransforms() {
+        #expect(SearchReplaceBuilder.applyPreserveCase(matched: "HELLO", replacement: "world") == "WORLD")
+        #expect(SearchReplaceBuilder.applyPreserveCase(matched: "hello", replacement: "WORLD") == "world")
+        #expect(SearchReplaceBuilder.applyPreserveCase(matched: "Hello", replacement: "world") == "World")
     }
 
     @Test func excludesGitPaths() {
@@ -84,6 +124,38 @@ struct SearchTests {
         #expect(changes.count == 2)
         #expect(changes[0].replacedRange.location >= changes[1].replacedRange.location)
         _ = text
+    }
+
+    @Test func openDocumentNotDuplicatedOnDisk() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("search-dedupe-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("Main.swift")
+        try "Full Full\n".data(using: .utf8)!.write(to: file)
+
+        // Simulate open-document URI that may not string-equal disk URI.
+        let openURI = DocumentURI(fileURL: file)
+        let ctx = WorkspaceSearchContext(
+            rootDirectories: [root],
+            openDocuments: [openURI: "Full Full\n"]
+        )
+        let service = WorkspaceSearchService(context: ctx)
+        var matches: [SearchMatch] = []
+        var finishedFiles = 0
+        var finishedCount = 0
+        for try await event in await service.search(SearchQuery(pattern: "Full")) {
+            switch event {
+            case .match(let m): matches.append(m)
+            case .finished(let files, let count):
+                finishedFiles = files
+                finishedCount = count
+            case .progress: break
+            }
+        }
+        #expect(matches.count == 2)
+        #expect(finishedCount == 2)
+        #expect(finishedFiles == 1)
     }
 
     @Test func diskSearchFindsFile() async throws {

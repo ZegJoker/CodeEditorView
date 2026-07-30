@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import CodeEditorDocuments
 
 public struct EditorTab: Hashable, Codable, Sendable {
@@ -28,6 +29,7 @@ public struct EditorTab: Hashable, Codable, Sendable {
 
 /// One editor pane: ordered tabs, selection, optional preview tab.
 @MainActor
+@Observable
 public final class EditorPane {
     public let id: EditorPaneID
     public private(set) var tabs: [EditorTab]
@@ -46,25 +48,48 @@ public final class EditorPane {
         return tabs.first { $0.id == selectedTabID }
     }
 
+    /// Result of opening a tab, including any preview tab that was replaced.
+    public struct OpenResult: Sendable {
+        public let tab: EditorTab
+        /// Previous preview tab removed to make room (caller should dispose session).
+        public let replacedPreview: EditorTab?
+
+        public init(tab: EditorTab, replacedPreview: EditorTab? = nil) {
+            self.tab = tab
+            self.replacedPreview = replacedPreview
+        }
+    }
+
     /// Opens a tab. Preview policy: at most one unpinned preview; new preview replaces it.
+    /// When reusing an existing tab with `preview == false`, promotes that tab to permanent.
     @discardableResult
     public func open(
         sessionID: EditorSessionID,
         documentID: DocumentID,
         documentURI: DocumentURI,
         preview: Bool
-    ) -> EditorTab {
+    ) -> OpenResult {
         // Reuse existing tab for same document.
         if let existing = tabs.first(where: { $0.documentID == documentID }) {
             selectedTabID = existing.id
-            return existing
+            if !preview {
+                promotePreviewIfNeeded(tab: existing.id)
+            }
+            // Re-read after possible promote.
+            let current = tabs.first(where: { $0.id == existing.id }) ?? existing
+            return OpenResult(tab: current, replacedPreview: nil)
         }
 
+        var replaced: EditorTab?
         if preview {
             if let previewID = previewTabID,
                let idx = tabs.firstIndex(where: { $0.id == previewID }),
                !tabs[idx].isPinned {
-                tabs.remove(at: idx)
+                replaced = tabs.remove(at: idx)
+                if selectedTabID == previewID {
+                    selectedTabID = tabs.last?.id
+                }
+                previewTabID = nil
             }
         }
 
@@ -80,7 +105,7 @@ public final class EditorPane {
         if preview {
             previewTabID = tab.id
         }
-        return tab
+        return OpenResult(tab: tab, replacedPreview: replaced)
     }
 
     public func select(tab id: EditorTabID) {

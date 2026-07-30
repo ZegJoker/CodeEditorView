@@ -130,10 +130,13 @@ public final class TextDocumentViewProvider: DocumentViewProvider {
             TextDocumentEditorHost(
                 document: context.document,
                 session: context.session,
+                tabID: context.tabID,
+                workspace: context.workspace,
                 configuration: context.editorConfiguration,
                 language: language,
                 clientRegistry: context.clientRegistry
             )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
     }
 }
@@ -143,6 +146,8 @@ public final class TextDocumentViewProvider: DocumentViewProvider {
 struct TextDocumentEditorHost: View {
     let document: TextDocument
     let session: EditorSession
+    let tabID: EditorTabID
+    let workspace: Workspace
     let configuration: EditorConfiguration
     let language: CodeLanguage?
     let clientRegistry: WorkbenchEditorClientRegistry
@@ -154,6 +159,8 @@ struct TextDocumentEditorHost: View {
             configuration: configuration,
             language: language
         )
+        // Remount when tab/document/session changes (NSViewRepresentable is sticky otherwise).
+        .id("\(tabID.rawValue.uuidString)/\(document.id.rawValue.uuidString)/\(session.id.rawValue.uuidString)")
         .onAppear {
             // Controller is internal to SharedEditorRepresentable; registry is filled via
             // workbench bridge when hosts inject coordinators. Session-level registration
@@ -165,6 +172,18 @@ struct TextDocumentEditorHost: View {
         }
         .onDisappear {
             clientRegistry.unregister(sessionID: session.id)
+        }
+        // Xcode/VS Code: editing a preview tab promotes it to permanent.
+        .task(id: document.id.rawValue) {
+            let stream = document.makeEventStream()
+            for await event in stream {
+                switch event {
+                case .didApply, .dirtyStateDidChange(true):
+                    workspace.promotePreviewTabs(for: document.id)
+                default:
+                    break
+                }
+            }
         }
     }
 }
