@@ -127,12 +127,10 @@ extension EditorController: EditorCommandClient {
 // MARK: - Built-in registration
 
 extension EditorController {
-    /// Installs built-in commands and default keybindings into `dispatcher`.
-    ///
-    /// Safe to call once after creating the controller. Returns a disposable that
-    /// removes all built-in registrations.
+    /// Installs the built-in command catalog into `dispatcher` without requiring a controller instance.
+    /// Used by workbench hosts that share one dispatcher across editors.
     @discardableResult
-    public func installBuiltInCommands(into dispatcher: CommandDispatcher) -> any CommandDisposable {
+    public static func installBuiltInCommandCatalog(into dispatcher: CommandDispatcher) -> any CommandDisposable {
         var tokens: [any CommandDisposable] = []
 
         func reg(
@@ -242,10 +240,20 @@ extension EditorController {
             keys: [Keybinding(key: "escape")],
             enablement: .always, placement: .hiddenInPalette, action: .cancel)
 
-        commandDispatcher = dispatcher
         return RegistrationToken {
             for token in tokens { token.dispose() }
         }
+    }
+
+    /// Installs built-in commands and default keybindings into `dispatcher`.
+    ///
+    /// Safe to call once after creating the controller. Returns a disposable that
+    /// removes all built-in registrations.
+    @discardableResult
+    public func installBuiltInCommands(into dispatcher: CommandDispatcher) -> any CommandDisposable {
+        let token = Self.installBuiltInCommandCatalog(into: dispatcher)
+        commandDispatcher = dispatcher
+        return token
     }
 
     /// Builds a ``CommandContext`` for the current controller state.

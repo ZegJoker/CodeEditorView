@@ -2,10 +2,40 @@ import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 
+/// How the find pattern is interpreted (Xcode-style textual match modes).
+public enum SearchMatchMode: String, Sendable, Hashable, Codable, CaseIterable, Identifiable {
+    /// Substring match anywhere.
+    case contains
+    /// Whole-word match (`\b…\b`).
+    case matchesWord
+    /// Pattern at the start of a line.
+    case startsWith
+    /// Pattern at the end of a line.
+    case endsWith
+    /// Pattern is a regular expression.
+    case regularExpression
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .contains: return "Contains"
+        case .matchesWord: return "Matches Word"
+        case .startsWith: return "Starts With"
+        case .endsWith: return "Ends With"
+        case .regularExpression: return "Regular Expression"
+        }
+    }
+}
+
 public struct SearchQuery: Sendable, Hashable {
     public var pattern: String
-    public var isRegex: Bool
+    /// Primary match mode (Contains / Matches Word / Starts With / Ends With / Regex).
+    public var matchMode: SearchMatchMode
     public var caseSensitive: Bool
+    /// Legacy: prefer ``matchMode``. Still honored when `matchMode == .contains` and flags are set.
+    public var isRegex: Bool
+    /// Legacy: prefer ``matchMode``.
     public var wholeWord: Bool
     public var includeGlobs: [String]
     public var excludeGlobs: [String]
@@ -14,8 +44,9 @@ public struct SearchQuery: Sendable, Hashable {
 
     public init(
         pattern: String,
-        isRegex: Bool = false,
+        matchMode: SearchMatchMode = .contains,
         caseSensitive: Bool = false,
+        isRegex: Bool = false,
         wholeWord: Bool = false,
         includeGlobs: [String] = [],
         excludeGlobs: [String] = SearchQuery.defaultExcludes,
@@ -23,9 +54,20 @@ public struct SearchQuery: Sendable, Hashable {
         maxResults: Int = 10_000
     ) {
         self.pattern = pattern
-        self.isRegex = isRegex
+        // Prefer explicit matchMode; legacy flags upgrade contains when set.
+        if matchMode != .contains {
+            self.matchMode = matchMode
+        } else if isRegex {
+            self.matchMode = .regularExpression
+        } else if wholeWord {
+            self.matchMode = .matchesWord
+        } else {
+            self.matchMode = matchMode
+        }
         self.caseSensitive = caseSensitive
-        self.wholeWord = wholeWord
+        // Keep independent toggles so regex + whole-word can combine (Xcode Aa/ab/.* chips).
+        self.isRegex = self.matchMode == .regularExpression || isRegex
+        self.wholeWord = wholeWord || self.matchMode == .matchesWord
         self.includeGlobs = includeGlobs
         self.excludeGlobs = excludeGlobs
         self.maxFileBytes = maxFileBytes

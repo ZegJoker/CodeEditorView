@@ -50,11 +50,25 @@ public struct CommandPaletteView: View {
                 }
             }
             .listStyle(.plain)
+            // Keyboard: Return runs the selected command (do not run on arrow-key selection change).
+            .onKeyPress(.return) {
+                if let selection {
+                    run(selection)
+                    return .handled
+                }
+                if let first = items.first {
+                    run(first.id)
+                    return .handled
+                }
+                return .ignored
+            }
         }
         .frame(minWidth: 360, minHeight: 280)
-        .onChange(of: selection) { _, newValue in
-            if let newValue {
-                run(newValue)
+        .onChange(of: model.query) { _, _ in
+            // Keep selection valid when filter shrinks.
+            let ids = Set(model.filteredCommands(from: dispatcher.commands, context: context).map(\.id))
+            if let selection, !ids.contains(selection) {
+                self.selection = ids.first
             }
         }
     }

@@ -23,11 +23,29 @@ struct DocumentViewRegistryTests {
 struct WorkbenchContributionRegistryTests {
     @Test func registerAndListBySlot() {
         let registry = WorkbenchContributionRegistry()
+        let before = registry.revision
         let token = registry.register(FileTreeNavigatorContribution())
+        #expect(registry.revision > before)
         #expect(registry.contributions(for: .navigator).count == 1)
         registry.unregister(id: "workbench.navigator.files")
         #expect(registry.contributions(for: .navigator).isEmpty)
         token.dispose()
+    }
+
+    @Test func workbenchModelSelectsNavigatorAndUtility() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WB-Nav-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let model = WorkbenchModel(workspace: workspace, configuration: .xcodeLike)
+        #expect(model.activeNavigatorID == "workbench.navigator.files")
+        #expect(model.contributionRegistry.contributions(for: .utility).count >= 3)
+        model.selectUtility(id: "workbench.utility.terminal")
+        #expect(model.activeUtilityID == "workbench.utility.terminal")
+        #expect(model.isUtilityVisible)
+        model.selectNavigator(id: "workbench.navigator.files")
+        #expect(model.isNavigatorVisible)
     }
 }
 
@@ -69,5 +87,93 @@ struct OpenQuicklyModelTests {
         model.query = "alpha"
         #expect(model.results.count == 1)
         #expect(model.results[0].name == "Alpha.swift")
+    }
+
+    @Test func fuzzyRanksPrefixAndSubsequence() {
+        let exact = OpenQuicklyModel.fuzzyScore(
+            query: "Workspace",
+            name: "Workspace.swift",
+            path: "Sources/Workspace.swift"
+        )
+        let fuzzy = OpenQuicklyModel.fuzzyScore(
+            query: "wsv",
+            name: "WorkspaceView.swift",
+            path: "Sources/Views/WorkspaceView.swift"
+        )
+        let miss = OpenQuicklyModel.fuzzyScore(
+            query: "zzzz",
+            name: "Workspace.swift",
+            path: "Sources/Workspace.swift"
+        )
+        #expect(exact != nil)
+        #expect(fuzzy != nil)
+        #expect(miss == nil)
+        #expect((exact ?? 0) > (fuzzy ?? 0))
+    }
+
+    @Test func keyboardSelectionMovesWithinResults() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("OQ-Keys-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try "a".data(using: .utf8)!.write(to: root.appendingPathComponent("A.swift"))
+        try "b".data(using: .utf8)!.write(to: root.appendingPathComponent("B.swift"))
+        try "c".data(using: .utf8)!.write(to: root.appendingPathComponent("C.swift"))
+
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let model = OpenQuicklyModel()
+        await model.recompute(workspace: workspace)
+        #expect(model.results.count >= 3)
+        model.moveSelection(by: 1)
+        #expect(model.selectedIndex == 1)
+        model.moveSelection(by: 10)
+        #expect(model.selectedIndex == model.results.count - 1)
+        model.moveSelection(by: -100)
+        #expect(model.selectedIndex == 0)
+    }
+}
+
+@Suite("Workbench open and create")
+@MainActor
+struct WorkbenchOpenCreateTests {
+    @Test func openInActivePaneCreatesTabAndBumpsRevision() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WB-Open-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("Main.swift")
+        try "print(1)\n".data(using: .utf8)!.write(to: file)
+
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let before = workspace.revision
+        let opened = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: file),
+            preview: false
+        )
+        #expect(workspace.revision > before)
+        #expect(workspace.panes[workspace.activePaneID!]?.tabs.count == 1)
+        #expect(opened.document.uri.fileURL?.lastPathComponent == "Main.swift")
+        #expect(workspace.documents.document(id: opened.document.id) != nil)
+        #expect(workspace.sessions[opened.session.id] != nil)
+    }
+
+    @Test func createFileAppearsUnderRoot() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WB-Create-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let rootID = workspace.fileTree.roots[0].id
+        let parent = WorkspaceItemID(rootID: rootID, path: "")
+        let item = try await workspace.createFile(
+            in: parent,
+            name: "New.swift",
+            contents: Data("// hi\n".utf8)
+        )
+        #expect(item.name == "New.swift")
+        let kids = try await workspace.fileTree.children(of: parent)
+        #expect(kids.contains { $0.name == "New.swift" })
+        #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("New.swift").path))
     }
 }

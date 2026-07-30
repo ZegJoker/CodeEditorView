@@ -2,6 +2,14 @@
 
 A multiplatform code text editor for iOS 18 and macOS 15.
 
+## Modular package
+
+`CodeEditorView` is one product in a modular SwiftPM graph. Pair it with optional products for workspace, workbench, language services, LSP, extensions, search, tasks, terminal, and source control.
+
+- Product selection: `Docs/Guides/PRODUCT-SELECTION.md`
+- API stability: `Docs/Guides/API-STABILITY.md`
+- Migration: `Docs/Guides/MIGRATION-1.0.md`
+
 ## Overview
 
 `CodeEditorView` provides a line-oriented code editor with:

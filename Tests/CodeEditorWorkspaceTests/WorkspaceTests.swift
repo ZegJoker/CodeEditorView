@@ -94,20 +94,80 @@ struct PreviewTabPolicyTests {
         let d1 = DocumentID()
         let d2 = DocumentID()
         let t1 = pane.open(sessionID: EditorSessionID(), documentID: d1, documentURI: "inmemory:1", preview: true)
-        #expect(t1.isPreview)
+        #expect(t1.tab.isPreview)
+        #expect(t1.replacedPreview == nil)
         let t2 = pane.open(sessionID: EditorSessionID(), documentID: d2, documentURI: "inmemory:2", preview: true)
         #expect(pane.tabs.count == 1)
-        #expect(pane.tabs[0].id == t2.id)
-        #expect(pane.previewTabID == t2.id)
+        #expect(pane.tabs[0].id == t2.tab.id)
+        #expect(pane.previewTabID == t2.tab.id)
+        #expect(t2.replacedPreview?.id == t1.tab.id)
     }
 
     @Test func pinPromotesPreview() {
         let pane = EditorPane()
         let tab = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:x", preview: true)
-        pane.pin(tab: tab.id)
+        pane.pin(tab: tab.tab.id)
         #expect(pane.tabs[0].isPinned)
         #expect(!pane.tabs[0].isPreview)
         #expect(pane.previewTabID == nil)
+    }
+
+    @Test func keepOpenThenSecondPreviewDoesNotReplace() {
+        let pane = EditorPane()
+        let d1 = DocumentID()
+        let d2 = DocumentID()
+        let t1 = pane.open(sessionID: EditorSessionID(), documentID: d1, documentURI: "inmemory:1", preview: true)
+        pane.promotePreviewIfNeeded(tab: t1.tab.id)
+        #expect(!pane.tabs[0].isPreview)
+        #expect(pane.previewTabID == nil)
+
+        let t2 = pane.open(sessionID: EditorSessionID(), documentID: d2, documentURI: "inmemory:2", preview: true)
+        #expect(pane.tabs.count == 2)
+        #expect(pane.tabs.contains { $0.id == t1.tab.id && !$0.isPreview })
+        #expect(pane.tabs.contains { $0.id == t2.tab.id && $0.isPreview })
+        #expect(pane.previewTabID == t2.tab.id)
+    }
+
+    @Test func permanentOpenReusesAndPromotesPreview() {
+        let pane = EditorPane()
+        let d1 = DocumentID()
+        let first = pane.open(sessionID: EditorSessionID(), documentID: d1, documentURI: "inmemory:1", preview: true)
+        #expect(first.tab.isPreview)
+        let second = pane.open(
+            sessionID: EditorSessionID(),
+            documentID: d1,
+            documentURI: "inmemory:1",
+            preview: false
+        )
+        #expect(pane.tabs.count == 1)
+        #expect(second.tab.id == first.tab.id)
+        #expect(!second.tab.isPreview)
+        #expect(pane.previewTabID == nil)
+    }
+
+    @Test func workspaceDoubleOpenPromotesPreview() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PreviewPromote-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("A.swift")
+        try "let x = 1\n".data(using: .utf8)!.write(to: file)
+        let other = root.appendingPathComponent("B.swift")
+        try "let y = 2\n".data(using: .utf8)!.write(to: other)
+
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let a = try await workspace.openInActivePane(uri: DocumentURI(fileURL: file), preview: true)
+        #expect(a.tab.isPreview)
+        // Permanent open of same file (navigator double-click).
+        let a2 = try await workspace.openInActivePane(uri: DocumentURI(fileURL: file), preview: false)
+        #expect(a2.tab.id == a.tab.id)
+        #expect(!a2.tab.isPreview)
+
+        let b = try await workspace.openInActivePane(uri: DocumentURI(fileURL: other), preview: true)
+        #expect(workspace.panes[workspace.activePaneID!]!.tabs.count == 2)
+        #expect(b.tab.isPreview)
+        // A still permanent.
+        #expect(workspace.panes.values.flatMap(\.tabs).contains { $0.documentID == a.document.id && !$0.isPreview })
     }
 }
 
@@ -124,6 +184,67 @@ struct NavigationHistoryTests {
         #expect(history.canGoForward)
         let forward = history.forward()
         #expect(forward?.documentURI.rawValue == "inmemory:b")
+    }
+}
+
+@Suite("Pane split and tabs")
+@MainActor
+struct PaneSplitAndTabsTests {
+    @Test func splitActivePaneClonesSelectedTab() async throws {
+        let root = try makeTempRoot(files: ["Main.swift": "print(1)\n"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let file = root.appendingPathComponent("Main.swift")
+        let opened = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: file),
+            preview: false
+        )
+        let sourcePaneID = try #require(workspace.activePaneID)
+        let newPaneID = try #require(workspace.splitActivePane(axis: .horizontal))
+        #expect(newPaneID != sourcePaneID)
+        #expect(workspace.panes.count == 2)
+        let cloned = try #require(workspace.panes[newPaneID])
+        #expect(cloned.tabs.count == 1)
+        #expect(cloned.tabs[0].documentID == opened.document.id)
+        #expect(cloned.tabs[0].sessionID != opened.session.id)
+        if case .split(_, let axis, let children, let fracs) = workspace.layout.root {
+            #expect(axis == .horizontal)
+            #expect(children.count == 2)
+            #expect(abs(fracs.reduce(0, +) - 1) < 0.001)
+        } else {
+            Issue.record("Expected horizontal split")
+        }
+    }
+
+    @Test func moveTabReordersWithinPane() {
+        let pane = EditorPane()
+        let a = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:a", preview: false)
+        let b = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:b", preview: false)
+        let c = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:c", preview: false)
+        #expect(pane.tabs.map(\.id) == [a.tab.id, b.tab.id, c.tab.id])
+        pane.moveTab(from: 0, to: 2)
+        #expect(pane.tabs.map(\.id) == [b.tab.id, c.tab.id, a.tab.id])
+    }
+
+    @Test func setSplitFractionsPersists() async throws {
+        let root = try makeTempRoot(files: ["a.txt": "a"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let file = root.appendingPathComponent("a.txt")
+        _ = try await workspace.openInActivePane(uri: DocumentURI(fileURL: file), preview: false)
+        _ = workspace.splitActivePane(axis: .vertical, fraction: 0.4)
+        guard case .split(let id, _, _, let before) = workspace.layout.root else {
+            Issue.record("Expected split")
+            return
+        }
+        #expect(abs(before[0] - 0.4) < 0.001)
+        workspace.setSplitFractions(id, fractions: [0.7, 0.3])
+        guard case .split(_, _, _, let after) = workspace.layout.root else {
+            Issue.record("Expected split after set")
+            return
+        }
+        #expect(abs(after[0] - 0.7) < 0.001)
+        #expect(abs(after[1] - 0.3) < 0.001)
     }
 }
 
