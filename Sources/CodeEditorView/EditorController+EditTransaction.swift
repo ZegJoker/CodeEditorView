@@ -1,5 +1,6 @@
 import Foundation
 import CodeEditorCore
+import CodeEditorDocuments
 
 // MARK: - Versioned edit funnel
 
@@ -7,12 +8,9 @@ extension EditorController {
     /// Applies a content transaction with a single document version bump, detailed
     /// events, layout/highlight hooks, and optional lifecycle observers.
     ///
-    /// - Parameters:
-    ///   - transaction: Changes in any order (sorted high→low on apply unless `sortHighToLow` is false).
-    ///   - sortHighToLow: Pass `false` for ordered undo/redo sequences.
-    ///   - registerUndo: When false (undo/redo), skips undo registration.
-    ///   - requireEditable: When false, allows undo/redo while not editable.
-    ///   - updatingSelection: Called after content apply, before text/selection publish.
+    /// Content is always applied through ``textDocument`` (document-scoped undo).
+    /// When using a presentation mirror, the same transaction is mirrored locally
+    /// for layout/highlight without a second undo registration.
     @discardableResult
     func applyEditTransaction(
         _ transaction: EditTransaction,
@@ -23,8 +21,9 @@ extension EditorController {
     ) -> AppliedEditTransaction? {
         guard !transaction.changes.isEmpty else { return nil }
         if requireEditable, !configuration.isEditable { return nil }
+        if isApplyingRemoteDocumentEdit { return nil }
 
-        let preSnapshot = document.snapshot()
+        let preSnapshot = textDocument.snapshot()
         let ordered: [TextChange]
         if sortHighToLow {
             ordered = transaction.changes.sorted {
@@ -46,7 +45,7 @@ extension EditorController {
             observer.editorWillApply(normalized, snapshot: preSnapshot)
         }
 
-        // Tree-sitter / provider pre-edit hooks (coordinates as of pre-edit / sequential step).
+        // Tree-sitter / provider pre-edit hooks.
         for change in ordered {
             noteWillEdit(change.replacedRange.nsRange)
         }
@@ -54,22 +53,24 @@ extension EditorController {
         layout.beginTransaction()
         let applied: AppliedEditTransaction
         do {
-            applied = try document.apply(normalized, sortHighToLow: false)
+            applied = try textDocument.apply(
+                normalized,
+                sortHighToLow: false,
+                registerUndo: registerUndo
+            )
         } catch {
             layout.endTransaction()
             return nil
         }
+        lastLocalTransactionID = applied.transaction.id
+        lastSeenDocumentVersion = applied.newVersion
 
-        if registerUndo {
-            // Multi-change transactions register as one undo group.
-            if ordered.count > 1 {
-                undoCoordinator.beginGrouping()
-            }
-            for edit in applied.textEdits {
-                undoCoordinator.register(edit: edit)
-            }
-            if ordered.count > 1 {
-                undoCoordinator.endGrouping()
+        // Mirror onto session-local presentation buffer when isolated from content store.
+        if usesPresentationMirror {
+            do {
+                _ = try document.apply(normalized, sortHighToLow: false)
+            } catch {
+                document.setFullText(textDocument.text)
             }
         }
 
@@ -80,6 +81,7 @@ extension EditorController {
         layout.endTransaction()
 
         updatingSelection?(applied)
+        syncSessionFromController()
 
         events.yield(.didApplyEdit(applied))
         for observer in liveLifecycleObservers {
@@ -92,36 +94,36 @@ extension EditorController {
 
     /// Full document replace as a single programmatic transaction (clears undo).
     func applyFullTextReplace(_ string: String) {
-        let oldLength = document.length
-        let range = NSRange(location: 0, length: oldLength)
+        if isApplyingRemoteDocumentEdit { return }
         let transaction = EditTransaction.single(
-            range: range,
+            range: NSRange(location: 0, length: textDocument.length),
             replacement: string,
             origin: .programmatic
         )
-        let preSnapshot = document.snapshot()
+        let preSnapshot = textDocument.snapshot()
         events.yield(.willChangeText)
         events.yield(.willApplyEdit(transaction, preSnapshot))
         for observer in liveLifecycleObservers {
             observer.editorWillApply(transaction, snapshot: preSnapshot)
         }
 
-        undoCoordinator.clear()
-        // setFullText bumps version once (same as a single content replace).
-        let oldVersion = document.version
-        document.setFullText(string)
-        let newVersion = document.version
-        let applied = AppliedEditTransaction(
-            transaction: transaction,
-            oldVersion: oldVersion,
-            newVersion: newVersion,
-            inverse: EditTransaction.single(
-                range: NSRange(location: 0, length: (string as NSString).length),
-                replacement: preSnapshot.text,
-                origin: .programmatic
-            ),
-            textEdits: []
-        )
+        let applied: AppliedEditTransaction
+        do {
+            applied = try textDocument.replaceFullContent(
+                string,
+                origin: .programmatic,
+                clearUndo: true,
+                markDirty: true
+            )
+        } catch {
+            return
+        }
+        lastLocalTransactionID = applied.transaction.id
+        lastSeenDocumentVersion = applied.newVersion
+
+        if usesPresentationMirror {
+            document.setFullText(string)
+        }
 
         layout.invalidateAll()
         if !languageConfigInFlight {
@@ -132,6 +134,7 @@ extension EditorController {
         }
 
         selection.setInsertionPoint(min(selection.selectedRange.location, document.length))
+        syncSessionFromController()
 
         events.yield(.didApplyEdit(applied))
         for observer in liveLifecycleObservers {

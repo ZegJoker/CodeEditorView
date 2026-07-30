@@ -9,6 +9,7 @@ let package = Package(
     ],
     products: [
         .library(name: "CodeEditorCore", targets: ["CodeEditorCore"]),
+        .library(name: "CodeEditorDocuments", targets: ["CodeEditorDocuments"]),
         .library(name: "CodeEditorView", targets: ["CodeEditorView"]),
         .library(name: "CodeEditorLanguageSupport", targets: ["CodeEditorLanguageSupport"]),
         .library(name: "CodeEditorTreeSitter", targets: ["CodeEditorTreeSitter"]),
@@ -491,6 +492,13 @@ let package = Package(
             ]
         ),
         .target(
+            name: "CodeEditorDocuments",
+            dependencies: [
+                "CodeEditorCore",
+                "TextStory",
+            ]
+        ),
+        .target(
             name: "CodeEditorLanguageSupport"
         ),
         .target(
@@ -576,6 +584,7 @@ let package = Package(
             name: "CodeEditorView",
             dependencies: [
                 "CodeEditorCore",
+                "CodeEditorDocuments",
                 "TextStory",
                 "CodeEditorLanguageSupport",
                 "CodeEditorTreeSitter",
@@ -587,8 +596,12 @@ let package = Package(
             dependencies: ["CodeEditorCore"]
         ),
         .testTarget(
+            name: "CodeEditorDocumentsTests",
+            dependencies: ["CodeEditorDocuments"]
+        ),
+        .testTarget(
             name: "CodeEditorViewTests",
-            dependencies: ["CodeEditorView", "CodeEditorLanguages"]
+            dependencies: ["CodeEditorView", "CodeEditorLanguages", "CodeEditorDocuments"]
         ),
         .testTarget(
             name: "CodeEditorLanguagesTests",

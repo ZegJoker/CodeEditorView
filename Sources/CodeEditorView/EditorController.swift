@@ -5,17 +5,38 @@ import TextStory
 import CodeEditorLanguageSupport
 import CodeEditorTreeSitter
 import CodeEditorCore
+import CodeEditorDocuments
 
 /// Central editor model: document, layout, multi-range selection, undo, emphasis, and event streams.
 @MainActor
 @Observable
 public final class EditorController {
+    /// Shared content authority (versioned text + document-scoped undo).
+    public let textDocument: TextDocument
+    /// Presentation session (selection / scroll / find). Nil for simple single-controller hosts
+    /// that only use the controller’s selection APIs.
+    public private(set) var session: EditorSession?
+    /// Buffer used by layout, typesetting, and highlighting.
+    ///
+    /// When sharing a document across controllers this is a **session-local mirror** so themes
+    /// and syntax attributes stay independent. Otherwise it is `textDocument.store`.
     public private(set) var document: DocumentStore
     public let layout: LayoutEngine
     public let selection: SelectionEngine
-    public let undoCoordinator: UndoCoordinator
+    /// Document-scoped undo (always `textDocument.undo`).
+    public var undoCoordinator: UndoCoordinator { textDocument.undo }
     public let events: EditorEventStream
     public let emphasis: EmphasisManager
+
+    /// Observation task for shared-document remote edits.
+    /// Stored as nonisolated so `deinit` can cancel without MainActor hopping.
+    nonisolated(unsafe) var documentObservationTask: Task<Void, Never>?
+    /// Last transaction id applied locally (skip remote echo).
+    var lastLocalTransactionID: UUID?
+    /// Watermark for remote sync.
+    var lastSeenDocumentVersion: DocumentVersion = .zero
+    /// True while applying a remote shared-document edit.
+    var isApplyingRemoteDocumentEdit = false
 
     public var configuration: EditorConfiguration {
         didSet {
@@ -271,7 +292,8 @@ public final class EditorController {
     public var selectionChanges: AsyncStream<[NSRange]> { events.makeSelectionStream() }
     public var editorEvents: AsyncStream<EditorEvent> { events.makeEventStream() }
 
-    public init(
+    /// Creates a standalone controller with a private ``TextDocument`` (legacy-friendly).
+    public convenience init(
         text: String = "",
         configuration: EditorConfiguration = EditorConfiguration(),
         coordinators: [any EditorCoordinator] = [],
@@ -279,16 +301,76 @@ public final class EditorController {
         language: CodeLanguage? = nil,
         languageID: String? = nil
     ) {
+        let doc = TextDocument(text: text)
+        self.init(
+            document: doc,
+            session: nil,
+            configuration: configuration,
+            coordinators: coordinators,
+            highlightProviders: highlightProviders,
+            language: language,
+            languageID: languageID,
+            sharePresentation: false
+        )
+    }
+
+    /// Creates a controller attached to a shared document and presentation session.
+    ///
+    /// When multiple controllers share the same ``TextDocument``, each uses a
+    /// session-local presentation buffer so themes and syntax paint stay independent.
+    public convenience init(
+        document: TextDocument,
+        session: EditorSession,
+        configuration: EditorConfiguration = EditorConfiguration(),
+        coordinators: [any EditorCoordinator] = [],
+        highlightProviders: [any HighlightProviding] = [],
+        language: CodeLanguage? = nil,
+        languageID: String? = nil
+    ) {
+        precondition(session.documentID == document.id, "EditorSession.documentID must match TextDocument.id")
+        self.init(
+            document: document,
+            session: session,
+            configuration: configuration,
+            coordinators: coordinators,
+            highlightProviders: highlightProviders,
+            language: language,
+            languageID: languageID,
+            sharePresentation: true
+        )
+    }
+
+    private init(
+        document textDocument: TextDocument,
+        session: EditorSession?,
+        configuration: EditorConfiguration,
+        coordinators: [any EditorCoordinator],
+        highlightProviders: [any HighlightProviding],
+        language: CodeLanguage?,
+        languageID: String?,
+        sharePresentation: Bool
+    ) {
         self.configuration = configuration
         let resolvedLanguage = language ?? languageID.flatMap { CodeLanguages.language(id: $0) }
         self.language = resolvedLanguage
         self.languageID = resolvedLanguage?.id.rawValue ?? languageID
-        self.document = DocumentStore(string: text, attributes: configuration.typingAttributes)
+        self.textDocument = textDocument
+        self.session = session
+        if sharePresentation {
+            // Session-local mirror: same plain text, independent attributes.
+            self.document = DocumentStore(
+                string: textDocument.text,
+                attributes: configuration.typingAttributes
+            )
+        } else {
+            textDocument.store.defaultAttributes = configuration.typingAttributes
+            self.document = textDocument.store
+        }
         self.layout = LayoutEngine()
         self.selection = SelectionEngine()
-        self.undoCoordinator = UndoCoordinator()
         self.events = EditorEventStream()
         self.emphasis = EmphasisManager()
+        self.lastSeenDocumentVersion = textDocument.version
 
         layout.attach(document: document, typingAttributes: configuration.typingAttributes)
         selection.attach(document: document, layout: layout)
@@ -306,6 +388,10 @@ public final class EditorController {
         applyConfiguration(old: nil)
         setCoordinators(coordinators)
 
+        if let session {
+            selection.setSelectedRanges(session.selectedNSRanges)
+        }
+
         highlighter = Highlighter(hooks: makeHighlightHooks())
         highlighter.setLanguageID(self.languageID)
 
@@ -317,6 +403,12 @@ public final class EditorController {
 
         installFoldingIfNeeded()
         installJumpToDefinitionIfNeeded()
+        startObservingSharedDocumentIfNeeded()
+    }
+
+    deinit {
+        // Tasks capturing self are cancelled when the controller is released.
+        documentObservationTask?.cancel()
     }
 
     // MARK: - Highlighting
@@ -370,7 +462,7 @@ public final class EditorController {
             needsDisplay: { [weak self] in
                 self?.onNeedsDisplay?()
             },
-            version: { [weak self] in self?.document.version ?? .zero }
+            version: { [weak self] in self?.textDocument.version ?? .zero }
         )
     }
 
@@ -831,48 +923,41 @@ public final class EditorController {
     }
 
     public func undo() {
-        undoCoordinator.undoGroup { [weak self] edits in
-            guard let self, !edits.isEmpty else { return }
-            // `edits` are already in undo application order (each inverse applies sequentially).
-            let changes = edits.map {
-                TextChange(range: $0.inverse.range, replacement: $0.inverse.string)
+        // Document-scoped undo emits didApply; this controller applies locally via funnel
+        // only when it owns the undo call — TextDocument.undo applies content; we mirror.
+        let before = textDocument.version
+        textDocument.performUndo()
+        if textDocument.version > before {
+            if let id = textDocument.lastAppliedTransactionID {
+                lastLocalTransactionID = id
             }
-            let transaction = EditTransaction(changes: changes, origin: .undo)
-            _ = self.applyEditTransaction(
-                transaction,
-                sortHighToLow: false,
-                registerUndo: false,
-                requireEditable: false
-            ) { applied in
-                if let last = applied.textEdits.last {
-                    self.selection.setInsertionPoint(
-                        last.range.location + last.mutation.string.utf16.count
-                    )
-                }
+            if usesPresentationMirror {
+                document.setFullText(textDocument.text)
             }
+            layout.invalidateAll()
+            highlighter?.documentDidReplaceAll()
+            selection.setInsertionPoint(min(selection.selectedRange.location, document.length))
+            lastSeenDocumentVersion = textDocument.version
+            publishTextChange()
         }
         publishSelectionChange()
     }
 
     public func redo() {
-        undoCoordinator.redoGroup { [weak self] edits in
-            guard let self, !edits.isEmpty else { return }
-            let changes = edits.map {
-                TextChange(range: $0.mutation.range, replacement: $0.mutation.string)
+        let before = textDocument.version
+        textDocument.performRedo()
+        if textDocument.version > before {
+            if usesPresentationMirror {
+                document.setFullText(textDocument.text)
             }
-            let transaction = EditTransaction(changes: changes, origin: .redo)
-            _ = self.applyEditTransaction(
-                transaction,
-                sortHighToLow: false,
-                registerUndo: false,
-                requireEditable: false
-            ) { applied in
-                if let last = applied.textEdits.last {
-                    self.selection.setInsertionPoint(
-                        last.range.location + last.mutation.string.utf16.count
-                    )
-                }
+            if let id = textDocument.lastAppliedTransactionID {
+                lastLocalTransactionID = id
             }
+            layout.invalidateAll()
+            highlighter?.documentDidReplaceAll()
+            selection.setInsertionPoint(min(selection.selectedRange.location, document.length))
+            lastSeenDocumentVersion = textDocument.version
+            publishTextChange()
         }
         publishSelectionChange()
     }
@@ -1164,8 +1249,9 @@ public final class EditorController {
         events.yield(.selectionDidChange)
         let detailed = SelectionChangeEvent(
             nsRanges: selection.selectedRanges,
-            version: document.version
+            version: textDocument.version
         )
+        syncSessionFromController()
         events.yield(.selectionDidChangeDetailed(detailed))
         events.yieldSelection(selection.selectedRanges)
         let cursors = cursorPositions
