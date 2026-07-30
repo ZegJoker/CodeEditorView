@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import CodeEditorView
+@testable import CodeEditorCore
 
 @MainActor
 final class TestLine: LinePayload {

@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 public extension LineIndex {
@@ -68,13 +69,13 @@ public extension LineIndex {
         return index
     }
 
-    /// Convenience using ``LayoutInvalidation/splitLines`` with trailing empty-line semantics.
+    /// Convenience using ``LineMetrics/splitLines`` with trailing empty-line semantics.
     static func buildUsingSplitLines(
         from string: String,
         estimatedLineHeight: CGFloat,
         makePayload: (Int) -> Payload
     ) -> LineIndex<Payload> {
-        let metrics = LayoutInvalidation.splitLines(
+        let metrics = LineMetrics.splitLines(
             in: string,
             estimatedHeight: estimatedLineHeight,
             includeTrailingEmptyLine: true

@@ -2,6 +2,16 @@ import CoreGraphics
 import Foundation
 import TextStory
 
+/// Layout queries required for vertical caret movement and preferred-X tracking.
+///
+/// Implemented by the view-layer ``LayoutEngine``; kept in Core so selection
+/// navigation does not depend on typesetting/layout modules.
+@MainActor
+public protocol CaretLayoutQuerying: AnyObject {
+    func caretRect(atUTF16Offset offset: Int, containerWidth: CGFloat) -> CGRect?
+    func utf16Offset(at point: CGPoint, containerWidth: CGFloat) -> Int
+}
+
 /// Manages multi-range selection state and keyboard/pointer-driven navigation.
 @MainActor
 public final class SelectionEngine {
@@ -11,13 +21,13 @@ public final class SelectionEngine {
     public var mode: SelectionMode = .character
 
     private weak var document: DocumentStore?
-    private weak var layout: LayoutEngine?
+    private weak var layout: (any CaretLayoutQuerying)?
 
     public init(selection: TextRangeSelection = .insertionPoint(0)) {
         self.selections = [selection]
     }
 
-    public func attach(document: DocumentStore, layout: LayoutEngine) {
+    public func attach(document: DocumentStore, layout: some CaretLayoutQuerying) {
         self.document = document
         self.layout = layout
         clampToDocument()
@@ -134,7 +144,7 @@ public final class SelectionEngine {
         extending: Bool,
         containerWidth: CGFloat,
         document: DocumentStore,
-        layout: LayoutEngine
+        layout: any CaretLayoutQuerying
     ) -> TextRangeSelection {
         let anchor: Int
         let head: Int
@@ -188,7 +198,7 @@ public final class SelectionEngine {
         preferredX: CGFloat?,
         containerWidth: CGFloat,
         document: DocumentStore,
-        layout: LayoutEngine
+        layout: any CaretLayoutQuerying
     ) -> Int {
         switch (direction, granularity) {
         case (.left, .character):
@@ -232,7 +242,7 @@ public final class SelectionEngine {
         direction: NavigationDirection,
         preferredX: CGFloat?,
         containerWidth: CGFloat,
-        layout: LayoutEngine
+        layout: any CaretLayoutQuerying
     ) -> Int {
         guard let caret = layout.caretRect(atUTF16Offset: head, containerWidth: containerWidth) else {
             return head

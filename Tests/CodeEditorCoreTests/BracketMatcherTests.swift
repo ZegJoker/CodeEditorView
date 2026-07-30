@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import CodeEditorView
+@testable import CodeEditorCore
 
 @Suite("BracketMatcher")
 struct BracketMatcherTests {

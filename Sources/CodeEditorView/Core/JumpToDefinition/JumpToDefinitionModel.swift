@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 
 /// Manages jump-to-definition hover + jump (CESE-aligned, no Combine).
 ///

@@ -8,6 +8,7 @@ let package = Package(
         .macOS(.v15),
     ],
     products: [
+        .library(name: "CodeEditorCore", targets: ["CodeEditorCore"]),
         .library(name: "CodeEditorView", targets: ["CodeEditorView"]),
         .library(name: "CodeEditorLanguageSupport", targets: ["CodeEditorLanguageSupport"]),
         .library(name: "CodeEditorTreeSitter", targets: ["CodeEditorTreeSitter"]),
@@ -484,6 +485,12 @@ let package = Package(
             ]
         ),
         .target(
+            name: "CodeEditorCore",
+            dependencies: [
+                "TextStory",
+            ]
+        ),
+        .target(
             name: "CodeEditorLanguageSupport"
         ),
         .target(
@@ -566,11 +573,16 @@ let package = Package(
         .target(
             name: "CodeEditorView",
             dependencies: [
+                "CodeEditorCore",
                 "TextStory",
                 "CodeEditorLanguageSupport",
                 "CodeEditorTreeSitter",
                 .product(name: "Collections", package: "swift-collections"),
             ]
+        ),
+        .testTarget(
+            name: "CodeEditorCoreTests",
+            dependencies: ["CodeEditorCore"]
         ),
         .testTarget(
             name: "CodeEditorViewTests",

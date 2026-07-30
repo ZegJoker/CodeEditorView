@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 
 /// Computes which logical lines must be rebuilt after a document edit.
 public enum LayoutInvalidation {
@@ -21,61 +22,16 @@ public enum LayoutInvalidation {
 
     /// Splits a UTF-16 string into line metrics (including terminators), using estimated height.
     ///
-    /// - Parameter includeTrailingEmptyLine: When `true` (full-document rebuild only), a document that
-    ///   ends with a newline also gets a final zero-length line so the caret can sit after the last `\n`.
-    ///   **Must be `false` for localized edit slices** — every mid-document line ends with `\n`, and
-    ///   appending a phantom empty line there invents blank rows, desyncs hit-testing, and can crash draw.
+    /// Forwards to ``LineMetrics/splitLines`` so layout and Core share one implementation.
     public static func splitLines(
         in string: String,
         estimatedHeight: CGFloat,
         includeTrailingEmptyLine: Bool = false
     ) -> [LineMetrics] {
-        let utf16 = string.utf16
-        var metrics: [LineMetrics] = []
-        var start = utf16.startIndex
-
-        while start < utf16.endIndex {
-            var end = start
-            var foundTerminator = false
-            while end < utf16.endIndex {
-                let unit = utf16[end]
-                if unit == 0x0A {
-                    end = utf16.index(after: end)
-                    foundTerminator = true
-                    break
-                }
-                if unit == 0x0D {
-                    end = utf16.index(after: end)
-                    if end < utf16.endIndex, utf16[end] == 0x0A {
-                        end = utf16.index(after: end)
-                    }
-                    foundTerminator = true
-                    break
-                }
-                end = utf16.index(after: end)
-            }
-            let length = utf16.distance(from: start, to: end)
-            if length == 0, !foundTerminator, start == utf16.endIndex { break }
-            metrics.append(LineMetrics(utf16Length: max(length, 0), height: estimatedHeight))
-            start = end
-        }
-
-        if metrics.isEmpty {
-            // Full-document empty buffer needs one caret line.
-            // Localized edits of a fully-deleted line must return *no* metrics — otherwise we
-            // re-insert a zero-length phantom line that cannot be deleted and breaks hit-testing
-            // (blank row that "won't go away", Delete eating `{` on the previous line).
-            if includeTrailingEmptyLine {
-                metrics.append(LineMetrics(utf16Length: 0, height: estimatedHeight))
-            }
-        } else if includeTrailingEmptyLine, let last = metrics.last, last.utf16Length > 0 {
-            let ns = string as NSString
-            let lastRange = NSRange(location: ns.length - last.utf16Length, length: last.utf16Length)
-            let lastString = ns.substring(with: lastRange)
-            if lastString.hasSuffix("\n") || lastString.hasSuffix("\r") {
-                metrics.append(LineMetrics(utf16Length: 0, height: estimatedHeight))
-            }
-        }
-        return metrics
+        LineMetrics.splitLines(
+            in: string,
+            estimatedHeight: estimatedHeight,
+            includeTrailingEmptyLine: includeTrailingEmptyLine
+        )
     }
 }

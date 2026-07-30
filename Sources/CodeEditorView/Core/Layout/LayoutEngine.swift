@@ -1,6 +1,7 @@
 import CoreGraphics
 import CoreText
 import Foundation
+import CodeEditorCore
 
 /// Builds and maintains line layout for a code document.
 @MainActor
@@ -898,6 +899,8 @@ public final class LayoutEngine {
         return maxWidth
     }
 }
+
+extension LayoutEngine: CaretLayoutQuerying {}
 
 // Platform font access for height estimation only — see PlatformTypes.
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)

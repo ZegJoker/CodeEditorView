@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 import TextStory
-@testable import CodeEditorView
+@testable import CodeEditorCore
 
 @Suite("UndoCoordinator")
 @MainActor

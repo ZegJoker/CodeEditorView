@@ -106,8 +106,9 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
             for (key, value) in attributes {
                 merged[key] = value
             }
-            // Drop bold/italic from previous capture fonts unless a font is provided.
-            if attributes[.font] == nil, let font = existing[.font] as? PlatformFont {
+            // Preserve existing font when the caller does not supply a replacement
+            // (avoids leaving bold/italic capture fonts only when a new font is set).
+            if attributes[.font] == nil, let font = existing[.font] {
                 merged[.font] = font
             }
             self.storage.setAttributes(merged, range: subrange)

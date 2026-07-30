@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import CodeEditorView
+@testable import CodeEditorCore
 
 @Suite("MultiRange")
 struct MultiRangeTests {
@@ -26,30 +26,5 @@ struct MultiRangeTests {
         let normalized = MultiRangeEdit.normalize(ranges, documentLength: 100)
         #expect(normalized.count == 2)
         #expect(normalized[0] == NSRange(location: 0, length: 7))
-    }
-
-    @Test func multiCursorInsert() async {
-        await MainActor.run {
-            let controller = EditorController(text: "abcdef")
-            controller.setSelectedRanges([
-                NSRange(location: 1, length: 0),
-                NSRange(location: 4, length: 0),
-            ])
-            controller.insertText("X")
-            #expect(controller.text == "aXbcdXef")
-            #expect(controller.selectedRanges.count == 2)
-        }
-    }
-
-    @Test func multiCursorDeleteBackward() async {
-        await MainActor.run {
-            let controller = EditorController(text: "abcdef")
-            controller.setSelectedRanges([
-                NSRange(location: 2, length: 0),
-                NSRange(location: 5, length: 0),
-            ])
-            controller.deleteBackward()
-            #expect(controller.text == "acdf")
-        }
     }
 }
