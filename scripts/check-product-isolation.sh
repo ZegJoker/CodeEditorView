@@ -89,6 +89,11 @@ check_no_imports "Sources/CodeEditorExtensions" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|ExtensionKit)' \
   "Extensions has no UI / View / Workbench / Tree-sitter / LSP / ExtensionKit imports"
 
+echo "== CodeEditorLSP import allowlist =="
+check_no_imports "Sources/CodeEditorLSP" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorExtensions|CodeEditorLanguages|CodeEditorTreeSitter|ExtensionKit)' \
+  "LSP has no UI / View / Workbench / Extensions / Tree-sitter imports"
+
 echo "== CodeEditorTreeSitter grammar isolation =="
 check_no_imports "Sources/CodeEditorTreeSitter" \
   'import TreeSitter\w+Grammar' \
@@ -159,6 +164,37 @@ if missing:
     print("FAIL: Extensions missing deps:", ", ".join(sorted(missing)))
     sys.exit(1)
 print("OK:   Extensions Package.swift deps are Core+Documents+Commands+LanguageSupport+LanguageServices")
+PY
+
+echo "== CodeEditorLSP Package.swift deps =="
+python3 - <<'PY' || fail=1
+import re, sys
+text = open("Package.swift").read()
+m = re.search(
+    r'\.target\(\s*name:\s*"CodeEditorLSP",\s*dependencies:\s*\[(.*?)\]',
+    text,
+    re.S,
+)
+if not m:
+    print("FAIL: CodeEditorLSP target not found")
+    sys.exit(1)
+deps = m.group(1)
+allowed = {
+    "CodeEditorCore",
+    "CodeEditorDocuments",
+    "CodeEditorLanguageSupport",
+    "CodeEditorLanguageServices",
+}
+found = set(re.findall(r'"([^"]+)"', deps))
+bad = found - allowed
+if bad:
+    print("FAIL: LSP unexpected deps:", ", ".join(sorted(bad)))
+    sys.exit(1)
+missing = allowed - found
+if missing:
+    print("FAIL: LSP missing deps:", ", ".join(sorted(missing)))
+    sys.exit(1)
+print("OK:   LSP Package.swift deps are Core+Documents+LanguageSupport+LanguageServices")
 PY
 
 echo "== CodeEditorWorkbench dependency isolation =="
