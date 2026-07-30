@@ -1,49 +1,18 @@
 import Foundation
 import SwiftTreeSitter
+import CodeEditorLanguageSupport
+import CodeEditorTreeSitter
 
-/// Registry and tree-sitter configuration factory for ``CodeLanguage``.
-///
-/// **Queries** use the CodeEditLanguages layout:
-/// `Resources/tree-sitter-{tsName}/highlights.scm` (+ optional `highlights-*` variants).
-///
-/// **Parsers** are multiplatform vendored C sources under `Grammars/src/`
-/// (not the CodeEditLanguages binary container).
-///
-/// Configurations are cached and safe to build off the main actor.
-public enum CodeLanguages: Sendable {
-    public static var all: [CodeLanguage] { CodeLanguage.allLanguages }
-
-    public static var highlightable: [CodeLanguage] { CodeLanguage.highlightable }
-
-    public static func language(id: String) -> CodeLanguage? {
-        let key = id.lowercased()
-        // Prefer exact ID match so `typescript` does not resolve to TSX (shared tsName).
-        if let exact = all.first(where: { $0.id.rawValue.lowercased() == key }) {
-            return exact
-        }
-        return all.first {
-            $0.tsName == key
-                || $0.aliases.contains(key)
-                || $0.displayName.lowercased() == key
-        }
-    }
-
-    public static func language(id: TreeSitterLanguageID) -> CodeLanguage? {
-        all.first { $0.id == id }
-    }
-
-    public static func language(forFileExtension ext: String) -> CodeLanguage? {
-        let key = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
-        if key == "dockerfile" { return .dockerfile }
-        return all.first { $0.extensions.contains(key) }
-    }
-
+/// Highlight configuration factory (umbrella resource bundle + registered parsers).
+extension CodeLanguages {
     /// Builds a `LanguageConfiguration` with **highlight** queries only.
     ///
     /// - Important: Only `highlights.scm` / `highlights-*.scm` (and parent highlights) are compiled.
     ///   Folds, indents, tags, locals, and injections are **not** merged into the highlight query —
     ///   doing so can hang query compilation on the main thread for large grammars.
     public nonisolated static func languageConfiguration(for language: CodeLanguage) throws -> LanguageConfiguration? {
+        CodeEditorLanguages.bootstrap()
+
         guard language.id != .plainText else { return nil }
 
         if let cached = ConfigCache.shared.configuration(for: language.id) {
@@ -99,6 +68,7 @@ public enum CodeLanguages: Sendable {
     }
 
     public nonisolated static func languageConfiguration(id: String) throws -> LanguageConfiguration? {
+        CodeEditorLanguages.bootstrap()
         guard let language = language(id: id) else { return nil }
         return try languageConfiguration(for: language)
     }
