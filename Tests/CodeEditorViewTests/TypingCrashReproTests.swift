@@ -6,6 +6,7 @@ import CodeEditorLanguages
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
 import AppKit
 
+
 @MainActor
 private final class CrashReproCompletionDelegate: CodeSuggestionDelegate {
     private let items: [SimpleCodeSuggestion] = [
@@ -39,6 +40,8 @@ private final class CrashReproCompletionDelegate: CodeSuggestionDelegate {
 @Suite("Typing crash repro")
 @MainActor
 struct TypingCrashReproTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func typeWithMinimapFoldAnnotationsAndCompletions() async {
         _ = NSApplication.shared
 

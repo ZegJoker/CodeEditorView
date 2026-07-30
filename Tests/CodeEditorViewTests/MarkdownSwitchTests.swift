@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Markdown switch")
 @MainActor
 struct MarkdownSwitchTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func switchToMarkdownDoesNotHang() async throws {
         let controller = EditorController(text: "func x() {}\n", language: .swift)
         for _ in 0..<20 { await Task.yield(); try? await Task.sleep(for: .milliseconds(20)) }

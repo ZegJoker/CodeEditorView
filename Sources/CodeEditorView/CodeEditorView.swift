@@ -8,6 +8,12 @@
 //   SwiftUI `CodeEditor` → platform host view → `EditorController` → core engines
 //
 // Inspired by the product goals of CodeEditTextView; implemented as an original rewrite.
+//
+// Language contracts and Tree-sitter lifecycle are re-exported so clients can write
+// `CodeEditor(..., language: .swift)` with only `import CodeEditorView`. Hosts that need
+// highlight configurations must also link a language pack or the `CodeEditorLanguages`
+// umbrella (which bootstraps parsers into `LanguageRegistry`).
 
-// Core types are available through the module automatically.
-// This file documents the public surface and ensures the target has a root source file.
+@_exported import CodeEditorCore
+@_exported import CodeEditorLanguageSupport
+@_exported import CodeEditorTreeSitter

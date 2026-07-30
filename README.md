@@ -2,7 +2,7 @@
 
 A multiplatform code editor for **macOS 15** and **iOS 18**.
 
-Use it from SwiftUI, or drive the same engine through `EditorController` on AppKit and UIKit. Syntax highlighting is powered by Tree-sitter via the companion **CodeEditorLanguages** product.
+Use it from SwiftUI, or drive the same engine through `EditorController` on AppKit and UIKit. Syntax highlighting is powered by Tree-sitter via optional language products (see **Products** below).
 
 ## Features
 
@@ -34,15 +34,51 @@ dependencies: [
 ]
 ```
 
-Link the `CodeEditorView` product (and `CodeEditorLanguages` if you resolve languages yourself).
+Link the products you need (see **Products**).
+
+## Products
+
+| Product | Role |
+|---|---|
+| **CodeEditorView** | Embeddable editor UI (SwiftUI / AppKit / UIKit). No grammar C targets. |
+| **CodeEditorCore** | Platform-neutral document, selection, undo, formation, events. |
+| **CodeEditorLanguageSupport** | Open `LanguageID`, definitions, registry, highlight contracts. |
+| **CodeEditorTreeSitter** | Generic Tree-sitter lifecycle + highlight provider (no grammars). |
+| **CodeEditorLanguageSwift** | Swift grammar + queries (pilot single-language pack). |
+| **CodeEditorLanguageJSON** | JSON grammar + queries (pilot). |
+| **CodeEditorLanguages** | Convenience umbrella: all grammars + `bootstrap()`. |
+
+**Typical compositions**
+
+```swift
+// Small editor, no syntax highlighting
+.product(name: "CodeEditorView", package: "CodeEditorView")
+
+// Swift syntax only (call CodeEditorLanguageSwift.register() once at launch)
+.product(name: "CodeEditorView", package: "CodeEditorView"),
+.product(name: "CodeEditorLanguageSwift", package: "CodeEditorView")
+
+// Full catalog (call CodeEditorLanguages.bootstrap() once, or import and use catalog APIs)
+.product(name: "CodeEditorView", package: "CodeEditorView"),
+.product(name: "CodeEditorLanguages", package: "CodeEditorView")
+```
+
+`CodeEditorView` re-exports Core, LanguageSupport, and TreeSitter for a simple `import CodeEditorView` call site.
 
 ## Quick start
 
 ```swift
 import SwiftUI
 import CodeEditorView
+import CodeEditorLanguages // or CodeEditorLanguageSwift
 
 struct EditorScreen: View {
+    init() {
+        // Install parsers/queries once per process (umbrella or individual packs).
+        CodeEditorLanguages.bootstrap()
+        // Alternatively: CodeEditorLanguageSwift.register()
+    }
+
     @State private var text = """
     func hello() {
         print("hi")
@@ -76,6 +112,8 @@ struct EditorScreen: View {
 Flat `EditorConfiguration` initializers (for example `wrapLines:`, `showGutter:`) remain available for simple call sites.
 
 Pass `highlightProviders:` to replace the default Tree-sitter highlighter, or wire `completionDelegate` / `jumpToDefinitionDelegate` on `CodeEditor` for IDE-style features.
+
+Architecture notes for the modular split live under `Docs/Architecture/`. Run `scripts/check-product-isolation.sh` to verify dependency allowlists.
 
 ## Configuration
 

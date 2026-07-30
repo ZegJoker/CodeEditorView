@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Language switch debug")
 @MainActor
 struct LanguageSwitchDebugTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func dumpAfterMultiSwitch() async throws {
         let controller = EditorController(text: "func x() {}\n", language: .swift)
         let languages: [CodeLanguage] = [.swift, .python, .javascript, .rust, .cSharp, .go, .cSharp]

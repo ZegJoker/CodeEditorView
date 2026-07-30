@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import CodeEditorCore
 
 public enum TextAttachmentAction: Sendable {
     case none

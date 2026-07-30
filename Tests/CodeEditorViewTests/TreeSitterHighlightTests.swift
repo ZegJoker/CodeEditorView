@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("TreeSitterHighlightProvider")
 @MainActor
 struct TreeSitterHighlightTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func jsonHighlightsKeysAndStrings() async throws {
         let provider = try TreeSitterHighlightProvider(language: .json)
         let source = #"{ "hello": 123 }"#

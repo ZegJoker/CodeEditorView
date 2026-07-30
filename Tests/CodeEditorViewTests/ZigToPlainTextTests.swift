@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Zig to plain text")
 @MainActor
 struct ZigToPlainTextTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func zigConfigLoad() throws {
         let t0 = ContinuousClock.now
         let config = try CodeLanguages.languageConfiguration(for: .zig)

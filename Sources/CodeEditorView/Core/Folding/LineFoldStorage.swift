@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 
 /// Sendable fold index over a document (CESE `LineFoldStorage` semantics on our `RangeStore`).
 public struct LineFoldStorage: Sendable {

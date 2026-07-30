@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Markdown inline highlight")
 @MainActor
 struct MarkdownInlineHighlightTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func highlightsBoldAndCode() async throws {
         let text = "hello **bold** and `code` plus https://example.com"
         let provider = try #require(TreeSitterHighlightProvider.make(for: .markdownInline))

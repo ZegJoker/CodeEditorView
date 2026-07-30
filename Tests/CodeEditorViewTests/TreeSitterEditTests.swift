@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("TreeSitter incremental edits")
 @MainActor
 struct TreeSitterEditTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func pointAtStartAndAfterNewline() {
         let text = "ab\nc" as NSString
         let p0 = TreeSitterEdit.point(atUTF16Offset: 0, in: text)

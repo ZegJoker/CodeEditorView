@@ -1,6 +1,7 @@
 import CoreGraphics
 import CoreText
 import Foundation
+import CodeEditorCore
 
 /// A single visual row produced by the typesetter for a logical document line.
 public final class LineFragment: LinePayload, Identifiable {

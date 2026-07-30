@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Language switch highlighting")
 @MainActor
 struct LanguageSwitchHighlightTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func multiSwitchKeepsContiguousTokenColors() async throws {
         let controller = EditorController(text: DemoCSharp, language: .swift)
         let languages: [CodeLanguage] = [.swift, .python, .javascript, .rust, .cSharp, .go, .cSharp]

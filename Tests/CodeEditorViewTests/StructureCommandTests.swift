@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Structure commands")
 @MainActor
 struct StructureCommandTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func indentMultiLineSelection() {
         let src = "a\nb\nc\n"
         let reps = StructureCommands.indentLines(

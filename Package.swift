@@ -8,7 +8,12 @@ let package = Package(
         .macOS(.v15),
     ],
     products: [
+        .library(name: "CodeEditorCore", targets: ["CodeEditorCore"]),
         .library(name: "CodeEditorView", targets: ["CodeEditorView"]),
+        .library(name: "CodeEditorLanguageSupport", targets: ["CodeEditorLanguageSupport"]),
+        .library(name: "CodeEditorTreeSitter", targets: ["CodeEditorTreeSitter"]),
+        .library(name: "CodeEditorLanguageSwift", targets: ["CodeEditorLanguageSwift"]),
+        .library(name: "CodeEditorLanguageJSON", targets: ["CodeEditorLanguageJSON"]),
         .library(name: "CodeEditorLanguages", targets: ["CodeEditorLanguages"]),
     ],
     dependencies: [
@@ -480,8 +485,48 @@ let package = Package(
             ]
         ),
         .target(
+            name: "CodeEditorCore",
+            dependencies: [
+                "TextStory",
+            ]
+        ),
+        .target(
+            name: "CodeEditorLanguageSupport"
+        ),
+        .target(
+            name: "CodeEditorTreeSitter",
+            dependencies: [
+                "CodeEditorLanguageSupport",
+                .product(name: "SwiftTreeSitter", package: "swift-tree-sitter"),
+            ]
+        ),
+        .target(
+            name: "CodeEditorLanguageSwift",
+            dependencies: [
+                "CodeEditorLanguageSupport",
+                "CodeEditorTreeSitter",
+                "TreeSitterSwiftGrammar",
+            ],
+            resources: [
+                .copy("Resources"),
+            ]
+        ),
+        .target(
+            name: "CodeEditorLanguageJSON",
+            dependencies: [
+                "CodeEditorLanguageSupport",
+                "CodeEditorTreeSitter",
+                "TreeSitterJsonGrammar",
+            ],
+            resources: [
+                .copy("Resources"),
+            ]
+        ),
+        .target(
             name: "CodeEditorLanguages",
             dependencies: [
+                "CodeEditorLanguageSupport",
+                "CodeEditorTreeSitter",
                 .product(name: "SwiftTreeSitter", package: "swift-tree-sitter"),
                 "TreeSitterAgdaGrammar",
                 "TreeSitterBashGrammar",
@@ -530,11 +575,16 @@ let package = Package(
         .target(
             name: "CodeEditorView",
             dependencies: [
+                "CodeEditorCore",
                 "TextStory",
-                "CodeEditorLanguages",
+                "CodeEditorLanguageSupport",
+                "CodeEditorTreeSitter",
                 .product(name: "Collections", package: "swift-collections"),
-                .product(name: "SwiftTreeSitter", package: "swift-tree-sitter"),
             ]
+        ),
+        .testTarget(
+            name: "CodeEditorCoreTests",
+            dependencies: ["CodeEditorCore"]
         ),
         .testTarget(
             name: "CodeEditorViewTests",
@@ -543,6 +593,10 @@ let package = Package(
         .testTarget(
             name: "CodeEditorLanguagesTests",
             dependencies: ["CodeEditorLanguages"]
+        ),
+        .testTarget(
+            name: "CodeEditorLanguageSupportTests",
+            dependencies: ["CodeEditorLanguageSupport"]
         ),
     ],
     swiftLanguageModes: [.v6],

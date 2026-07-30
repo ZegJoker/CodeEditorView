@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorLanguageSupport
 
 /// Merges highlight runs from multiple providers into a single style stream.
 @MainActor

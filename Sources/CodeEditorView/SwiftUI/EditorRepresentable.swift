@@ -1,5 +1,5 @@
 import SwiftUI
-import CodeEditorLanguages
+import CodeEditorLanguageSupport
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
 import AppKit

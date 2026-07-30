@@ -2,7 +2,9 @@ import CoreGraphics
 import Foundation
 import Observation
 import TextStory
-import CodeEditorLanguages
+import CodeEditorLanguageSupport
+import CodeEditorTreeSitter
+import CodeEditorCore
 
 /// Central editor model: document, layout, multi-range selection, undo, emphasis, and event streams.
 @MainActor
@@ -910,9 +912,16 @@ public final class EditorController {
             visibleRect: rect.insetBy(dx: -10, dy: -10),
             containerWidth: containerWidth
         )
+        let columnFragments = snapshot.fragments.map {
+            ColumnSelectionFragment(
+                frame: $0.frame,
+                documentRange: $0.fragment.documentRange,
+                ctLine: $0.fragment.ctLine
+            )
+        }
         let ranges = ColumnSelectionBuilder.ranges(
             in: rect,
-            fragments: snapshot.fragments,
+            fragments: columnFragments,
             documentLength: document.length
         )
         selection.mode = .column

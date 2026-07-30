@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("TS to YAML switch")
 @MainActor
 struct TStoYAMLSwitchTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func yamlConfigLoadTime() throws {
         let t0 = ContinuousClock.now
         let config = try CodeLanguages.languageConfiguration(for: .yaml)

@@ -1,6 +1,7 @@
 import CoreGraphics
 import CoreText
 import Foundation
+import CodeEditorCore
 
 public enum InvisibleCharacterRenderer {
     public static func draw(

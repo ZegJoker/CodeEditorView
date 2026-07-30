@@ -1,5 +1,7 @@
 import CoreGraphics
 import Foundation
+import CodeEditorLanguageSupport
+import CodeEditorCore
 
 // MARK: - Minimap (Phase 9)
 

@@ -1,8 +1,11 @@
 import Testing
 @testable import CodeEditorLanguages
 
+
 @Suite("CodeEditorLanguages")
 struct CodeLanguagesTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func fullCatalogMatchesCELCount() {
         // plainText + full grammar set
         #expect(CodeLanguage.allLanguages.count >= 40)
