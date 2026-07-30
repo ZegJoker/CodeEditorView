@@ -16,6 +16,7 @@ let package = Package(
         .library(name: "CodeEditorView", targets: ["CodeEditorView"]),
         .library(name: "CodeEditorLanguageSupport", targets: ["CodeEditorLanguageSupport"]),
         .library(name: "CodeEditorLanguageServices", targets: ["CodeEditorLanguageServices"]),
+        .library(name: "CodeEditorExtensions", targets: ["CodeEditorExtensions"]),
         .library(name: "CodeEditorTreeSitter", targets: ["CodeEditorTreeSitter"]),
         .library(name: "CodeEditorLanguageSwift", targets: ["CodeEditorLanguageSwift"]),
         .library(name: "CodeEditorLanguageJSON", targets: ["CodeEditorLanguageJSON"]),
@@ -539,6 +540,16 @@ let package = Package(
             ]
         ),
         .target(
+            name: "CodeEditorExtensions",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+                "CodeEditorCommands",
+                "CodeEditorLanguageSupport",
+                "CodeEditorLanguageServices",
+            ]
+        ),
+        .target(
             name: "CodeEditorTreeSitter",
             dependencies: [
                 "CodeEditorLanguageSupport",
@@ -665,6 +676,15 @@ let package = Package(
         .testTarget(
             name: "CodeEditorLanguageServicesTests",
             dependencies: ["CodeEditorLanguageServices"]
+        ),
+        .testTarget(
+            name: "CodeEditorExtensionsTests",
+            dependencies: [
+                "CodeEditorExtensions",
+                "CodeEditorCommands",
+                "CodeEditorLanguageServices",
+                "CodeEditorLanguageSupport",
+            ]
         ),
     ],
     swiftLanguageModes: [.v6],

@@ -28,6 +28,13 @@ public final class LanguageRegistry: @unchecked Sendable {
         definitions[definition.id] = definition
     }
 
+    /// Removes a language definition (e.g. extension deactivation).
+    public func unregisterDefinition(for id: LanguageID) {
+        lock.lock()
+        defer { lock.unlock() }
+        definitions.removeValue(forKey: id)
+    }
+
     public func definition(for id: LanguageID) -> LanguageDefinition? {
         lock.lock()
         defer { lock.unlock() }
@@ -46,6 +53,12 @@ public final class LanguageRegistry: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         parserFactories[id] = factory
+    }
+
+    public func unregisterParser(for id: LanguageID) {
+        lock.lock()
+        defer { lock.unlock() }
+        parserFactories.removeValue(forKey: id)
     }
 
     public func parser(for id: LanguageID) -> OpaquePointer? {
@@ -70,12 +83,27 @@ public final class LanguageRegistry: @unchecked Sendable {
         queryProviders[id] = provider
     }
 
+    public func unregisterQueryProvider(for id: LanguageID) {
+        lock.lock()
+        defer { lock.unlock() }
+        queryProviders.removeValue(forKey: id)
+    }
+
     public func queryURL(for id: LanguageID, query: String) -> URL? {
         let provider: QueryURLProvider?
         lock.lock()
         provider = queryProviders[id]
         lock.unlock()
         return provider?(query)
+    }
+
+    /// Removes definition, parser factory, and query provider for `id`.
+    public func unregisterAll(for id: LanguageID) {
+        lock.lock()
+        defer { lock.unlock() }
+        definitions.removeValue(forKey: id)
+        parserFactories.removeValue(forKey: id)
+        queryProviders.removeValue(forKey: id)
     }
 
     public func hasQueryProvider(for id: LanguageID) -> Bool {
