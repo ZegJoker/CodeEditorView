@@ -6,6 +6,7 @@ import CodeEditorLanguageSupport
 import CodeEditorTreeSitter
 import CodeEditorCore
 import CodeEditorDocuments
+import CodeEditorCommands
 
 /// Central editor model: document, layout, multi-range selection, undo, emphasis, and event streams.
 @MainActor
@@ -27,6 +28,11 @@ public final class EditorController {
     public var undoCoordinator: UndoCoordinator { textDocument.undo }
     public let events: EditorEventStream
     public let emphasis: EmphasisManager
+
+    /// Optional command dispatcher (built-ins installed via ``installBuiltInCommands(into:)``).
+    public var commandDispatcher: CommandDispatcher?
+    /// Token retaining built-in command registrations.
+    var builtInCommandRegistration: (any CommandDisposable)?
 
     /// Observation task for shared-document remote edits.
     /// Stored as nonisolated so `deinit` can cancel without MainActor hopping.
@@ -404,6 +410,10 @@ public final class EditorController {
         installFoldingIfNeeded()
         installJumpToDefinitionIfNeeded()
         startObservingSharedDocumentIfNeeded()
+
+        // Default command dispatcher with built-in edit/find/completion actions.
+        let dispatcher = CommandDispatcher()
+        builtInCommandRegistration = installBuiltInCommands(into: dispatcher)
     }
 
     deinit {

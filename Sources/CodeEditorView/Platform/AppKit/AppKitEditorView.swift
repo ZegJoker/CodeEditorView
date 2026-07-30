@@ -701,116 +701,14 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
     // MARK: - Keyboard
 
     open override func keyDown(with event: NSEvent) {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let chars = event.charactersIgnoringModifiers ?? ""
-
-        if flags.contains(.command), chars == "a" {
-            selectAll(nil)
-            return
-        }
-        // Find / replace (⌘F find, ⌘R expand/show replace, ⌥⌘F replace, ⌘G / ⇧⌘G next/prev)
-        if flags.contains(.command), !flags.contains(.shift), !flags.contains(.option), chars == "f" {
-            controller.showFindPanel(mode: .find)
-            return
-        }
-        if flags.contains(.command), !flags.contains(.shift), !flags.contains(.option), chars == "r" {
-            // When find is already open, expand to replace; otherwise open replace mode.
-            controller.showReplacePanel()
-            return
-        }
-        if flags.contains(.command), flags.contains(.option), !flags.contains(.shift), chars == "f" {
-            controller.showReplacePanel()
-            return
-        }
-        if flags.contains(.command), !flags.contains(.shift), chars == "g" {
-            controller.findNext()
-            finishSelection()
-            return
-        }
-        if flags.contains(.command), flags.contains(.shift), chars == "g" {
-            controller.findPrevious()
-            finishSelection()
-            return
-        }
-        if event.keyCode == 53 { // Escape
-            if controller.findSession.isShowing {
-                controller.hideFindPanel()
-                return
-            }
-            // CESE: Escape toggles completions when find is closed.
-            if controller.completionsVisible {
-                controller.hideCompletions()
-                return
-            }
-            if controller.completionDelegate != nil {
-                controller.showCompletions()
-                return
-            }
-            controller.collapseCursors()
-            onSelectionChange?(controller.selectedRange)
-            needsDisplay = true
-            return
-        }
-        // Ctrl-Space: show completions
-        if flags.contains(.control), !flags.contains(.command), !flags.contains(.option),
-           chars == " " || event.keyCode == 49 {
-            if controller.completionsVisible {
-                controller.hideCompletions()
-            } else {
-                controller.showCompletions()
-            }
-            return
-        }
-        // Jump to definition: ⌃⌘J (CESE)
-        if flags.contains(.command), flags.contains(.control), !flags.contains(.shift),
-           !flags.contains(.option), chars.lowercased() == "j",
-           controller.jumpToDefinitionDelegate != nil
-        {
-            controller.jumpToDefinition()
-            finishSelection()
-            return
-        }
-        // Completion list navigation while visible
-        if controller.completionsVisible {
-            if event.keyCode == 125 { // Down
-                controller.moveCompletionSelection(delta: 1)
-                return
-            }
-            if event.keyCode == 126 { // Up
-                controller.moveCompletionSelection(delta: -1)
-                return
-            }
-            if event.keyCode == 36 || event.keyCode == 76 { // Return / keypad Enter
-                controller.applyCompletionSelection()
+        // Route structured shortcuts through the command dispatcher when available.
+        if let press = KeyPress(nsEvent: event),
+           let dispatcher = controller.commandDispatcher {
+            let context = controller.makeCommandContext()
+            if (try? dispatcher.handleKeyPress(press, context: context)) == true {
                 finishEdit()
                 return
             }
-        }
-        // Structure shortcuts
-        if flags.contains(.command), chars == "]" {
-            controller.indentSelection()
-            finishEdit()
-            return
-        }
-        if flags.contains(.command), chars == "[" {
-            controller.outdentSelection()
-            finishEdit()
-            return
-        }
-        if flags.contains(.command), chars == "/" {
-            controller.toggleLineComment()
-            finishEdit()
-            return
-        }
-        if flags.contains(.option), event.keyCode == 126 { // Up
-            controller.moveSelectedLines(up: true)
-            finishEdit()
-            return
-        }
-        if flags.contains(.option), event.keyCode == 125 { // Down
-            controller.moveSelectedLines(up: false)
-            finishEdit()
-            return
         }
         interpretKeyEvents([event])
     }

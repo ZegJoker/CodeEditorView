@@ -1,0 +1,66 @@
+import SwiftUI
+import CodeEditorCommands
+
+/// Optional command-palette UI driven by ``CommandPaletteModel`` and a ``CommandDispatcher``.
+public struct CommandPaletteView: View {
+    @Bindable private var model: CommandPaletteModel
+    private var dispatcher: CommandDispatcher
+    private var context: CommandContext
+    private var onDismiss: (() -> Void)?
+
+    @State private var selection: CommandID?
+
+    public init(
+        model: CommandPaletteModel,
+        dispatcher: CommandDispatcher,
+        context: CommandContext,
+        onDismiss: (() -> Void)? = nil
+    ) {
+        self.model = model
+        self.dispatcher = dispatcher
+        self.context = context
+        self.onDismiss = onDismiss
+    }
+
+    public var body: some View {
+        let items = model.filteredCommands(from: dispatcher.commands, context: context)
+        VStack(spacing: 0) {
+            TextField("Run a command…", text: $model.query)
+                .textFieldStyle(.plain)
+                .padding(10)
+            Divider()
+            List(items, id: \.id.rawValue, selection: $selection) { command in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(command.title)
+                        Text(command.id.rawValue)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if let category = command.category {
+                        Text(category.rawValue)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    run(command.id)
+                }
+            }
+            .listStyle(.plain)
+        }
+        .frame(minWidth: 360, minHeight: 280)
+        .onChange(of: selection) { _, newValue in
+            if let newValue {
+                run(newValue)
+            }
+        }
+    }
+
+    private func run(_ id: CommandID) {
+        try? dispatcher.execute(id, context: context)
+        onDismiss?()
+    }
+}

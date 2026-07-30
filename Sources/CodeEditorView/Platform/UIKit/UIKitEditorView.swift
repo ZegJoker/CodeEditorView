@@ -493,79 +493,69 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     }
 
     @objc private func handleToggleCompletions() {
-        if controller.completionsVisible {
-            controller.hideCompletions()
-        } else {
-            controller.showCompletions()
-        }
+        try? controller.executeCommand(BuiltInCommandID.completionShow)
         setNeedsDisplay()
     }
 
     @objc private func handleEscape() {
-        if controller.findSession.isShowing {
-            controller.hideFindPanel()
-        } else if controller.completionsVisible {
-            controller.hideCompletions()
-        } else if controller.completionDelegate != nil {
-            controller.showCompletions()
-        }
+        try? controller.executeCommand(BuiltInCommandID.cancel)
         setNeedsDisplay()
     }
 
     @objc private func handleCompletionUp() {
-        controller.moveCompletionSelection(delta: -1)
+        try? controller.executeCommand(BuiltInCommandID.completionUp)
         setNeedsDisplay()
     }
 
     @objc private func handleCompletionDown() {
-        controller.moveCompletionSelection(delta: 1)
+        try? controller.executeCommand(BuiltInCommandID.completionDown)
         setNeedsDisplay()
     }
 
     @objc private func handleCompletionApply() {
-        controller.applyCompletionSelection()
+        try? controller.executeCommand(BuiltInCommandID.completionApply)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()
     }
 
     @objc private func handleBacktab() {
-        controller.insertBacktab()
+        try? controller.executeCommand(BuiltInCommandID.insertBacktab)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()
     }
 
     @objc private func handleIndent() {
-        controller.indentSelection()
+        try? controller.executeCommand(BuiltInCommandID.indent)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()
     }
 
     @objc private func handleOutdent() {
-        controller.outdentSelection()
-        onTextChange?(controller.text)
-        onSelectionChange?(controller.selectedRange)
-        relayout()
-    }
-
-    @objc private func handleToggleComment() {
-        controller.toggleLineComment()
+        try? controller.executeCommand(BuiltInCommandID.outdent)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()
     }
 
     @objc private func handleMoveLinesUp() {
-        controller.moveSelectedLines(up: true)
+        try? controller.executeCommand(BuiltInCommandID.moveLinesUp)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()
     }
 
     @objc private func handleMoveLinesDown() {
-        controller.moveSelectedLines(up: false)
+        try? controller.executeCommand(BuiltInCommandID.moveLinesDown)
+        onTextChange?(controller.text)
+        onSelectionChange?(controller.selectedRange)
+        relayout()
+    }
+
+    @objc private func handleToggleComment() {
+        try? controller.executeCommand(BuiltInCommandID.toggleLineComment)
         onTextChange?(controller.text)
         onSelectionChange?(controller.selectedRange)
         relayout()
