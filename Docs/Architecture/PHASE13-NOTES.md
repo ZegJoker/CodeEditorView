@@ -25,11 +25,11 @@ cd Examples/FullWorkbench && swift build
 
 ## Release checklist
 
-- [ ] `swift test`
-- [ ] `scripts/check-product-isolation.sh`
-- [ ] `scripts/check-docs.sh`
-- [ ] README product table current
-- [ ] CHANGELOG `1.0.0` section complete
+- [x] `swift test` (344 tests / 99 suites)
+- [x] `scripts/check-product-isolation.sh`
+- [x] `scripts/check-docs.sh`
+- [x] README product table current
+- [x] CHANGELOG `1.0.0` section complete
 - [ ] Tag `1.0.0` (optional, human step)
 - [ ] SPI / DocC host (optional)
 
