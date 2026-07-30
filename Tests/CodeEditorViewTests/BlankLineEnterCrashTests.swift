@@ -6,9 +6,12 @@ import CodeEditorLanguages
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
 import AppKit
 
+
 @Suite("Blank line enter crash")
 @MainActor
 struct BlankLineEnterCrashTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func exactDemoReproEnterOnBlankLine() async {
         _ = NSApplication.shared
 

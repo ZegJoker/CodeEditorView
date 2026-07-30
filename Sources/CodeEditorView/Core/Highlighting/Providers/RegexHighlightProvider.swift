@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorLanguageSupport
 
 /// Simple regex-based highlight provider for tests and lightweight demos.
 @MainActor

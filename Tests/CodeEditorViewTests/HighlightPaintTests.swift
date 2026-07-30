@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Highlight paint")
 @MainActor
 struct HighlightPaintTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func controllerAttributesAreContiguousForTokens() async throws {
         let source = """
         static void Greet(string name) {

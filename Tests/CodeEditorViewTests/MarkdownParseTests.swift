@@ -4,9 +4,12 @@ import SwiftTreeSitter
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Markdown parse")
 @MainActor
 struct MarkdownParseTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func parseAndQueryMarkdown() async throws {
         let provider = try #require(TreeSitterHighlightProvider.make(for: .markdown))
         let t0 = ContinuousClock.now

@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import CodeEditorLanguageSupport
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
 import AppKit

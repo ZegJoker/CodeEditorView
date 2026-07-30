@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("MainActor load stress")
 @MainActor
 struct MainActorLoadStressTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func concurrentLoadAndSetDocumentText() async throws {
         let provider = try #require(TreeSitterHighlightProvider.make(for: .typescript))
         // Warm TS

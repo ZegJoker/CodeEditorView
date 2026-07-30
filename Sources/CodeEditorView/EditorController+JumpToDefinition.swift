@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorTreeSitter
 
 // MARK: - Jump to definition (Phase 11)
 

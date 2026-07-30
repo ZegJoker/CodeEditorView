@@ -2,8 +2,11 @@ import Testing
 import Foundation
 @testable import CodeEditorLanguages
 
+
 @Suite("Load timing")
 struct LoadTimingTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func dartConfigDoesNotHang() throws {
         let t0 = Date()
         let config = try CodeLanguages.languageConfiguration(for: .dart)

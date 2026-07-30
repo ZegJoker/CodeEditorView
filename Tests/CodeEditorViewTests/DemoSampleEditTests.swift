@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("Demo sample edit")
 @MainActor
 struct DemoSampleEditTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func swiftSampleTypeOnBlankLineBeforeGreet() {
         let src = """
         // Swift — CodeEditorView demo

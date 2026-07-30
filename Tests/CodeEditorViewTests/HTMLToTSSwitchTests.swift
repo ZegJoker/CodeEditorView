@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("HTML to TS switch")
 @MainActor
 struct HTMLToTSSwitchTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func htmlThenTypescriptDoesNotHang() async throws {
         let html = DemoHTML
         let ts = DemoTS

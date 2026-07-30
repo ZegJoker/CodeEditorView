@@ -3,9 +3,12 @@ import Foundation
 @testable import CodeEditorView
 import CodeEditorLanguages
 
+
 @Suite("CSharp highlight debug")
 @MainActor
 struct CSharpHighlightDebugTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func printRanges() async throws {
         let source = """
         using System;

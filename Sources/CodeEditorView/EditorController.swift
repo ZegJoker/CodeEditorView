@@ -2,7 +2,8 @@ import CoreGraphics
 import Foundation
 import Observation
 import TextStory
-import CodeEditorLanguages
+import CodeEditorLanguageSupport
+import CodeEditorTreeSitter
 
 /// Central editor model: document, layout, multi-range selection, undo, emphasis, and event streams.
 @MainActor

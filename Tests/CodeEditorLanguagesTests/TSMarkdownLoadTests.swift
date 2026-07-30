@@ -3,8 +3,11 @@ import Foundation
 import SwiftTreeSitter
 @testable import CodeEditorLanguages
 
+
 @Suite("TS and Markdown load")
 struct TSMarkdownLoadTests {
+    init() { CodeEditorLanguages.bootstrap() }
+
     @Test func typescriptPatternCountIncludesParent() throws {
         let ts = try CodeLanguages.languageConfiguration(for: .typescript)
         let count = ts?.queries[.highlights]?.patternCount ?? 0
