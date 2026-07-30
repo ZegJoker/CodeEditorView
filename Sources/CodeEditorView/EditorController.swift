@@ -79,6 +79,9 @@ public final class EditorController {
         }
     }
 
+    /// Strong retain for adapters installed via ``installLanguageServices(_:context:)``.
+    var languageServicesRetain: AnyObject?
+
     /// Hosts observe to present/update the completion panel UI.
     public var onCompletionSessionChange: (() -> Void)?
     /// Blocks nested `notifyCompletionSessionChange` (panel sync ↔ selection feedback).
