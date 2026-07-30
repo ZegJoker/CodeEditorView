@@ -1,5 +1,6 @@
 import Foundation
 import CodeEditorLanguageSupport
+import CodeEditorCore
 
 /// Orchestrates highlight providers, merges runs, and paints attributes into the document.
 @MainActor
@@ -13,6 +14,8 @@ public final class Highlighter {
         public var font: () -> PlatformFont
         public var invalidateLayout: (NSRange) -> Void
         public var needsDisplay: () -> Void
+        /// Current document content version (stale async work is discarded when it changes).
+        public var version: () -> DocumentVersion
 
         public init(
             length: @escaping () -> Int,
@@ -22,7 +25,8 @@ public final class Highlighter {
             theme: @escaping () -> EditorTheme,
             font: @escaping () -> PlatformFont,
             invalidateLayout: @escaping (NSRange) -> Void,
-            needsDisplay: @escaping () -> Void
+            needsDisplay: @escaping () -> Void,
+            version: @escaping () -> DocumentVersion = { .zero }
         ) {
             self.length = length
             self.substring = substring
@@ -32,6 +36,7 @@ public final class Highlighter {
             self.font = font
             self.invalidateLayout = invalidateLayout
             self.needsDisplay = needsDisplay
+            self.version = version
         }
     }
 
@@ -262,30 +267,31 @@ public final class Highlighter {
 
     private func bootstrapProviders(generation gen: UInt64) async {
         guard gen == generation else { return }
+        let startVersion = hooks.version()
         let length = hooks.length()
         styleContainer.replaceDocumentLength(length)
         // Snapshot after any prior cancellation point; re-read again after provider setup.
         var fullText = hooks.substring(NSRange(location: 0, length: length)) ?? ""
         for provider in providers {
-            guard !Task.isCancelled, gen == generation else { return }
+            guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
             await provider.setUp(documentLength: hooks.length(), languageID: languageID)
-            guard !Task.isCancelled, gen == generation else { return }
+            guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
             // Document may have changed while queries compiled.
             let latestLength = hooks.length()
             fullText = hooks.substring(NSRange(location: 0, length: latestLength)) ?? ""
             await provider.setDocumentText(fullText)
         }
-        guard !Task.isCancelled, gen == generation else { return }
+        guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
         // Final sync: if text changed during the last parse, re-push once more.
         let finalLength = hooks.length()
         let finalText = hooks.substring(NSRange(location: 0, length: finalLength)) ?? ""
         if finalText != fullText {
             for provider in providers {
-                guard !Task.isCancelled, gen == generation else { return }
+                guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
                 await provider.setDocumentText(finalText)
             }
         }
-        guard !Task.isCancelled, gen == generation else { return }
+        guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
         styleContainer.replaceDocumentLength(hooks.length())
         invalidateAll()
     }
@@ -293,9 +299,11 @@ public final class Highlighter {
     private func scheduleRefresh() {
         refreshTask?.cancel()
         let gen = generation
+        let version = hooks.version()
         refreshTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(16))
             guard let self, !Task.isCancelled, gen == self.generation else { return }
+            guard self.hooks.version() == version else { return }
             await self.refreshVisible()
         }
     }
@@ -323,14 +331,15 @@ public final class Highlighter {
         }
 
         let gen = generation
+        let startVersion = hooks.version()
         for range in ranges {
-            guard !Task.isCancelled, gen == generation else { return }
+            guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
             guard let text = hooks.substring(range) else { continue }
             for (index, provider) in providers.enumerated() {
-                guard !Task.isCancelled, gen == generation else { return }
+                guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
                 do {
                     let highlights = try await provider.queryHighlights(in: range, text: text)
-                    guard !Task.isCancelled, gen == generation else { return }
+                    guard !Task.isCancelled, gen == generation, hooks.version() == startVersion else { return }
                     styleContainer.setHighlights(highlights, forProvider: index, in: range)
                 } catch is CancellationError {
                     return
@@ -340,11 +349,13 @@ public final class Highlighter {
             }
             dirtyRanges.remove(integersIn: range.location..<(range.location + range.length))
         }
-        guard gen == generation else { return }
+        guard gen == generation, hooks.version() == startVersion else { return }
         didInitialVisibleHighlight = true
     }
 
     private func paint(range: NSRange) {
+        // Attribute paints must never run against a document that moved under us mid-refresh.
+        // (style container callbacks can race with a newer edit generation.)
         let length = hooks.length()
         let clamped = NSIntersectionRange(range, NSRange(location: 0, length: length))
         guard clamped.length > 0 else { return }

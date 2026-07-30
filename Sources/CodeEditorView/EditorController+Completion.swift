@@ -15,6 +15,7 @@ extension EditorController {
 
         completionRequestTask?.cancel()
         let controller = self
+        let requestVersion = document.version
         completionRequestTask = Task { @MainActor in
             defer { controller.completionRequestTask = nil }
             guard !controller.isJumpLinkPopoverVisible else { return }
@@ -24,7 +25,11 @@ extension EditorController {
             ) else {
                 return
             }
-            guard !Task.isCancelled, !controller.isJumpLinkPopoverVisible else { return }
+            // Discard stale responses after the document content generation moved on.
+            guard !Task.isCancelled,
+                  !controller.isJumpLinkPopoverVisible,
+                  controller.document.version == requestVersion
+            else { return }
             if result.items.isEmpty {
                 controller.hideCompletions()
                 return

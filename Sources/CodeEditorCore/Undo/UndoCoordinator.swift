@@ -58,24 +58,41 @@ public final class UndoCoordinator {
         }
     }
 
+    /// Undoes the last group. Prefer ``undoGroup`` so the host can apply one versioned transaction.
     public func undo(apply: (TextEdit) -> Void) {
+        undoGroup { edits in
+            for edit in edits {
+                apply(edit)
+            }
+        }
+    }
+
+    /// Undoes the last group as a whole. `edits` are in **undo application order**
+    /// (reverse of original registration order).
+    public func undoGroup(apply: ([TextEdit]) -> Void) {
         flushOpenGroup()
         guard let group = undoStack.popLast() else { return }
         isUndoing = true
-        for edit in group.edits.reversed() {
-            apply(edit)
-        }
+        apply(group.edits.reversed())
         redoStack.append(group)
         isUndoing = false
     }
 
+    /// Redoes the last undone group. Prefer ``redoGroup`` for a single versioned transaction.
     public func redo(apply: (TextEdit) -> Void) {
+        redoGroup { edits in
+            for edit in edits {
+                apply(edit)
+            }
+        }
+    }
+
+    /// Redoes the last group as a whole. `edits` are in original application order.
+    public func redoGroup(apply: ([TextEdit]) -> Void) {
         flushOpenGroup()
         guard let group = redoStack.popLast() else { return }
         isRedoing = true
-        for edit in group.edits {
-            apply(edit)
-        }
+        apply(group.edits)
         undoStack.append(group)
         isRedoing = false
     }

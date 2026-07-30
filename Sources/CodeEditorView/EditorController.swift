@@ -85,6 +85,10 @@ public final class EditorController {
     /// Coordinators receive lifecycle/edit callbacks (no Combine).
     public private(set) var coordinators: [any EditorCoordinator] = []
 
+    /// Versioned lifecycle observers (preferred over ``EditorCoordinator`` for new code).
+    public private(set) var lifecycleObservers: [any EditorLifecycleObserver] = []
+    var weakLifecycleObservers: [WeakLifecycleObserver] = []
+
     /// Syntax highlight providers (regex, tree-sitter, …).
     public private(set) var highlightProviders: [any HighlightProviding] = []
 
@@ -140,7 +144,7 @@ public final class EditorController {
 
     /// True while a language grammar is loading — full-text replaces skip extra bootstraps
     /// (the language task will re-bootstrap once with the final buffer).
-    private var languageConfigInFlight = false
+    var languageConfigInFlight = false
 
     private func reconfigureLanguageHighlighting() {
         // Auto-manage tree-sitter when the app didn't install custom non-TS providers.
@@ -350,7 +354,7 @@ public final class EditorController {
         }
     }
 
-    private func makeHighlightHooks() -> Highlighter.DocumentHooks {
+    func makeHighlightHooks() -> Highlighter.DocumentHooks {
         Highlighter.DocumentHooks(
             length: { [weak self] in self?.document.length ?? 0 },
             substring: { [weak self] range in self?.document.substring(from: range) },
@@ -365,7 +369,8 @@ public final class EditorController {
             },
             needsDisplay: { [weak self] in
                 self?.onNeedsDisplay?()
-            }
+            },
+            version: { [weak self] in self?.document.version ?? .zero }
         )
     }
 
@@ -395,7 +400,7 @@ public final class EditorController {
         }
     }
 
-    // MARK: - Coordinators
+    // MARK: - Coordinators / lifecycle observers
 
     public func setCoordinators(_ coordinators: [any EditorCoordinator]) {
         for box in weakCoordinators {
@@ -406,6 +411,24 @@ public final class EditorController {
         for coordinator in coordinators {
             coordinator.prepare(controller: self)
         }
+    }
+
+    /// Registers versioned lifecycle observers (does not retain them strongly beyond the array).
+    public func setLifecycleObservers(_ observers: [any EditorLifecycleObserver]) {
+        let context = EditorContext(documentVersion: document.version)
+        for box in weakLifecycleObservers {
+            box.value?.editorDidDetach(context)
+        }
+        weakLifecycleObservers = observers.map { WeakLifecycleObserver($0) }
+        lifecycleObservers = observers
+        let attach = EditorContext(documentVersion: document.version)
+        for observer in observers {
+            observer.editorDidAttach(attach)
+        }
+    }
+
+    var liveLifecycleObservers: [any EditorLifecycleObserver] {
+        weakLifecycleObservers.compactMap(\.value)
     }
 
     public func notifyDidAppear() {
@@ -461,17 +484,11 @@ public final class EditorController {
 
     public func replaceCharacters(in range: NSRange, with string: String) {
         guard configuration.isEditable else { return }
-        events.yield(.willChangeText)
-        noteWillEdit(range)
-        layout.beginTransaction()
-        let edit = document.replaceCharacters(in: range, with: string)
-        undoCoordinator.register(edit: edit)
-        layout.documentDidReplace(range: range, delta: edit.mutation.delta)
-        layout.endTransaction()
-        noteDidEdit(range: range, delta: edit.mutation.delta)
-        selection.setInsertionPoint(range.location + string.utf16.count)
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
-        publishTextChange()
+        let transaction = EditTransaction.single(range: range, replacement: string, origin: .programmatic)
+        _ = applyEditTransaction(transaction) { _ in
+            self.selection.setInsertionPoint(range.location + string.utf16.count)
+            self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
+        }
         publishSelectionChange()
     }
 
@@ -487,20 +504,24 @@ public final class EditorController {
             }
         }
 
-        events.yield(.willChangeText)
-        for range in ranges { noteWillEdit(range) }
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-        let edits = selection.replaceAllSelections(with: string)
-        for edit in edits {
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: edit.range, delta: edit.mutation.delta)
-            noteDidEdit(range: edit.range, delta: edit.mutation.delta)
+        let ordered = ranges.sorted { $0.location > $1.location }
+        let changes = ordered.map { TextChange(range: $0, replacement: string) }
+        let transaction = EditTransaction(changes: changes, origin: .typing)
+        _ = applyEditTransaction(transaction) { applied in
+            var carets: [Int] = []
+            for edit in applied.textEdits {
+                carets.append(
+                    MultiRangeEdit.caretAfterReplace(
+                        range: edit.range,
+                        replacementUTF16Count: string.utf16.count
+                    )
+                )
+            }
+            self.selection.setSelectedRanges(
+                carets.reversed().map { NSRange(location: $0, length: 0) }
+            )
+            self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
         }
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
-        publishTextChange()
         publishSelectionChange()
         noteTextInsertedForCompletions(string)
     }
@@ -528,27 +549,22 @@ public final class EditorController {
         let ranges = selection.selectedRanges
         guard !ranges.isEmpty else { return }
 
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-
-        // High → low so earlier carets stay valid.
-        var newCarets: [Int] = []
+        // High → low so earlier carets stay valid; precompute payloads against current text.
+        var changes: [TextChange] = []
+        var caretByLocation: [(location: Int, caret: Int)] = []
         for range in ranges.sorted(by: { $0.location > $1.location }) {
             let insertion = newlineInsertion(at: range.location, replacing: range)
-            noteWillEdit(range)
-            let edit = document.replaceCharacters(in: range, with: insertion.payload)
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: range, delta: edit.mutation.delta)
-            noteDidEdit(range: range, delta: edit.mutation.delta)
-            newCarets.append(range.location + insertion.caretOffsetInPayload)
+            changes.append(TextChange(range: range, replacement: insertion.payload))
+            caretByLocation.append((range.location, range.location + insertion.caretOffsetInPayload))
         }
 
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        selection.setSelectedRanges(newCarets.sorted().map { NSRange(location: $0, length: 0) })
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
-        publishTextChange()
+        let transaction = EditTransaction(changes: changes, origin: .typing)
+        _ = applyEditTransaction(transaction) { _ in
+            self.selection.setSelectedRanges(
+                caretByLocation.map(\.caret).sorted().map { NSRange(location: $0, length: 0) }
+            )
+            self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
+        }
         publishSelectionChange()
     }
 
@@ -640,31 +656,30 @@ public final class EditorController {
         let allPair = payloads.allSatisfy { $0.inside && !$0.skip }
         guard allSkip || allPair else { return false }
 
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-
+        var changes: [TextChange] = []
         var newCarets: [Int] = []
         for item in payloads.sorted(by: { $0.range.location > $1.range.location }) {
             if item.skip {
                 newCarets.append(item.range.location + 1)
                 continue
             }
-            noteWillEdit(item.range)
-            let edit = document.replaceCharacters(in: item.range, with: item.insert)
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: item.range, delta: edit.mutation.delta)
-            noteDidEdit(range: item.range, delta: edit.mutation.delta)
-            // Caret between pair: after first character.
+            changes.append(TextChange(range: item.range, replacement: item.insert))
             let inside = item.inside ? 1 : item.insert.utf16.count
             newCarets.append(item.range.location + inside)
         }
 
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        selection.setSelectedRanges(newCarets.sorted().map { NSRange(location: $0, length: 0) })
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
-        publishTextChange()
+        if !changes.isEmpty {
+            let transaction = EditTransaction(changes: changes, origin: .formation)
+            _ = applyEditTransaction(transaction) { _ in
+                self.selection.setSelectedRanges(
+                    newCarets.sorted().map { NSRange(location: $0, length: 0) }
+                )
+                self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
+            }
+        } else {
+            selection.setSelectedRanges(newCarets.sorted().map { NSRange(location: $0, length: 0) })
+            updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
+        }
         publishSelectionChange()
         return true
     }
@@ -706,55 +721,42 @@ public final class EditorController {
         forceSelection: NSRange? = nil
     ) {
         guard configuration.isEditable, !replacements.isEmpty else { return }
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-
-        var carets = selection.selectedRanges
-        for rep in replacements.sorted(by: { $0.range.location > $1.range.location }) {
-            noteWillEdit(rep.range)
-            let edit = document.replaceCharacters(in: rep.range, with: rep.string)
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: rep.range, delta: edit.mutation.delta)
-            noteDidEdit(range: rep.range, delta: edit.mutation.delta)
-            carets = MultiRangeEdit.remap(
-                ranges: carets,
-                editLocation: rep.range.location,
-                delta: edit.mutation.delta
-            )
+        let ordered = replacements.sorted { $0.range.location > $1.range.location }
+        let changes = ordered.map { TextChange(range: $0.range, replacement: $0.string) }
+        let transaction = EditTransaction(changes: changes, origin: .structure)
+        _ = applyEditTransaction(transaction) { applied in
+            if let forceSelection {
+                self.selection.setSelectedRange(forceSelection)
+            } else {
+                var carets = self.selection.selectedRanges
+                for edit in applied.textEdits {
+                    carets = MultiRangeEdit.remap(
+                        ranges: carets,
+                        editLocation: edit.range.location,
+                        delta: edit.mutation.delta
+                    )
+                }
+                self.selection.setSelectedRanges(carets)
+            }
+            self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
         }
-
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        if let forceSelection {
-            selection.setSelectedRange(forceSelection)
-        } else {
-            selection.setSelectedRanges(carets)
-        }
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
-        publishTextChange()
         publishSelectionChange()
     }
 
     public func deleteBackward() {
         guard configuration.isEditable else { return }
         let ranges = selection.selectedRanges
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-
         let working = ranges.sorted { $0.location > $1.location }
         var carets: [Int] = []
-        // Snapshot once; high→low edits keep earlier carets valid in this snapshot only for planning.
+        var changes: [TextChange] = []
+        // High→low keeps lower indices stable; `full` tracks content for indent-aware deletes.
         var full = document.fullString
         for range in working {
             let deleteRange: NSRange
             if range.length > 0 {
-                // Expand through any collapsed fold the selection touches.
                 deleteRange = selectionExpandedForCollapsedFolds(range)
             } else if selectedFoldPlaceholderID != nil,
                       let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID }) {
-                // Selected ··· bubble + Delete removes the whole folded body.
                 deleteRange = fold.nsRange
                 selectedFoldPlaceholderID = nil
             } else if let planned = TextFilters.deleteBackwardRange(
@@ -767,32 +769,34 @@ public final class EditorController {
                 carets.append(0)
                 continue
             }
-            // Don't re-collapse folds whose body is being deleted (preserve-by-start would revive them).
             expandCollapsedFoldsIntersecting(deleteRange)
-            noteWillEdit(deleteRange)
-            let edit = document.replaceCharacters(in: deleteRange, with: "")
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: deleteRange, delta: edit.mutation.delta)
-            noteDidEdit(range: deleteRange, delta: edit.mutation.delta)
+            changes.append(TextChange(range: deleteRange, replacement: ""))
             carets.append(deleteRange.location)
-            full = document.fullString
+            let ns = full as NSString
+            let start = min(max(0, deleteRange.location), ns.length)
+            let end = min(ns.length, start + max(0, deleteRange.length))
+            full = ns.substring(to: start) + ns.substring(from: end)
         }
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        selection.setSelectedRanges(carets.sorted().map { NSRange(location: $0, length: 0) })
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
-        publishTextChange()
+        guard !changes.isEmpty else {
+            selection.setSelectedRanges(carets.sorted().map { NSRange(location: $0, length: 0) })
+            publishSelectionChange()
+            return
+        }
+        let transaction = EditTransaction(changes: changes, origin: .typing)
+        _ = applyEditTransaction(transaction) { _ in
+            self.selection.setSelectedRanges(
+                carets.sorted().map { NSRange(location: $0, length: 0) }
+            )
+            self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
+        }
         publishSelectionChange()
     }
 
     public func deleteForward() {
         guard configuration.isEditable else { return }
         let ranges = selection.selectedRanges
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-
         var carets: [Int] = []
+        var changes: [TextChange] = []
         for range in ranges.sorted(by: { $0.location > $1.location }) {
             let deleteRange: NSRange
             if range.length > 0 {
@@ -802,7 +806,6 @@ public final class EditorController {
                 deleteRange = fold.nsRange
                 selectedFoldPlaceholderID = nil
             } else if range.location < document.length {
-                // Forward-delete into a collapsed fold removes the whole body.
                 let one = NSRange(location: range.location, length: 1)
                 deleteRange = selectionExpandedForCollapsedFolds(one)
             } else {
@@ -810,49 +813,67 @@ public final class EditorController {
                 continue
             }
             expandCollapsedFoldsIntersecting(deleteRange)
-            noteWillEdit(deleteRange)
-            let edit = document.replaceCharacters(in: deleteRange, with: "")
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: deleteRange, delta: edit.mutation.delta)
-            noteDidEdit(range: deleteRange, delta: edit.mutation.delta)
+            changes.append(TextChange(range: deleteRange, replacement: ""))
             carets.append(deleteRange.location)
         }
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        selection.setSelectedRanges(carets.reversed().map { NSRange(location: $0, length: 0) })
-        publishTextChange()
+        guard !changes.isEmpty else {
+            selection.setSelectedRanges(carets.reversed().map { NSRange(location: $0, length: 0) })
+            publishSelectionChange()
+            return
+        }
+        let transaction = EditTransaction(changes: changes, origin: .typing)
+        _ = applyEditTransaction(transaction) { _ in
+            self.selection.setSelectedRanges(
+                carets.reversed().map { NSRange(location: $0, length: 0) }
+            )
+        }
         publishSelectionChange()
     }
 
     public func undo() {
-        undoCoordinator.undo { [weak self] edit in
-            guard let self else { return }
-            self.events.yield(.willChangeText)
-            self.noteWillEdit(edit.inverse.range)
-            self.layout.beginTransaction()
-            self.document.applyMutation(edit.inverse)
-            self.layout.documentDidReplace(range: edit.inverse.range, delta: edit.inverse.delta)
-            self.layout.endTransaction()
-            self.noteDidEdit(range: edit.inverse.range, delta: edit.inverse.delta)
-            self.selection.setInsertionPoint(edit.inverse.range.location + edit.inverse.string.utf16.count)
+        undoCoordinator.undoGroup { [weak self] edits in
+            guard let self, !edits.isEmpty else { return }
+            // `edits` are already in undo application order (each inverse applies sequentially).
+            let changes = edits.map {
+                TextChange(range: $0.inverse.range, replacement: $0.inverse.string)
+            }
+            let transaction = EditTransaction(changes: changes, origin: .undo)
+            _ = self.applyEditTransaction(
+                transaction,
+                sortHighToLow: false,
+                registerUndo: false,
+                requireEditable: false
+            ) { applied in
+                if let last = applied.textEdits.last {
+                    self.selection.setInsertionPoint(
+                        last.range.location + last.mutation.string.utf16.count
+                    )
+                }
+            }
         }
-        publishTextChange()
         publishSelectionChange()
     }
 
     public func redo() {
-        undoCoordinator.redo { [weak self] edit in
-            guard let self else { return }
-            self.events.yield(.willChangeText)
-            self.noteWillEdit(edit.mutation.range)
-            self.layout.beginTransaction()
-            self.document.applyMutation(edit.mutation)
-            self.layout.documentDidReplace(range: edit.mutation.range, delta: edit.mutation.delta)
-            self.layout.endTransaction()
-            self.noteDidEdit(range: edit.mutation.range, delta: edit.mutation.delta)
-            self.selection.setInsertionPoint(edit.mutation.range.location + edit.mutation.string.utf16.count)
+        undoCoordinator.redoGroup { [weak self] edits in
+            guard let self, !edits.isEmpty else { return }
+            let changes = edits.map {
+                TextChange(range: $0.mutation.range, replacement: $0.mutation.string)
+            }
+            let transaction = EditTransaction(changes: changes, origin: .redo)
+            _ = self.applyEditTransaction(
+                transaction,
+                sortHighToLow: false,
+                registerUndo: false,
+                requireEditable: false
+            ) { applied in
+                if let last = applied.textEdits.last {
+                    self.selection.setInsertionPoint(
+                        last.range.location + last.mutation.string.utf16.count
+                    )
+                }
+            }
         }
-        publishTextChange()
         publishSelectionChange()
     }
 
@@ -1011,58 +1032,43 @@ public final class EditorController {
         let ordered = ranges.sorted { $0.location < $1.location }
         let pieces = ordered.compactMap { document.substring(from: $0) }
         let payload = pieces.joined(separator: "\n")
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
 
-        // Delete high → low
-        var adjustedDrop = dropOffset
+        // Sequential apply: deletes high→low (pre-edit coords), then insert at post-delete drop.
+        let deleteChanges = ordered.reversed().map { TextChange(range: $0, replacement: "") }
+        var plannedDrop = dropOffset
         for range in ordered.reversed() {
-            noteWillEdit(range)
-            let edit = document.replaceCharacters(in: range, with: "")
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: range, delta: edit.mutation.delta)
-            noteDidEdit(range: range, delta: edit.mutation.delta)
             if range.location + range.length <= dropOffset {
-                adjustedDrop += edit.mutation.delta
+                plannedDrop -= range.length
             } else if range.location < dropOffset {
-                adjustedDrop = range.location
+                plannedDrop = range.location
             }
         }
-        let insertRange = NSRange(location: max(0, min(adjustedDrop, document.length)), length: 0)
-        noteWillEdit(insertRange)
-        let insert = document.replaceCharacters(in: insertRange, with: payload)
-        undoCoordinator.register(edit: insert)
-        layout.documentDidReplace(range: insert.range, delta: insert.mutation.delta)
-        noteDidEdit(range: insert.range, delta: insert.mutation.delta)
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        selection.setSelectedRange(
-            NSRange(location: insert.range.location, length: payload.utf16.count)
+        let insertChange = TextChange(
+            range: NSRange(location: max(0, plannedDrop), length: 0),
+            replacement: payload
         )
-        publishTextChange()
+        let transaction = EditTransaction(
+            changes: deleteChanges + [insertChange],
+            origin: .drop
+        )
+        _ = applyEditTransaction(
+            transaction,
+            sortHighToLow: false
+        ) { applied in
+            // Last edit is the insert.
+            if let insert = applied.textEdits.last {
+                self.selection.setSelectedRange(
+                    NSRange(location: insert.range.location, length: payload.utf16.count)
+                )
+            }
+        }
         publishSelectionChange()
     }
 
     // MARK: - Private
 
     private func replaceFullText(_ string: String) {
-        events.yield(.willChangeText)
-        undoCoordinator.clear()
-        document.setFullText(string)
-        layout.invalidateAll()
-        // During language switch the config task will bootstrap after the grammar loads.
-        // Skipping a full bootstrap here prevents piled-up load/parse work that freezes the UI,
-        // but we must still resync style-container length so stale highlight ranges cannot crash.
-        if !languageConfigInFlight {
-            highlighter?.documentDidReplaceAll()
-        } else {
-            highlighter?.updateHooks(makeHighlightHooks())
-            highlighter?.syncDocumentLengthOnly()
-        }
-        selection.setInsertionPoint(min(selection.selectedRange.location, document.length))
-        publishTextChange()
-        publishSelectionChange()
+        applyFullTextReplace(string)
     }
 
     private func applyConfiguration(old: EditorConfiguration?) {
@@ -1156,10 +1162,18 @@ public final class EditorController {
 
     func publishSelectionChange() {
         events.yield(.selectionDidChange)
+        let detailed = SelectionChangeEvent(
+            nsRanges: selection.selectedRanges,
+            version: document.version
+        )
+        events.yield(.selectionDidChangeDetailed(detailed))
         events.yieldSelection(selection.selectedRanges)
         let cursors = cursorPositions
         for coordinator in liveCoordinators {
             coordinator.selectionDidChange(controller: self, cursors: cursors)
+        }
+        for observer in liveLifecycleObservers {
+            observer.editorSelectionDidChange(detailed)
         }
         updateBracketEmphasis()
         syncEditorStateCursors()

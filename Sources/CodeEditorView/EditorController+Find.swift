@@ -241,31 +241,21 @@ extension EditorController {
 
         let sorted = findSession.matches.sorted { $0.location < $1.location }
         let replacement = findSession.replaceText
+        let highToLow = sorted.reversed().map { TextChange(range: $0, replacement: replacement) }
+        let lastLocation = sorted.last?.location ?? 0
         isApplyingFindReplace = true
-        events.yield(.willChangeText)
-        undoCoordinator.beginGrouping()
-        layout.beginTransaction()
-
-        var lastLocation = 0
-        for range in sorted.reversed() {
-            noteWillEdit(range)
-            let edit = document.replaceCharacters(in: range, with: replacement)
-            undoCoordinator.register(edit: edit)
-            layout.documentDidReplace(range: range, delta: edit.mutation.delta)
-            noteDidEdit(range: range, delta: edit.mutation.delta)
-            lastLocation = range.location
+        let transaction = EditTransaction(changes: Array(highToLow), origin: .programmatic)
+        _ = applyEditTransaction(transaction) { _ in
+            self.selection.setSelectedRange(
+                NSRange(location: lastLocation + replacement.utf16.count, length: 0)
+            )
+            self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
         }
-
-        layout.endTransaction()
-        undoCoordinator.endGrouping()
-        selection.setSelectedRange(NSRange(location: lastLocation + replacement.utf16.count, length: 0))
-        updateScrollTarget(containerWidth: contentSize.width > 0 ? contentSize.width : 400)
         isApplyingFindReplace = false
 
         findSession.matches = []
         findSession.currentMatchIndex = nil
         clearFindEmphases()
-        publishTextChange()
         publishSelectionChange()
         notifyFindSessionChange()
     }
