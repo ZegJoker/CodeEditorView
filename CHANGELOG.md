@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 5: View public API allowlist, package-scoped renderers, EditorAccessibility helpers
+- Phase 5: UIKit marked-text composition, theme token overrides (`resolve` / `applyTokenMap`), highlight cancel on disappear
+- Phase 5: reference workflow and IME composition model tests
 - Phase 4: expanded LanguageDefinition, QueryKind, LanguageDetector, registry snapshots/diagnostics
 - Phase 4: QuerySetLoader/GrammarIdentity, grammar-inventory.json, verify-grammars hermetic checks
 - Phase 4: Swift/JSON grammar provenance constants and pack smoke/corpus tests

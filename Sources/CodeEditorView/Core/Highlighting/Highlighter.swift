@@ -104,10 +104,15 @@ public final class Highlighter {
         scheduleBootstrap()
     }
 
-    public func setProviders(_ providers: [any HighlightProviding]) {
+    /// Cancels in-flight refresh/edit/bootstrap tasks (visibility / lifecycle).
+    public func cancelPendingWork() {
         refreshTask?.cancel()
         editProcessingTask?.cancel()
         bootstrapTask?.cancel()
+    }
+
+    public func setProviders(_ providers: [any HighlightProviding]) {
+        cancelPendingWork()
         pendingEdits.removeAll()
         generation &+= 1
         self.providers = providers

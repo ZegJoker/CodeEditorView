@@ -1032,12 +1032,21 @@ open class AppKitEditorView: NSView, @preconcurrency NSTextInputClient, NSDraggi
         }
         return [jump]
     }
-    open override func accessibilityValue() -> Any? { controller.text }
+    open override func accessibilityLabel() -> String? {
+        controller.accessibilityLabelText
+    }
+    open override func accessibilityValue() -> Any? {
+        controller.accessibilityValueText
+    }
     open override func accessibilitySelectedText() -> String? {
         controller.text(in: controller.selectedRanges)
     }
     open override func accessibilitySelectedTextRange() -> NSRange {
+        // Multi-cursor: primary range only (VoiceOver limitation).
         controller.selectedRange
+    }
+    open override func accessibilityHelp() -> String? {
+        EditorAccessibility.multiCursorSummary(rangeCount: controller.selectedRanges.count)
     }
     open override func accessibilityNumberOfCharacters() -> Int {
         controller.document.length

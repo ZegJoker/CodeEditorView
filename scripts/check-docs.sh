@@ -34,6 +34,8 @@ require Docs/Architecture/PHASE1-NOTES.md
 require Docs/Architecture/PHASE2-NOTES.md
 require Docs/Architecture/PHASE3-NOTES.md
 require Docs/Architecture/PHASE4-NOTES.md
+require Docs/Architecture/PHASE5-NOTES.md
+require Docs/Architecture/VIEW-PUBLIC-API.md
 require Docs/Architecture/TOOLCHAIN.md
 require scripts/grammar-inventory.json
 require Docs/Architecture/WASI-SDK.pin

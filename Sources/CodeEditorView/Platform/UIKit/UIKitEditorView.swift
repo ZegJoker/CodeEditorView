@@ -13,6 +13,8 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     private var inputDelegateStorage: UITextInputDelegate?
     private var tokenizerStorage: UITextInputTokenizer!
     private var selectionAnchor: Int?
+    /// UTF-16 range of the active IME composition, or `NSNotFound` when none.
+    private var markedRangeStorage = NSRange(location: NSNotFound, length: 0)
 
     public var onTextChange: ((String) -> Void)?
     public var onSelectionChange: ((NSRange) -> Void)?
@@ -29,7 +31,10 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
         }
     }
 
-    public var markedTextRange: UITextRange? { nil }
+    public var markedTextRange: UITextRange? {
+        guard markedRangeStorage.location != NSNotFound else { return nil }
+        return EditorTextRange(range: markedRangeStorage)
+    }
     public var markedTextStyle: [NSAttributedString.Key: Any]?
     public var beginningOfDocument: UITextPosition { EditorTextPosition(offset: 0) }
     public var endOfDocument: UITextPosition { EditorTextPosition(offset: controller.document.length) }
@@ -578,10 +583,29 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
     }
 
     public func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
-        if let markedText { insertText(markedText) }
+        inputDelegate?.textWillChange(self)
+        let text = markedText ?? ""
+        if markedRangeStorage.location != NSNotFound {
+            controller.replaceCharacters(in: markedRangeStorage, with: text)
+        } else {
+            controller.insertText(text)
+        }
+        if text.isEmpty {
+            markedRangeStorage = NSRange(location: NSNotFound, length: 0)
+        } else {
+            let end = controller.selectedRange.location
+            let start = max(0, end - text.utf16.count)
+            markedRangeStorage = NSRange(location: start, length: text.utf16.count)
+        }
+        _ = selectedRange // selection within marked text — hosts may refine caret later
+        inputDelegate?.textDidChange(self)
+        onTextChange?(controller.text)
+        setNeedsDisplay()
     }
 
-    public func unmarkText() {}
+    public func unmarkText() {
+        markedRangeStorage = NSRange(location: NSNotFound, length: 0)
+    }
 
     public func textRange(from fromPosition: UITextPosition, to toPosition: UITextPosition) -> UITextRange? {
         guard let from = fromPosition as? EditorTextPosition,
@@ -697,16 +721,38 @@ open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDe
 
     // MARK: - Accessibility
 
+    open override var accessibilityLabel: String? {
+        get { controller.accessibilityLabelText }
+        set { _ = newValue }
+    }
+
+    open override var accessibilityValue: String? {
+        get { controller.accessibilityValueText }
+        set { _ = newValue }
+    }
+
+    open override var accessibilityHint: String? {
+        get { EditorAccessibility.multiCursorSummary(rangeCount: controller.selectedRanges.count) }
+        set { _ = newValue }
+    }
+
     open override var accessibilityCustomActions: [UIAccessibilityCustomAction]? {
-        guard controller.jumpToDefinitionDelegate != nil else {
-            return super.accessibilityCustomActions
+        var actions: [UIAccessibilityCustomAction] = []
+        if controller.jumpToDefinitionDelegate != nil {
+            actions.append(
+                UIAccessibilityCustomAction(name: "Jump to Definition") { [weak self] _ in
+                    self?.controller.jumpToDefinition()
+                    return true
+                }
+            )
         }
-        return [
-            UIAccessibilityCustomAction(name: "Jump to Definition") { [weak self] _ in
-                self?.controller.jumpToDefinition()
+        actions.append(
+            UIAccessibilityCustomAction(name: "Find Next") { [weak self] _ in
+                self?.controller.findNext()
                 return true
-            },
-        ]
+            }
+        )
+        return actions.isEmpty ? super.accessibilityCustomActions : actions
     }
 
     open override var accessibilityLabel: String? {

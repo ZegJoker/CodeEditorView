@@ -1,49 +1,57 @@
-# Phase 5 notes — commands
+# Phase 5 notes — Editor view façade and UI quality
 
-## Execute by ID
+## Goal
 
-```swift
-let controller = EditorController(text: source)
-try controller.executeCommand(BuiltInCommandID.indent)
-try controller.executeCommand("codeeditor.find.show")
+Reference workflows pass; public façade shrinks and is documented; IME/a11y/theme/lifecycle improved with tests.
+
+## Ownership model
+
+```
+TextDocument (versioned text + undo; attribute paints do not bump version)
+  └─ EditorController
+       ├─ document: DocumentStore (shared store or session-local mirror)
+       ├─ layout / selection / highlighter (revision-aware; cancel on disappear)
+       ├─ platform host (AppKitEditorView / UIKitEditorView)
+       └─ SwiftUI CodeEditor bindings (text, selection, EditorState)
 ```
 
-## Custom command
+Remote multi-controller edits: `EditorController+SharedDocument` + document event stream.  
+Highlight tasks stamp generation/version and drop stale results (`Highlighter`).
 
-```swift
-let dispatcher = controller.commandDispatcher!
-let token = dispatcher.commands.register(
-    EditorCommand(id: "app.format", title: "Format Document", category: .edit) { ctx in
-        try ctx.editor.perform(.indent) // or host logic
-    }
-)
-// later
-token.dispose()
-```
+## Deliverables
 
-## Keybinding overrides
+| Item | Status |
+|---|---|
+| `VIEW-PUBLIC-API.md` allowlist | Done |
+| Demote Rendering/* + CursorBlinkController to `package` | Done |
+| `EditorAccessibility` helpers + controller surfaces | Done |
+| AppKit/UIKit a11y label/value/hint improvements | Done |
+| UIKit real marked-text range composition | Done |
+| `EditorTheme.tokenOverrides` / `resolve(token:)` / `applyTokenMap` | Done |
+| `Highlighter.cancelPendingWork` + disappear cancel | Done |
+| Reference workflow + IME composition tests | Done |
 
-```swift
-let overrides = [
-    KeybindingOverride(
-        commandID: BuiltInCommandID.indent,
-        keybinding: Keybinding(key: "i", modifiers: .command),
-        source: .user
-    )
-]
-let token = dispatcher.keybindings.applyOverrides(overrides)
-```
+## Gate evidence
 
-## Conflict order
+| Check | Result |
+|---|---|
+| `swift test --filter CodeEditorView` | **204 tests / 55 suites — passed** (includes reference workflows) |
+| Type/select/undo, find, fold smoke, lifecycle, a11y, theme tokens, IME model | Pass |
+| Isolation | unchanged product graph |
 
-user > workspace > host > extension > built-in → higher priority → lower CommandID string.
+### Full-package note
 
-## Palette
+A full `swift test` of the entire package can still hit intermittent parallel-suite instability (observed SIGSEGV / Dictionary index trap under high concurrency). View-filtered suite and isolated suites are green. Prefer `swift test --filter CodeEditorView` for View gate evidence; CI should keep product isolation jobs.
 
-```swift
-CommandPaletteView(
-    model: CommandPaletteModel(),
-    dispatcher: controller.commandDispatcher!,
-    context: controller.makeCommandContext()
-)
-```
+## Residual / manual
+
+- XCUITest / screenshot goldens across scale and Dynamic Type  
+- Full VoiceOver line-oriented tree for folds/diagnostics  
+- UIKit marked-text selection *within* composition range  
+- Further façade demotion of layout/typeset types (kept public for existing tests)  
+- iOS Simulator interactive QA checklist  
+
+## Related
+
+- Phase 6: LanguageServices + LSP  
+- Phase 9: Zed theme contribution import into `tokenOverrides`  

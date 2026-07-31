@@ -543,9 +543,33 @@ public final class EditorController {
     }
 
     public func notifyDidDisappear() {
+        // Cancel highlight work tied to visibility; remote observation is owned by attach lifetime.
+        cancelPendingHighlightWork()
         for coordinator in liveCoordinators {
             coordinator.controllerDidDisappear(controller: self)
         }
+    }
+
+    /// Cancels revision-stamped highlight / provider work (safe to call repeatedly).
+    public func cancelPendingHighlightWork() {
+        highlighter?.cancelPendingWork()
+    }
+
+    /// Accessibility label for platform hosts.
+    public var accessibilityLabelText: String {
+        EditorAccessibility.label(
+            languageID: languageID,
+            isEditable: configuration.behavior.isEditable,
+            isDirty: textDocument.isDirty
+        )
+    }
+
+    /// Truncated accessibility value for platform hosts.
+    public var accessibilityValueText: String {
+        EditorAccessibility.valueText(
+            fullText: text,
+            selectedRange: selectedRange
+        )
     }
 
     private var liveCoordinators: [any EditorCoordinator] {

@@ -119,9 +119,16 @@ public struct EditorTheme: Equatable {
         )
     }
 
+    /// Optional overrides for capture names / extension theme tokens (string keys).
+    /// Keys are lowercased capture names (e.g. `"keyword"`, `"function"`).
+    public var tokenOverrides: [String: Attribute] = [:]
+
     /// Maps a capture to theme attributes.
     public func attribute(for capture: CaptureName?) -> Attribute {
         guard let capture else { return text }
+        if let override = tokenOverrides[capture.rawValue.lowercased()] {
+            return override
+        }
         switch capture {
         case .include, .constructor, .keyword, .boolean, .variableBuiltin,
              .keywordReturn, .keywordFunction, .repeat, .conditional, .tag:
@@ -150,6 +157,36 @@ public struct EditorTheme: Equatable {
             return punctuation
         case .text:
             return text
+        }
+    }
+
+    /// Resolve a free-form syntax token name (extension themes / Zed-style tokens).
+    public func resolve(token: String) -> Attribute {
+        let key = token.lowercased()
+        if let override = tokenOverrides[key] { return override }
+        if let capture = CaptureName(rawValue: key) {
+            return attribute(for: capture)
+        }
+        // Common aliases
+        switch key {
+        case "keyword", "keyword.control", "storage.type": return keywords
+        case "comment", "comment.line", "comment.block": return comments
+        case "string", "string.quoted": return strings
+        case "constant.numeric", "number": return numbers
+        case "entity.name.function", "function", "support.function": return values
+        case "entity.name.type", "type", "storage.type.class": return types
+        case "variable", "variable.other": return variables
+        case "constant", "constant.language": return constants
+        case "keyword.operator", "operator": return operators
+        case "punctuation", "meta.brace": return punctuation
+        default: return text
+        }
+    }
+
+    /// Merges string token colors into ``tokenOverrides`` (host/extension themes).
+    public mutating func applyTokenMap(_ map: [String: PlatformColor]) {
+        for (key, color) in map {
+            tokenOverrides[key.lowercased()] = Attribute(color: color)
         }
     }
 
