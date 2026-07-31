@@ -5,7 +5,9 @@
 # Usage (from repo root or anywhere):
 #   ./scripts/update-grammars.sh
 #
-# Catalog: scripts/grammars.tsv  (name|c_symbol|url|ref)
+# Catalog: scripts/grammars.tsv
+#   name|c_symbol|url|commit_sha|sha256_parser_c
+#   (legacy 4-column name|…|ref still accepted; prefer immutable SHA pins)
 # Queries (.scm) live under Sources/CodeEditorLanguages/Resources/ — not here.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -86,21 +88,73 @@ copy_common_if_needed() {
   esac
 }
 
+# Upstream monorepos often use #include "../../common/…" from src/; after flatten, map to local common/.
+rewrite_relative_common_includes() {
+  local dest="$1"
+  local f tmp
+  for f in "$dest"/*.c "$dest"/*.cc "$dest"/*.cpp "$dest"/*.h; do
+    [[ -f "$f" ]] || continue
+    if grep -q 'common/' "$f" 2>/dev/null; then
+      tmp="$(mktemp)"
+      sed -e 's|#include "../../../common/|#include "common/|g' \
+          -e 's|#include "../../common/|#include "common/|g' \
+          -e 's|#include "../common/|#include "common/|g' \
+          "$f" >"$tmp"
+      mv "$tmp" "$f"
+    fi
+  done
+}
+
 fetch_one() {
-  local name="$1" c_symbol="$2" url="$3" ref="$4"
+  local name="$1" c_symbol="$2" url="$3" pin="$4"
   local dest="Grammars/src/$name"
   mkdir -p "$dest"
   local clone="$TMP/$name"
+  local is_sha=0
+  if [[ "$pin" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    is_sha=1
+  fi
+
   if [[ ! -d "$clone/.git" ]]; then
-    echo "cloning $name ($ref)…"
-    git clone --depth 1 --branch "$ref" "$url" "$clone" 2>/dev/null \
-      || git clone --depth 1 "$url" "$clone"
+    echo "cloning $name ($pin)…"
+    if [[ "$is_sha" -eq 1 ]]; then
+      # Immutable pin: shallow fetch of the exact commit when possible.
+      git clone --filter=blob:none --no-checkout "$url" "$clone" 2>/dev/null \
+        || git clone "$url" "$clone"
+      git -C "$clone" fetch --depth 1 origin "$pin" 2>/dev/null \
+        || git -C "$clone" fetch origin "$pin" 2>/dev/null \
+        || true
+      git -C "$clone" checkout -q "$pin" 2>/dev/null \
+        || git -C "$clone" checkout -q FETCH_HEAD 2>/dev/null \
+        || git -C "$clone" checkout -q "$(git -C "$clone" rev-parse HEAD)"
+    else
+      git clone --depth 1 --branch "$pin" "$url" "$clone" 2>/dev/null \
+        || git clone --depth 1 "$url" "$clone"
+    fi
   else
-    # Reuse cache; optional refresh of the tracked ref.
-    git -C "$clone" fetch --depth 1 origin "$ref" 2>/dev/null || true
-    git -C "$clone" checkout -q FETCH_HEAD 2>/dev/null \
-      || git -C "$clone" checkout -q "$ref" 2>/dev/null \
-      || true
+    if [[ "$is_sha" -eq 1 ]]; then
+      if ! git -C "$clone" cat-file -e "${pin}^{commit}" 2>/dev/null; then
+        git -C "$clone" fetch --depth 1 origin "$pin" 2>/dev/null \
+          || git -C "$clone" fetch origin "$pin" 2>/dev/null \
+          || true
+      fi
+      git -C "$clone" checkout -q "$pin" 2>/dev/null \
+        || git -C "$clone" checkout -q FETCH_HEAD 2>/dev/null \
+        || true
+    else
+      git -C "$clone" fetch --depth 1 origin "$pin" 2>/dev/null || true
+      git -C "$clone" checkout -q FETCH_HEAD 2>/dev/null \
+        || git -C "$clone" checkout -q "$pin" 2>/dev/null \
+        || true
+    fi
+  fi
+
+  if [[ "$is_sha" -eq 1 ]]; then
+    local head
+    head="$(git -C "$clone" rev-parse HEAD 2>/dev/null || true)"
+    if [[ -n "$head" && "$head" != "$pin" ]]; then
+      echo "warning: $name HEAD=$head expected pin=$pin" >&2
+    fi
   fi
 
   local srcdir="$clone/src"
@@ -136,6 +190,13 @@ fetch_one() {
     return 1
   fi
 
+  # Copy sibling headers referenced by scanners (e.g. haskell's unicode.h).
+  # Do not copy tree_sitter/ here — handled by copy_tree_sitter_headers.
+  for f in "$srcdir"/*.h "$srcdir"/*.hpp "$srcdir"/*.inc; do
+    [[ -f "$f" ]] || continue
+    cp "$f" "$dest/"
+  done
+
   copy_tree_sitter_headers "$srcdir" "$dest"
   # Fallback: any previously populated tree_sitter from another language.
   if [[ ! -f "$dest/tree_sitter/parser.h" ]]; then
@@ -154,6 +215,7 @@ fetch_one() {
   fi
 
   copy_common_if_needed "$clone" "$name" "$dest"
+  rewrite_relative_common_includes "$dest"
 
   local stem
   stem="$(header_basename "$name")"
@@ -163,9 +225,10 @@ fetch_one() {
 }
 
 failures=0
-while IFS='|' read -r name c_symbol url ref; do
+while IFS='|' read -r name c_symbol url pin checksum; do
   [[ -z "${name:-}" || "$name" =~ ^# ]] && continue
-  if ! fetch_one "$name" "$c_symbol" "$url" "$ref"; then
+  # pin = commit SHA (preferred) or legacy branch/tag name
+  if ! fetch_one "$name" "$c_symbol" "$url" "$pin"; then
     failures=$((failures + 1))
   fi
 done < "$(dirname "$0")/grammars.tsv"
