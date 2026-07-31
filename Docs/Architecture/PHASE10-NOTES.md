@@ -1,82 +1,82 @@
-# Phase 10 notes — LSP client
+# Phase 10 notes — Native Swift process runtime
 
-## Minimal host (test transport)
+## Goal
 
-```swift
-import CodeEditorDocuments
-import CodeEditorLanguageServices
-import CodeEditorLSP
+Run the same Swift extension **in-process** and as a **native helper** over a versioned **CBOR** wire protocol, with process-group teardown, restart/quarantine, capability broker, and signed/dev package trust.
 
-let pool = LanguageServerPool()
-await pool.registerTestFactory(id: "mock") {
-    let pair = LSPTestTransport.makePair()
-    let mock = MockLanguageServer(transport: pair.server)
-    await mock.start()
-    return pair.client
-}
+## Products
 
-let definition = LanguageServerDefinition(
-    id: "mock-ls",
-    displayName: "Mock LS",
-    languages: ["swift"],
-    launch: .test(factoryID: "mock"),
-    workspaceRootURIs: [DocumentURI(fileURL: projectRoot)]
-)
+| Product | Role |
+|---|---|
+| `CodeEditorExtensionProtocol` | CBOR codec, 4-byte framing, method catalog + schema hash, wire connection |
+| `CodeEditorExtensionGuest` | Guest runtime + stdio transport for Swift executables |
+| `ConformanceExtensionGuest` | Fixture executable for dual-run |
+| `CodeEditorExtensionHost` | Drivers, orchestrator, broker, signing, native transport |
 
-let session = try await pool.server(for: definition)
-let registry = LanguageServiceRegistry()
-let registration = await LSPClientProviders.register(session: session, into: registry)
+## Wire protocol
 
-let sync = LSPDocumentSynchronizer(session: session)
-await sync.open(document: textDocument, languageID: "swift")
+- Canonical framing: **big-endian u32 length + CBOR body**
+- Schema source: `ExtensionMethodCatalog.entries` → `schemaHash` (SHA-256)
+- Handshake carries protocol version, schema hash, package id/version/digest, capabilities, grants, limits, generation
+- JSON remains **diagnostic only** (`JSONDiagnosticRenderer`); legacy Content-Length JSON RPC still exists for older remote adapters
 
-// Push diagnostics
-Task {
-    for await event in await session.diagnosticsStream {
-        // controller.applyLanguageDiagnostics(event.diagnostics)
-    }
-}
+## Runtime drivers
 
-let host = LanguageServiceHost(registry: registry)
-let completions = try await host.completions(
-    for: CompletionRequest(
-        document: textDocument.snapshot(),
-        position: TextPosition(utf16Offset: caret),
-        context: LanguageServiceContext(languageID: "swift", uri: textDocument.uri)
-    ),
-    currentVersion: { textDocument.version }
-)
+```text
+RuntimeSelector → BuiltInSwiftRuntimeDriver
+                → NativeProcessRuntimeDriver
+                → swiftWasm (reserved; throws not available)
 ```
 
-## Process transport (real server)
+Shared `ExtensionInstance` surface: request/cancel/stop + conformance traces.
 
-```swift
-let definition = LanguageServerDefinition(
-    id: "sourcekit",
-    displayName: "SourceKit-LSP",
-    languages: ["swift"],
-    launch: .process(
-        executable: URL(fileURLWithPath: "/usr/bin/sourcekit-lsp"),
-        arguments: []
-    ),
-    workspaceRootURIs: [DocumentURI(fileURL: projectRoot)]
-)
-let session = try await pool.server(for: definition)
-```
+## Capability broker
 
-## Lifecycle
+Fail-closed handles for:
 
-```swift
-await session.shutdown()
-try await session.restart()   // re-opens tracked documents
-await pool.shutdownAll()
-registration.dispose()
-```
+- worktree (path containment)
+- project
+- settings
+- storage (quota)
+- process (allowlist + process-group kill via `ProcessService`)
+- download (HTTPS host allowlist; fixture path for tests)
+- npm (allowlist, no lifecycle scripts)
 
-## Isolation
+Forged / stale generation handles reject.
+
+## Trust
+
+- Ed25519 sign/verify over `checksums.json` + `signature.ed25519` + `publisher.json`
+- Classes: `trustedSigned` / `workspaceDev` / `untrusted`
+- Native launch denied for untrusted under strict policy
+- Notice: native helper is a **reliability** boundary, not a sandbox (`NativeProcessTrustNotice`)
+
+## Guest executable
 
 ```bash
+swift build --product ConformanceExtensionGuest
+# Host spawns Artifacts/.../extension or .build/.../ConformanceExtensionGuest
+```
+
+## Gate evidence
+
+| Check | Result |
+|---|---|
+| Protocol CBOR/framing/catalog tests | Pass |
+| Dual-run built-in trace + native mock guest handshake/activate/echo/completion | Pass |
+| Broker worktree/process/download/npm/storage/forged handles | Pass |
+| Sign/verify + untrusted reject | Pass |
+| Process group terminate (sleep helper) | Pass |
+| Quarantine after crash storm | Pass |
+
+```bash
+swift test --filter CodeEditorExtensionProtocolTests
+swift test --filter 'Phase10DualRun|Phase10Broker|Phase10Signing|Phase10Orchestrator|Phase10Process'
 scripts/check-product-isolation.sh
 ```
 
-`CodeEditorLSP` must not import View, Workbench, Extensions, TreeSitter, or UI frameworks.
+## Explicitly not Phase 10
+
+- WasmKit / core-Wasm ABI (Phase 11)
+- Full LS procedural provisioning (Phase 12)
+- Marketplace COSE gallery (later)

@@ -136,7 +136,27 @@ Rules:
 
 Request only what you need. The host grants the intersection of requests and policy. Panel registration requires `presentUI`. Storage paths cannot escape the extension sandbox.
 
-## Out-of-process (remote)
+## Native-process helper (Phase 10)
+
+Authors link `CodeEditorExtensionGuest` + `CodeEditorExtensionAPI` (+ protocol transitively):
+
+```swift
+import CodeEditorExtensionAPI
+import CodeEditorExtensionGuest
+
+@main
+struct MyHelper {
+    static func main() async {
+        await ExtensionGuestMain.run(extension: MyExtension())
+    }
+}
+```
+
+Wire format is CBOR with a 4-byte length prefix (not JSON). Host policy selects built-in vs native-process based on artifacts and trust (`trustedSigned` / `workspaceDev`).
+
+Native helpers are a **reliability** boundary—not a sandbox—unless an OS sandbox is applied.
+
+## Out-of-process (legacy remote adapters)
 
 ```swift
 let pair = MockRemoteExtensionTransport.makePair()

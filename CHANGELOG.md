@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 10: `CodeEditorExtensionProtocol` CBOR wire + framing + method catalog/schema hash
+- Phase 10: `CodeEditorExtensionGuest` + `ConformanceExtensionGuest` native helper runtime
+- Phase 10: runtime drivers/orchestrator, process-group transport, restart/quarantine
+- Phase 10: capability broker (worktree/project/settings/storage/process/download/npm)
+- Phase 10: Ed25519 package signing/verify + trust classes for native launch
 - Phase 9: `CodeEditorExtensionAPI` author product (identity, manifest, author protocol, contribution DTOs)
 - Phase 9: `extension.toml` v1 parser/validator, `ValidatedContributionPlan`, SHA-256 package digests
 - Phase 9: declarative loaders for themes, icon themes, snippets, languages, grammars, queries

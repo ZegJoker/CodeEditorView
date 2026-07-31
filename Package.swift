@@ -20,6 +20,9 @@ let package = Package(
         .library(name: "CodeEditorExtensions", targets: ["CodeEditorExtensions"]),
         .executable(name: "codeeditor-extension", targets: ["CodeEditorExtensionCLI"]),
         .library(name: "CodeEditorExtensionHost", targets: ["CodeEditorExtensionHost"]),
+        .library(name: "CodeEditorExtensionProtocol", targets: ["CodeEditorExtensionProtocol"]),
+        .library(name: "CodeEditorExtensionGuest", targets: ["CodeEditorExtensionGuest"]),
+        .executable(name: "ConformanceExtensionGuest", targets: ["ConformanceExtensionGuest"]),
         .library(name: "CodeEditorLSP", targets: ["CodeEditorLSP"]),
         .library(name: "CodeEditorSearch", targets: ["CodeEditorSearch"]),
         .library(name: "CodeEditorTasks", targets: ["CodeEditorTasks"]),
@@ -575,9 +578,37 @@ let package = Package(
             path: "Sources/CodeEditorExtensionCLI"
         ),
         .target(
+            name: "CodeEditorExtensionProtocol",
+            dependencies: [
+                "CodeEditorExtensionAPI",
+            ]
+        ),
+        .target(
+            name: "CodeEditorExtensionGuest",
+            dependencies: [
+                "CodeEditorExtensionProtocol",
+                "CodeEditorExtensionAPI",
+            ]
+        ),
+        .executableTarget(
+            name: "ConformanceExtensionGuest",
+            dependencies: [
+                "CodeEditorExtensionGuest",
+                "CodeEditorExtensionProtocol",
+                "CodeEditorExtensionAPI",
+                "CodeEditorLanguageServices",
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+            ],
+            path: "Sources/ConformanceExtensionGuest"
+        ),
+        .target(
             name: "CodeEditorExtensionHost",
             dependencies: [
+                "CodeEditorExtensionProtocol",
+                "CodeEditorExtensionGuest",
                 "CodeEditorExtensions",
+                "CodeEditorExtensionAPI",
                 "CodeEditorCore",
                 "CodeEditorDocuments",
                 "CodeEditorCommands",
@@ -807,11 +838,23 @@ let package = Package(
             dependencies: ["CodeEditorSourceControl"]
         ),
         .testTarget(
+            name: "CodeEditorExtensionProtocolTests",
+            dependencies: [
+                "CodeEditorExtensionProtocol",
+                "CodeEditorExtensionAPI",
+            ]
+        ),
+        .testTarget(
             name: "CodeEditorExtensionHostTests",
             dependencies: [
                 "CodeEditorExtensionHost",
+                "CodeEditorExtensionProtocol",
+                "CodeEditorExtensionGuest",
                 "CodeEditorExtensions",
+                "CodeEditorExtensionAPI",
                 "CodeEditorLanguageServices",
+                "CodeEditorCore",
+                "CodeEditorDocuments",
             ]
         ),
     ],

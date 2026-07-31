@@ -82,8 +82,10 @@ dependencies: [
 | **CodeEditorSearch** | Evolving | Workspace search/replace |
 | **CodeEditorTasks** | Evolving | Tasks & problem matchers |
 | **CodeEditorExtensionAPI** | Experimental | Author SDK (`extension.toml`, protocols) |
+| **CodeEditorExtensionProtocol** | Experimental | CBOR wire protocol for host ↔ guest |
+| **CodeEditorExtensionGuest** | Experimental | Native helper guest runtime |
 | **CodeEditorExtensions** | Experimental | In-process runtime / package manager |
-| **CodeEditorExtensionHost** | Experimental | Out-of-process extension host |
+| **CodeEditorExtensionHost** | Experimental | Multi-driver host, broker, signing |
 | **CodeEditorLSP** | Experimental | LSP client |
 | **CodeEditorTerminal** | Experimental | Terminal sessions |
 | **CodeEditorSourceControl** | Experimental | SCM providers / Git CLI |

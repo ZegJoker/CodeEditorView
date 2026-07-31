@@ -19,6 +19,8 @@ PRODUCTS=(
   CodeEditorLanguageSupport
   CodeEditorLanguageServices
   CodeEditorExtensionAPI
+  CodeEditorExtensionProtocol
+  CodeEditorExtensionGuest
   CodeEditorExtensions
   CodeEditorExtensionHost
   CodeEditorLSP

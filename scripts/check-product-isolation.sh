@@ -84,6 +84,16 @@ check_no_imports "Sources/CodeEditorLanguageServices" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP)' \
   "LanguageServices has no UI / View / Workbench / Tree-sitter / LSP imports"
 
+echo "== CodeEditorExtensionProtocol import allowlist =="
+check_no_imports "Sources/CodeEditorExtensionProtocol" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions|CodeEditorExtensionHost|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl|ExtensionKit|WasmKit)' \
+  "ExtensionProtocol has no host/UI/runtime/tooling imports"
+
+echo "== CodeEditorExtensionGuest import allowlist =="
+check_no_imports "Sources/CodeEditorExtensionGuest" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions|CodeEditorExtensionHost|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl|ExtensionKit|WasmKit)' \
+  "ExtensionGuest has no host/UI/tooling imports"
+
 echo "== CodeEditorExtensionAPI import allowlist =="
 check_no_imports "Sources/CodeEditorExtensionAPI" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions|CodeEditorExtensionHost|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl|ExtensionKit|WasmKit|Process)' \
