@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 2 Core/Documents safety: `TextOffsetSemantics`, `DocumentStoreError`, stale-version apply, property/Unicode edit tests
+- Atomic durable file IO (`DocumentIO`, temp + fsync + replace), coordinated IO, recovery journal, file identity / external-change detection, lifecycle policies, security-scoped bookmark helpers
+- Fault-injection DocumentIO for data-loss prevention tests
 - Stabilization program Phase 0: ADR-013 (Stable gate), ADR-014 (Swift-first extensions), ADR-015 (threat model), ADR-016 (platform profiles)
 - `Docs/Architecture/CompatibilityProfile.toml`, `PRODUCT-OWNERS.md`, `EXTENSION-API-INVENTORY.md`, `PHASE0-NOTES.md`
 - `scripts/dump-symbol-graphs.sh` for local per-product symbol-graph dumps

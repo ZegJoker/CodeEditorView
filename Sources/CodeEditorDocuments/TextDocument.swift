@@ -12,6 +12,11 @@ public final class TextDocument {
     public private(set) var uri: DocumentURI
     public private(set) var isDirty: Bool
     public private(set) var encoding: DocumentEncoding
+    /// Last known on-disk identity (hash/mtime) after load/save.
+    public private(set) var fileIdentity: DocumentFileIdentity?
+    /// Whether the last load observed a BOM.
+    public private(set) var hadBOM: Bool = false
+    public var lifecyclePolicy: DocumentLifecyclePolicy
 
     /// Content buffer (plain text + optional attributes for standalone paint).
     /// Shared multi-session hosts should treat attributes as non-authoritative;
@@ -24,6 +29,7 @@ public final class TextDocument {
     public var lineEnding: LineEnding { store.lineEnding }
     public var text: String { store.fullString }
     public var length: Int { store.length }
+    public var isReadOnly: Bool { lifecyclePolicy.isReadOnly }
 
     private var continuations: [UUID: AsyncStream<TextDocumentEvent>.Continuation] = [:]
     /// Generation of the last apply started by this process path (for self-filtering hosts).
@@ -34,12 +40,14 @@ public final class TextDocument {
         uri: DocumentURI? = nil,
         text: String = "",
         encoding: DocumentEncoding = .utf8,
-        isDirty: Bool = false
+        isDirty: Bool = false,
+        lifecyclePolicy: DocumentLifecyclePolicy = .default
     ) {
         self.id = id
         self.uri = uri ?? .inMemory(id: id)
         self.encoding = encoding
         self.isDirty = isDirty
+        self.lifecyclePolicy = lifecyclePolicy
         self.store = DocumentStore(string: text)
         self.undo = UndoCoordinator()
     }
@@ -81,6 +89,9 @@ public final class TextDocument {
         sortHighToLow: Bool = true,
         registerUndo: Bool = true
     ) throws -> AppliedEditTransaction {
+        if lifecyclePolicy.isReadOnly {
+            throw DocumentProviderError.readOnly
+        }
         let pre = store.snapshot()
         yield(.willApply(transaction, pre))
 
@@ -189,6 +200,14 @@ public final class TextDocument {
 
     public func setEncoding(_ newEncoding: DocumentEncoding) {
         encoding = newEncoding
+    }
+
+    public func setFileIdentity(_ identity: DocumentFileIdentity?) {
+        fileIdentity = identity
+    }
+
+    public func setHadBOM(_ value: Bool) {
+        hadBOM = value
     }
 
     /// Apply external content according to policy.

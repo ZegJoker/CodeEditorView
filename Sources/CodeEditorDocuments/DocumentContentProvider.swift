@@ -16,6 +16,9 @@ public enum DocumentProviderError: Error, Sendable, Equatable {
     case notFound(String)
     case encodingFailed
     case ioFailure(String)
+    case tooLarge(UInt64)
+    case readOnly
+    case conflict(DocumentFileChange)
 }
 
 /// In-memory provider keyed by `inmemory:` URIs (and arbitrary map keys).
@@ -47,9 +50,25 @@ public actor InMemoryDocumentProvider: DocumentContentProvider {
     }
 }
 
-/// Local filesystem provider for `file://` URIs.
+/// Local filesystem provider for `file://` URIs with atomic Durable writes.
 public struct LocalFileDocumentProvider: DocumentContentProvider {
-    public init() {}
+    public var io: any DocumentIO
+    public var policy: DocumentLifecyclePolicy
+    public var useCoordinator: Bool
+
+    public init(
+        io: (any DocumentIO)? = nil,
+        policy: DocumentLifecyclePolicy = .default,
+        useCoordinator: Bool = true
+    ) {
+        if let io {
+            self.io = io
+        } else {
+            self.io = useCoordinator ? CoordinatedDocumentIO() : LocalDocumentIO()
+        }
+        self.policy = policy
+        self.useCoordinator = useCoordinator
+    }
 
     public func load(uri: DocumentURI) async throws -> LoadedDocument {
         guard let url = uri.fileURL else {
@@ -57,20 +76,37 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         }
         let data: Data
         do {
-            data = try Data(contentsOf: url)
+            data = try await io.read(url: url)
+        } catch let error as DocumentIOError {
+            throw mapIO(error)
         } catch {
             throw DocumentProviderError.ioFailure(error.localizedDescription)
         }
-        let encoding = DocumentEncoding.detect(from: data)
-        guard let text = String(data: data, encoding: encoding.stringEncoding)
-                ?? String(data: data, encoding: .utf8)
-        else {
+        if UInt64(data.count) > policy.maxLoadBytes {
+            throw DocumentProviderError.tooLarge(UInt64(data.count))
+        }
+        let decoded: (text: String, encoding: DocumentEncoding, bom: Bool)
+        do {
+            decoded = try DocumentCodec.decode(data)
+        } catch {
             throw DocumentProviderError.encodingFailed
         }
+        let identity = DocumentFileIdentity(
+            contentHash: DocumentFileIdentity.hash(of: data),
+            size: UInt64(data.count),
+            modificationTime: try? await io.resourceIdentity(at: url)?.modificationTime,
+            fileResourceIdentifier: try? await io.resourceIdentity(at: url)?.fileResourceIdentifier
+        )
+        // Prefer single resourceIdentity call
+        let live = try? await io.resourceIdentity(at: url)
+        let resolvedIdentity = live ?? identity
+
         return LoadedDocument(
-            text: text,
-            encoding: encoding,
-            lineEnding: LineEnding.detect(in: text)
+            text: decoded.text,
+            encoding: decoded.encoding,
+            lineEnding: LineEnding.detect(in: decoded.text),
+            fileIdentity: resolvedIdentity,
+            hadBOM: decoded.bom
         )
     }
 
@@ -79,16 +115,64 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         to uri: DocumentURI,
         encoding: DocumentEncoding
     ) async throws {
+        if policy.isReadOnly {
+            throw DocumentProviderError.readOnly
+        }
         guard let url = uri.fileURL else {
             throw DocumentProviderError.unsupportedURI(uri.rawValue)
         }
-        guard let data = snapshot.text.data(using: encoding.stringEncoding) else {
+        let data: Data
+        do {
+            data = try DocumentCodec.encode(
+                text: snapshot.text,
+                encoding: encoding,
+                lineEndingPolicy: policy.lineEndingOnSave,
+                bomPolicy: policy.bomPolicy
+            )
+        } catch {
             throw DocumentProviderError.encodingFailed
         }
         do {
-            try data.write(to: url, options: .atomic)
+            try await io.writeAtomically(data: data, to: url)
+        } catch let error as DocumentIOError {
+            throw mapIO(error)
         } catch {
             throw DocumentProviderError.ioFailure(error.localizedDescription)
+        }
+    }
+
+    /// Detect whether the on-disk file changed relative to `known`.
+    public func detectChange(
+        at uri: DocumentURI,
+        known: DocumentFileIdentity?
+    ) async throws -> DocumentFileChange {
+        guard let url = uri.fileURL else {
+            throw DocumentProviderError.unsupportedURI(uri.rawValue)
+        }
+        guard await io.fileExists(at: url) else {
+            return .deleted
+        }
+        guard let known else { return .externalModified }
+        guard let live = try await io.resourceIdentity(at: url) else {
+            return .deleted
+        }
+        if live.contentHash == known.contentHash {
+            // Same content at this path — treat as unchanged (identifier may churn after replace).
+            return .unchanged
+        }
+        // Content changed at the same path → external modify. "Moved" is reserved for
+        // callers that observe a rename while tracking the resource identifier elsewhere.
+        return .externalModified
+    }
+
+    private func mapIO(_ error: DocumentIOError) -> DocumentProviderError {
+        switch error {
+        case .notFound(let s): return .notFound(s)
+        case .ioFailure(let s): return .ioFailure(s)
+        case .tooLarge(let n): return .tooLarge(n)
+        case .injectedFault(let p): return .ioFailure("injected fault: \(p.rawValue)")
+        case .readOnly: return .readOnly
+        case .encodingFailed: return .encodingFailed
         }
     }
 }
@@ -105,6 +189,11 @@ extension TextDocument {
             setURI(uri)
         }
         setEncoding(loaded.encoding)
+        if let ending = loaded.lineEnding {
+            store.setPreferredLineEnding(ending)
+        }
+        setFileIdentity(loaded.fileIdentity)
+        setHadBOM(loaded.hadBOM)
         _ = try replaceFullContent(
             loaded.text,
             origin: .programmatic,
@@ -115,12 +204,51 @@ extension TextDocument {
     }
 
     /// Save current snapshot through a provider and mark clean on success.
-    public func save(using provider: any DocumentContentProvider, to uri: DocumentURI? = nil) async throws {
+    /// Writes a recovery journal when dirty before the durable save (when policy allows).
+    public func save(
+        using provider: any DocumentContentProvider,
+        to uri: DocumentURI? = nil,
+        io: (any DocumentIO)? = nil
+    ) async throws {
         let target = uri ?? self.uri
+        if let local = provider as? LocalFileDocumentProvider, local.policy.isReadOnly {
+            throw DocumentProviderError.readOnly
+        }
+
+        if let fileURL = target.fileURL,
+           let io,
+           let local = provider as? LocalFileDocumentProvider,
+           local.policy.writeRecoveryJournal,
+           isDirty {
+            let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
+            try await journal.write(text: text, forPrimary: fileURL, io: io)
+        }
+
         try await provider.save(snapshot(), to: target, encoding: encoding)
         if let uri {
             setURI(uri)
         }
+
+        if let fileURL = target.fileURL, let io {
+            setFileIdentity(try await io.resourceIdentity(at: fileURL))
+            if let local = provider as? LocalFileDocumentProvider, local.policy.writeRecoveryJournal {
+                let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
+                try await journal.clear(forPrimary: fileURL, io: io)
+            }
+        }
+
         markClean()
+    }
+
+    /// Attempt recovery from a sidecar journal for this document's file URI.
+    @discardableResult
+    public func recoverFromJournalIfNeeded(io: any DocumentIO) async throws -> Bool {
+        guard let fileURL = uri.fileURL else { return false }
+        let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
+        guard let text = try await journal.read(forPrimary: fileURL, io: io) else {
+            return false
+        }
+        _ = try replaceFullContent(text, origin: .programmatic, clearUndo: true, markDirty: true)
+        return true
     }
 }

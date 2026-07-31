@@ -39,7 +39,15 @@ public struct DocumentURI: Hashable, Codable, Sendable, RawRepresentable, Expres
     }
 
     public init(fileURL url: URL) {
-        self.rawValue = url.absoluteString
+        // Canonical file URI: standardized path, file:// absoluteString.
+        let standardized = url.standardizedFileURL
+        self.rawValue = standardized.absoluteString
+    }
+
+    /// Returns a canonicalized URI for file URLs (standardized path); others unchanged.
+    public func canonicalized() -> DocumentURI {
+        guard let url = fileURL else { return self }
+        return DocumentURI(fileURL: url)
     }
 
     public static func inMemory(id: DocumentID = DocumentID()) -> DocumentURI {
