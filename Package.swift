@@ -20,6 +20,9 @@ let package = Package(
         .library(name: "CodeEditorExtensions", targets: ["CodeEditorExtensions"]),
         .executable(name: "codeeditor-extension", targets: ["CodeEditorExtensionCLI"]),
         .library(name: "CodeEditorExtensionHost", targets: ["CodeEditorExtensionHost"]),
+        .library(name: "CodeEditorWasmEngine", targets: ["CodeEditorWasmEngine"]),
+        .library(name: "CodeEditorWasmEngineWasmKit", targets: ["CodeEditorWasmEngineWasmKit"]),
+        .library(name: "CodeEditorExtensionWasmGuest", targets: ["CodeEditorExtensionWasmGuest"]),
         .library(name: "CodeEditorExtensionProtocol", targets: ["CodeEditorExtensionProtocol"]),
         .library(name: "CodeEditorExtensionGuest", targets: ["CodeEditorExtensionGuest"]),
         .executable(name: "ConformanceExtensionGuest", targets: ["ConformanceExtensionGuest"]),
@@ -37,6 +40,7 @@ let package = Package(
         .package(url: "https://github.com/ChimeHQ/TextStory", from: "0.9.0"),
         .package(url: "https://github.com/apple/swift-collections.git", .upToNextMajor(from: "1.1.0")),
         .package(url: "https://github.com/tree-sitter/swift-tree-sitter", from: "0.25.0"),
+        .package(url: "https://github.com/swiftwasm/WasmKit.git", from: "0.1.5"),
     ],
     targets: [
         .target(
@@ -603,10 +607,31 @@ let package = Package(
             path: "Sources/ConformanceExtensionGuest"
         ),
         .target(
+            name: "CodeEditorWasmEngine",
+            dependencies: []
+        ),
+        .target(
+            name: "CodeEditorWasmEngineWasmKit",
+            dependencies: [
+                "CodeEditorWasmEngine",
+                .product(name: "WasmKit", package: "WasmKit"),
+            ]
+        ),
+        .target(
+            name: "CodeEditorExtensionWasmGuest",
+            dependencies: [
+                "CodeEditorExtensionAPI",
+                "CodeEditorExtensionProtocol",
+            ]
+        ),
+        .target(
             name: "CodeEditorExtensionHost",
             dependencies: [
                 "CodeEditorExtensionProtocol",
                 "CodeEditorExtensionGuest",
+                "CodeEditorExtensionWasmGuest",
+                "CodeEditorWasmEngine",
+                "CodeEditorWasmEngineWasmKit",
                 "CodeEditorExtensions",
                 "CodeEditorExtensionAPI",
                 "CodeEditorCore",
@@ -845,17 +870,31 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "CodeEditorWasmEngineTests",
+            dependencies: [
+                "CodeEditorWasmEngine",
+                "CodeEditorWasmEngineWasmKit",
+                "CodeEditorExtensionWasmGuest",
+                "CodeEditorExtensionProtocol",
+            ],
+            resources: [.copy("../Fixtures/Wasm")]
+        ),
+        .testTarget(
             name: "CodeEditorExtensionHostTests",
             dependencies: [
                 "CodeEditorExtensionHost",
                 "CodeEditorExtensionProtocol",
                 "CodeEditorExtensionGuest",
+                "CodeEditorExtensionWasmGuest",
+                "CodeEditorWasmEngine",
+                "CodeEditorWasmEngineWasmKit",
                 "CodeEditorExtensions",
                 "CodeEditorExtensionAPI",
                 "CodeEditorLanguageServices",
                 "CodeEditorCore",
                 "CodeEditorDocuments",
-            ]
+            ],
+            resources: [.copy("../Fixtures/Wasm")]
         ),
     ],
     swiftLanguageModes: [.v6],

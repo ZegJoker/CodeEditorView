@@ -84,7 +84,9 @@ public actor ExtensionHostOrchestrator {
             publish()
             return
         case .swiftWasm:
-            throw RuntimeSelectionError.wasmNotAvailable
+            let driver = SwiftWasmRuntimeDriver()
+            prepared = try await driver.prepare(package: package, policy: policy)
+            instance = try await driver.start(prepared: prepared, handshake: handshake, broker: broker)
         case .remote:
             throw RuntimeSelectionError.noPermittedRuntime
         }

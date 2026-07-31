@@ -84,6 +84,16 @@ check_no_imports "Sources/CodeEditorLanguageServices" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP)' \
   "LanguageServices has no UI / View / Workbench / Tree-sitter / LSP imports"
 
+echo "== CodeEditorWasmEngine import allowlist =="
+check_no_imports "Sources/CodeEditorWasmEngine" \
+  'import (SwiftUI|AppKit|UIKit|CodeEditorView|CodeEditorWorkbench|CodeEditorExtensionHost|CodeEditorExtensions|WasmKit)' \
+  "WasmEngine core has no Host/UI/WasmKit imports"
+
+echo "== CodeEditorExtensionWasmGuest import allowlist =="
+check_no_imports "Sources/CodeEditorExtensionWasmGuest" \
+  'import (SwiftUI|AppKit|UIKit|CodeEditorView|CodeEditorWorkbench|CodeEditorExtensionHost|CodeEditorExtensions|WasmKit|CodeEditorWasmEngine)' \
+  "WasmGuest has no Host/WasmKit/Engine imports"
+
 echo "== CodeEditorExtensionProtocol import allowlist =="
 check_no_imports "Sources/CodeEditorExtensionProtocol" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions|CodeEditorExtensionHost|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl|ExtensionKit|WasmKit)' \

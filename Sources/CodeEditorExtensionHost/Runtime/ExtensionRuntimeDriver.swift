@@ -48,6 +48,8 @@ public struct PreparedExtensionPackage: Sendable {
     public var packageRoot: URL?
     public var digest: String?
     public var nativeExecutable: URL?
+    public var wasmModuleURL: URL?
+    public var wasmModuleData: Data?
     public var trustClass: ExtensionTrustClass
     public var runtimePreference: ExtensionRuntimeKind?
     public var builtInExtension: (any CodeEditorExtension)?
@@ -60,6 +62,8 @@ public struct PreparedExtensionPackage: Sendable {
         packageRoot: URL? = nil,
         digest: String? = nil,
         nativeExecutable: URL? = nil,
+        wasmModuleURL: URL? = nil,
+        wasmModuleData: Data? = nil,
         trustClass: ExtensionTrustClass = .workspaceDev,
         runtimePreference: ExtensionRuntimeKind? = nil,
         builtInExtension: (any CodeEditorExtension)? = nil
@@ -71,6 +75,8 @@ public struct PreparedExtensionPackage: Sendable {
         self.packageRoot = packageRoot
         self.digest = digest
         self.nativeExecutable = nativeExecutable
+        self.wasmModuleURL = wasmModuleURL
+        self.wasmModuleData = wasmModuleData
         self.trustClass = trustClass
         self.runtimePreference = runtimePreference
         self.builtInExtension = builtInExtension
@@ -190,18 +196,27 @@ public enum RuntimeSelector {
                 guard package.nativeExecutable != nil else { throw RuntimeSelectionError.missingArtifact }
                 return .nativeProcess
             case .swiftWasm:
-                throw RuntimeSelectionError.wasmNotAvailable
+                guard package.wasmModuleData != nil || package.wasmModuleURL != nil else {
+                    throw RuntimeSelectionError.missingArtifact
+                }
+                return .swiftWasm
             case .remote:
                 if policy.allowsRemoteProviders { return .remote }
             }
         }
         if package.builtInExtension != nil { return .builtIn }
+        if package.wasmModuleData != nil || package.wasmModuleURL != nil {
+            if policy.prefersSandbox { return .swiftWasm }
+        }
         if package.nativeExecutable != nil, policy.platformAllowsNativeProcess {
             try ExtensionPackageVerifier.assertNativeLaunchAllowed(
                 trust: package.trustClass,
                 policy: policy.trust
             )
             return .nativeProcess
+        }
+        if package.wasmModuleData != nil || package.wasmModuleURL != nil {
+            return .swiftWasm
         }
         throw RuntimeSelectionError.noPermittedRuntime
     }

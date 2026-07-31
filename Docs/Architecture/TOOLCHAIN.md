@@ -14,21 +14,23 @@ Phase 0 local baseline also validated on Apple Swift 6.3 developer toolchain; th
 
 ## Swift WASI SDK (extension Swift-Wasm path)
 
-Pinned for CI **presence validation** (Phase 1). Full guest builds and ABI freeze are **Phase 11**.
+Pinned for CI presence validation (Phase 1). Phase 11 adds **build/repro scripts**; ABI freeze blocked until CI emits real `.wasm` (ADR-017).
 
 | Item | Value |
 |---|---|
 | Pin file | `Docs/Architecture/WASI-SDK.pin` |
 | Env override | `CODEEDITOR_WASI_SDK_ID` |
 | CI job | `wasi-sdk` in `.github/workflows/ci.yml` |
+| Build script | `scripts/build-wasm-extension.sh` |
+| Fixture check | `scripts/check-wasm-fixture.sh` |
 
 Install (example; adjust to the pin file):
 
 ```bash
-# See https://www.swift.org/documentation/articles/static-linux-getting-started.html
-# and Swift WASI SDK release notes for the exact artifact URL matching the pin.
-swift sdk install "$CODEEDITOR_WASI_SDK_URL"   # when documented for the pin
-swift sdk list | grep -F "$(cat Docs/Architecture/WASI-SDK.pin)"
+swift sdk install "$CODEEDITOR_WASI_SDK_URL"
+swift sdk list | grep -F "$(grep -v '^#' Docs/Architecture/WASI-SDK.pin | head -1)"
+./scripts/build-wasm-extension.sh ConformanceExtensionGuest
+./scripts/check-wasm-fixture.sh
 ```
 
 ## Grammar pins

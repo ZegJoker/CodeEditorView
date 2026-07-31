@@ -1,0 +1,11 @@
+{
+  "fixtures": {
+    "malformed.wasm": "invalid magic/body",
+    "missing_export.wasm": "missing poll export",
+    "conformance.wasm": "happy path linked guest",
+    "infinite_loop.wasm": "poll never completes",
+    "memory_growth.wasm": "memory pressure",
+    "flood_host_send.wasm": "host_send flood",
+    "bad_schema_start.wasm": "schema mismatch at start"
+  }
+}

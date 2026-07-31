@@ -84,8 +84,11 @@ dependencies: [
 | **CodeEditorExtensionAPI** | Experimental | Author SDK (`extension.toml`, protocols) |
 | **CodeEditorExtensionProtocol** | Experimental | CBOR wire protocol for host ↔ guest |
 | **CodeEditorExtensionGuest** | Experimental | Native helper guest runtime |
+| **CodeEditorWasmEngine** | Experimental | Portable Wasm engine protocol + limits |
+| **CodeEditorWasmEngineWasmKit** | Experimental | WasmKit reference backend |
+| **CodeEditorExtensionWasmGuest** | Experimental | Cooperative core-Wasm guest glue |
 | **CodeEditorExtensions** | Experimental | In-process runtime / package manager |
-| **CodeEditorExtensionHost** | Experimental | Multi-driver host, broker, signing |
+| **CodeEditorExtensionHost** | Experimental | Multi-driver host, broker, signing, Wasm |
 | **CodeEditorLSP** | Experimental | LSP client |
 | **CodeEditorTerminal** | Experimental | Terminal sessions |
 | **CodeEditorSourceControl** | Experimental | SCM providers / Git CLI |

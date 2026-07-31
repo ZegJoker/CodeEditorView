@@ -40,6 +40,8 @@ require Docs/Architecture/PHASE7-NOTES.md
 require Docs/Architecture/PHASE8-NOTES.md
 require Docs/Architecture/PHASE9-NOTES.md
 require Docs/Architecture/PHASE10-NOTES.md
+require Docs/Architecture/PHASE11-NOTES.md
+require Docs/Architecture/ADR-017-core-wasm-abi-v1.md
 require Docs/Architecture/VIEW-PUBLIC-API.md
 require Docs/Architecture/TOOLCHAIN.md
 require scripts/grammar-inventory.json
@@ -52,7 +54,7 @@ echo "== DocC landings =="
 for mod in \
   CodeEditorCore CodeEditorDocuments CodeEditorCommands CodeEditorWorkspace \
   CodeEditorWorkbench CodeEditorView CodeEditorLanguageSupport CodeEditorLanguageServices \
-  CodeEditorExtensionAPI CodeEditorExtensionProtocol CodeEditorExtensionGuest CodeEditorExtensions CodeEditorExtensionHost CodeEditorLSP CodeEditorSearch \
+  CodeEditorExtensionAPI CodeEditorExtensionProtocol CodeEditorExtensionGuest CodeEditorWasmEngine CodeEditorWasmEngineWasmKit CodeEditorExtensionWasmGuest CodeEditorExtensions CodeEditorExtensionHost CodeEditorLSP CodeEditorSearch \
   CodeEditorTasks CodeEditorTerminal CodeEditorSourceControl CodeEditorTreeSitter \
   CodeEditorLanguageSwift CodeEditorLanguageJSON CodeEditorLanguages
 do

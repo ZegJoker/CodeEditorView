@@ -21,6 +21,9 @@ PRODUCTS=(
   CodeEditorExtensionAPI
   CodeEditorExtensionProtocol
   CodeEditorExtensionGuest
+  CodeEditorWasmEngine
+  CodeEditorWasmEngineWasmKit
+  CodeEditorExtensionWasmGuest
   CodeEditorExtensions
   CodeEditorExtensionHost
   CodeEditorLSP

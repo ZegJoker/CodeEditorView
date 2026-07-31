@@ -1,67 +1,56 @@
-# Phase 11 notes — tooling products
+# Phase 11 notes — Swift-Wasm feasibility and core-Wasm ABI
 
-## Search
+## Goal
 
-```swift
-import CodeEditorSearch
+Prove Swift-Wasm extension execution: engine protocol + WasmKit product, core-Wasm ABI v1, cooperative poll, limits, malicious containment, dual-run traces. **Do not freeze ABI without full WASI bytecode proof** (see ADR-017).
 
-let context = WorkspaceSearchContext(
-    rootDirectories: [projectRoot],
-    openDocuments: [document.uri: document.text],
-    openDocumentVersions: [document.uri: document.version]
-)
-let service = WorkspaceSearchService(context: context)
-var matches: [SearchMatch] = []
-for try await event in service.search(SearchQuery(pattern: "TODO", isRegex: false)) {
-    if case .match(let m) = event { matches.append(m) }
-}
+## Products
 
-let plan = SearchReplacePlan(query: SearchQuery(pattern: "TODO"), replacement: "DONE", matches: matches)
-let edit = try SearchReplaceBuilder.makeWorkspaceEdit(
-    plan: plan,
-    openDocumentVersions: context.openDocumentVersions
-)
-_ = try await WorkspaceEditService(workspace: workspace).apply(edit)
+| Product | Role |
+|---|---|
+| `CodeEditorWasmEngine` | Portable engine protocol, limits, meters, module builder, linked/in-process engines |
+| `CodeEditorWasmEngineWasmKit` | WasmKit SPM-linked reference backend |
+| `CodeEditorExtensionWasmGuest` | Cooperative guest implementing ABI export semantics + CBOR |
+| `CodeEditorExtensionHost` | `CoreWasmABISession`, `SwiftWasmRuntimeDriver`, selector |
+
+## Core-Wasm ABI v1 (§9.5)
+
+Exports: `codeeditor_abi_version`, `alloc`, `dealloc`, `start`, `receive`, `poll`, `stop`  
+Imports: `codeeditor_host_send`, `host_log`, `host_monotonic_millis`, `host_should_cancel`  
+
+Semantic payloads = Phase 10 CBOR envelopes (same schema hash).
+
+## Limits
+
+`WasmResourceLimits`: max module/memory, wall time, poll budget/ticks, host_send queue, log bytes.
+
+## Fixtures
+
+`Tests/Fixtures/Wasm/` — malformed, missing export, conformance marker, infinite loop, etc.  
+`scripts/build-wasm-extension.sh` — cross-compile when pinned WASI SDK installed.  
+`scripts/check-wasm-fixture.sh` — fixture presence (+ optional rebuild).
+
+## ADR-017 verdict
+
+**EXPERIMENTAL / NO-GO for freeze** until CI builds real `extension.wasm` via WASI SDK and WasmKit executes that bytecode guest end-to-end. Linked-guest dual-run + containment tests **pass** now.
+
+## Gate evidence
+
+```bash
+swift test --filter 'Phase11|WasmEngine'
+# 12 tests passed
+./scripts/check-product-isolation.sh
+./scripts/check-wasm-fixture.sh
 ```
 
-## Tasks
-
-```swift
-let tasks = TaskService()
-await tasks.registerMatcher(try ProblemMatcher.swiftCompiler())
-await tasks.setDiagnosticsSink(mySink)
-await tasks.register(TaskDefinition(
-    id: "build",
-    label: "Build",
-    executable: "/usr/bin/swift",
-    arguments: ["build"],
-    cwd: projectRoot,
-    problemMatchers: ["swift"]
-))
-let run = try await tasks.run(id: "build")
-```
-
-## Terminal
-
-```swift
-let backend = MockTerminalBackend() // or ProcessTerminalBackend()
-let manager = TerminalSessionManager()
-await manager.attach(backend: backend)
-let session = try await manager.create(title: "Shell")
-// Host: show TerminalPanelDescriptor in workbench utility slot
-try await manager.write("echo hi\n", to: session.id)
-```
-
-## Source control
-
-```swift
-let scm = SourceControlService()
-await scm.setProvider(GitCLIProvider(repositoryRoot: projectRoot))
-let status = try await scm.refresh()
-```
+| Suite | Result |
+|---|---|
+| Engine limits/malformed/missing export/loop interrupt | PASS |
+| ABI echo/activate/completion | PASS |
+| Dual-run method set built-in vs Wasm | PASS |
+| Cooperative multi-step poll | PASS |
+| Host_send backpressure | PASS |
 
 ## Isolation
 
-```bash
-scripts/check-product-isolation.sh
-```
+Author API / Protocol / Guest (stdio) do **not** import WasmKit. Only `CodeEditorWasmEngineWasmKit` + Host may.

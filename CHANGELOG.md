@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 11: `CodeEditorWasmEngine` + `CodeEditorWasmEngineWasmKit` (WasmKit) + `CodeEditorExtensionWasmGuest`
+- Phase 11: core-Wasm ABI session, SwiftWasm runtime driver, resource limits, malicious fixtures
+- Phase 11: `scripts/build-wasm-extension.sh` / `check-wasm-fixture.sh`; ADR-017 ABI go/no-go (experimental)
 - Phase 10: `CodeEditorExtensionProtocol` CBOR wire + framing + method catalog/schema hash
 - Phase 10: `CodeEditorExtensionGuest` + `ConformanceExtensionGuest` native helper runtime
 - Phase 10: runtime drivers/orchestrator, process-group transport, restart/quarantine
