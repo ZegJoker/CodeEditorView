@@ -436,13 +436,231 @@ public struct ColorInformation: Sendable, Hashable, Codable {
     }
 }
 
-// MARK: - Errors / versioning
+// MARK: - Document highlights / hierarchy / command / pull diagnostics
+
+public enum DocumentHighlightKind: String, Sendable, Codable, Hashable {
+    case text
+    case read
+    case write
+}
+
+public struct DocumentHighlight: Sendable, Hashable, Codable {
+    public var range: CodeEditorCore.TextRange
+    public var kind: DocumentHighlightKind
+
+    public init(range: CodeEditorCore.TextRange, kind: DocumentHighlightKind = .text) {
+        self.range = range
+        self.kind = kind
+    }
+}
+
+public struct HierarchyItem: Sendable, Hashable, Codable {
+    public var name: String
+    public var kind: SymbolKind
+    public var detail: String?
+    public var uri: DocumentURI
+    public var range: CodeEditorCore.TextRange
+    public var selectionRange: CodeEditorCore.TextRange
+    public var tags: [String]
+
+    public init(
+        name: String,
+        kind: SymbolKind,
+        detail: String? = nil,
+        uri: DocumentURI,
+        range: CodeEditorCore.TextRange,
+        selectionRange: CodeEditorCore.TextRange,
+        tags: [String] = []
+    ) {
+        self.name = name
+        self.kind = kind
+        self.detail = detail
+        self.uri = uri
+        self.range = range
+        self.selectionRange = selectionRange
+        self.tags = tags
+    }
+}
+
+public struct CallHierarchyItem: Sendable, Hashable, Codable {
+    public var name: String
+    public var kind: SymbolKind
+    public var detail: String?
+    public var uri: DocumentURI
+    public var range: CodeEditorCore.TextRange
+    public var selectionRange: CodeEditorCore.TextRange
+
+    public init(
+        name: String,
+        kind: SymbolKind,
+        detail: String? = nil,
+        uri: DocumentURI,
+        range: CodeEditorCore.TextRange,
+        selectionRange: CodeEditorCore.TextRange
+    ) {
+        self.name = name
+        self.kind = kind
+        self.detail = detail
+        self.uri = uri
+        self.range = range
+        self.selectionRange = selectionRange
+    }
+}
+
+public struct CallHierarchyIncomingCall: Sendable, Hashable, Codable {
+    public var from: CallHierarchyItem
+    public var fromRanges: [CodeEditorCore.TextRange]
+
+    public init(from: CallHierarchyItem, fromRanges: [CodeEditorCore.TextRange]) {
+        self.from = from
+        self.fromRanges = fromRanges
+    }
+}
+
+public struct CallHierarchyOutgoingCall: Sendable, Hashable, Codable {
+    public var to: CallHierarchyItem
+    public var fromRanges: [CodeEditorCore.TextRange]
+
+    public init(to: CallHierarchyItem, fromRanges: [CodeEditorCore.TextRange]) {
+        self.to = to
+        self.fromRanges = fromRanges
+    }
+}
+
+public struct ExecuteCommandRequest: Sendable, Hashable {
+    public var command: String
+    public var argumentsJSON: String?
+    public var context: LanguageServiceContext
+
+    public init(
+        command: String,
+        argumentsJSON: String? = nil,
+        context: LanguageServiceContext = LanguageServiceContext()
+    ) {
+        self.command = command
+        self.argumentsJSON = argumentsJSON
+        self.context = context
+    }
+}
+
+public struct ExecuteCommandResult: Sendable, Hashable {
+    public var appliedEdit: WorkspaceEditPlan?
+    public var message: String?
+
+    public init(appliedEdit: WorkspaceEditPlan? = nil, message: String? = nil) {
+        self.appliedEdit = appliedEdit
+        self.message = message
+    }
+}
+
+public struct PullDiagnosticsResult: Sendable, Hashable {
+    public var kind: String
+    public var resultID: String?
+    public var items: [LanguageDiagnostic]
+
+    public init(kind: String = "full", resultID: String? = nil, items: [LanguageDiagnostic]) {
+        self.kind = kind
+        self.resultID = resultID
+        self.items = items
+    }
+}
+
+// MARK: - Limits / health / errors / sanitization
+
+/// Bounds applied by ``LanguageServiceHost`` after provider work.
+public struct LanguageServiceLimits: Sendable, Hashable {
+    public var providerTimeout: Duration
+    public var maxCompletionItems: Int
+    public var maxHoverSections: Int
+    public var maxDiagnostics: Int
+    public var maxLocations: Int
+    public var maxSymbols: Int
+    public var maxCodeActions: Int
+    public var maxSemanticTokens: Int
+    public var maxInlayHints: Int
+    public var maxFoldingRanges: Int
+    public var maxDocumentLinks: Int
+    public var maxColors: Int
+    public var maxHighlights: Int
+    public var maxHierarchyItems: Int
+    public var maxMarkupCharacters: Int
+
+    public init(
+        providerTimeout: Duration = .seconds(5),
+        maxCompletionItems: Int = 500,
+        maxHoverSections: Int = 8,
+        maxDiagnostics: Int = 2_000,
+        maxLocations: Int = 2_000,
+        maxSymbols: Int = 5_000,
+        maxCodeActions: Int = 200,
+        maxSemanticTokens: Int = 50_000,
+        maxInlayHints: Int = 5_000,
+        maxFoldingRanges: Int = 10_000,
+        maxDocumentLinks: Int = 2_000,
+        maxColors: Int = 2_000,
+        maxHighlights: Int = 2_000,
+        maxHierarchyItems: Int = 500,
+        maxMarkupCharacters: Int = 32_768
+    ) {
+        self.providerTimeout = providerTimeout
+        self.maxCompletionItems = maxCompletionItems
+        self.maxHoverSections = maxHoverSections
+        self.maxDiagnostics = maxDiagnostics
+        self.maxLocations = maxLocations
+        self.maxSymbols = maxSymbols
+        self.maxCodeActions = maxCodeActions
+        self.maxSemanticTokens = maxSemanticTokens
+        self.maxInlayHints = maxInlayHints
+        self.maxFoldingRanges = maxFoldingRanges
+        self.maxDocumentLinks = maxDocumentLinks
+        self.maxColors = maxColors
+        self.maxHighlights = maxHighlights
+        self.maxHierarchyItems = maxHierarchyItems
+        self.maxMarkupCharacters = maxMarkupCharacters
+    }
+
+    public static let `default` = LanguageServiceLimits()
+}
+
+/// Per-provider health counters observed by the registry / host.
+public struct ProviderHealthSnapshot: Sendable, Hashable {
+    public var providerID: ProviderID
+    public var successCount: UInt64
+    public var failureCount: UInt64
+    public var timeoutCount: UInt64
+    public var cancelCount: UInt64
+    public var lastErrorDescription: String?
+    public var lastUpdated: Date?
+
+    public init(
+        providerID: ProviderID,
+        successCount: UInt64 = 0,
+        failureCount: UInt64 = 0,
+        timeoutCount: UInt64 = 0,
+        cancelCount: UInt64 = 0,
+        lastErrorDescription: String? = nil,
+        lastUpdated: Date? = nil
+    ) {
+        self.providerID = providerID
+        self.successCount = successCount
+        self.failureCount = failureCount
+        self.timeoutCount = timeoutCount
+        self.cancelCount = cancelCount
+        self.lastErrorDescription = lastErrorDescription
+        self.lastUpdated = lastUpdated
+    }
+}
 
 public enum LanguageServiceError: Error, Sendable, Equatable {
     case cancelled
     case staleVersion(expected: UInt64, actual: UInt64)
     case unavailable
     case provider(String)
+    case timeout(providerID: String)
+    case noProvider
+    case providerFailed(id: String, message: String)
+    case limitExceeded(String)
+    case invalidEdit(String)
 }
 
 public enum LanguageServiceVersioning {
@@ -457,5 +675,58 @@ public enum LanguageServiceVersioning {
                 actual: now.rawValue
             )
         }
+    }
+}
+
+/// Range / edit / markup sanitization for provider results.
+public enum LanguageServiceSanitize {
+    public static func clampRange(
+        _ range: CodeEditorCore.TextRange,
+        documentLength: Int
+    ) -> CodeEditorCore.TextRange? {
+        guard documentLength >= 0 else { return nil }
+        let loc = max(0, min(range.location, documentLength))
+        let end = max(loc, min(range.location + max(0, range.length), documentLength))
+        let length = end - loc
+        guard length >= 0, loc + length <= documentLength else { return nil }
+        if range.location < 0 || range.location > documentLength || range.length < 0 {
+            return CodeEditorCore.TextRange(location: loc, length: length)
+        }
+        if range.location + range.length > documentLength {
+            return CodeEditorCore.TextRange(location: loc, length: length)
+        }
+        return range
+    }
+
+    public static func sanitizeEdit(
+        _ edit: TextEditPlan,
+        documentLength: Int
+    ) -> TextEditPlan? {
+        guard let range = clampRange(edit.range, documentLength: documentLength) else {
+            return nil
+        }
+        return TextEditPlan(range: range, newText: edit.newText)
+    }
+
+    public static func sanitizeEdits(
+        _ edits: [TextEditPlan],
+        documentLength: Int
+    ) -> [TextEditPlan] {
+        edits.compactMap { sanitizeEdit($0, documentLength: documentLength) }
+    }
+
+    public static func truncateMarkup(
+        _ content: MarkupContent,
+        maxCharacters: Int
+    ) -> MarkupContent {
+        guard maxCharacters > 0, content.value.count > maxCharacters else { return content }
+        let idx = content.value.index(content.value.startIndex, offsetBy: maxCharacters)
+        return MarkupContent(kind: content.kind, value: String(content.value[..<idx]))
+    }
+
+    public static func capped<T>(_ items: [T], max: Int) throws -> [T] {
+        guard max >= 0 else { throw LanguageServiceError.limitExceeded("negative max") }
+        if items.count <= max { return items }
+        return Array(items.prefix(max))
     }
 }

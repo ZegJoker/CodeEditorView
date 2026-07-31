@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 6: LanguageServices policy engine (timeout, cancel, stale-revision, failure isolation, limits, health)
+- Phase 6: provider categories for highlights, type/call hierarchy, execute command, pull diagnostics
+- Phase 6: full bidirectional LSP JSON-RPC (cancel, server requests, progress), framing caps, position map cache
+- Phase 6: capability-gated adapters for all LanguageServices categories; process-group kill; restart backoff
+- Phase 6: CI `lsp-matrix` job; `PHASE6-NOTES.md` evidence matrix
 - Phase 5: View public API allowlist, package-scoped renderers, EditorAccessibility helpers
 - Phase 5: UIKit marked-text composition, theme token overrides (`resolve` / `applyTokenMap`), highlight cancel on disappear
 - Phase 5: reference workflow and IME composition model tests

@@ -155,6 +155,44 @@ jobs:
       - name: Smoke products
         run: ./scripts/smoke-products.sh
 
+  lsp-matrix:
+    name: LanguageServices + LSP matrix
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: LanguageServices tests
+        run: swift test --filter CodeEditorLanguageServices
+      - name: LSP mock matrix tests
+        run: swift test --filter CodeEditorLSP
+      - name: Real language server probe
+        run: |
+          set -euo pipefail
+          if command -v sourcekit-lsp >/dev/null 2>&1; then
+            echo "sourcekit-lsp present: $(command -v sourcekit-lsp)"
+            sourcekit-lsp --help >/dev/null 2>&1 || true
+            echo "REAL_SERVER=sourcekit-lsp" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "sourcekit-lsp not on PATH — mock matrix remains the required gate"
+            echo "REAL_SERVER=skipped (sourcekit-lsp missing)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if command -v clangd >/dev/null 2>&1; then
+            echo "clangd present: $(command -v clangd)"
+            echo "SECOND_SERVER=clangd" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "SECOND_SERVER=skipped (clangd missing)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   coverage:
     name: Test with coverage
     runs-on: macos-15

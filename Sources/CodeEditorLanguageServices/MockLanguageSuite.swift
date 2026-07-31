@@ -30,6 +30,12 @@ public struct MockLanguageSuite: Sendable {
     public var signatureHelp: SignatureHelp?
     public var documentLinks: [DocumentLink]
     public var documentColors: [ColorInformation]
+    public var documentHighlights: [DocumentHighlight]
+    public var typeHierarchy: [HierarchyItem]
+    public var callHierarchy: [CallHierarchyItem]
+    public var executeCommandResult: ExecuteCommandResult
+    public var supportedCommands: Set<String>
+    public var pullDiagnosticsResult: PullDiagnosticsResult?
 
     /// Artificial delay before each response (for stale-version tests).
     public var delayNanoseconds: UInt64
@@ -58,6 +64,12 @@ public struct MockLanguageSuite: Sendable {
         signatureHelp: SignatureHelp? = nil,
         documentLinks: [DocumentLink] = [],
         documentColors: [ColorInformation] = [],
+        documentHighlights: [DocumentHighlight] = [],
+        typeHierarchy: [HierarchyItem] = [],
+        callHierarchy: [CallHierarchyItem] = [],
+        executeCommandResult: ExecuteCommandResult = ExecuteCommandResult(),
+        supportedCommands: Set<String> = [],
+        pullDiagnosticsResult: PullDiagnosticsResult? = nil,
         delayNanoseconds: UInt64 = 0,
         failure: LanguageServiceError? = nil
     ) {
@@ -82,6 +94,12 @@ public struct MockLanguageSuite: Sendable {
         self.signatureHelp = signatureHelp
         self.documentLinks = documentLinks
         self.documentColors = documentColors
+        self.documentHighlights = documentHighlights
+        self.typeHierarchy = typeHierarchy
+        self.callHierarchy = callHierarchy
+        self.executeCommandResult = executeCommandResult
+        self.supportedCommands = supportedCommands
+        self.pullDiagnosticsResult = pullDiagnosticsResult
         self.delayNanoseconds = delayNanoseconds
         self.failure = failure
     }
@@ -106,6 +124,11 @@ public struct MockLanguageSuite: Sendable {
         await registry.register(self as any SignatureHelpProvider)
         await registry.register(self as any DocumentLinkProvider)
         await registry.register(self as any DocumentColorProvider)
+        await registry.register(self as any DocumentHighlightProvider)
+        await registry.register(self as any TypeHierarchyProvider)
+        await registry.register(self as any CallHierarchyProvider)
+        await registry.register(self as any ExecuteCommandProvider)
+        await registry.register(self as any PullDiagnosticsProvider)
     }
 
     private func gate() async throws {
@@ -287,6 +310,49 @@ extension MockLanguageSuite: DocumentColorProvider {
     }
 }
 
+extension MockLanguageSuite: DocumentHighlightProvider {
+    public func documentHighlights(for request: PositionRequest) async throws -> [DocumentHighlight] {
+        try await gate()
+        _ = request
+        return documentHighlights
+    }
+}
+
+extension MockLanguageSuite: TypeHierarchyProvider {
+    public func prepareTypeHierarchy(for request: PositionRequest) async throws -> [HierarchyItem] {
+        try await gate()
+        _ = request
+        return typeHierarchy
+    }
+}
+
+extension MockLanguageSuite: CallHierarchyProvider {
+    public func prepareCallHierarchy(for request: PositionRequest) async throws -> [CallHierarchyItem] {
+        try await gate()
+        _ = request
+        return callHierarchy
+    }
+}
+
+extension MockLanguageSuite: ExecuteCommandProvider {
+    public func execute(_ request: ExecuteCommandRequest) async throws -> ExecuteCommandResult {
+        try await gate()
+        _ = request
+        return executeCommandResult
+    }
+}
+
+extension MockLanguageSuite: PullDiagnosticsProvider {
+    public func pullDiagnostics(for request: DocumentRequest) async throws -> PullDiagnosticsResult {
+        try await gate()
+        _ = request
+        if let pullDiagnosticsResult {
+            return pullDiagnosticsResult
+        }
+        return PullDiagnosticsResult(items: diagnostics)
+    }
+}
+
 // MARK: - Fixtures
 
 public extension MockLanguageSuite {
@@ -388,7 +454,43 @@ public extension MockLanguageSuite {
                     range: range,
                     color: ColorValue(red: 1, green: 0, blue: 0, alpha: 1)
                 ),
-            ]
+            ],
+            documentHighlights: [
+                DocumentHighlight(range: range, kind: .write),
+            ],
+            typeHierarchy: [
+                HierarchyItem(
+                    name: "SampleType",
+                    kind: .class,
+                    uri: uri,
+                    range: range,
+                    selectionRange: range
+                ),
+            ],
+            callHierarchy: [
+                CallHierarchyItem(
+                    name: "hello",
+                    kind: .function,
+                    uri: uri,
+                    range: range,
+                    selectionRange: range
+                ),
+            ],
+            executeCommandResult: ExecuteCommandResult(message: "ok"),
+            supportedCommands: ["mock.sample"],
+            pullDiagnosticsResult: PullDiagnosticsResult(
+                kind: "full",
+                resultID: "r1",
+                items: [
+                    LanguageDiagnostic(
+                        range: range,
+                        severity: .warning,
+                        message: "sample warning",
+                        code: "S001",
+                        source: "mock"
+                    ),
+                ]
+            )
         )
     }
 }

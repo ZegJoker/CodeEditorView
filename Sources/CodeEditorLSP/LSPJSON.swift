@@ -12,3 +12,14 @@ public struct LSPJSONObject: @unchecked Sendable {
         dictionary[key]
     }
 }
+
+/// Unchecked Sendable JSON value (object, array, scalar, or null) for actor boundaries.
+public struct LSPAnyJSON: @unchecked Sendable {
+    public let value: Any?
+
+    public init(_ value: Any?) {
+        self.value = value
+    }
+
+    public static let null = LSPAnyJSON(nil)
+}

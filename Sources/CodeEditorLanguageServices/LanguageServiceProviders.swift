@@ -199,3 +199,73 @@ public protocol DocumentLinkProvider: LanguageServiceProvider {
 public protocol DocumentColorProvider: LanguageServiceProvider {
     func documentColors(for request: DocumentRequest) async throws -> [ColorInformation]
 }
+
+public protocol DocumentHighlightProvider: LanguageServiceProvider {
+    func documentHighlights(for request: PositionRequest) async throws -> [DocumentHighlight]
+}
+
+public protocol TypeHierarchyProvider: LanguageServiceProvider {
+    func prepareTypeHierarchy(for request: PositionRequest) async throws -> [HierarchyItem]
+    func supertypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem]
+    func subtypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem]
+}
+
+public extension TypeHierarchyProvider {
+    func supertypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem] {
+        _ = item
+        _ = context
+        return []
+    }
+
+    func subtypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem] {
+        _ = item
+        _ = context
+        return []
+    }
+}
+
+public protocol CallHierarchyProvider: LanguageServiceProvider {
+    func prepareCallHierarchy(for request: PositionRequest) async throws -> [CallHierarchyItem]
+    func incomingCalls(
+        of item: CallHierarchyItem,
+        context: LanguageServiceContext
+    ) async throws -> [CallHierarchyIncomingCall]
+    func outgoingCalls(
+        of item: CallHierarchyItem,
+        context: LanguageServiceContext
+    ) async throws -> [CallHierarchyOutgoingCall]
+}
+
+public extension CallHierarchyProvider {
+    func incomingCalls(
+        of item: CallHierarchyItem,
+        context: LanguageServiceContext
+    ) async throws -> [CallHierarchyIncomingCall] {
+        _ = item
+        _ = context
+        return []
+    }
+
+    func outgoingCalls(
+        of item: CallHierarchyItem,
+        context: LanguageServiceContext
+    ) async throws -> [CallHierarchyOutgoingCall] {
+        _ = item
+        _ = context
+        return []
+    }
+}
+
+public protocol ExecuteCommandProvider: LanguageServiceProvider {
+    /// Commands this provider handles (empty = claims all).
+    var supportedCommands: Set<String> { get }
+    func execute(_ request: ExecuteCommandRequest) async throws -> ExecuteCommandResult
+}
+
+public extension ExecuteCommandProvider {
+    var supportedCommands: Set<String> { [] }
+}
+
+public protocol PullDiagnosticsProvider: LanguageServiceProvider {
+    func pullDiagnostics(for request: DocumentRequest) async throws -> PullDiagnosticsResult
+}

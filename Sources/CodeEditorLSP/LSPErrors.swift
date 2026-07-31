@@ -1,5 +1,12 @@
 import Foundation
 
+/// Pinned LSP protocol version for this host.
+public enum LSPProtocolVersion {
+    public static let major = 3
+    public static let minor = 17
+    public static var description: String { "\(major).\(minor)" }
+}
+
 public enum LSPError: Error, Sendable, Equatable {
     case transportClosed
     case timeout(method: String)
@@ -11,6 +18,9 @@ public enum LSPError: Error, Sendable, Equatable {
     case unsupported(String)
     case alreadyStarted
     case notRunning
+    case capabilityUnavailable(String)
+    case framing(String)
+    case budgetExceeded(String)
 }
 
 public enum LSPLogLevel: String, Sendable, Hashable, Codable {
@@ -63,4 +73,32 @@ public final class LSPLog: @unchecked Sendable {
         }
         lock.unlock()
     }
+}
+
+/// Per-server resource budgets (defaults).
+public struct LSPServerBudgets: Sendable, Hashable {
+    public var maxConcurrentRequests: Int
+    public var requestTimeout: Duration
+    public var restartMaxAttempts: Int
+    public var restartInitialBackoff: Duration
+    public var restartMaxBackoff: Duration
+    public var maxStderrBytes: Int
+
+    public init(
+        maxConcurrentRequests: Int = 32,
+        requestTimeout: Duration = .seconds(30),
+        restartMaxAttempts: Int = 5,
+        restartInitialBackoff: Duration = .milliseconds(200),
+        restartMaxBackoff: Duration = .seconds(10),
+        maxStderrBytes: Int = 64 * 1024
+    ) {
+        self.maxConcurrentRequests = maxConcurrentRequests
+        self.requestTimeout = requestTimeout
+        self.restartMaxAttempts = restartMaxAttempts
+        self.restartInitialBackoff = restartInitialBackoff
+        self.restartMaxBackoff = restartMaxBackoff
+        self.maxStderrBytes = maxStderrBytes
+    }
+
+    public static let `default` = LSPServerBudgets()
 }

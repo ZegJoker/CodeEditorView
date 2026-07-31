@@ -19,17 +19,37 @@ public actor LanguageServerSession {
     private var diagnosticsContinuation: AsyncStream<LSPDiagnosticsEvent>.Continuation?
     public let diagnosticsStream: AsyncStream<LSPDiagnosticsEvent>
 
+    // Progress
+    private var progressContinuation: AsyncStream<LSPJSONRPCConnection.ProgressEvent>.Continuation?
+    public let progressStream: AsyncStream<LSPJSONRPCConnection.ProgressEvent>
+
+    public let budgets: LSPServerBudgets
+    public let positionMaps = LSPPositionMapCache()
+    public private(set) var restartAttempts: Int = 0
+    private var dynamicRegistrations: [String: LSPJSONObject] = [:]
+    /// Host-facing applyEdit handler.
+    public var applyEditHandler: (@Sendable (WorkspaceEditPlan) async -> Bool)?
+    /// Host-facing showMessageRequest handler (returns selected action title).
+    public var showMessageRequestHandler: (@Sendable (String, [String]) async -> String?)?
+    /// Host-facing configuration handler.
+    public var configurationHandler: (@Sendable ([[String: Any]]) async -> [Any])?
+
     public init(
         definition: LanguageServerDefinition,
         log: LSPLog = LSPLog(),
+        budgets: LSPServerBudgets = .default,
         transportFactory: (@Sendable () async throws -> any LSPTransport)? = nil
     ) {
         self.definition = definition
         self.log = log
+        self.budgets = budgets
         self.makeTransport = transportFactory
         var cont: AsyncStream<LSPDiagnosticsEvent>.Continuation!
         self.diagnosticsStream = AsyncStream { cont = $0 }
         self.diagnosticsContinuation = cont
+        var pcont: AsyncStream<LSPJSONRPCConnection.ProgressEvent>.Continuation!
+        self.progressStream = AsyncStream { pcont = $0 }
+        self.progressContinuation = pcont
     }
 
     public var id: LanguageServerID { definition.id }
@@ -53,11 +73,22 @@ public actor LanguageServerSession {
         do {
             let transport = try await createTransport()
             self.transport = transport
-            let connection = LSPJSONRPCConnection(transport: transport, log: log)
+            let connection = LSPJSONRPCConnection(
+                transport: transport,
+                log: log,
+                requestTimeout: budgets.requestTimeout
+            )
             self.connection = connection
             await connection.start()
             await connection.setNotificationHandler { [weak self] method, data in
                 await self?.handleNotification(method: method, paramsData: data)
+            }
+            await connection.setServerRequestHandler { [weak self] method, id, data in
+                guard let self else { throw LSPError.notRunning }
+                return try await self.handleServerRequest(method: method, id: id, paramsData: data)
+            }
+            await connection.setProgressHandler { [weak self] event in
+                await self?.progressContinuation?.yield(event)
             }
 
             let initResult = try await connection.requestDictionary(
@@ -97,9 +128,19 @@ public actor LanguageServerSession {
     }
 
     public func restart() async throws {
+        if restartAttempts >= budgets.restartMaxAttempts {
+            throw LSPError.budgetExceeded("restart attempts exhausted")
+        }
+        let attempt = restartAttempts
+        restartAttempts += 1
+        let nanos = restartBackoffNanoseconds(attempt: attempt)
+        if nanos > 0 {
+            try await Task.sleep(nanoseconds: nanos)
+        }
         let docs = Array(openDocuments.values)
         await shutdown()
         try await start()
+        restartAttempts = 0
         for doc in docs {
             try await didOpen(
                 uri: doc.uri,
@@ -108,6 +149,16 @@ public actor LanguageServerSession {
                 text: doc.text
             )
         }
+    }
+
+    private func restartBackoffNanoseconds(attempt: Int) -> UInt64 {
+        // Exponential backoff from initial to max.
+        let initial = Double(budgets.restartInitialBackoff.components.seconds)
+            + Double(budgets.restartInitialBackoff.components.attoseconds) / 1e18
+        let maximum = Double(budgets.restartMaxBackoff.components.seconds)
+            + Double(budgets.restartMaxBackoff.components.attoseconds) / 1e18
+        let delay = min(maximum, initial * pow(2.0, Double(attempt)))
+        return UInt64(delay * 1_000_000_000)
     }
 
     public func markFailed() async {
@@ -131,6 +182,7 @@ public actor LanguageServerSession {
             version: version,
             text: text
         )
+        _ = await positionMaps.map(for: uri, version: version, text: text)
         try await connection?.notifyDictionary(
             "textDocument/didOpen",
             params: LSPJSONObject([
@@ -214,6 +266,7 @@ public actor LanguageServerSession {
             doc.text = fullText
             openDocuments[uri] = doc
         }
+        _ = await positionMaps.map(for: uri, version: version, text: fullText)
         try await connection?.notifyDictionary(
             "textDocument/didChange",
             params: LSPJSONObject([
@@ -240,6 +293,7 @@ public actor LanguageServerSession {
     public func didClose(uri: DocumentURI) async throws {
         try requireRunning()
         openDocuments.removeValue(forKey: uri)
+        await positionMaps.invalidate(uri: uri)
         try await connection?.notifyDictionary(
             "textDocument/didClose",
             params: LSPJSONObject([
@@ -313,30 +367,75 @@ public actor LanguageServerSession {
 
     private func makeInitializeParams() -> [String: Any] {
         let rootURI = definition.workspaceRootURIs.first?.rawValue
+        let tokenTypes = [
+            "namespace", "type", "class", "enum", "interface", "struct", "typeParameter",
+            "parameter", "variable", "property", "enumMember", "event", "function", "method",
+            "macro", "keyword", "modifier", "comment", "string", "number", "regexp", "operator",
+        ]
         var params: [String: Any] = [
             "processId": ProcessInfo.processInfo.processIdentifier,
-            "clientInfo": ["name": "CodeEditorLSP", "version": "1.0.0"],
+            "clientInfo": [
+                "name": "CodeEditorLSP",
+                "version": LSPProtocolVersion.description,
+            ],
+            "locale": "en-us",
             "capabilities": [
+                "general": [
+                    "positionEncodings": ["utf-16"],
+                ],
                 "textDocument": [
                     "synchronization": [
-                        "dynamicRegistration": false,
+                        "dynamicRegistration": true,
                         "willSave": false,
                         "didSave": true,
                         "willSaveWaitUntil": false,
                     ],
-                    "completion": ["dynamicRegistration": false],
-                    "hover": ["contentFormat": ["markdown", "plaintext"]],
-                    "definition": ["linkSupport": true],
-                    "publishDiagnostics": ["relatedInformation": false],
+                    "completion": [
+                        "dynamicRegistration": true,
+                        "completionItem": ["snippetSupport": false, "documentationFormat": ["markdown", "plaintext"]],
+                        "contextSupport": true,
+                    ],
+                    "hover": ["contentFormat": ["markdown", "plaintext"], "dynamicRegistration": true],
+                    "definition": ["linkSupport": true, "dynamicRegistration": true],
+                    "declaration": ["linkSupport": true, "dynamicRegistration": true],
+                    "implementation": ["linkSupport": true, "dynamicRegistration": true],
+                    "references": ["dynamicRegistration": true],
+                    "documentHighlight": ["dynamicRegistration": true],
+                    "documentSymbol": ["hierarchicalDocumentSymbolSupport": true, "dynamicRegistration": true],
+                    "codeAction": ["dynamicRegistration": true, "resolveSupport": ["properties": ["edit", "command"]]],
+                    "formatting": ["dynamicRegistration": true],
+                    "rangeFormatting": ["dynamicRegistration": true],
+                    "rename": ["dynamicRegistration": true, "prepareSupport": false],
+                    "publishDiagnostics": ["relatedInformation": false, "versionSupport": true],
+                    "diagnostic": ["dynamicRegistration": true],
+                    "signatureHelp": ["dynamicRegistration": true],
+                    "documentLink": ["dynamicRegistration": true],
+                    "colorProvider": ["dynamicRegistration": true],
+                    "foldingRange": ["dynamicRegistration": true],
+                    "inlayHint": ["dynamicRegistration": true, "resolveSupport": ["properties": ["tooltip", "textEdits"]]],
+                    "typeHierarchy": ["dynamicRegistration": true],
+                    "callHierarchy": ["dynamicRegistration": true],
                     "semanticTokens": [
-                        "requests": ["full": true],
-                        "tokenTypes": ["namespace", "type", "class", "enum", "interface", "struct", "typeParameter", "parameter", "variable", "property", "enumMember", "event", "function", "method", "macro", "keyword", "modifier", "comment", "string", "number", "regexp", "operator"],
+                        "dynamicRegistration": true,
+                        "requests": ["full": ["delta": true], "range": true],
+                        "tokenTypes": tokenTypes,
                         "tokenModifiers": ["declaration", "definition", "readonly", "static"],
                         "formats": ["relative"],
+                        "multilineTokenSupport": true,
                     ],
                 ] as [String: Any],
                 "workspace": [
                     "workspaceFolders": true,
+                    "applyEdit": true,
+                    "configuration": true,
+                    "didChangeConfiguration": ["dynamicRegistration": true],
+                    "didChangeWatchedFiles": ["dynamicRegistration": true],
+                    "symbol": ["dynamicRegistration": true],
+                    "executeCommand": ["dynamicRegistration": true],
+                ] as [String: Any],
+                "window": [
+                    "showMessage": ["messageActionItem": ["additionalPropertiesSupport": false]],
+                    "workDoneProgress": true,
                 ],
             ] as [String: Any],
             "rootUri": rootURI as Any,
@@ -367,15 +466,111 @@ public actor LanguageServerSession {
             {
                 log.append(level: .info, message: message, serverID: definition.id.rawValue)
             }
+        case "$/progress":
+            break // handled via progress stream
         default:
             log.append(level: .debug, message: "Notification \(method)", serverID: definition.id.rawValue)
         }
+    }
+
+    private func handleServerRequest(
+        method: String,
+        id: LSPJSONRPCConnection.RequestID,
+        paramsData: Data
+    ) async throws -> LSPAnyJSON {
+        _ = id
+        let params = (try? JSONSerialization.jsonObject(with: paramsData)) as? [String: Any] ?? [:]
+        switch method {
+        case "workspace/applyEdit":
+            let editDict = params["edit"] as? [String: Any] ?? [:]
+            let plan = parseWorkspaceEdit(editDict)
+            if let handler = applyEditHandler {
+                let applied = await handler(plan)
+                return LSPAnyJSON(["applied": applied])
+            }
+            return LSPAnyJSON(["applied": false, "failureReason": "no applyEdit handler"])
+        case "window/showMessageRequest":
+            let message = params["message"] as? String ?? ""
+            let actions = (params["actions"] as? [[String: Any]] ?? []).compactMap { $0["title"] as? String }
+            if let handler = showMessageRequestHandler {
+                if let title = await handler(message, actions) {
+                    return LSPAnyJSON(["title": title])
+                }
+                return .null
+            }
+            if let first = actions.first {
+                return LSPAnyJSON(["title": first])
+            }
+            return .null
+        case "workspace/configuration":
+            let items = params["items"] as? [[String: Any]] ?? []
+            if let handler = configurationHandler {
+                return LSPAnyJSON(await handler(items))
+            }
+            return LSPAnyJSON(items.map { _ in NSNull() })
+        case "workspace/workspaceFolders":
+            return LSPAnyJSON(definition.workspaceRootURIs.map {
+                ["uri": $0.rawValue, "name": $0.rawValue] as [String: Any]
+            })
+        case "client/registerCapability":
+            if let registrations = params["registrations"] as? [[String: Any]] {
+                for reg in registrations {
+                    if let id = reg["id"] as? String {
+                        dynamicRegistrations[id] = LSPJSONObject(reg)
+                    }
+                }
+            }
+            return .null
+        case "client/unregisterCapability":
+            if let unregs = params["unregisterations"] as? [[String: Any]]
+                ?? params["unregistrations"] as? [[String: Any]]
+            {
+                for reg in unregs {
+                    if let id = reg["id"] as? String {
+                        dynamicRegistrations.removeValue(forKey: id)
+                    }
+                }
+            }
+            return .null
+        case "window/workDoneProgress/create":
+            return .null
+        default:
+            throw LSPError.serverError(code: -32601, message: "Method not found: \(method)")
+        }
+    }
+
+    public func dynamicRegistrationIDs() -> [String] {
+        Array(dynamicRegistrations.keys).sorted()
+    }
+
+    public func positionMap(uri: DocumentURI) async -> LSPPositionMap? {
+        guard let doc = openDocuments[uri] else { return nil }
+        return await positionMaps.map(for: uri, version: doc.version, text: doc.text)
+    }
+
+    private func parseWorkspaceEdit(_ dict: [String: Any]) -> WorkspaceEditPlan {
+        var docs: [DocumentEditPlan] = []
+        if let changes = dict["changes"] as? [String: [[String: Any]]] {
+            for (uri, edits) in changes {
+                let text = openDocuments[DocumentURI(rawValue: uri)]?.text ?? ""
+                if let data = try? JSONSerialization.data(withJSONObject: edits),
+                   let decoded = try? JSONDecoder().decode([LSPTextEdit].self, from: data)
+                {
+                    docs.append(DocumentEditPlan(
+                        uri: DocumentURI(rawValue: uri),
+                        edits: decoded.map { LSPConvert.textEditPlan($0, in: text) }
+                    ))
+                }
+            }
+        }
+        return WorkspaceEditPlan(documentEdits: docs)
     }
 
     private func cleanupConnection() async {
         await connection?.close()
         connection = nil
         transport = nil
+        await positionMaps.removeAll()
     }
 }
 

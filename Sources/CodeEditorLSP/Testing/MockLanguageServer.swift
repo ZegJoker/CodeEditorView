@@ -17,6 +17,13 @@ public actor MockLanguageServer {
     public var publishDiagnosticsOnChange = true
     /// Artificial delay for completion responses (stale-version tests).
     public var completionDelayNanoseconds: UInt64 = 0
+    /// When true, issue a workspace/applyEdit server request after initialize.
+    public var requestApplyEditAfterInit = false
+    /// When true, send $/progress after initialize.
+    public var sendProgressAfterInit = false
+    /// Track cancelled request IDs.
+    public private(set) var cancelledIDs: [Any] = []
+    public private(set) var receivedMethods: [String] = []
 
     public init(transport: LSPTestTransport) {
         self.transport = transport
@@ -58,6 +65,7 @@ public actor MockLanguageServer {
         let id = obj["id"]
         let params = obj["params"] as? [String: Any] ?? [:]
 
+        receivedMethods.append(method)
         switch method {
         case "initialize":
             initializeCount += 1
@@ -69,28 +77,84 @@ public actor MockLanguageServer {
                             "change": 2,
                             "save": ["includeText": true],
                         ] as [String: Any],
-                        "completionProvider": ["triggerCharacters": ["."]],
+                        "completionProvider": ["triggerCharacters": ["."], "resolveProvider": true],
                         "hoverProvider": true,
                         "definitionProvider": true,
+                        "declarationProvider": true,
+                        "implementationProvider": true,
+                        "referencesProvider": true,
                         "documentFormattingProvider": true,
+                        "documentRangeFormattingProvider": true,
                         "renameProvider": true,
                         "documentSymbolProvider": true,
+                        "workspaceSymbolProvider": true,
+                        "codeActionProvider": ["resolveProvider": true],
+                        "signatureHelpProvider": ["triggerCharacters": ["(", ","]],
+                        "inlayHintProvider": true,
+                        "foldingRangeProvider": true,
+                        "documentLinkProvider": true,
+                        "colorProvider": true,
+                        "documentHighlightProvider": true,
+                        "typeHierarchyProvider": true,
+                        "callHierarchyProvider": true,
+                        "executeCommandProvider": ["commands": ["mock.cmd"]],
+                        "diagnosticProvider": ["interFileDependencies": false, "workspaceDiagnostics": false],
                         "semanticTokensProvider": [
                             "legend": [
                                 "tokenTypes": ["function", "keyword"],
                                 "tokenModifiers": [],
                             ],
-                            "full": true,
+                            "full": ["delta": true],
+                            "range": true,
                         ] as [String: Any],
+                        "workspace": [
+                            "workspaceFolders": ["supported": true],
+                        ],
                     ] as [String: Any],
                     "serverInfo": ["name": "MockLanguageServer", "version": "1.0"],
                 ])
             }
-        case "initialized", "exit":
+        case "initialized":
+            if sendProgressAfterInit {
+                await notify(method: "$/progress", params: [
+                    "token": "t1",
+                    "value": ["kind": "begin", "title": "Indexing", "percentage": 0],
+                ])
+                await notify(method: "$/progress", params: [
+                    "token": "t1",
+                    "value": ["kind": "end"],
+                ])
+            }
+            if requestApplyEditAfterInit {
+                await request(
+                    id: "server-apply-1",
+                    method: "workspace/applyEdit",
+                    params: [
+                        "edit": [
+                            "changes": [
+                                "inmemory:x": [
+                                    [
+                                        "range": [
+                                            "start": ["line": 0, "character": 0],
+                                            "end": ["line": 0, "character": 0],
+                                        ],
+                                        "newText": "// applied\n",
+                                    ] as [String: Any],
+                                ],
+                            ] as [String: Any],
+                        ] as [String: Any],
+                    ]
+                )
+            }
+        case "exit":
             break
         case "shutdown":
             if let id {
                 await respond(id: id, result: NSNull())
+            }
+        case "$/cancelRequest":
+            if let cancelID = params["id"] {
+                cancelledIDs.append(cancelID)
             }
         case "textDocument/didOpen":
             openCount += 1
@@ -222,18 +286,219 @@ public actor MockLanguageServer {
                     ] as [String: Any],
                 ])
             }
-        case "textDocument/semanticTokens/full":
+        case "textDocument/semanticTokens/full", "textDocument/semanticTokens/range":
             if let id {
                 // one token: line 0, char 0, length 4, type 0, mods 0
                 await respond(id: id, result: [
                     "data": [0, 0, 4, 0, 0],
                 ] as [String: Any])
             }
+        case "textDocument/declaration", "textDocument/implementation":
+            if let id {
+                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                await respond(id: id, result: [
+                    "uri": uri,
+                    "range": [
+                        "start": ["line": 0, "character": 0],
+                        "end": ["line": 0, "character": 4],
+                    ],
+                ] as [String: Any])
+            }
+        case "textDocument/references":
+            if let id {
+                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                await respond(id: id, result: [
+                    [
+                        "uri": uri,
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 4],
+                        ],
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/documentHighlight":
+            if let id {
+                await respond(id: id, result: [
+                    [
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 4],
+                        ],
+                        "kind": 2,
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/rangeFormatting":
+            if let id {
+                await respond(id: id, result: [
+                    [
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 0],
+                        ],
+                        "newText": "// range\n",
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/codeAction":
+            if let id {
+                await respond(id: id, result: [
+                    ["title": "Mock fix", "kind": "quickfix", "isPreferred": true] as [String: Any],
+                ])
+            }
+        case "textDocument/signatureHelp":
+            if let id {
+                await respond(id: id, result: [
+                    "signatures": [
+                        [
+                            "label": "mock(x: Int)",
+                            "parameters": [["label": "x: Int"]],
+                        ] as [String: Any],
+                    ],
+                    "activeSignature": 0,
+                    "activeParameter": 0,
+                ] as [String: Any])
+            }
+        case "textDocument/inlayHint":
+            if let id {
+                await respond(id: id, result: [
+                    [
+                        "position": ["line": 0, "character": 4],
+                        "label": ": Int",
+                        "kind": 1,
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/foldingRange":
+            if let id {
+                await respond(id: id, result: [
+                    ["startLine": 0, "endLine": 2, "kind": "region"] as [String: Any],
+                ])
+            }
+        case "textDocument/documentLink":
+            if let id {
+                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                await respond(id: id, result: [
+                    [
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 4],
+                        ],
+                        "target": uri,
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/documentColor":
+            if let id {
+                await respond(id: id, result: [
+                    [
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 7],
+                        ],
+                        "color": ["red": 1.0, "green": 0.0, "blue": 0.0, "alpha": 1.0],
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/prepareTypeHierarchy":
+            if let id {
+                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                await respond(id: id, result: [
+                    [
+                        "name": "MockType",
+                        "kind": 5,
+                        "uri": uri,
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 8],
+                        ],
+                        "selectionRange": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 8],
+                        ],
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/prepareCallHierarchy":
+            if let id {
+                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                await respond(id: id, result: [
+                    [
+                        "name": "mockFn",
+                        "kind": 12,
+                        "uri": uri,
+                        "range": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 6],
+                        ],
+                        "selectionRange": [
+                            "start": ["line": 0, "character": 0],
+                            "end": ["line": 0, "character": 6],
+                        ],
+                    ] as [String: Any],
+                ])
+            }
+        case "textDocument/diagnostic":
+            if let id {
+                await respond(id: id, result: [
+                    "kind": "full",
+                    "resultId": "1",
+                    "items": [
+                        [
+                            "range": [
+                                "start": ["line": 0, "character": 0],
+                                "end": ["line": 0, "character": 1],
+                            ],
+                            "severity": 2,
+                            "message": "pull mock",
+                            "source": "mock",
+                        ] as [String: Any],
+                    ],
+                ] as [String: Any])
+            }
+        case "workspace/symbol":
+            if let id {
+                await respond(id: id, result: [
+                    [
+                        "name": "mockWS",
+                        "kind": 12,
+                        "location": [
+                            "uri": "inmemory:x",
+                            "range": [
+                                "start": ["line": 0, "character": 0],
+                                "end": ["line": 0, "character": 4],
+                            ],
+                        ] as [String: Any],
+                    ] as [String: Any],
+                ])
+            }
+        case "workspace/executeCommand":
+            if let id {
+                await respond(id: id, result: ["ok": true])
+            }
+        case "client/registerCapability":
+            // echoed by client as response; mock may request registration
+            if let id {
+                await respond(id: id, result: NSNull())
+            }
         default:
             if let id {
                 await respondError(id: id, code: -32601, message: "Method not found: \(method)")
             }
         }
+    }
+
+    /// Issues a server→client request.
+    public func request(id: Any, method: String, params: [String: Any]) async {
+        let message: [String: Any] = [
+            "jsonrpc": "2.0",
+            "id": id,
+            "method": method,
+            "params": params,
+        ]
+        guard let body = try? JSONSerialization.data(withJSONObject: message) else { return }
+        try? await transport.send(LSPMessageFraming.encode(body))
     }
 
     private func publishDiagnostics(uri: String, version: Int?, text: String) async {

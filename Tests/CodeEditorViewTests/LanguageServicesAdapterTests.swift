@@ -137,4 +137,84 @@ struct LanguageServicesAdapterTests {
         #expect(!(result?.items.isEmpty ?? true))
         #expect(result?.items.first is LanguageCompletionItem)
     }
+
+    /// End-to-end host wiring for every LanguageServices category used by View adapters.
+    @Test func hostCategoryMatrixWithRevisionGuard() async throws {
+        let registry = LanguageServiceRegistry()
+        let mock = MockLanguageSuite.sample()
+        await mock.register(in: registry)
+        let host = LanguageServiceHost(registry: registry)
+        let text = "hello world"
+        let snap = DocumentSnapshot(version: DocumentVersion(rawValue: 1), text: text)
+        let ctx = LanguageServiceContext(
+            languageID: "swift",
+            uri: DocumentURI(rawValue: "inmemory:view-e2e")
+        )
+        let pos = PositionRequest(
+            document: snap,
+            position: TextPosition(utf16Offset: 0),
+            context: ctx
+        )
+        let full = DocumentRequest(document: snap, context: ctx)
+        let range = RangeRequest(
+            document: snap,
+            range: CodeEditorCore.TextRange(location: 0, length: 5),
+            context: ctx
+        )
+        let version: @Sendable () -> DocumentVersion = { DocumentVersion(rawValue: 1) }
+
+        #expect(!(try await host.completions(
+            for: CompletionRequest(document: snap, position: TextPosition(utf16Offset: 0), context: ctx),
+            currentVersion: version
+        )).items.isEmpty)
+        #expect(try await host.hover(for: pos, currentVersion: version) != nil)
+        #expect(!(try await host.definitions(for: pos, currentVersion: version)).isEmpty)
+        #expect(!(try await host.diagnostics(for: full, currentVersion: version)).isEmpty)
+        #expect(!(try await host.documentSymbols(for: full, currentVersion: version)).isEmpty)
+        #expect(!(try await host.semanticTokens(for: full, currentVersion: version)).isEmpty)
+        #expect(!(try await host.foldingRanges(for: full, currentVersion: version)).isEmpty)
+        #expect(!(try await host.documentHighlights(for: pos, currentVersion: version)).isEmpty)
+        #expect(!(try await host.codeActions(for: range, currentVersion: version)).isEmpty)
+
+        // Completion adapter still loads through View wiring.
+        await registry.register(mock as any CompletionProvider)
+        let adapter = CompletionProviderDelegateAdapter(host: host)
+        let controller = EditorController(text: "hel")
+        let cursor = CursorPosition(range: NSRange(location: 3, length: 0), line: 0, column: 3)
+        let suggestions = await adapter.completionSuggestionsRequested(
+            textView: controller,
+            cursorPosition: cursor
+        )
+        #expect(!(suggestions?.items.isEmpty ?? true))
+
+        // Revision change during request surfaces staleVersion.
+        let slow = MockLanguageSuite(
+            id: "slow.view",
+            priority: 200,
+            completionItems: [CompletionItem(label: "late")],
+            delayNanoseconds: 40_000_000
+        )
+        await registry.register(slow as any CompletionProvider)
+        final class Box: @unchecked Sendable {
+            var version = DocumentVersion(rawValue: 1)
+        }
+        let box = Box()
+        let request = CompletionRequest(
+            document: DocumentSnapshot(version: DocumentVersion(rawValue: 1), text: text),
+            position: TextPosition(utf16Offset: 0),
+            context: ctx
+        )
+        async let late = host.completions(for: request) { box.version }
+        try await Task.sleep(nanoseconds: 5_000_000)
+        box.version = DocumentVersion(rawValue: 2)
+        do {
+            _ = try await late
+            Issue.record("expected staleVersion")
+        } catch let error as LanguageServiceError {
+            guard case .staleVersion = error else {
+                Issue.record("unexpected \(error)")
+                return
+            }
+        }
+    }
 }

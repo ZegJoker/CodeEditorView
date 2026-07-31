@@ -138,6 +138,28 @@ public enum LanguageServiceMerge {
         return []
     }
 
+    public static func documentHighlights(_ batches: [[DocumentHighlight]]) -> [DocumentHighlight] {
+        var seen = Set<String>()
+        var result: [DocumentHighlight] = []
+        for batch in batches {
+            for item in batch {
+                let key = "\(item.range.location):\(item.range.length):\(item.kind.rawValue)"
+                guard !seen.contains(key) else { continue }
+                seen.insert(key)
+                result.append(item)
+            }
+        }
+        return result.sorted { $0.range.location < $1.range.location }
+    }
+
+    public static func hierarchyItems(_ batches: [[HierarchyItem]]) -> [HierarchyItem] {
+        batches.flatMap { $0 }
+    }
+
+    public static func callHierarchyItems(_ batches: [[CallHierarchyItem]]) -> [CallHierarchyItem] {
+        batches.flatMap { $0 }
+    }
+
     // MARK: - Private
 
     private static func completionDedupeKey(_ item: CompletionItem) -> String {

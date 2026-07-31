@@ -2,44 +2,74 @@ import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 
-/// Routes language-service requests through the registry with merge policies and version checks.
+/// Routes language-service requests through the registry with merge policies,
+/// per-provider timeouts, cancellation, stale-revision checks, and failure isolation.
 public struct LanguageServiceHost: Sendable {
     public let registry: LanguageServiceRegistry
+    public var limits: LanguageServiceLimits
 
-    /// Optional hover section cap (default 8).
-    public var maxHoverSections: Int
-
-    public init(registry: LanguageServiceRegistry, maxHoverSections: Int = 8) {
+    public init(
+        registry: LanguageServiceRegistry,
+        limits: LanguageServiceLimits = .default,
+        maxHoverSections: Int? = nil
+    ) {
         self.registry = registry
-        self.maxHoverSections = maxHoverSections
+        var limits = limits
+        if let maxHoverSections {
+            limits.maxHoverSections = maxHoverSections
+        }
+        self.limits = limits
+    }
+
+    /// Convenience accessor used by older call sites.
+    public var maxHoverSections: Int {
+        get { limits.maxHoverSections }
+        set { limits.maxHoverSections = newValue }
     }
 
     // MARK: - Completions
 
     public func completions(
         for request: CompletionRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> CompletionList {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
-
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingCompletions(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         var batches: [(priority: Int, list: CompletionList)] = []
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            do {
-                let list = try await provider.completions(for: request)
-                batches.append((provider.priority, list))
-            } catch is CancellationError {
-                throw LanguageServiceError.cancelled
-            } catch let error as LanguageServiceError where error == .cancelled {
-                throw error
-            } catch {
-                continue
+            guard let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.completions(for: request) }
+            ) else { continue }
+
+            var sanitized = list
+            let cappedItems: [CompletionItem] = try LanguageServiceSanitize.capped(
+                list.items,
+                max: limits.maxCompletionItems
+            )
+            sanitized.items = cappedItems
+            for i in sanitized.items.indices {
+                if let doc = sanitized.items[i].documentation {
+                    sanitized.items[i].documentation = LanguageServiceSanitize.truncateMarkup(
+                        doc,
+                        maxCharacters: limits.maxMarkupCharacters
+                    )
+                }
+                if let edit = sanitized.items[i].textEdit {
+                    sanitized.items[i].textEdit = LanguageServiceSanitize.sanitizeEdit(
+                        edit,
+                        documentLength: docLen
+                    )
+                }
             }
+            batches.append((provider.priority, sanitized))
         }
         try ensureVersion(request.document.version, current: currentVersion)
         return LanguageServiceMerge.completions(from: batches)
@@ -49,34 +79,50 @@ public struct LanguageServiceHost: Sendable {
 
     public func hover(
         for request: PositionRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> Hover? {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
-
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingHovers(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         var batches: [Hover] = []
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            if let result = try? await provider.hover(for: request) {
-                batches.append(result)
+            guard let maybeHover = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.hover(for: request) }
+            ), let result = maybeHover else { continue }
+
+            let sections = result.sections.prefix(limits.maxHoverSections).map { section in
+                HoverSection(
+                    content: LanguageServiceSanitize.truncateMarkup(
+                        section.content,
+                        maxCharacters: limits.maxMarkupCharacters
+                    ),
+                    range: section.range.flatMap {
+                        LanguageServiceSanitize.clampRange($0, documentLength: docLen)
+                    }
+                )
+            }
+            if !sections.isEmpty {
+                batches.append(Hover(sections: Array(sections)))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.hoverSections(batches, max: maxHoverSections)
+        return LanguageServiceMerge.hoverSections(batches, max: limits.maxHoverSections)
     }
 
     // MARK: - Navigation
 
     public func definitions(
         for request: PositionRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [LocationLink] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingDefinitions(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -84,20 +130,27 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[LocationLink]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let links = try? await provider.definitions(for: request) {
-                batches.append(links)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.definitions(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxLocations))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.locationLinks(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.locationLinks(batches),
+            max: limits.maxLocations
+        )
     }
 
     public func declarations(
         for request: PositionRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [LocationLink] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingDeclarations(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -105,20 +158,27 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[LocationLink]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let links = try? await provider.declarations(for: request) {
-                batches.append(links)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.declarations(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxLocations))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.locationLinks(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.locationLinks(batches),
+            max: limits.maxLocations
+        )
     }
 
     public func implementations(
         for request: PositionRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [LocationLink] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingImplementations(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -126,21 +186,28 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[LocationLink]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let links = try? await provider.implementations(for: request) {
-                batches.append(links)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.implementations(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxLocations))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.locationLinks(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.locationLinks(batches),
+            max: limits.maxLocations
+        )
     }
 
     public func references(
         for request: PositionRequest,
         includeDeclaration: Bool = true,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [Location] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingReferences(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -148,46 +215,101 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[Location]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.references(
-                for: request,
-                includeDeclaration: includeDeclaration
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.references(for: request, includeDeclaration: includeDeclaration) }
             ) {
-                batches.append(list)
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxLocations))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.locations(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.locations(batches),
+            max: limits.maxLocations
+        )
     }
 
     // MARK: - Diagnostics / symbols
 
     public func diagnostics(
         for request: DocumentRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [LanguageDiagnostic] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingDiagnostics(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         var batches: [[LanguageDiagnostic]] = []
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.diagnostics(for: request) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.diagnostics(for: request) }
+            ) {
+                let owned = list.compactMap { diag -> LanguageDiagnostic? in
+                    guard let range = LanguageServiceSanitize.clampRange(diag.range, documentLength: docLen)
+                    else { return nil }
+                    var copy = diag
+                    copy.range = range
+                    if copy.source == nil {
+                        copy.source = provider.id.rawValue
+                    }
+                    return copy
+                }
+                batches.append(try LanguageServiceSanitize.capped(owned, max: limits.maxDiagnostics))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.diagnostics(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.diagnostics(batches),
+            max: limits.maxDiagnostics
+        )
+    }
+
+    public func pullDiagnostics(
+        for request: DocumentRequest,
+        currentVersion: @escaping @Sendable () -> DocumentVersion
+    ) async throws -> PullDiagnosticsResult {
+        try preflight(request.document.version, currentVersion)
+        let providers = await registry.matchingPullDiagnostics(
+            languageID: request.context.languageID,
+            uri: request.context.uri
+        )
+        var items: [LanguageDiagnostic] = []
+        var kind = "full"
+        var resultID: String?
+        for provider in providers {
+            try Task.checkCancellation()
+            if let result = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.pullDiagnostics(for: request) }
+            ) {
+                kind = result.kind
+                if resultID == nil { resultID = result.resultID }
+                items.append(contentsOf: result.items)
+            }
+        }
+        try ensureVersion(request.document.version, current: currentVersion)
+        let merged = try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.diagnostics([items]),
+            max: limits.maxDiagnostics
+        )
+        return PullDiagnosticsResult(kind: kind, resultID: resultID, items: merged)
     }
 
     public func documentSymbols(
         for request: DocumentRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [DocumentSymbol] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingDocumentSymbols(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -195,12 +317,20 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[DocumentSymbol]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.documentSymbols(for: request) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.documentSymbols(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxSymbols))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.documentSymbols(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.documentSymbols(batches),
+            max: limits.maxSymbols
+        )
     }
 
     public func workspaceSymbols(
@@ -215,11 +345,19 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[WorkspaceSymbol]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.workspaceSymbols(query: query, context: context) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: nil as DocumentVersion?,
+                currentVersion: nil as (@Sendable () -> DocumentVersion)?,
+                work: { try await provider.workspaceSymbols(query: query, context: context) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxSymbols))
             }
         }
-        return LanguageServiceMerge.workspaceSymbols(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.workspaceSymbols(batches),
+            max: limits.maxSymbols
+        )
     }
 
     // MARK: - Formatting / rename (highest priority only)
@@ -227,19 +365,27 @@ public struct LanguageServiceHost: Sendable {
     public func format(
         _ request: DocumentRequest,
         options: FormattingOptions = FormattingOptions(),
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [TextEditPlan] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingFormatting(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            if let edits = try? await provider.format(request, options: options), !edits.isEmpty {
-                try ensureVersion(request.document.version, current: currentVersion)
-                return edits
+            if let edits = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.format(request, options: options) }
+            ) {
+                let sanitized = LanguageServiceSanitize.sanitizeEdits(edits, documentLength: docLen)
+                if !sanitized.isEmpty {
+                    try ensureVersion(request.document.version, current: currentVersion)
+                    return sanitized
+                }
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
@@ -249,19 +395,27 @@ public struct LanguageServiceHost: Sendable {
     public func formatRange(
         _ request: RangeRequest,
         options: FormattingOptions = FormattingOptions(),
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [TextEditPlan] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingFormatting(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            if let edits = try? await provider.formatRange(request, options: options), !edits.isEmpty {
-                try ensureVersion(request.document.version, current: currentVersion)
-                return edits
+            if let edits = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.formatRange(request, options: options) }
+            ) {
+                let sanitized = LanguageServiceSanitize.sanitizeEdits(edits, documentLength: docLen)
+                if !sanitized.isEmpty {
+                    try ensureVersion(request.document.version, current: currentVersion)
+                    return sanitized
+                }
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
@@ -271,17 +425,21 @@ public struct LanguageServiceHost: Sendable {
     public func rename(
         _ request: PositionRequest,
         newName: String,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> WorkspaceEditPlan {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingRenames(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         for provider in providers {
             try Task.checkCancellation()
-            if let plan = try? await provider.rename(request, newName: newName) {
+            if let plan = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.rename(request, newName: newName) }
+            ), !plan.documentEdits.isEmpty {
                 try ensureVersion(request.document.version, current: currentVersion)
                 return plan
             }
@@ -295,10 +453,9 @@ public struct LanguageServiceHost: Sendable {
     public func codeActions(
         for request: RangeRequest,
         diagnostics: [LanguageDiagnostic] = [],
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [CodeAction] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingCodeActions(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -306,20 +463,66 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[CodeAction]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.codeActions(for: request, diagnostics: diagnostics) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.codeActions(for: request, diagnostics: diagnostics) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxCodeActions))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.codeActions(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.codeActions(batches),
+            max: limits.maxCodeActions
+        )
     }
 
     public func semanticTokens(
         for request: DocumentRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [SemanticTokenSpan] {
+        try preflight(request.document.version, currentVersion)
+        let providers = await registry.matchingSemanticTokens(
+            languageID: request.context.languageID,
+            uri: request.context.uri
+        )
+        var batches: [[SemanticTokenSpan]] = []
+        let docLen = request.document.text.utf16.count
+        for provider in providers {
+            try Task.checkCancellation()
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.semanticTokens(for: request) }
+            ) {
+                let tagged = list.compactMap { span -> SemanticTokenSpan? in
+                    guard let range = LanguageServiceSanitize.clampRange(span.range, documentLength: docLen)
+                    else { return nil }
+                    var copy = span
+                    copy.range = range
+                    if copy.providerID == nil {
+                        copy.providerID = provider.id.rawValue
+                    }
+                    return copy
+                }
+                batches.append(try LanguageServiceSanitize.capped(tagged, max: limits.maxSemanticTokens))
+            }
+        }
         try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.semanticTokens(batches),
+            max: limits.maxSemanticTokens
+        )
+    }
+
+    public func semanticTokens(
+        for request: RangeRequest,
+        currentVersion: @escaping @Sendable () -> DocumentVersion
+    ) async throws -> [SemanticTokenSpan] {
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingSemanticTokens(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -327,27 +530,27 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[SemanticTokenSpan]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.semanticTokens(for: request) {
-                let tagged = list.map { span -> SemanticTokenSpan in
-                    var copy = span
-                    if copy.providerID == nil {
-                        copy.providerID = provider.id.rawValue
-                    }
-                    return copy
-                }
-                batches.append(tagged)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.semanticTokens(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxSemanticTokens))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.semanticTokens(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.semanticTokens(batches),
+            max: limits.maxSemanticTokens
+        )
     }
 
     public func inlayHints(
         for request: RangeRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [InlayHint] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingInlayHints(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -355,20 +558,27 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[InlayHint]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.inlayHints(for: request) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.inlayHints(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxInlayHints))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.inlayHints(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.inlayHints(batches),
+            max: limits.maxInlayHints
+        )
     }
 
     public func foldingRanges(
         for request: DocumentRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [FoldingRange] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingFolding(
             languageID: request.context.languageID,
             uri: request.context.uri
@@ -376,27 +586,39 @@ public struct LanguageServiceHost: Sendable {
         var batches: [[FoldingRange]] = []
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.foldingRanges(for: request) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.foldingRanges(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxFoldingRanges))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.foldingRanges(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.foldingRanges(batches),
+            max: limits.maxFoldingRanges
+        )
     }
 
     public func signatureHelp(
         for request: PositionRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> SignatureHelp? {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingSignatures(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         for provider in providers {
             try Task.checkCancellation()
-            if let help = try? await provider.signatureHelp(for: request) {
+            if let maybeHelp = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.signatureHelp(for: request) }
+            ), let help = maybeHelp {
                 try ensureVersion(request.document.version, current: currentVersion)
                 return help
             }
@@ -407,51 +629,257 @@ public struct LanguageServiceHost: Sendable {
 
     public func documentLinks(
         for request: DocumentRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [DocumentLink] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingLinks(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         var batches: [[DocumentLink]] = []
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.documentLinks(for: request) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.documentLinks(for: request) }
+            ) {
+                let clamped = list.compactMap { link -> DocumentLink? in
+                    guard let range = LanguageServiceSanitize.clampRange(link.range, documentLength: docLen)
+                    else { return nil }
+                    return DocumentLink(range: range, target: link.target)
+                }
+                batches.append(try LanguageServiceSanitize.capped(clamped, max: limits.maxDocumentLinks))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.documentLinks(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.documentLinks(batches),
+            max: limits.maxDocumentLinks
+        )
     }
 
     public func documentColors(
         for request: DocumentRequest,
-        currentVersion: @Sendable () -> DocumentVersion
+        currentVersion: @escaping @Sendable () -> DocumentVersion
     ) async throws -> [ColorInformation] {
-        try ensureVersion(request.document.version, current: currentVersion)
-        try Task.checkCancellation()
+        try preflight(request.document.version, currentVersion)
         let providers = await registry.matchingColors(
             languageID: request.context.languageID,
             uri: request.context.uri
         )
         var batches: [[ColorInformation]] = []
+        let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            if let list = try? await provider.documentColors(for: request) {
-                batches.append(list)
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.documentColors(for: request) }
+            ) {
+                let clamped = list.compactMap { info -> ColorInformation? in
+                    guard let range = LanguageServiceSanitize.clampRange(info.range, documentLength: docLen)
+                    else { return nil }
+                    return ColorInformation(range: range, color: info.color)
+                }
+                batches.append(try LanguageServiceSanitize.capped(clamped, max: limits.maxColors))
             }
         }
         try ensureVersion(request.document.version, current: currentVersion)
-        return LanguageServiceMerge.documentColors(batches)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.documentColors(batches),
+            max: limits.maxColors
+        )
     }
 
-    // MARK: - Helpers
+    // MARK: - Highlights / hierarchy / execute command
+
+    public func documentHighlights(
+        for request: PositionRequest,
+        currentVersion: @escaping @Sendable () -> DocumentVersion
+    ) async throws -> [DocumentHighlight] {
+        try preflight(request.document.version, currentVersion)
+        let providers = await registry.matchingHighlights(
+            languageID: request.context.languageID,
+            uri: request.context.uri
+        )
+        var batches: [[DocumentHighlight]] = []
+        let docLen = request.document.text.utf16.count
+        for provider in providers {
+            try Task.checkCancellation()
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.documentHighlights(for: request) }
+            ) {
+                let clamped = list.compactMap { h -> DocumentHighlight? in
+                    guard let range = LanguageServiceSanitize.clampRange(h.range, documentLength: docLen)
+                    else { return nil }
+                    return DocumentHighlight(range: range, kind: h.kind)
+                }
+                batches.append(try LanguageServiceSanitize.capped(clamped, max: limits.maxHighlights))
+            }
+        }
+        try ensureVersion(request.document.version, current: currentVersion)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.documentHighlights(batches),
+            max: limits.maxHighlights
+        )
+    }
+
+    public func prepareTypeHierarchy(
+        for request: PositionRequest,
+        currentVersion: @escaping @Sendable () -> DocumentVersion
+    ) async throws -> [HierarchyItem] {
+        try preflight(request.document.version, currentVersion)
+        let providers = await registry.matchingTypeHierarchies(
+            languageID: request.context.languageID,
+            uri: request.context.uri
+        )
+        var batches: [[HierarchyItem]] = []
+        for provider in providers {
+            try Task.checkCancellation()
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.prepareTypeHierarchy(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxHierarchyItems))
+            }
+        }
+        try ensureVersion(request.document.version, current: currentVersion)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.hierarchyItems(batches),
+            max: limits.maxHierarchyItems
+        )
+    }
+
+    public func prepareCallHierarchy(
+        for request: PositionRequest,
+        currentVersion: @escaping @Sendable () -> DocumentVersion
+    ) async throws -> [CallHierarchyItem] {
+        try preflight(request.document.version, currentVersion)
+        let providers = await registry.matchingCallHierarchies(
+            languageID: request.context.languageID,
+            uri: request.context.uri
+        )
+        var batches: [[CallHierarchyItem]] = []
+        for provider in providers {
+            try Task.checkCancellation()
+            if let list = try await invoke(
+                id: provider.id,
+                requestVersion: request.document.version,
+                currentVersion: currentVersion,
+                work: { try await provider.prepareCallHierarchy(for: request) }
+            ) {
+                batches.append(try LanguageServiceSanitize.capped(list, max: limits.maxHierarchyItems))
+            }
+        }
+        try ensureVersion(request.document.version, current: currentVersion)
+        return try LanguageServiceSanitize.capped(
+            LanguageServiceMerge.callHierarchyItems(batches),
+            max: limits.maxHierarchyItems
+        )
+    }
+
+    public func executeCommand(
+        _ request: ExecuteCommandRequest
+    ) async throws -> ExecuteCommandResult {
+        try Task.checkCancellation()
+        let providers = await registry.matchingExecuteCommands(
+            languageID: request.context.languageID,
+            uri: request.context.uri
+        )
+        let candidates = providers.filter {
+            $0.supportedCommands.isEmpty || $0.supportedCommands.contains(request.command)
+        }
+        for provider in candidates {
+            try Task.checkCancellation()
+            if let result = try await invoke(
+                id: provider.id,
+                requestVersion: nil as DocumentVersion?,
+                currentVersion: nil as (@Sendable () -> DocumentVersion)?,
+                work: { try await provider.execute(request) }
+            ) {
+                return result
+            }
+        }
+        throw LanguageServiceError.noProvider
+    }
+
+    // MARK: - Policy engine
+
+    /// Invokes a provider with timeout, cancellation, and failure isolation.
+    /// Returns `nil` when the provider failed or timed out (isolated).
+    /// Rethrows cancellation and stale-version errors.
+    private func invoke<T: Sendable>(
+        id: ProviderID,
+        requestVersion: DocumentVersion?,
+        currentVersion: (@Sendable () -> DocumentVersion)?,
+        work: @Sendable @escaping () async throws -> T
+    ) async throws -> T? {
+        try Task.checkCancellation()
+        if let requestVersion, let currentVersion {
+            try ensureVersion(requestVersion, current: currentVersion)
+        }
+
+        let timeout = limits.providerTimeout
+        do {
+            let result: T = try await withThrowingTaskGroup(of: T.self) { group in
+                group.addTask {
+                    try await work()
+                }
+                group.addTask {
+                    try await Task.sleep(for: timeout)
+                    throw LanguageServiceError.timeout(providerID: id.rawValue)
+                }
+                defer { group.cancelAll() }
+                return try await group.next()!
+            }
+            if let requestVersion, let currentVersion {
+                try ensureVersion(requestVersion, current: currentVersion)
+            }
+            await registry.recordSuccess(id: id)
+            return result
+        } catch is CancellationError {
+            await registry.recordCancel(id: id)
+            throw LanguageServiceError.cancelled
+        } catch let error as LanguageServiceError {
+            switch error {
+            case .cancelled:
+                await registry.recordCancel(id: id)
+                throw error
+            case .staleVersion:
+                throw error
+            case .timeout:
+                await registry.recordTimeout(id: id)
+                return nil
+            default:
+                await registry.recordFailure(id: id, message: String(describing: error))
+                return nil
+            }
+        } catch {
+            await registry.recordFailure(id: id, message: String(describing: error))
+            return nil
+        }
+    }
+
+    private func preflight(
+        _ requestVersion: DocumentVersion,
+        _ current: @escaping @Sendable () -> DocumentVersion
+    ) throws {
+        try ensureVersion(requestVersion, current: current)
+        try Task.checkCancellation()
+    }
 
     private func ensureVersion(
         _ requestVersion: DocumentVersion,
-        current: @Sendable () -> DocumentVersion
+        current: @escaping @Sendable () -> DocumentVersion
     ) throws {
         try LanguageServiceVersioning.ensureCurrent(
             requestVersion: requestVersion,

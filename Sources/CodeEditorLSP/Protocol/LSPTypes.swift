@@ -345,26 +345,49 @@ struct LSPTextEditResult: Codable, Sendable {
 // Capabilities snapshot (public)
 public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
     public var completion: Bool
+    public var completionResolve: Bool
     public var hover: Bool
     public var definition: Bool
+    public var declaration: Bool
+    public var implementation: Bool
+    public var references: Bool
     public var diagnostics: Bool
+    public var pullDiagnostics: Bool
     public var documentSymbol: Bool
+    public var workspaceSymbol: Bool
     public var formatting: Bool
     public var rangeFormatting: Bool
     public var rename: Bool
     public var codeAction: Bool
+    public var codeActionResolve: Bool
     public var semanticTokens: Bool
+    public var semanticTokensRange: Bool
+    public var semanticTokensDelta: Bool
     public var foldingRange: Bool
     public var signatureHelp: Bool
     public var documentLink: Bool
     public var documentColor: Bool
+    public var inlayHint: Bool
+    public var inlayHintResolve: Bool
+    public var documentHighlight: Bool
+    public var typeHierarchy: Bool
+    public var callHierarchy: Bool
+    public var executeCommand: Bool
     public var incrementalSync: Bool
+    public var workspaceFolders: Bool
+    public var supportedCommands: [String]
 
     public static let empty = ServerCapabilitiesSnapshot(
-        completion: false, hover: false, definition: false, diagnostics: false,
-        documentSymbol: false, formatting: false, rangeFormatting: false, rename: false,
-        codeAction: false, semanticTokens: false, foldingRange: false, signatureHelp: false,
-        documentLink: false, documentColor: false, incrementalSync: false
+        completion: false, completionResolve: false, hover: false, definition: false,
+        declaration: false, implementation: false, references: false, diagnostics: false,
+        pullDiagnostics: false, documentSymbol: false, workspaceSymbol: false,
+        formatting: false, rangeFormatting: false, rename: false, codeAction: false,
+        codeActionResolve: false, semanticTokens: false, semanticTokensRange: false,
+        semanticTokensDelta: false, foldingRange: false, signatureHelp: false,
+        documentLink: false, documentColor: false, inlayHint: false, inlayHintResolve: false,
+        documentHighlight: false, typeHierarchy: false, callHierarchy: false,
+        executeCommand: false, incrementalSync: false, workspaceFolders: false,
+        supportedCommands: []
     )
 
     static func parse(from result: [String: Any]) -> ServerCapabilitiesSnapshot {
@@ -381,22 +404,75 @@ public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
                 incremental = change == 2
             }
         }
+        let completionProvider = caps["completionProvider"] as? [String: Any]
+        let completionResolve = completionProvider?["resolveProvider"] as? Bool ?? false
+        let codeActionProvider = caps["codeActionProvider"]
+        var codeActionResolve = false
+        if let dict = codeActionProvider as? [String: Any] {
+            codeActionResolve = dict["resolveProvider"] as? Bool ?? false
+        }
+        let semantic = caps["semanticTokensProvider"] as? [String: Any]
+        var tokensFull = has("semanticTokensProvider")
+        var tokensRange = false
+        var tokensDelta = false
+        if let semantic {
+            tokensFull = true
+            if let full = semantic["full"] as? Bool {
+                tokensFull = full
+            } else if let full = semantic["full"] as? [String: Any] {
+                tokensFull = true
+                tokensDelta = full["delta"] as? Bool ?? false
+            }
+            if semantic["range"] is Bool || semantic["range"] is [String: Any] {
+                tokensRange = true
+            }
+        }
+        let inlay = caps["inlayHintProvider"] as? [String: Any]
+        let inlayResolve = inlay?["resolveProvider"] as? Bool ?? false
+        let exec = caps["executeCommandProvider"] as? [String: Any]
+        let commands = exec?["commands"] as? [String] ?? []
+        let workspace = caps["workspace"] as? [String: Any]
+        let folders = workspace?["workspaceFolders"]
+        let foldersSupported: Bool
+        if let b = folders as? Bool {
+            foldersSupported = b
+        } else {
+            foldersSupported = folders != nil
+        }
+        let diagnosticProvider = caps["diagnosticProvider"]
         return ServerCapabilitiesSnapshot(
             completion: has("completionProvider"),
+            completionResolve: completionResolve,
             hover: has("hoverProvider"),
             definition: has("definitionProvider"),
-            diagnostics: true, // publishDiagnostics is almost always present
+            declaration: has("declarationProvider"),
+            implementation: has("implementationProvider"),
+            references: has("referencesProvider"),
+            diagnostics: true,
+            pullDiagnostics: diagnosticProvider != nil,
             documentSymbol: has("documentSymbolProvider"),
+            workspaceSymbol: has("workspaceSymbolProvider"),
             formatting: has("documentFormattingProvider"),
             rangeFormatting: has("documentRangeFormattingProvider"),
             rename: has("renameProvider"),
             codeAction: has("codeActionProvider"),
-            semanticTokens: has("semanticTokensProvider"),
+            codeActionResolve: codeActionResolve,
+            semanticTokens: tokensFull,
+            semanticTokensRange: tokensRange,
+            semanticTokensDelta: tokensDelta,
             foldingRange: has("foldingRangeProvider"),
             signatureHelp: has("signatureHelpProvider"),
             documentLink: has("documentLinkProvider"),
             documentColor: has("colorProvider"),
-            incrementalSync: incremental
+            inlayHint: has("inlayHintProvider"),
+            inlayHintResolve: inlayResolve,
+            documentHighlight: has("documentHighlightProvider"),
+            typeHierarchy: has("typeHierarchyProvider"),
+            callHierarchy: has("callHierarchyProvider"),
+            executeCommand: has("executeCommandProvider"),
+            incrementalSync: incremental,
+            workspaceFolders: foldersSupported,
+            supportedCommands: commands
         )
     }
 }
