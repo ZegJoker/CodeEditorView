@@ -22,12 +22,35 @@ public final class WorkbenchModel {
     public let editorClientRegistry: WorkbenchEditorClientRegistry
     public let openQuickly: OpenQuicklyModel
     public let commandPalette: CommandPaletteModel
+    public let windowRegistry: WorkbenchWindowRegistry
+    public let toolingSurfaces: WorkbenchToolingSurfaceRegistry
+
+    /// Explicit lifecycle phase for the primary session owner.
+    public private(set) var lifecyclePhase: WorkbenchLifecyclePhase = .creating
+    /// Keyboard / command focus target.
+    public var focusedTarget: WorkbenchFocusTarget = .editor
 
     public var isNavigatorVisible: Bool
     public var isInspectorVisible: Bool
     public var isUtilityVisible: Bool
-    public var isCommandPalettePresented: Bool = false
-    public var isOpenQuicklyPresented: Bool = false
+    public var isCommandPalettePresented: Bool = false {
+        didSet {
+            if isCommandPalettePresented {
+                focusedTarget = .commandPalette
+            } else if focusedTarget == .commandPalette {
+                focusedTarget = .editor
+            }
+        }
+    }
+    public var isOpenQuicklyPresented: Bool = false {
+        didSet {
+            if isOpenQuicklyPresented {
+                focusedTarget = .openQuickly
+            } else if focusedTarget == .openQuickly {
+                focusedTarget = .editor
+            }
+        }
+    }
     /// Selected utility contribution id (filters utility body).
     public var activeUtilityID: String?
     /// Selected navigator contribution id (multi-mode project / find / scm).
@@ -39,6 +62,8 @@ public final class WorkbenchModel {
     public var selectedNavigatorItem: WorkspaceItemID?
     /// Alert text when file-tree mutations fail.
     public var navigatorError: String?
+    /// Dismissed tooling surface banners.
+    public var dismissedToolingBannerIDs: Set<String> = []
 
     /// Legacy alias used by older hosts; maps to contribution id when possible.
     public var utilitySelectedTab: UtilityAreaTab {
@@ -76,6 +101,8 @@ public final class WorkbenchModel {
         self.editorClientRegistry = WorkbenchEditorClientRegistry()
         self.openQuickly = OpenQuicklyModel()
         self.commandPalette = CommandPaletteModel()
+        self.windowRegistry = WorkbenchWindowRegistry()
+        self.toolingSurfaces = WorkbenchToolingSurfaceRegistry()
         self.isNavigatorVisible = configuration.showsNavigator
         self.isInspectorVisible = configuration.showsInspector
         self.isUtilityVisible = configuration.showsUtilityArea
@@ -120,8 +147,82 @@ public final class WorkbenchModel {
         activeNavigatorID = "workbench.navigator.files"
         activeUtilityID = "workbench.utility.problems"
 
+        // Primary window for multi-window hosts.
+        _ = windowRegistry.create(
+            title: "Main",
+            from: captureWindowState(title: "Main")
+        )
+
         // Catalog of editor commands for the palette (executed via active client).
         builtInCommandToken = EditorController.installBuiltInCommandCatalog(into: self.commandDispatcher)
+        lifecyclePhase = .active
+    }
+
+    // MARK: - Lifecycle
+
+    public func enterBackground() {
+        guard lifecyclePhase == .active else { return }
+        lifecyclePhase = .background
+    }
+
+    public func enterForeground() {
+        if lifecyclePhase == .background || lifecyclePhase == .restoring {
+            lifecyclePhase = .active
+        }
+    }
+
+    public func beginTearDown() {
+        lifecyclePhase = .tearingDown
+        for token in contributionTokens { token.dispose() }
+        contributionTokens.removeAll()
+        builtInCommandToken?.dispose()
+        builtInCommandToken = nil
+    }
+
+    // MARK: - Focus
+
+    public func focus(_ target: WorkbenchFocusTarget) {
+        focusedTarget = target
+        switch target {
+        case .navigator:
+            if !isNavigatorVisible { isNavigatorVisible = true }
+        case .inspector:
+            if !isInspectorVisible { isInspectorVisible = true }
+        case .utility:
+            if !isUtilityVisible { isUtilityVisible = true }
+        case .commandPalette:
+            isCommandPalettePresented = true
+        case .openQuickly:
+            presentOpenQuickly()
+        case .editor, .toolbar:
+            break
+        }
+        syncFocusedWindowChrome()
+    }
+
+    public func cycleFocusForward() {
+        let order: [WorkbenchFocusTarget] = [.navigator, .editor, .inspector, .utility]
+        let idx = order.firstIndex(of: focusedTarget) ?? 0
+        focus(order[(idx + 1) % order.count])
+    }
+
+    /// Whether a command should be enabled given current focus/selection.
+    public func isCommandEnabled(_ id: CommandID) -> Bool {
+        let raw = id.rawValue
+        if raw.hasPrefix("codeeditor.edit.") || raw.hasPrefix("editor.") {
+            return makeCommandContext() != nil && focusedTarget == .editor
+        }
+        if raw.contains("openQuickly") || raw.contains("open.quickly") {
+            return lifecyclePhase == .active
+        }
+        if raw.contains("palette") {
+            return lifecyclePhase == .active
+        }
+        return lifecyclePhase == .active || lifecyclePhase == .background
+    }
+
+    public func validatedPaletteCommands() -> [EditorCommand] {
+        commandDispatcher.commands.allCommands().filter { isCommandEnabled($0.id) }
     }
 
     // MARK: - Contribution selection
@@ -183,13 +284,118 @@ public final class WorkbenchModel {
     }
 
     public func presentCommandPalette() {
+        focus(.commandPalette)
         isCommandPalettePresented = true
     }
 
     public func presentOpenQuickly() {
         openQuickly.resetPresentation()
         isOpenQuicklyPresented = true
+        focusedTarget = .openQuickly
         Task { await openQuickly.recompute(workspace: workspace) }
+    }
+
+    // MARK: - Multi-window
+
+    @discardableResult
+    public func createWindow(title: String = "Workbench") -> WorkbenchWindowState {
+        windowRegistry.create(title: title, from: captureWindowState(title: title))
+    }
+
+    public func focusWindow(_ id: WorkbenchWindowID) {
+        windowRegistry.focus(id)
+        if let state = windowRegistry.windows[id] {
+            applyWindowState(state)
+        }
+    }
+
+    public func closeWindow(_ id: WorkbenchWindowID) {
+        windowRegistry.close(id)
+        if let focused = windowRegistry.focused() {
+            applyWindowState(focused)
+        }
+    }
+
+    public func captureWindowState(title: String = "Workbench") -> WorkbenchWindowState {
+        WorkbenchWindowState(
+            title: title,
+            isNavigatorVisible: isNavigatorVisible,
+            isInspectorVisible: isInspectorVisible,
+            isUtilityVisible: isUtilityVisible,
+            activeNavigatorID: activeNavigatorID,
+            activeUtilityID: activeUtilityID,
+            utilityHeight: Double(utilityHeight),
+            focusedTarget: focusedTarget,
+            statusMessage: statusMessage
+        )
+    }
+
+    public func applyWindowState(_ state: WorkbenchWindowState) {
+        isNavigatorVisible = state.isNavigatorVisible
+        isInspectorVisible = state.isInspectorVisible
+        isUtilityVisible = state.isUtilityVisible
+        activeNavigatorID = state.activeNavigatorID
+        activeUtilityID = state.activeUtilityID
+        utilityHeight = CGFloat(state.utilityHeight)
+        focusedTarget = state.focusedTarget
+        statusMessage = state.statusMessage
+    }
+
+    private func syncFocusedWindowChrome() {
+        guard var state = windowRegistry.focused() else { return }
+        state.isNavigatorVisible = isNavigatorVisible
+        state.isInspectorVisible = isInspectorVisible
+        state.isUtilityVisible = isUtilityVisible
+        state.activeNavigatorID = activeNavigatorID
+        state.activeUtilityID = activeUtilityID
+        state.utilityHeight = Double(utilityHeight)
+        state.focusedTarget = focusedTarget
+        state.statusMessage = statusMessage
+        windowRegistry.update(state)
+    }
+
+    // MARK: - Restoration
+
+    public func captureRestorationState() -> WorkbenchRestorationState {
+        syncFocusedWindowChrome()
+        let (windows, focused) = windowRegistry.capture()
+        return WorkbenchRestorationState(
+            lifecyclePhase: lifecyclePhase == .tearingDown ? .active : lifecyclePhase,
+            windows: windows.isEmpty ? [captureWindowState()] : windows,
+            focusedWindowID: focused,
+            workspace: workspace.captureRestorationState(),
+            registeredContributionIDs: contributionRegistry.allDescriptors().map(\.id),
+            toolingSurfaces: toolingSurfaces.snapshots()
+        )
+    }
+
+    public func encodeRestoration() throws -> Data {
+        try WorkbenchRestoration.encode(captureRestorationState())
+    }
+
+    public func applyRestoration(_ state: WorkbenchRestorationState) {
+        lifecyclePhase = .restoring
+        let migrated = WorkbenchRestoration.migrate(state)
+        windowRegistry.applyRestoration(migrated)
+        if let focused = windowRegistry.focused() {
+            applyWindowState(focused)
+        }
+        toolingSurfaces.apply(snapshots: migrated.toolingSurfaces)
+        lifecyclePhase = .active
+    }
+
+    // MARK: - Tooling surfaces
+
+    public func visibleToolingFailures() -> [WorkbenchToolingSurface] {
+        toolingSurfaces.failed().filter { !dismissedToolingBannerIDs.contains($0.id) }
+    }
+
+    public func dismissToolingBanner(id: String) {
+        dismissedToolingBannerIDs.insert(id)
+    }
+
+    public func retryTooling(id: String) {
+        toolingSurfaces.retry(id: id)
     }
 
     public func openURI(_ uri: DocumentURI, preview: Bool = true) {

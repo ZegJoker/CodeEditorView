@@ -16,12 +16,21 @@ public struct WorkbenchView: View {
         self.model = model
     }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.layoutDirection) private var layoutDirection
+
     public var body: some View {
         let _ = model.contributionRegistry.revision
+        let _ = model.toolingSurfaces.revision
         VStack(spacing: 0) {
+            if !model.visibleToolingFailures().isEmpty {
+                toolingFailureBanner
+            }
             if model.configuration.showsToolbar {
                 toolbar
-                    .transition(.opacity)
+                    .accessibilityIdentifier(WorkbenchAccessibilityID.toolbar)
+                    .accessibilitySortPriority(Double(WorkbenchFocusOrder.toolbar))
+                    .transition(reduceMotion ? .opacity : .opacity)
             }
 
             // Xcode layout: utility/debug area sits under the *editor column* only,
@@ -29,36 +38,52 @@ public struct WorkbenchView: View {
             HStack(spacing: 0) {
                 if model.configuration.showsActivityBar {
                     activityBar
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .accessibilityIdentifier(WorkbenchAccessibilityID.activityBar)
+                        .accessibilitySortPriority(Double(WorkbenchFocusOrder.activityBar))
+                        .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
                 }
                 if model.isNavigatorVisible {
                     navigatorChrome
-                        .transition(WorkbenchMotion.navigatorInsert)
+                        .accessibilityIdentifier(WorkbenchAccessibilityID.navigator)
+                        .accessibilityLabel(WorkbenchL10n.navigator)
+                        .accessibilitySortPriority(Double(WorkbenchFocusOrder.navigator))
+                        .transition(reduceMotion ? .opacity : WorkbenchMotion.navigatorInsert)
                 }
 
                 editorColumn
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityIdentifier(WorkbenchAccessibilityID.editor)
+                    .accessibilityLabel(WorkbenchL10n.editor)
+                    .accessibilitySortPriority(Double(WorkbenchFocusOrder.editor))
 
                 if model.isInspectorVisible {
                     inspectorChrome
-                        .transition(WorkbenchMotion.inspectorInsert)
+                        .accessibilityIdentifier(WorkbenchAccessibilityID.inspector)
+                        .accessibilityLabel(WorkbenchL10n.inspector)
+                        .accessibilitySortPriority(Double(WorkbenchFocusOrder.inspector))
+                        .transition(reduceMotion ? .opacity : WorkbenchMotion.inspectorInsert)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(WorkbenchMotion.pane, value: model.isNavigatorVisible)
-            .animation(WorkbenchMotion.pane, value: model.isInspectorVisible)
-            .animation(WorkbenchMotion.pane, value: model.isUtilityVisible)
+            .animation(reduceMotion ? nil : WorkbenchMotion.pane, value: model.isNavigatorVisible)
+            .animation(reduceMotion ? nil : WorkbenchMotion.pane, value: model.isInspectorVisible)
+            .animation(reduceMotion ? nil : WorkbenchMotion.pane, value: model.isUtilityVisible)
 
             if model.configuration.showsStatusBar {
                 statusBar
+                    .accessibilityIdentifier(WorkbenchAccessibilityID.statusBar)
+                    .accessibilitySortPriority(Double(WorkbenchFocusOrder.statusBar))
                     .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(windowBackground)
+        .environment(\.layoutDirection, layoutDirection)
+        .accessibilityIdentifier(WorkbenchAccessibilityID.root)
         .onAppear {
             model.ensureActiveNavigator()
             model.ensureActiveUtility()
+            model.enterForeground()
         }
         .onChange(of: model.contributionRegistry.revision) { _, _ in
             model.ensureActiveNavigator()
@@ -73,15 +98,17 @@ public struct WorkbenchView: View {
                     onDismiss: { model.isCommandPalettePresented = false }
                 )
                 .padding()
+                .accessibilityIdentifier(WorkbenchAccessibilityID.commandPalette)
             } else {
                 VStack(spacing: 12) {
-                    Text("No active editor")
+                    Text(WorkbenchL10n.noActiveEditor)
                         .font(.headline)
-                    Text("Open a text file to run editor commands.")
+                    Text(WorkbenchL10n.openFileHint)
                         .foregroundStyle(.secondary)
                     Button("Close") { model.isCommandPalettePresented = false }
                 }
                 .padding(24)
+                .accessibilityIdentifier(WorkbenchAccessibilityID.commandPalette)
             }
         }
         .overlay {
@@ -89,9 +116,47 @@ public struct WorkbenchView: View {
                 OpenQuicklyOverlay(model: model)
                     .transition(.opacity)
                     .zIndex(100)
+                    .accessibilityIdentifier(WorkbenchAccessibilityID.openQuickly)
             }
         }
-        .animation(WorkbenchMotion.chrome, value: model.isOpenQuicklyPresented)
+        .animation(reduceMotion ? nil : WorkbenchMotion.chrome, value: model.isOpenQuicklyPresented)
+    }
+
+    private var toolingFailureBanner: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Array(model.visibleToolingFailures()), id: \.id) { surface in
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(surface.title)
+                            .font(.subheadline.weight(.semibold))
+                        if let message = surface.status.message {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    if surface.canRetry {
+                        Button(WorkbenchL10n.retry) {
+                            model.retryTooling(id: surface.id)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    Button(WorkbenchL10n.dismiss) {
+                        model.dismissToolingBanner(id: surface.id)
+                    }
+                    .buttonStyle(.borderless)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.yellow.opacity(0.15))
+        .accessibilityIdentifier(WorkbenchAccessibilityID.toolingBanner)
+        .accessibilityLabel(WorkbenchL10n.toolingFailed)
     }
 
     /// Editor + optional utility split (does not span navigator).
@@ -102,9 +167,11 @@ public struct WorkbenchView: View {
                 VSplitView {
                     WorkbenchEditorArea(model: model)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .animation(WorkbenchMotion.content, value: model.workspace.revision)
+                        .animation(reduceMotion ? nil : WorkbenchMotion.content, value: model.workspace.revision)
                     utilityArea
                         .frame(minHeight: 100)
+                        .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
+                        .accessibilityLabel(WorkbenchL10n.utility)
                 }
                 #else
                 VStack(spacing: 0) {
@@ -112,12 +179,14 @@ public struct WorkbenchView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     utilityArea
                         .frame(height: model.utilityHeight)
+                        .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
+                        .accessibilityLabel(WorkbenchL10n.utility)
                 }
                 #endif
             } else {
                 WorkbenchEditorArea(model: model)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .animation(WorkbenchMotion.content, value: model.workspace.revision)
+                    .animation(reduceMotion ? nil : WorkbenchMotion.content, value: model.workspace.revision)
             }
         }
     }
@@ -323,7 +392,7 @@ public struct WorkbenchView: View {
         let active = contribs.first(where: { $0.id == model.activeNavigatorID }) ?? contribs.first
         return Group {
             if let active {
-                active.makeBody(context: ctx)
+                model.contributionRegistry.makeBodyIsolated(id: active.id, context: ctx)
                     .id(active.id)
             } else {
                 ContentUnavailableView("No Navigator", systemImage: "sidebar.left")
@@ -374,7 +443,7 @@ public struct WorkbenchView: View {
             } else {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(contribs, id: \.id) { c in
-                        c.makeBody(context: ctx)
+                        model.contributionRegistry.makeBodyIsolated(id: c.id, context: ctx)
                     }
                 }
             }
@@ -434,7 +503,7 @@ public struct WorkbenchView: View {
 
             Group {
                 if let active {
-                    active.makeBody(context: ctx)
+                    model.contributionRegistry.makeBodyIsolated(id: active.id, context: ctx)
                         .id(active.id)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .transition(WorkbenchMotion.editorContent)
@@ -464,11 +533,11 @@ public struct WorkbenchView: View {
                 EmptyView()
             } else {
                 if let first = contribs.first {
-                    first.makeBody(context: ctx)
+                    model.contributionRegistry.makeBodyIsolated(id: first.id, context: ctx)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 ForEach(contribs.dropFirst(), id: \.id) { c in
-                    c.makeBody(context: ctx)
+                    model.contributionRegistry.makeBodyIsolated(id: c.id, context: ctx)
                 }
             }
         }

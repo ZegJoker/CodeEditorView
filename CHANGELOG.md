@@ -10,6 +10,10 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 8: Workbench lifecycle, multi-window registry, restoration encode/decode
+- Phase 8: contribution descriptors, fault isolation, focus routing, command validation
+- Phase 8: cancellable workspace index for Open Quickly; tooling failure surfaces; host builder
+- Phase 8: accessibility identifiers, L10n keys, reduced-motion chrome; `PHASE8-NOTES.md`
 - Phase 7: `ProcessService` with process-group kill, streaming I/O, timeouts, shell quoting
 - Phase 7: Task execution handles, concurrency groups, readiness matchers, streaming problem matchers
 - Phase 7: VT parser/screen model, macOS PTY backend, remote terminal transport contract

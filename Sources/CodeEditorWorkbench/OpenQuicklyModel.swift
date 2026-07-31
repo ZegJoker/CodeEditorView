@@ -30,10 +30,13 @@ public final class OpenQuicklyModel {
     public private(set) var isScanning: Bool = false
     /// Keyboard / list highlight index into ``results``.
     public var selectedIndex: Int = 0
+    public var resultLimit: Int = 50
+    /// Injected index service (default file-tree index).
+    public var indexService: any WorkspaceIndexService = FileTreeIndexService()
 
     private var allItems: [OpenQuicklyItem] = []
     private var scanTask: Task<Void, Never>?
-    public var resultLimit: Int = 50
+    private var scanGeneration: UInt64 = 0
 
     public init() {}
 
@@ -43,26 +46,31 @@ public final class OpenQuicklyModel {
         results = Array(allItems.prefix(resultLimit))
     }
 
+    /// Rebuilds the file index via ``indexService`` (cancellable).
     public func recompute(workspace: Workspace) async {
         scanTask?.cancel()
+        scanGeneration &+= 1
+        let generation = scanGeneration
         isScanning = true
-        defer { isScanning = false }
-
-        var collected: [OpenQuicklyItem] = []
-        for root in workspace.fileSystem.roots {
-            let rootItem = WorkspaceItemID(rootID: root.id, path: "")
-            try? await collectFiles(
-                from: rootItem,
-                rootName: root.name,
-                workspace: workspace,
-                into: &collected,
-                depth: 0,
-                maxDepth: 12
-            )
-            if Task.isCancelled { return }
+        defer {
+            if generation == scanGeneration {
+                isScanning = false
+            }
         }
-        allItems = collected
-        applyFilter()
+
+        let service = indexService
+        do {
+            let items = try await service.rebuild(workspace: workspace)
+            guard generation == scanGeneration else { return }
+            allItems = items
+            applyFilter()
+        } catch is CancellationError {
+            return
+        } catch {
+            guard generation == scanGeneration else { return }
+            // Keep previous index on failure.
+            applyFilter()
+        }
     }
 
     public var selectedItem: OpenQuicklyItem? {
@@ -113,7 +121,6 @@ public final class OpenQuicklyModel {
     }
 
     /// Subsequence fuzzy score. Higher is better. `nil` = no match.
-    /// Prefers consecutive runs, word/camel starts, and matches in the file name over path.
     public static func fuzzyScore(query: String, name: String, path: String) -> Int? {
         let q = Array(query.lowercased())
         guard !q.isEmpty else { return 0 }
@@ -145,7 +152,6 @@ public final class OpenQuicklyModel {
 
         for (ti, ch) in chars.enumerated() {
             guard qi < query.count else { break }
-            // Case-insensitive match; keep original case for boundary bonuses.
             guard ch.lowercased() == String(query[qi]) else {
                 consecutive = 0
                 continue
@@ -158,7 +164,6 @@ public final class OpenQuicklyModel {
             } else {
                 consecutive = 1
             }
-            // Word / path / camelCase boundary bonus.
             if ti == 0 {
                 points += 40
             } else {
@@ -169,7 +174,6 @@ public final class OpenQuicklyModel {
                     points += 25
                 }
             }
-            // Prefer earlier first match.
             if ti == firstMatchIndex {
                 points += max(0, 20 - ti)
             }
@@ -177,44 +181,6 @@ public final class OpenQuicklyModel {
             lastMatch = ti
             qi += 1
         }
-
-        guard qi == query.count else { return nil }
-        // Shorter candidates win ties later; slight penalty for long remaining tail.
-        score -= max(0, chars.count - query.count) / 4
-        // Exact name-like prefix boost (case-insensitive).
-        if text.lowercased().hasPrefix(String(query)) {
-            score += 80
-        }
-        return score
-    }
-
-    private func collectFiles(
-        from item: WorkspaceItemID,
-        rootName: String,
-        workspace: Workspace,
-        into collected: inout [OpenQuicklyItem],
-        depth: Int,
-        maxDepth: Int
-    ) async throws {
-        guard depth <= maxDepth, !Task.isCancelled else { return }
-        let children = try await workspace.fileSystem.children(of: item)
-        for child in children {
-            if Task.isCancelled { return }
-            if child.isDirectory {
-                try await collectFiles(
-                    from: child.id,
-                    rootName: rootName,
-                    workspace: workspace,
-                    into: &collected,
-                    depth: depth + 1,
-                    maxDepth: maxDepth
-                )
-            } else {
-                let displayPath = child.id.path.isEmpty ? child.name : "\(rootName)/\(child.id.path)"
-                collected.append(
-                    OpenQuicklyItem(uri: child.uri, name: child.name, path: displayPath)
-                )
-            }
-        }
+        return qi == query.count ? score : nil
     }
 }
