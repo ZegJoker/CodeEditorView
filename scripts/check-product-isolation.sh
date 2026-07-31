@@ -84,6 +84,11 @@ check_no_imports "Sources/CodeEditorLanguageServices" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorCommands|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP)' \
   "LanguageServices has no UI / View / Workbench / Tree-sitter / LSP imports"
 
+echo "== CodeEditorExtensionAPI import allowlist =="
+check_no_imports "Sources/CodeEditorExtensionAPI" \
+  'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions|CodeEditorExtensionHost|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl|ExtensionKit|WasmKit|Process)' \
+  "ExtensionAPI has no host/UI/runtime/tooling imports"
+
 echo "== CodeEditorExtensions import allowlist =="
 check_no_imports "Sources/CodeEditorExtensions" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|ExtensionKit)' \
@@ -181,6 +186,7 @@ if not m:
     sys.exit(1)
 deps = m.group(1)
 allowed = {
+    "CodeEditorExtensionAPI",
     "CodeEditorCore",
     "CodeEditorDocuments",
     "CodeEditorCommands",
@@ -196,7 +202,38 @@ missing = allowed - found
 if missing:
     print("FAIL: Extensions missing deps:", ", ".join(sorted(missing)))
     sys.exit(1)
-print("OK:   Extensions Package.swift deps are Core+Documents+Commands+LanguageSupport+LanguageServices")
+print("OK:   Extensions Package.swift deps are ExtensionAPI+Core+Documents+Commands+LanguageSupport+LanguageServices")
+PY
+
+echo "== CodeEditorExtensionAPI Package.swift deps =="
+python3 - <<'PY' || fail=1
+import re, sys
+text = open("Package.swift").read()
+m = re.search(
+    r'\.target\(\s*name:\s*"CodeEditorExtensionAPI",\s*dependencies:\s*\[(.*?)\]',
+    text,
+    re.S,
+)
+if not m:
+    print("FAIL: CodeEditorExtensionAPI target not found")
+    sys.exit(1)
+deps = m.group(1)
+allowed = {
+    "CodeEditorCore",
+    "CodeEditorDocuments",
+    "CodeEditorCommands",
+    "CodeEditorLanguageSupport",
+}
+found = set(re.findall(r'"([^"]+)"', deps))
+bad = found - allowed
+if bad:
+    print("FAIL: ExtensionAPI unexpected deps:", ", ".join(sorted(bad)))
+    sys.exit(1)
+missing = allowed - found
+if missing:
+    print("FAIL: ExtensionAPI missing deps:", ", ".join(sorted(missing)))
+    sys.exit(1)
+print("OK:   ExtensionAPI Package.swift deps are Core+Documents+Commands+LanguageSupport only")
 PY
 
 echo "== CodeEditorLSP Package.swift deps =="

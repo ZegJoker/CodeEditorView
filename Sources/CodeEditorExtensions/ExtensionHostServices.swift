@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorExtensionAPI
 import CodeEditorCommands
 import CodeEditorLanguageSupport
 import CodeEditorLanguageServices
@@ -12,6 +13,7 @@ public struct ExtensionHostServices: Sendable {
     public var panelStore: PanelContributionStore
     public var themeStore: ThemeContributionStore
     public var snippetStore: SnippetContributionStore
+    public var iconThemeStore: IconThemeContributionStore
     public var storageRoot: URL?
 
     public init(
@@ -22,6 +24,7 @@ public struct ExtensionHostServices: Sendable {
         panelStore: PanelContributionStore = PanelContributionStore(),
         themeStore: ThemeContributionStore = ThemeContributionStore(),
         snippetStore: SnippetContributionStore = SnippetContributionStore(),
+        iconThemeStore: IconThemeContributionStore = IconThemeContributionStore(),
         storageRoot: URL? = nil
     ) {
         self.commandRegistry = commandRegistry
@@ -31,6 +34,7 @@ public struct ExtensionHostServices: Sendable {
         self.panelStore = panelStore
         self.themeStore = themeStore
         self.snippetStore = snippetStore
+        self.iconThemeStore = iconThemeStore
         self.storageRoot = storageRoot
     }
 

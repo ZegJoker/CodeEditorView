@@ -38,6 +38,7 @@ require Docs/Architecture/PHASE5-NOTES.md
 require Docs/Architecture/PHASE6-NOTES.md
 require Docs/Architecture/PHASE7-NOTES.md
 require Docs/Architecture/PHASE8-NOTES.md
+require Docs/Architecture/PHASE9-NOTES.md
 require Docs/Architecture/VIEW-PUBLIC-API.md
 require Docs/Architecture/TOOLCHAIN.md
 require scripts/grammar-inventory.json
@@ -50,7 +51,7 @@ echo "== DocC landings =="
 for mod in \
   CodeEditorCore CodeEditorDocuments CodeEditorCommands CodeEditorWorkspace \
   CodeEditorWorkbench CodeEditorView CodeEditorLanguageSupport CodeEditorLanguageServices \
-  CodeEditorExtensions CodeEditorExtensionHost CodeEditorLSP CodeEditorSearch \
+  CodeEditorExtensionAPI CodeEditorExtensions CodeEditorExtensionHost CodeEditorLSP CodeEditorSearch \
   CodeEditorTasks CodeEditorTerminal CodeEditorSourceControl CodeEditorTreeSitter \
   CodeEditorLanguageSwift CodeEditorLanguageJSON CodeEditorLanguages
 do

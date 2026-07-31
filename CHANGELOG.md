@@ -10,6 +10,12 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 9: `CodeEditorExtensionAPI` author product (identity, manifest, author protocol, contribution DTOs)
+- Phase 9: `extension.toml` v1 parser/validator, `ValidatedContributionPlan`, SHA-256 package digests
+- Phase 9: declarative loaders for themes, icon themes, snippets, languages, grammars, queries
+- Phase 9: immutable contribution snapshots + collision diagnostics; `ExtensionPackageManager` lifecycle (install/enable/disable/update/rollback/uninstall/dev-reload)
+- Phase 9: `codeeditor-extension` CLI (`validate`, `digest`, `migrate` JSON→TOML + optional Swift template)
+- Phase 9: S0/S1 fixtures, TOML corpus, migration goldens; `PHASE9-NOTES.md`
 - Phase 8: Workbench lifecycle, multi-window registry, restoration encode/decode
 - Phase 8: contribution descriptors, fault isolation, focus routing, command validation
 - Phase 8: cancellable workspace index for Open Quickly; tooling failure surfaces; host builder

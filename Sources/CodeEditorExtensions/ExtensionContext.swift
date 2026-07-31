@@ -1,7 +1,8 @@
 import Foundation
+import CodeEditorExtensionAPI
 
 /// Runtime context passed to ``CodeEditorExtension/activate(in:)``.
-public final class ExtensionContext: @unchecked Sendable {
+public final class ExtensionContext: ExtensionAuthorContext, @unchecked Sendable {
     public let extensionID: ExtensionID
     public let grantedPermissions: Set<ExtensionPermission>
     public let log: ExtensionLog
@@ -13,6 +14,7 @@ public final class ExtensionContext: @unchecked Sendable {
     public private(set) var panels: PanelContributionRegistrar?
     public private(set) var themes: ThemeContributionRegistrar?
     public private(set) var snippets: SnippetContributionRegistrar?
+    public private(set) var iconThemes: IconThemeContributionRegistrar?
     public private(set) var storage: ExtensionStorage?
 
     private let lock = NSLock()
@@ -57,6 +59,10 @@ public final class ExtensionContext: @unchecked Sendable {
 
     public func install(snippets: SnippetContributionRegistrar?) {
         self.snippets = snippets
+    }
+
+    public func install(iconThemes: IconThemeContributionRegistrar?) {
+        self.iconThemes = iconThemes
     }
 
     public func install(storage: ExtensionStorage?) {
@@ -117,13 +123,3 @@ public final class ExtensionContext: @unchecked Sendable {
     }
 }
 
-/// In-process extension contract.
-public protocol CodeEditorExtension: Sendable {
-    var manifest: ExtensionManifest { get }
-    func activate(in context: ExtensionContext) async throws
-    func deactivate() async
-}
-
-public extension CodeEditorExtension {
-    func deactivate() async {}
-}

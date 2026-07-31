@@ -1,0 +1,48 @@
+{
+  "id": "com.codeeditor.fixtures.legacy",
+  "displayName": "Legacy JSON Package",
+  "version": "0.9.0",
+  "requiredAPIVersion": "1.0.0",
+  "activationEvents": ["startup"],
+  "requiredHostCapabilities": ["themes", "snippets"],
+  "requestedPermissions": [],
+  "themes": [
+    {
+      "id": "legacy-dark",
+      "displayName": "Legacy Dark",
+      "tokens": { "keyword": "#ff00ff", "string": "#00ff00" }
+    }
+  ],
+  "snippets": [
+    {
+      "id": "leg-snip",
+      "prefix": "leg",
+      "body": "legacy()",
+      "languageID": "swift"
+    }
+  ],
+  "languages": [
+    {
+      "id": "legacy-lang",
+      "displayName": "Legacy Lang",
+      "tsName": "legacy",
+      "fileExtensions": ["leg"],
+      "lineComment": "#"
+    }
+  ],
+  "iconThemes": [
+    {
+      "id": "legacy-icons",
+      "displayName": "Legacy Icons",
+      "fileIcons": { "leg": "leg.svg" }
+    }
+  ],
+  "keybindings": [
+    {
+      "commandID": "legacy.cmd",
+      "key": "l",
+      "modifiers": ["command"],
+      "priority": 1
+    }
+  ]
+}

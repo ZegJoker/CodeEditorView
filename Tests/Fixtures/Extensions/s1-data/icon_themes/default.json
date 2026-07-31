@@ -1,0 +1,11 @@
+{
+  "id": "default-icons",
+  "displayName": "Default Icons",
+  "fileIcons": {
+    "ex": "assets/file-ex.svg",
+    "swift": "assets/file-swift.svg"
+  },
+  "folderIcons": {
+    "src": "assets/folder-src.svg"
+  }
+}

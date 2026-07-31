@@ -1,0 +1,14 @@
+id = "com.codeeditor.fixtures.s0-basic"
+name = "S0 Basic Package"
+description = "Package-compatibility fixture: manifest only"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+authors = ["CodeEditorView Fixtures"]
+license = "MIT"
+
+[activation]
+events = ["startup"]
+
+[runtime]
+kind = "data-only"

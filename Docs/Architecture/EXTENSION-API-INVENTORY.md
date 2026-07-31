@@ -71,9 +71,11 @@ Extension package
 
 Must **not** depend on: CodeEditorView, CodeEditorWorkbench, CodeEditorExtensionHost, Wasm engines, store implementation.
 
-## Next inventory actions (Phase 9)
+## Phase 9 status
 
-1. Extract protocols and value types into new product without behavior change.
-2. Leave typealiases/re-exports in `CodeEditorExtensions` for one major.
-3. Replace mutable optional registrars with capability-scoped handles over time.
-4. Make `deactivate()` async and activation transactional.
+1. **Done:** Extract protocols and value types into `CodeEditorExtensionAPI`.
+2. **Done:** `@_exported import CodeEditorExtensionAPI` from `CodeEditorExtensions` for one major.
+3. **Done:** `deactivate()` is async via protocol default.
+4. **Done:** TOML packages + `ValidatedContributionPlan` + digests + package manager snapshots.
+5. **Later:** Replace mutable optional registrars with capability-scoped handles (Phases 10+).
+6. **Later:** `CodeEditorExtensionTesting` product.

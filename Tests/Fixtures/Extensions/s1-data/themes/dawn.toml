@@ -1,0 +1,6 @@
+id = "dawn"
+name = "Dawn"
+[tokens]
+keyword = "#d73a49"
+string = "#032f62"
+comment = "#6a737d"

@@ -1,25 +1,27 @@
 # ``CodeEditorExtensions``
 
-In-process extension runtime, manifests, and registrars.
+In-process extension runtime, host façade, and package lifecycle.
 
 ## Overview
 
-In-process extension runtime, manifests, and registrars.
+Host-facing extension product. Re-exports ``CodeEditorExtensionAPI`` for compatibility.
+Prefer authoring against the API product; use this module for:
 
-Key guides:
+- ``ExtensionRuntime`` lifecycle
+- Contribution registrars and stores
+- ``ExtensionPackageManager`` install/reload
+- ``DataExtensionLoader`` legacy adapter
 
-- Product selection: `Docs/Guides/PRODUCT-SELECTION.md`
-- API stability: `Docs/Guides/API-STABILITY.md`
-- API audit: `Docs/Guides/API-AUDIT.md`
+See `Docs/Architecture/PHASE9-NOTES.md` and `Docs/Guides/EXTENSION-AUTHORING.md`.
 
 ## Topics
 
-- `ExtensionRuntime`
-- `CodeEditorExtension`
-- Data-only loader
-- Permissions
+- Runtime: ``ExtensionRuntime``, ``ExtensionContext``
+- Package manager: ``ExtensionPackageManager``
+- Data loader: ``DataExtensionLoader``
+- Stores and registrars
 
 ## See Also
 
+- ``CodeEditorExtensionAPI``
 - Architecture notes under `Docs/Architecture/`
-- PHASE notes for the phase that introduced this product

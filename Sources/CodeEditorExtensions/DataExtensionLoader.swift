@@ -1,6 +1,7 @@
 import Foundation
 import CodeEditorCommands
 import CodeEditorLanguageSupport
+import CodeEditorExtensionAPI
 
 /// Declarative extension payload (no code execution).
 public struct DataExtensionBundle: Sendable {
@@ -9,42 +10,40 @@ public struct DataExtensionBundle: Sendable {
     public var snippets: [SnippetContribution]
     public var keybindingOverrides: [KeybindingOverrideDTO]
     public var languageDefinitions: [LanguageDefinitionDTO]
+    public var iconThemes: [IconThemeContribution]
+    public var plan: ValidatedContributionPlan?
 
     public init(
         manifest: ExtensionManifest,
         themes: [ThemeContribution] = [],
         snippets: [SnippetContribution] = [],
         keybindingOverrides: [KeybindingOverrideDTO] = [],
-        languageDefinitions: [LanguageDefinitionDTO] = []
+        languageDefinitions: [LanguageDefinitionDTO] = [],
+        iconThemes: [IconThemeContribution] = [],
+        plan: ValidatedContributionPlan? = nil
     ) {
         self.manifest = manifest
         self.themes = themes
         self.snippets = snippets
         self.keybindingOverrides = keybindingOverrides
         self.languageDefinitions = languageDefinitions
+        self.iconThemes = iconThemes
+        self.plan = plan
+    }
+
+    public init(plan: ValidatedContributionPlan) {
+        self.manifest = plan.manifest
+        self.themes = plan.themes
+        self.snippets = plan.snippets
+        self.keybindingOverrides = plan.keybindings
+        self.languageDefinitions = plan.languages
+        self.iconThemes = plan.iconThemes
+        self.plan = plan
     }
 }
 
-/// Codable keybinding override for data bundles.
-public struct KeybindingOverrideDTO: Sendable, Hashable, Codable {
-    public var commandID: String
-    public var key: String
-    public var modifiers: [String]
-    public var priority: Int
-
-    public init(
-        commandID: String,
-        key: String,
-        modifiers: [String] = [],
-        priority: Int = 0
-    ) {
-        self.commandID = commandID
-        self.key = key
-        self.modifiers = modifiers
-        self.priority = priority
-    }
-
-    public func makeOverride() -> KeybindingOverride {
+public extension KeybindingOverrideDTO {
+    func makeOverride() -> KeybindingOverride {
         var mods: KeyModifier = []
         for m in modifiers {
             switch m.lowercased() {
@@ -64,91 +63,25 @@ public struct KeybindingOverrideDTO: Sendable, Hashable, Codable {
     }
 }
 
-private struct DataExtensionFile: Codable {
-    var id: String
-    var displayName: String
-    var version: String?
-    var requiredAPIVersion: String?
-    var activationEvents: [String]?
-    var requiredHostCapabilities: [String]?
-    var requestedPermissions: [String]?
-    var themes: [ThemeJSON]?
-    var snippets: [SnippetJSON]?
-    var keybindings: [KeybindingOverrideDTO]?
-    var languages: [LanguageDefinitionDTO]?
-}
-
-private struct ThemeJSON: Codable {
-    var id: String
-    var displayName: String
-    var tokens: [String: String]?
-}
-
-private struct SnippetJSON: Codable {
-    var id: String
-    var prefix: String
-    var body: String
-    var languageID: String?
-    var description: String?
-}
-
-/// Loads data-only extension bundles from JSON.
+/// Loads data-only extension bundles. Prefer ``ExtensionPackageLoader``; this remains a legacy adapter.
 public enum DataExtensionLoader {
-    public static func load(json: Data) throws -> DataExtensionBundle {
-        let decoder = JSONDecoder()
-        let file: DataExtensionFile
-        do {
-            file = try decoder.decode(DataExtensionFile.self, from: json)
-        } catch {
-            throw ExtensionError.dataLoad(String(describing: error))
-        }
-
-        let version = SemanticVersion.parse(file.version ?? "1.0.0") ?? SemanticVersion(major: 1)
-        let apiMin = SemanticVersion.parse(file.requiredAPIVersion ?? "1.0.0") ?? .phase9API
-
-        let events: [ExtensionActivationEvent] = (file.activationEvents ?? ["startup"]).compactMap {
-            parseActivationEvent($0)
-        }
-
-        let caps = Set((file.requiredHostCapabilities ?? []).compactMap { HostCapability(rawValue: $0) })
-        let perms = Set((file.requestedPermissions ?? []).compactMap { ExtensionPermission(rawValue: $0) })
-
-        let manifest = ExtensionManifest(
-            id: ExtensionID(rawValue: file.id),
-            displayName: file.displayName,
-            version: version,
-            requiredAPIVersion: .from(apiMin),
-            activationEvents: events.isEmpty ? [.startup] : events,
-            requiredHostCapabilities: caps,
-            requestedPermissions: perms
+    /// Load from package directory (TOML preferred, JSON legacy).
+    public static func load(from directory: URL, allowLegacyJSON: Bool = true) throws -> DataExtensionBundle {
+        let plan = try ExtensionPackageLoader.load(
+            directory: directory,
+            options: .init(allowLegacyJSON: allowLegacyJSON, computeDigest: true)
         )
-
-        let themes = (file.themes ?? []).map {
-            ThemeContribution(id: $0.id, displayName: $0.displayName, tokens: $0.tokens ?? [:])
-        }
-        let snippets = (file.snippets ?? []).map {
-            SnippetContribution(
-                id: $0.id,
-                prefix: $0.prefix,
-                body: $0.body,
-                languageID: $0.languageID,
-                description: $0.description
-            )
-        }
-
-        return DataExtensionBundle(
-            manifest: manifest,
-            themes: themes,
-            snippets: snippets,
-            keybindingOverrides: file.keybindings ?? [],
-            languageDefinitions: file.languages ?? []
-        )
+        return DataExtensionBundle(plan: plan)
     }
 
-    public static func load(from directory: URL) throws -> DataExtensionBundle {
-        let packageURL = directory.appendingPathComponent("extension.json")
-        let data = try Data(contentsOf: packageURL)
-        return try load(json: data)
+    public static func load(json: Data) throws -> DataExtensionBundle {
+        // Write temp file for unified loader path
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ext-json-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        try json.write(to: tmp.appendingPathComponent("extension.json"))
+        return try load(from: tmp, allowLegacyJSON: true)
     }
 
     /// Wraps a data bundle as an activatable in-process extension.
@@ -156,24 +89,8 @@ public enum DataExtensionLoader {
         DataOnlyExtension(bundle: bundle)
     }
 
-    private static func parseActivationEvent(_ raw: String) -> ExtensionActivationEvent? {
-        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if s == "startup" { return .startup }
-        if s == "workspaceOpened" { return .workspaceOpened }
-        if s == "manual" { return .manual }
-        if s.hasPrefix("language:") {
-            return .language(String(s.dropFirst("language:".count)))
-        }
-        if s.hasPrefix("command:") {
-            return .command(String(s.dropFirst("command:".count)))
-        }
-        if s.hasPrefix("fileMatch:") {
-            return .fileMatch(pattern: String(s.dropFirst("fileMatch:".count)))
-        }
-        if s.hasPrefix("view:") {
-            return .view(String(s.dropFirst("view:".count)))
-        }
-        return nil
+    public static func makeExtension(from plan: ValidatedContributionPlan) -> any CodeEditorExtension {
+        DataOnlyExtension(bundle: DataExtensionBundle(plan: plan))
     }
 }
 
@@ -181,29 +98,41 @@ struct DataOnlyExtension: CodeEditorExtension {
     let bundle: DataExtensionBundle
     var manifest: ExtensionManifest { bundle.manifest }
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let ctx = context as? ExtensionContext else {
+            // Minimal author context: only log
+            context.info("Data extension activated without host registrars")
+            return
+        }
         for theme in bundle.themes {
-            if let reg = context.themes {
-                context.track(reg.register(theme))
+            if let reg = ctx.themes {
+                ctx.track(reg.register(theme))
             }
         }
         for snippet in bundle.snippets {
-            if let reg = context.snippets {
-                context.track(reg.register(snippet))
+            if let reg = ctx.snippets {
+                ctx.track(reg.register(snippet))
             }
         }
         for lang in bundle.languageDefinitions {
-            if let reg = context.languages {
-                context.track(reg.register(lang))
+            if let reg = ctx.languages {
+                ctx.track(reg.register(lang))
             }
         }
-        if !bundle.keybindingOverrides.isEmpty, let kb = context.keybindings {
+        for icon in bundle.iconThemes {
+            if let reg = ctx.iconThemes {
+                ctx.track(reg.register(icon))
+            }
+        }
+        if !bundle.keybindingOverrides.isEmpty, let kb = ctx.keybindings {
             let overrides = bundle.keybindingOverrides.map { $0.makeOverride() }
             let token = await MainActor.run {
                 kb.applyOverrides(overrides)
             }
-            context.track(token)
+            ctx.track(token)
         }
-        context.info("Data extension activated (\(bundle.themes.count) themes, \(bundle.snippets.count) snippets)")
+        ctx.info(
+            "Data extension activated (\(bundle.themes.count) themes, \(bundle.snippets.count) snippets, \(bundle.iconThemes.count) icon themes)"
+        )
     }
 }

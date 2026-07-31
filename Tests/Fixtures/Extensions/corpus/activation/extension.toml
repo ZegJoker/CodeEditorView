@@ -1,0 +1,7 @@
+id = "com.codeeditor.fixtures.activation"
+name = "Activation Variants"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+[activation]
+events = ["startup", "workspaceOpened", "language:swift", "command:foo.bar", "fileMatch:*.md", "view:panel", "manual"]

@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorExtensionAPI
 import CodeEditorCommands
 import CodeEditorLanguageSupport
 import CodeEditorLanguageServices
@@ -290,6 +291,30 @@ public final class SnippetContributionRegistrar: @unchecked Sendable {
     @discardableResult
     public func register(_ snippet: SnippetContribution) -> any ExtensionDisposable {
         var copy = snippet
+        copy.extensionID = extensionID
+        if !copy.id.contains(".") {
+            copy.id = "\(extensionID.rawValue).\(copy.id)"
+        }
+        let id = copy.id
+        store.register(copy)
+        return ExtensionRegistrationToken { [store] in
+            store.unregister(id: id)
+        }
+    }
+}
+
+public final class IconThemeContributionRegistrar: @unchecked Sendable {
+    private let store: IconThemeContributionStore
+    private let extensionID: ExtensionID
+
+    public init(store: IconThemeContributionStore, extensionID: ExtensionID) {
+        self.store = store
+        self.extensionID = extensionID
+    }
+
+    @discardableResult
+    public func register(_ theme: IconThemeContribution) -> any ExtensionDisposable {
+        var copy = theme
         copy.extensionID = extensionID
         if !copy.id.contains(".") {
             copy.id = "\(extensionID.rawValue).\(copy.id)"

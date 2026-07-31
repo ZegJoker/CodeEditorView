@@ -1,0 +1,15 @@
+[
+  {
+    "id": "ex-hello",
+    "prefix": "hello",
+    "body": "print(\"Hello, ${1:world}!\")",
+    "languageID": "example",
+    "description": "Hello print"
+  },
+  {
+    "id": "ex-for",
+    "prefix": "fori",
+    "body": "for i in 0..<${1:n} {\n    ${0}\n}",
+    "languageID": "example"
+  }
+]

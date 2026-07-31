@@ -1,0 +1,4 @@
+id = "com.codeeditor.fixtures.bad-schema"
+name = "Bad Schema"
+version = "1.0.0"
+schema_version = 99

@@ -1,0 +1,18 @@
+id = "com.codeeditor.fixtures.s1-data"
+name = "S1 Data Package"
+description = "Data-compatibility fixture: themes, icons, snippets, language, grammar, queries"
+version = "1.2.0"
+schema_version = 1
+api_version = "1.0"
+authors = ["CodeEditorView Fixtures"]
+repository = "https://example.invalid/s1-data"
+license = "MIT"
+
+[activation]
+events = ["startup", "language:example"]
+
+[runtime]
+kind = "data-only"
+
+capabilities = ["themes", "snippets", "languages"]
+permissions = []

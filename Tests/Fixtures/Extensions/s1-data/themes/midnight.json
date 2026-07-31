@@ -1,0 +1,10 @@
+{
+  "id": "midnight",
+  "displayName": "Midnight",
+  "tokens": {
+    "keyword": "#c792ea",
+    "string": "#c3e88d",
+    "comment": "#546e7a",
+    "function": "#82aaff"
+  }
+}

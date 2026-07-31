@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorExtensionAPI
 import CodeEditorCommands
 import CodeEditorLanguageSupport
 import CodeEditorLanguageServices
@@ -164,6 +165,7 @@ public actor ExtensionRuntime {
     public var panelStore: PanelContributionStore { services.panelStore }
     public var themeStore: ThemeContributionStore { services.themeStore }
     public var snippetStore: SnippetContributionStore { services.snippetStore }
+    public var iconThemeStore: IconThemeContributionStore { services.iconThemeStore }
 
     // MARK: - Private
 
@@ -230,6 +232,14 @@ public actor ExtensionRuntime {
                 )
             )
         }
+        if environment.capabilities.contains(.themes) {
+            context.install(
+                iconThemes: IconThemeContributionRegistrar(
+                    store: services.iconThemeStore,
+                    extensionID: extensionID
+                )
+            )
+        }
         if environment.capabilities.contains(.storage), let root = services.storageRoot {
             let dir = root.appendingPathComponent(extensionID.rawValue, isDirectory: true)
             context.install(
@@ -248,5 +258,6 @@ public actor ExtensionRuntime {
         services.panelStore.unregister(extensionID: id)
         services.themeStore.unregister(extensionID: id)
         services.snippetStore.unregister(extensionID: id)
+        services.iconThemeStore.unregister(extensionID: id)
     }
 }

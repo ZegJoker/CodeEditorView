@@ -21,10 +21,10 @@ Default owner for all products is the repository maintainer until multi-owner st
 | CodeEditorTerminal | maintainer | Experimental | Phase 7 | PTY + VT |
 | CodeEditorSourceControl | maintainer | Experimental | Phase 7 | Robust Git |
 | CodeEditorWorkbench | maintainer | Evolving | Phase 8 | Contribution isolation |
-| CodeEditorExtensions | maintainer | Experimental | Phase 9–14 | Store, TOML, façade |
+| CodeEditorExtensionAPI | maintainer | Experimental | Phase 9 | Author SDK, TOML, digests |
+| CodeEditorExtensions | maintainer | Experimental | Phase 9–14 | Runtime, package manager, façade |
 | CodeEditorExtensionHost | maintainer | Experimental | Phase 10–15 | Multi-runtime host |
-| CodeEditorExtensionAPI | maintainer | *new* | Phase 9+ | Author SDK |
-| CodeEditorExtensionTesting | maintainer | *new* | Phase 9+ | Author test harness |
+| CodeEditorExtensionTesting | maintainer | *new* | Phase 10+ | Author test harness |
 | CodeEditorDAP | maintainer | *new* | Phase 13+ | Debug adapter protocol |
 
 ## Program rules

@@ -16,7 +16,9 @@ let package = Package(
         .library(name: "CodeEditorView", targets: ["CodeEditorView"]),
         .library(name: "CodeEditorLanguageSupport", targets: ["CodeEditorLanguageSupport"]),
         .library(name: "CodeEditorLanguageServices", targets: ["CodeEditorLanguageServices"]),
+        .library(name: "CodeEditorExtensionAPI", targets: ["CodeEditorExtensionAPI"]),
         .library(name: "CodeEditorExtensions", targets: ["CodeEditorExtensions"]),
+        .executable(name: "codeeditor-extension", targets: ["CodeEditorExtensionCLI"]),
         .library(name: "CodeEditorExtensionHost", targets: ["CodeEditorExtensionHost"]),
         .library(name: "CodeEditorLSP", targets: ["CodeEditorLSP"]),
         .library(name: "CodeEditorSearch", targets: ["CodeEditorSearch"]),
@@ -546,14 +548,31 @@ let package = Package(
             ]
         ),
         .target(
+            name: "CodeEditorExtensionAPI",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+                "CodeEditorCommands",
+                "CodeEditorLanguageSupport",
+            ]
+        ),
+        .target(
             name: "CodeEditorExtensions",
             dependencies: [
+                "CodeEditorExtensionAPI",
                 "CodeEditorCore",
                 "CodeEditorDocuments",
                 "CodeEditorCommands",
                 "CodeEditorLanguageSupport",
                 "CodeEditorLanguageServices",
             ]
+        ),
+        .executableTarget(
+            name: "CodeEditorExtensionCLI",
+            dependencies: [
+                "CodeEditorExtensionAPI",
+            ],
+            path: "Sources/CodeEditorExtensionCLI"
         ),
         .target(
             name: "CodeEditorExtensionHost",
@@ -744,9 +763,20 @@ let package = Package(
             dependencies: ["CodeEditorLanguageServices"]
         ),
         .testTarget(
+            name: "CodeEditorExtensionAPITests",
+            dependencies: [
+                "CodeEditorExtensionAPI",
+                "CodeEditorExtensions",
+            ],
+            resources: [
+                .copy("../Fixtures/Extensions"),
+            ]
+        ),
+        .testTarget(
             name: "CodeEditorExtensionsTests",
             dependencies: [
                 "CodeEditorExtensions",
+                "CodeEditorExtensionAPI",
                 "CodeEditorCommands",
                 "CodeEditorLanguageServices",
                 "CodeEditorLanguageSupport",

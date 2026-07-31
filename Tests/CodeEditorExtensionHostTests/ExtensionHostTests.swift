@@ -25,7 +25,7 @@ struct DummyRemoteExtension: CodeEditorExtension {
         )
     }
 
-    func activate(in context: ExtensionContext) async throws {}
+    func activate(in context: any ExtensionAuthorContext) async throws {}
 }
 
 /// Creates a host-side transport and starts a peer server that handshakes immediately.

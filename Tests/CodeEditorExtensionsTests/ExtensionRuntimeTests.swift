@@ -18,7 +18,10 @@ struct CommandSampleExtension: CodeEditorExtension {
         requestedPermissions: []
     )
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let context = context as? ExtensionContext else {
+            throw ExtensionError.activationFailed("host context required")
+        }
         guard let commands = context.commands else {
             throw ExtensionError.missingCapabilities([.commands])
         }
@@ -43,7 +46,10 @@ struct CompletionSampleExtension: CodeEditorExtension {
         requestedPermissions: []
     )
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let context = context as? ExtensionContext else {
+            throw ExtensionError.activationFailed("host context required")
+        }
         guard let services = context.languageServices else {
             throw ExtensionError.missingCapabilities([.languageServices])
         }
@@ -66,7 +72,10 @@ struct LanguageMetaSampleExtension: CodeEditorExtension {
         requiredHostCapabilities: [.languages]
     )
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let context = context as? ExtensionContext else {
+            throw ExtensionError.activationFailed("host context required")
+        }
         let def = LanguageDefinition(
             id: LanguageID(rawValue: "extlang"),
             displayName: "Ext Lang",
@@ -88,7 +97,10 @@ struct PanelSampleExtension: CodeEditorExtension {
         requestedPermissions: [.presentUI]
     )
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let context = context as? ExtensionContext else {
+            throw ExtensionError.activationFailed("host context required")
+        }
         try context.requirePermission(.presentUI)
         let token = try context.panels?.register(
             id: "panel",
@@ -109,7 +121,10 @@ struct TaskyExtension: CodeEditorExtension {
     )
     let flag: LockedFlag
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let context = context as? ExtensionContext else {
+            throw ExtensionError.activationFailed("host context required")
+        }
         let flag = self.flag
         let task = Task {
             do {

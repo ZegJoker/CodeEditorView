@@ -81,7 +81,8 @@ dependencies: [
 | **CodeEditorLanguageServices** | Evolving | Provider contracts & host |
 | **CodeEditorSearch** | Evolving | Workspace search/replace |
 | **CodeEditorTasks** | Evolving | Tasks & problem matchers |
-| **CodeEditorExtensions** | Experimental | In-process extensions |
+| **CodeEditorExtensionAPI** | Experimental | Author SDK (`extension.toml`, protocols) |
+| **CodeEditorExtensions** | Experimental | In-process runtime / package manager |
 | **CodeEditorExtensionHost** | Experimental | Out-of-process extension host |
 | **CodeEditorLSP** | Experimental | LSP client |
 | **CodeEditorTerminal** | Experimental | Terminal sessions |
@@ -101,7 +102,7 @@ dependencies: [
 
 // Full tooling
 // + CodeEditorSearch, CodeEditorTasks, CodeEditorTerminal, CodeEditorSourceControl
-// + CodeEditorLSP / CodeEditorExtensions / CodeEditorExtensionHost as needed
+// + CodeEditorLSP / CodeEditorExtensionAPI / CodeEditorExtensions / CodeEditorExtensionHost as needed
 ```
 
 Examples:

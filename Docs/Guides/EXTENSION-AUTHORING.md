@@ -1,39 +1,100 @@
 # Extension authoring guide
 
-Extensions contribute language features and data without forking the editor. Prefer **in-process** Swift types (Phase 9). Use **data-only** bundles for themes/snippets. Use **out-of-process** hosting (Phase 12) when crash isolation is required.
+Extensions contribute language features and data without forking the editor.
+
+| Kind | Prefer |
+|---|---|
+| Data (themes, icons, snippets, language metadata) | `extension.toml` package — no code |
+| Procedural Swift (commands, language services) | In-process types depending on **`CodeEditorExtensionAPI`** |
+| Crash isolation | Out-of-process host (Phase 10+) |
+
+## Author dependency rule
+
+```text
+Your extension package
+  └── CodeEditorExtensionAPI
+        └── Core / Documents / Commands / LanguageSupport
+```
+
+Do **not** import `CodeEditorView`, `CodeEditorWorkbench`, `CodeEditorExtensionHost`, UI frameworks, or process/Wasm engines from author code.
+
+Host apps use `CodeEditorExtensions` for runtime activation and re-export the API (`@_exported`).
 
 ## Concepts
 
 | Concept | Module |
 |---|---|
-| `ExtensionManifest`, permissions, activation | `CodeEditorExtensions` |
-| `ExtensionRuntime` / `ExtensionContext` | `CodeEditorExtensions` |
-| Registrars (commands, languages, language services, panels) | `CodeEditorExtensions` |
+| Identity, manifest, author protocol, contribution DTOs | `CodeEditorExtensionAPI` |
+| TOML / JSON package loading, digests, migration | `CodeEditorExtensionAPI` |
+| `ExtensionRuntime`, registrars, stores, package manager | `CodeEditorExtensions` |
 | Remote host + RPC | `CodeEditorExtensionHost` |
 
-## In-process extension
+## Package layout
+
+```text
+my-extension/
+├── extension.toml
+├── themes/
+├── icon_themes/
+├── snippets/
+├── languages/<id>/config.toml
+├── languages/<id>/*.scm
+├── grammars/<id>/
+└── assets/
+```
+
+### `extension.toml` (canonical)
+
+```toml
+id = "com.example.theme"
+name = "Example Theme"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+
+[activation]
+events = ["startup"]
+
+[runtime]
+kind = "data-only"
+
+capabilities = ["themes", "snippets"]
+```
+
+Validate with:
+
+```bash
+swift run codeeditor-extension validate ./my-extension
+swift run codeeditor-extension digest ./my-extension
+```
+
+## In-process Swift extension
 
 ```swift
+import CodeEditorExtensionAPI
+// Host may also import CodeEditorExtensions for ExtensionContext registrars
 import CodeEditorExtensions
 import CodeEditorCommands
-import CodeEditorLanguageServices
 
-struct HelloExtension: CodeEditorExtension {
+struct HelloExtension: EditorExtension {
     let manifest = ExtensionManifest(
         id: "com.example.hello",
         displayName: "Hello",
         activationEvents: [.startup],
-        requiredHostCapabilities: [.commands, .languageServices]
+        requiredHostCapabilities: [.commands]
     )
 
-    func activate(in context: ExtensionContext) async throws {
+    func activate(in context: any ExtensionAuthorContext) async throws {
+        guard let ctx = context as? ExtensionContext else {
+            context.info("activated without host registrars")
+            return
+        }
         let command = await MainActor.run {
             EditorCommand(id: "com.example.hello.say", title: "Say Hello") { _ in }
         }
-        if let commands = context.commands {
+        if let commands = ctx.commands {
             context.track(await commands.registerAsync(command))
         }
-        // Register CompletionProvider via context.languageServices similarly
     }
 }
 
@@ -42,31 +103,38 @@ await runtime.register(HelloExtension())
 await runtime.fire(.startup)
 ```
 
-## Data-only bundle
+## Data-only package
 
-`extension.json` (see PHASE9-NOTES):
-
-```json
-{
-  "id": "com.example.theme",
-  "displayName": "Theme",
-  "activationEvents": ["startup"],
-  "requiredHostCapabilities": ["themes"],
-  "themes": [
-    { "id": "midnight", "displayName": "Midnight", "tokens": { "keyword": "#c792ea" } }
-  ]
-}
-```
+Load declarative contributions without writing Swift:
 
 ```swift
-let bundle = try DataExtensionLoader.load(from: directoryURL)
-await runtime.register(DataExtensionLoader.makeExtension(from: bundle))
-try await runtime.activate(id: bundle.manifest.id)
+let plan = try ExtensionPackageLoader.load(directory: packageURL)
+await runtime.register(DataExtensionLoader.makeExtension(from: plan))
+try await runtime.activate(id: plan.packageID)
 ```
+
+Themes live under `themes/*.json` (or `.toml`), snippets under `snippets/*.json`, languages under `languages/<id>/config.toml` plus optional Tree-sitter query files.
+
+## Migrating from `extension.json`
+
+```bash
+swift run codeeditor-extension migrate \
+  --from extension.json \
+  --to extension.toml \
+  --dir ./my-extension \
+  --report ./MIGRATION-REPORT.md \
+  --swift-template
+```
+
+Rules:
+
+- `extension.toml` is canonical; if both files exist, **TOML wins** (warning).
+- Legacy JSON remains readable under `allowLegacyJSON` for a documented window.
+- Migration writes contribution folders and a TODO report for ambiguous fields.
 
 ## Permissions
 
-Request only what you need. Host grants the intersection. Panel registration requires `presentUI`. Storage paths cannot escape the extension sandbox without explicit policy.
+Request only what you need. The host grants the intersection of requests and policy. Panel registration requires `presentUI`. Storage paths cannot escape the extension sandbox.
 
 ## Out-of-process (remote)
 
@@ -74,21 +142,19 @@ Request only what you need. Host grants the intersection. Panel registration req
 let pair = MockRemoteExtensionTransport.makePair()
 let server = RemoteExtensionServer(extension: myExt, transport: pair.remote)
 await server.run()
-
-// Host side: RemoteExtensionHost + testFactory returning pair.host
-// Remote completion/hover/definition register into LanguageServiceRegistry
 ```
 
-Production apps supply process or ExtensionKit transports; **do not** call private LaunchServices APIs to force-approve extensions (ADR-011).
+Production apps supply process transports; **do not** call private LaunchServices APIs (ADR-011).
 
 ## Do not
 
-- Import `CodeEditorView` / SwiftUI from extension library code intended for headless hosts  
-- Bypass `WorkspaceEdit` for multi-file edits  
-- Assume experimental ExtensionHost RPC is stable across minors without pinning  
+- Import `CodeEditorView` / SwiftUI from extension library code intended for headless hosts
+- Bypass `WorkspaceEdit` for multi-file edits
+- Assume experimental ExtensionHost RPC is stable across minors without pinning
+- Ship both independent JSON and TOML contribution sets (TOML is sole winner)
 
 ## Related
 
-- PHASE9-NOTES, PHASE12-NOTES  
-- ADR-008, ADR-011  
+- [PHASE9-NOTES](../Architecture/PHASE9-NOTES.md)
+- ADR-008, ADR-011, ADR-014
 - [Product selection](PRODUCT-SELECTION.md)

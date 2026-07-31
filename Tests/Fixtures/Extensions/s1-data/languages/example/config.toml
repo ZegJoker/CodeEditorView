@@ -1,0 +1,6 @@
+name = "Example Lang"
+grammar = "example"
+path_suffixes = ["ex", "example"]
+aliases = ["exlang"]
+line_comments = ["//"]
+block_comment = ["/*", "*/"]

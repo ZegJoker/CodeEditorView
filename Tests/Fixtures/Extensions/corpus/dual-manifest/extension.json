@@ -1,0 +1,6 @@
+{
+  "id": "com.codeeditor.fixtures.dual",
+  "displayName": "Dual Manifest JSON",
+  "version": "1.0.0",
+  "activationEvents": ["startup"]
+}

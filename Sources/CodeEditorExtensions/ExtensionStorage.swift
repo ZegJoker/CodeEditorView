@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorExtensionAPI
 
 /// Per-extension sandboxed key-value + file storage under a host-provided root.
 public final class ExtensionStorage: @unchecked Sendable {
