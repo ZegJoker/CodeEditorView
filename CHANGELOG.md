@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
+## Unreleased
+
+### Added
+
+- Stabilization program Phase 0: ADR-013 (Stable gate), ADR-014 (Swift-first extensions), ADR-015 (threat model), ADR-016 (platform profiles)
+- `Docs/Architecture/CompatibilityProfile.toml`, `PRODUCT-OWNERS.md`, `EXTENSION-API-INVENTORY.md`, `PHASE0-NOTES.md`
+- `scripts/dump-symbol-graphs.sh` for local per-product symbol-graph dumps
+- Phase 1: `PlatformCapabilityProfile` / `CodeEditorPlatformError` and platform service protocols in `CodeEditorCore`
+- Process fail-closed guards on LSP, Tasks, Terminal, SourceControl, and ExtensionHost
+- Immutable grammar pins (`scripts/grammars.tsv` commit SHAs + checksums); pin check/record scripts
+- CI workflow (`.github/workflows/ci.yml`): macOS debug/release, iOS Simulator build, empty-cache resolve, product smoke, coverage, API baselines, WASI pin, isolation/docs/format/license
+- `Docs/Architecture/TOOLCHAIN.md`, `WASI-SDK.pin`, `PHASE1-NOTES.md`
+- Local scripts: `verify-local.sh`, `smoke-products.sh`, `check-licenses.sh`, `check-format.sh`, `check-api-baseline.sh`, `check-wasi-sdk.sh`, `ci-bootstrap-grammars.sh`
+
+### Fixed
+
+- `scripts/update-grammars.sh` copies sibling headers (e.g. Haskell `unicode.h`) and rewrites flattened `common/` includes for TypeScript/TSX/PHP/OCaml so a clean clone can build after grammar generation
+- Grammar updater checks out by immutable commit SHA when pinned
+
 ## [1.0.0] — Ready
 
 First modular 1.0-ready release of the CodeEditorView package.

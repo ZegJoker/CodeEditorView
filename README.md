@@ -38,9 +38,13 @@ This clones (or reuses a cache under `$TMPDIR/codeeditorview-grammars`) each gra
 - `Grammars/src/<lang>/parser.c` (+ `scanner.c` / `scanner.cc` when present)
 - `Grammars/src/<lang>/tree_sitter/*.h`
 - `Grammars/src/<lang>/include/<lang>.h` (public `tree_sitter_*()` entry points)
-- Shared `common/` bits for TypeScript / TSX / PHP / OCaml when upstream provides them
+- Shared `common/` bits for TypeScript / TSX / PHP / OCaml when upstream provides them (includes rewritten to local paths after flatten)
 
 `Grammars/` is listed in `.gitignore`. Re-run the script after cloning the repo, when adding a language to `grammars.tsv`, or when you intentionally want newer upstream parsers.
+
+**Stabilization program:** see `Docs/Architecture/PHASE0-NOTES.md`, `PHASE1-NOTES.md`, and ADRs 013–016 for the evidence-based Stable gate, platform capability profiles, and Swift-first extension platform direction.
+
+**CI:** `.github/workflows/ci.yml` (macOS tests, iOS Simulator build, empty-cache resolve, product smoke, coverage, API baselines, WASI pin, isolation/docs). Local mirror: `./scripts/verify-local.sh`.
 
 **When you need it**
 

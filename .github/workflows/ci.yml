@@ -1,0 +1,234 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+jobs:
+  checks:
+    name: Scripts (isolation, docs, pins, licenses, format)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Isolation
+        run: ./scripts/check-product-isolation.sh
+      - name: Docs inventory
+        run: ./scripts/check-docs.sh
+      - name: Grammar pins
+        run: ./scripts/check-grammar-pins.sh
+      - name: Licenses
+        run: ./scripts/check-licenses.sh
+      - name: Format
+        run: ./scripts/check-format.sh
+
+  macos-debug:
+    name: macOS debug test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: swift test (debug)
+        run: swift test
+
+  macos-release:
+    name: macOS release test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: swift test (release)
+        run: swift test -c release
+
+  strict-concurrency:
+    name: Strict concurrency build
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: Build with complete concurrency checking
+        # Package already uses Swift 6 language mode; reinforce via frontend flags.
+        # (warnings-as-errors deferred until Phase 2+ clears residual concurrency warnings)
+        run: swift build -Xswiftc -strict-concurrency=complete
+
+  ios-simulator:
+    name: iOS Simulator build
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: Resolve package
+        run: swift package resolve
+      - name: Build for iOS Simulator (SPM triple)
+        run: |
+          set -euo pipefail
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
+          # arm64 iOS Simulator is standard on Apple Silicon runners.
+          swift build \
+            --triple arm64-apple-ios18.0-simulator \
+            -Xswiftc -sdk -Xswiftc "$SDK" \
+            -Xcc -isysroot -Xcc "$SDK"
+
+  resolve-empty-cache:
+    name: Empty-cache resolve + build
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: Clear SwiftPM / build caches
+        run: |
+          rm -rf .build
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf .swiftpm/configuration
+      - name: Resolve from empty cache
+        run: swift package resolve
+      - name: Build
+        run: swift build
+
+  product-smoke:
+    name: Independent product smoke builds
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: Smoke products
+        run: ./scripts/smoke-products.sh
+
+  coverage:
+    name: Test with coverage
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: swift test --enable-code-coverage
+        run: swift test --enable-code-coverage
+      - name: Export coverage artifact
+        if: always()
+        run: |
+          mkdir -p coverage-out
+          BIN=$(swift build --show-bin-path)
+          if command -v xcrun >/dev/null; then
+            xcrun llvm-cov export -format=lcov \
+              "${BIN}/CodeEditorViewPackageTests.xctest/Contents/MacOS/CodeEditorViewPackageTests" \
+              -instr-profile default.profdata \
+              > coverage-out/coverage.lcov 2>/dev/null || true
+          fi
+          find . -name '*.profdata' -o -name 'coverage.lcov' | head
+          cp -R .build coverage-out/build-meta 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage-out
+          if-no-files-found: warn
+
+  api-diff:
+    name: API symbol-graph baseline
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: Emit API baselines
+        run: ./scripts/check-api-baseline.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-baselines
+          path: Baselines/api
+
+  wasi-sdk:
+    name: Swift WASI SDK pin
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Swift version
+        run: swift --version
+      - name: Check WASI pin file + optional install
+        env:
+          # Soft by default so missing SDK does not block the whole matrix until
+          # the org publishes a stable CODEEDITOR_WASI_SDK_URL secret. Set
+          # repository variable WASI_SDK_REQUIRED=1 when install is automated.
+          WASI_SDK_REQUIRED: ${{ vars.WASI_SDK_REQUIRED || '0' }}
+          CODEEDITOR_WASI_SDK_URL: ${{ secrets.CODEEDITOR_WASI_SDK_URL || '' }}
+          CODEEDITOR_WASI_SDK_ID: ${{ vars.CODEEDITOR_WASI_SDK_ID || '' }}
+        run: ./scripts/check-wasi-sdk.sh
