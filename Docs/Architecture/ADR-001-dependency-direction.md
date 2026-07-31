@@ -37,7 +37,7 @@ Accepted (first modularization tranche)
 
 - Hosts that want syntax highlighting link one or more language packs (or the umbrella) and ensure packs are registered with `LanguageRegistry`.
 - Build/link cost for a Swift-only editor drops to a single grammar.
-- Clone size still includes all grammars until a satellite repository is considered later.
+- Tree-sitter C grammars under `Grammars/` are **not** checked into git; developers (and CI) run `scripts/update-grammars.sh` (see README).
 - Tests that exercise highlighting must depend on the packs (or umbrella) they need.
 
 ## Baseline (2026-07-30, branch `feat/modular-framework-tranche-1`)

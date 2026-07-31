@@ -20,6 +20,37 @@ Use it from SwiftUI, or drive the same engine through `EditorController` on AppK
 | Swift | 6 |
 | Platforms | macOS 15+, iOS 18+ |
 | Xcode | 16+ |
+| Git + network | Required once to fetch Tree-sitter grammars (see below) |
+
+## Developer setup (Tree-sitter grammars)
+
+Vendored Tree-sitter **C sources are not checked into git** (they are large third-party generated code). They live under `Grammars/` after you generate them locally.
+
+**Prerequisites:** `git`, network access to GitHub (and any grammar remotes listed in `scripts/grammars.tsv`).
+
+```bash
+# From the repository root:
+./scripts/update-grammars.sh
+```
+
+This clones (or reuses a cache under `$TMPDIR/codeeditorview-grammars`) each grammar from `scripts/grammars.tsv` and materializes:
+
+- `Grammars/src/<lang>/parser.c` (+ `scanner.c` / `scanner.cc` when present)
+- `Grammars/src/<lang>/tree_sitter/*.h`
+- `Grammars/src/<lang>/include/<lang>.h` (public `tree_sitter_*()` entry points)
+- Shared `common/` bits for TypeScript / TSX / PHP / OCaml when upstream provides them
+
+`Grammars/` is listed in `.gitignore`. Re-run the script after cloning the repo, when adding a language to `grammars.tsv`, or when you intentionally want newer upstream parsers.
+
+**When you need it**
+
+| Goal | Need `./scripts/update-grammars.sh`? |
+|---|---|
+| Build/test **CodeEditorView** / Core / Workbench only | No |
+| Build/test **CodeEditorLanguageSwift**, **JSON**, **CodeEditorLanguages**, language tests | **Yes** |
+| Examples that call `CodeEditorLanguageSwift.register()` | **Yes** |
+
+Highlight **query** files (`.scm`) remain in-repo under `Sources/CodeEditorLanguages/Resources/` and `Sources/CodeEditorLanguage*/` — only the C parser sources are generated.
 
 ## Installation
 
@@ -118,6 +149,9 @@ DocC landings ship with each library target under `Sources/*/Documentation.docc/
 ## Quality gates
 
 ```bash
+# First-time / CI: materialize Tree-sitter C grammars before language tests
+./scripts/update-grammars.sh
+
 swift test
 scripts/check-product-isolation.sh
 scripts/check-docs.sh
