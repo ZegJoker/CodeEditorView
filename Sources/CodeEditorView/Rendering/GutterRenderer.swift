@@ -10,7 +10,7 @@ import UIKit
 #endif
 
 /// Draws the line-number gutter (+ optional fold ribbon) into a Core Graphics context.
-public enum GutterRenderer {
+package enum GutterRenderer {
     public static func draw(
         model: GutterModel,
         lineIndex: LineIndex<some LinePayload>,

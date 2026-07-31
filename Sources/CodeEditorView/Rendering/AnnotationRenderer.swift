@@ -14,7 +14,7 @@ import UIKit
 /// `[count?][SF Symbol icons] | summary…` with severity-tinted fill and rounded left corners.
 ///
 /// Uses platform string/image drawing (not raw `CTLineDraw`) so flipped AppKit views stay upright.
-public enum AnnotationRenderer {
+package enum AnnotationRenderer {
     /// Distance of the expanded popup from the trailing edge (mchakravarty `popupRightSideOffset`).
     public static let popupRightSideOffset: CGFloat = 20
 

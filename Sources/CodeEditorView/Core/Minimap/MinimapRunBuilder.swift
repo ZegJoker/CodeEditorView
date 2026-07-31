@@ -27,7 +27,7 @@ public struct MinimapBubbleRun: Equatable, Sendable {
 }
 
 /// Builds minimap bubble runs for a single logical line of text.
-public enum MinimapRunBuilder: Sendable {
+package enum MinimapRunBuilder: Sendable {
     /// Produce non-whitespace runs for `lineText` using optional capture runs.
     ///
     /// - Parameters:

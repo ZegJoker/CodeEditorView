@@ -3,7 +3,7 @@ import CoreText
 import Foundation
 import CodeEditorCore
 
-public enum InvisibleCharacterRenderer {
+package enum InvisibleCharacterRenderer {
     public static func draw(
         delegate: InvisibleCharactersDelegate,
         document: DocumentStore,

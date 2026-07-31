@@ -2,7 +2,7 @@ import CoreGraphics
 import CoreText
 import Foundation
 
-public enum EmphasisRenderer {
+package enum EmphasisRenderer {
     public static func draw(
         _ emphases: [Emphasis],
         fragments: [LaidOutFragment],

@@ -3,7 +3,7 @@ import Foundation
 /// Cursor blink driven by structured concurrency (`Task` + `Clock`), not `Timer` or Combine.
 ///
 /// Call from the main actor (UI hosts). Uses `Task` + `ContinuousClock` instead of `Timer`/Combine.
-public final class CursorBlinkController: @unchecked Sendable {
+package final class CursorBlinkController: @unchecked Sendable {
     public private(set) var isVisible: Bool = true
     public var onChange: (@MainActor (Bool) -> Void)?
 

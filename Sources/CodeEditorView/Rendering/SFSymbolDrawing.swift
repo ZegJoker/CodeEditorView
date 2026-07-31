@@ -11,7 +11,7 @@ import UIKit
 ///
 /// Rasterises the symbol into a non-flipped bitmap, tints it, then draws with an
 /// explicit Y-flip so chevrons and diagnostic icons stay upright in `isFlipped` views.
-public enum SFSymbolDrawing {
+package enum SFSymbolDrawing {
     /// Draw a system symbol centered in `rect`, sized to fit the smaller side.
     public static func draw(
         name: String,

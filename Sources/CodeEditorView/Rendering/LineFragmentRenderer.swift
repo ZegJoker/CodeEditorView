@@ -3,7 +3,7 @@ import CoreText
 import Foundation
 
 /// Shared CoreGraphics drawing for typeset fragments.
-public enum LineFragmentRenderer {
+package enum LineFragmentRenderer {
     public static func draw(
         _ fragment: LineFragment,
         in context: CGContext,

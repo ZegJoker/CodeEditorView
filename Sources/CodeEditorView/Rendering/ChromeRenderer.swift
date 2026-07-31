@@ -3,7 +3,7 @@ import Foundation
 import CodeEditorCore
 
 /// Draws editor chrome that is not part of text fragments (line highlight, column guide).
-public enum ChromeRenderer {
+package enum ChromeRenderer {
     /// Fills full-width backgrounds for the given line indices.
     public static func drawLineHighlights(
         lineIndices: Set<Int>,
