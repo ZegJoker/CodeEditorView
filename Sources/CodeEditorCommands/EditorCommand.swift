@@ -51,6 +51,7 @@ public enum EditorCommandAction: Sendable, Equatable {
 }
 
 /// Host/extension service bag (type-erased values keyed by string).
+/// Prefer ``CommandDependencies`` for new code.
 @MainActor
 public final class CommandServiceLocator {
     private var storage: [String: Any] = [:]
@@ -66,6 +67,24 @@ public final class CommandServiceLocator {
     }
 }
 
+/// Typed dependency bag for command handlers (additive to string locator).
+@MainActor
+public final class CommandDependencies {
+    public var documentRegistry: DocumentRegistry?
+    public var onUndoGroup: (() -> Void)?
+
+    public init(documentRegistry: DocumentRegistry? = nil) {
+        self.documentRegistry = documentRegistry
+    }
+}
+
+/// Outcome of an async command execution.
+public enum CommandResult: Sendable, Equatable {
+    case success
+    case cancelled
+    case failed(String)
+}
+
 /// Immutable context passed to command handlers.
 @MainActor
 public struct CommandContext {
@@ -77,6 +96,7 @@ public struct CommandContext {
     public let isEditable: Bool
     public let isFocused: Bool
     public let services: CommandServiceLocator
+    public let dependencies: CommandDependencies
     public let editor: any EditorCommandClient
 
     public init(
@@ -88,6 +108,7 @@ public struct CommandContext {
         isEditable: Bool,
         isFocused: Bool,
         services: CommandServiceLocator = CommandServiceLocator(),
+        dependencies: CommandDependencies = CommandDependencies(),
         editor: any EditorCommandClient
     ) {
         self.documentID = documentID
@@ -98,6 +119,7 @@ public struct CommandContext {
         self.isEditable = isEditable
         self.isFocused = isFocused
         self.services = services
+        self.dependencies = dependencies
         self.editor = editor
     }
 
@@ -113,7 +135,11 @@ public struct CommandContext {
         )
     }
 
-    public static func make(from editor: any EditorCommandClient, services: CommandServiceLocator = CommandServiceLocator()) -> CommandContext {
+    public static func make(
+        from editor: any EditorCommandClient,
+        services: CommandServiceLocator = CommandServiceLocator(),
+        dependencies: CommandDependencies = CommandDependencies()
+    ) -> CommandContext {
         CommandContext(
             documentID: editor.documentID,
             sessionID: editor.sessionID,
@@ -123,6 +149,7 @@ public struct CommandContext {
             isEditable: editor.isEditable,
             isFocused: editor.isFocused,
             services: services,
+            dependencies: dependencies,
             editor: editor
         )
     }
@@ -139,6 +166,8 @@ public struct EditorCommand {
     public let placement: CommandPlacement
     /// Synchronous MainActor handler (built-ins never suspend).
     public let handler: (CommandContext) throws -> Void
+    /// Optional async handler; when set, preferred by ``CommandDispatcher/executeAsync``.
+    public let asyncHandler: ((CommandContext) async throws -> CommandResult)?
 
     public init(
         id: CommandID,
@@ -156,6 +185,26 @@ public struct EditorCommand {
         self.enablement = enablement
         self.placement = placement
         self.handler = handler
+        self.asyncHandler = nil
+    }
+
+    public init(
+        id: CommandID,
+        title: String,
+        category: CommandCategory? = nil,
+        defaultKeybindings: [Keybinding] = [],
+        enablement: ContextExpression = .always,
+        placement: CommandPlacement = .default,
+        asyncHandler: @escaping (CommandContext) async throws -> CommandResult
+    ) {
+        self.id = id
+        self.title = title
+        self.category = category
+        self.defaultKeybindings = defaultKeybindings
+        self.enablement = enablement
+        self.placement = placement
+        self.handler = { _ in }
+        self.asyncHandler = asyncHandler
     }
 
     /// Convenience: command that performs a single ``EditorCommandAction``.

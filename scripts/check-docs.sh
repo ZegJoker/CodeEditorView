@@ -32,6 +32,7 @@ require Docs/Architecture/PHASE13-NOTES.md
 require Docs/Architecture/PHASE0-NOTES.md
 require Docs/Architecture/PHASE1-NOTES.md
 require Docs/Architecture/PHASE2-NOTES.md
+require Docs/Architecture/PHASE3-NOTES.md
 require Docs/Architecture/TOOLCHAIN.md
 require Docs/Architecture/WASI-SDK.pin
 require CHANGELOG.md

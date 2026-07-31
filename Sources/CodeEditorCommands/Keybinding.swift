@@ -15,7 +15,7 @@ public struct KeyModifier: OptionSet, Sendable, Codable, Hashable {
 }
 
 /// One physical key press with modifiers.
-public struct KeyPress: Sendable, Codable, Hashable {
+public struct KeyPress: Sendable, Codable, Hashable, CustomStringConvertible {
     /// Normalized key: `"a"`, `"tab"`, `"escape"`, `"up"`, `"return"`, `"space"`, `"["`, …
     public var key: String
     public var modifiers: KeyModifier
@@ -23,6 +23,16 @@ public struct KeyPress: Sendable, Codable, Hashable {
     public init(key: String, modifiers: KeyModifier = []) {
         self.key = key.lowercased()
         self.modifiers = modifiers
+    }
+
+    public var description: String {
+        var parts: [String] = []
+        if modifiers.contains(.control) { parts.append("ctrl") }
+        if modifiers.contains(.option) { parts.append("opt") }
+        if modifiers.contains(.shift) { parts.append("shift") }
+        if modifiers.contains(.command) { parts.append("cmd") }
+        parts.append(key)
+        return parts.joined(separator: "+")
     }
 }
 

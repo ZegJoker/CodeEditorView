@@ -36,6 +36,24 @@ public final class CommandDispatcher {
         try command.handler(context)
     }
 
+    /// Async execution path (preferred for long-running / cancellable commands).
+    @discardableResult
+    public func executeAsync(_ id: CommandID, context: CommandContext) async throws -> CommandResult {
+        guard let command = commands.command(id: id) else {
+            throw CommandError.unknownCommand(id.rawValue)
+        }
+        let input = context.evaluationInput
+        guard ContextExpressionEvaluator.evaluate(command.enablement, in: input) else {
+            throw CommandError.disabled(id.rawValue)
+        }
+        try Task.checkCancellation()
+        if let asyncHandler = command.asyncHandler {
+            return try await asyncHandler(context)
+        }
+        try command.handler(context)
+        return .success
+    }
+
     /// Handles a single key press. Returns `true` if a command consumed the event.
     @discardableResult
     public func handleKeyPress(_ press: KeyPress, context: CommandContext) throws -> Bool {

@@ -77,6 +77,40 @@ public final class KeybindingRegistry {
         bindings.map { ($0.commandID, $0.keybinding, $0.source) }
     }
 
+    /// Deterministic conflict report for a chord under a context input.
+    public struct KeybindingConflict: Sendable, Hashable {
+        public var chord: [KeyPress]
+        public var winnerCommandID: CommandID
+        public var shadowedCommandIDs: [CommandID]
+    }
+
+    /// Returns chords that have more than one matching binding in `input`.
+    public func conflicts(in input: ContextEvaluationInput) -> [KeybindingConflict] {
+        var byChord: [[KeyPress]: [BindingEntry]] = [:]
+        for entry in bindings {
+            guard ContextExpressionEvaluator.evaluate(entry.keybinding.when, in: input) else { continue }
+            byChord[entry.keybinding.chord, default: []].append(entry)
+        }
+        var result: [KeybindingConflict] = []
+        for (chord, entries) in byChord where entries.count > 1 {
+            guard let winner = pickWinner(entries) else { continue }
+            let shadowed = entries
+                .map(\.commandID)
+                .filter { $0 != winner.commandID }
+                .sorted { $0.rawValue < $1.rawValue }
+            result.append(KeybindingConflict(
+                chord: chord,
+                winnerCommandID: winner.commandID,
+                shadowedCommandIDs: shadowed
+            ))
+        }
+        return result.sorted { a, b in
+            let aKey = a.chord.map(\.description).joined()
+            let bKey = b.chord.map(\.description).joined()
+            return aKey < bKey
+        }
+    }
+
     private func pickWinner(_ candidates: [BindingEntry]) -> BindingEntry? {
         candidates.max { a, b in
             if a.source != b.source {

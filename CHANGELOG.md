@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 3: transactional WorkspaceEdit with rollback, path security, FS directory watchers, workspace snapshots/trust
+- Phase 3: SearchBackend, gitignore-aware native search, SearchReplaceService via WorkspaceEdit
+- Phase 3: async commands, WhenClauseParser, keybinding conflict API, ranked command palette
 - Phase 2 Core/Documents safety: `TextOffsetSemantics`, `DocumentStoreError`, stale-version apply, property/Unicode edit tests
 - Atomic durable file IO (`DocumentIO`, temp + fsync + replace), coordinated IO, recovery journal, file identity / external-change detection, lifecycle policies, security-scoped bookmark helpers
 - Fault-injection DocumentIO for data-loss prevention tests
