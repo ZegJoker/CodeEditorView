@@ -10,3 +10,6 @@ Examples/.build
 .netrc
 *.xcodeproj
 !.github/**/*.xcodeproj
+
+# Tree-sitter C grammars (generated — see scripts/update-grammars.sh)
+/Grammars/
