@@ -1,14 +1,20 @@
 import Foundation
+import CodeEditorCore
 
 public protocol TaskRunner: Sendable {
     func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult
 }
 
 public struct ProcessTaskRunner: TaskRunner {
-    public init() {}
+    public let platformProfile: PlatformCapabilityProfile
+
+    public init(platformProfile: PlatformCapabilityProfile = .default()) {
+        self.platformProfile = platformProfile
+    }
 
     public func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult {
         try Task.checkCancellation()
+        try platformProfile.requireLocal(.localProcess)
         var run = TaskRun(definitionID: definition.id, state: .running, startedAt: Date())
 
         let process = Process()

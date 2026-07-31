@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
 @testable import CodeEditorTasks
@@ -39,6 +40,24 @@ struct TaskTests {
         #expect(result.run.state == .succeeded)
         #expect(result.stdout.contains("hello-task"))
         #expect(channel.snapshot.contains(where: { $0.text.contains("hello-task") }))
+    }
+
+    @Test func processRunnerFailsClosedWhenProfileDeniesLocalProcess() async {
+        let channel = OutputChannel(id: "t", name: "t")
+        let runner = ProcessTaskRunner(platformProfile: .processUnavailable)
+        let def = TaskDefinition(id: "echo", label: "Echo", executable: "/bin/echo", arguments: ["nope"])
+        do {
+            _ = try await runner.run(def, output: channel)
+            Issue.record("expected unsupportedCapability")
+        } catch let error as CodeEditorPlatformError {
+            guard case .unsupportedCapability(let kind, _) = error else {
+                Issue.record("wrong platform error \(error)")
+                return
+            }
+            #expect(kind == .localProcess)
+        } catch {
+            Issue.record("unexpected \(error)")
+        }
     }
 
     @Test func problemMatcherSwiftStyle() throws {

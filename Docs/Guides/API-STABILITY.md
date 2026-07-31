@@ -10,6 +10,8 @@ This package targets **Swift Package Manager 1.0 readiness** with explicit stabi
 | macOS | 15+ |
 | iOS | 18+ |
 
+Process-backed features (LSP process, tasks, terminal, Git CLI, native extension helpers) are gated by `PlatformCapabilityProfile` in `CodeEditorCore` (see ADR-016 and `Docs/Architecture/PHASE1-NOTES.md`). On iOS they fail closed with `CodeEditorPlatformError.unsupportedCapability` rather than incidental Foundation errors.
+
 ## What counts as public API
 
 - `public` types, methods, properties, and free functions in library product modules

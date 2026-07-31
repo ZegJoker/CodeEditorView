@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 
 /// Duplex raw-byte transport; framing is applied by ``LSPJSONRPCConnection``.
 public protocol LSPTransport: Sendable {
@@ -94,8 +95,11 @@ public final class LSPProcessTransport: LSPTransport, @unchecked Sendable {
         executable: URL,
         arguments: [String] = [],
         environment: [String: String]? = nil,
-        currentDirectory: URL? = nil
+        currentDirectory: URL? = nil,
+        platformProfile: PlatformCapabilityProfile = .default()
     ) throws {
+        try platformProfile.requireLocal(.localLanguageServerProcess)
+
         let process = Process()
         process.executableURL = executable
         process.arguments = arguments

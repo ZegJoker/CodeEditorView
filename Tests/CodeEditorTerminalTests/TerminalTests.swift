@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import CodeEditorCore
 @testable import CodeEditorTerminal
 
 @Suite("Terminal")
@@ -37,5 +38,21 @@ struct TerminalTests {
         try await manager.write("x", to: session.id)
         await manager.close(session.id)
         #expect(await manager.allSessions().isEmpty)
+    }
+
+    @Test func processBackendFailsClosedWhenProfileDeniesLocalProcess() async {
+        let backend = ProcessTerminalBackend(platformProfile: .processUnavailable)
+        do {
+            _ = try await backend.start(configuration: TerminalConfiguration())
+            Issue.record("expected unsupportedCapability")
+        } catch let error as CodeEditorPlatformError {
+            guard case .unsupportedCapability(let kind, _) = error else {
+                Issue.record("wrong platform error \(error)")
+                return
+            }
+            #expect(kind == .localProcess)
+        } catch {
+            Issue.record("unexpected \(error)")
+        }
     }
 }

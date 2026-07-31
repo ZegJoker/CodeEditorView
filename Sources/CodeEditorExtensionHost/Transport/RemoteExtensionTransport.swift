@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 
 public protocol RemoteExtensionTransport: Sendable {
     func send(_ data: Data) async throws
@@ -86,7 +87,14 @@ public final class ProcessRemoteExtensionTransport: RemoteExtensionTransport, @u
     public let inbound: AsyncStream<Data>
     private var readerTask: Task<Void, Never>?
 
-    public init(executable: URL, arguments: [String] = [], currentDirectory: URL? = nil) throws {
+    public init(
+        executable: URL,
+        arguments: [String] = [],
+        currentDirectory: URL? = nil,
+        platformProfile: PlatformCapabilityProfile = .default()
+    ) throws {
+        try platformProfile.requireLocal(.nativeExtensionProcess)
+
         let process = Process()
         process.executableURL = executable
         process.arguments = arguments

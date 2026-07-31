@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 import CodeEditorDocuments
 
 /// Source-control provider backed by the `git` CLI.
@@ -6,13 +7,16 @@ public struct GitCLIProvider: SourceControlProvider {
     public let id = "git"
     public var repositoryRoot: URL
     public var executable: URL
+    public var platformProfile: PlatformCapabilityProfile
 
     public init(
         repositoryRoot: URL,
-        executable: URL = URL(fileURLWithPath: "/usr/bin/git")
+        executable: URL = URL(fileURLWithPath: "/usr/bin/git"),
+        platformProfile: PlatformCapabilityProfile = .default()
     ) {
         self.repositoryRoot = repositoryRoot
         self.executable = executable
+        self.platformProfile = platformProfile
     }
 
     public func status() async throws -> [SCMFileStatus] {
@@ -81,7 +85,8 @@ public struct GitCLIProvider: SourceControlProvider {
     }
 
     private func run(_ arguments: [String]) async throws -> String {
-        try await withCheckedThrowingContinuation { cont in
+        try platformProfile.requireLocal(.localGitCLI)
+        return try await withCheckedThrowingContinuation { cont in
             let process = Process()
             process.executableURL = executable
             process.arguments = arguments

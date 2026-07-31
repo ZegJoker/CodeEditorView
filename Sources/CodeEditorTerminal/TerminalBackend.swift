@@ -1,4 +1,5 @@
 import Foundation
+import CodeEditorCore
 
 public protocol TerminalBackend: Sendable {
     func start(configuration: TerminalConfiguration) async throws -> TerminalSessionHandle
@@ -53,14 +54,18 @@ public actor ProcessTerminalBackend: TerminalBackend {
     private var entries: [TerminalSessionID: Entry] = [:]
     private var continuation: AsyncStream<TerminalOutputEvent>.Continuation?
     public let output: AsyncStream<TerminalOutputEvent>
+    public let platformProfile: PlatformCapabilityProfile
 
-    public init() {
+    public init(platformProfile: PlatformCapabilityProfile = .default()) {
+        self.platformProfile = platformProfile
         var cont: AsyncStream<TerminalOutputEvent>.Continuation!
         self.output = AsyncStream { cont = $0 }
         self.continuation = cont
     }
 
     public func start(configuration: TerminalConfiguration) async throws -> TerminalSessionHandle {
+        // Pipe backend uses localProcess; full PTY is Phase 7 (require localPTY then).
+        try platformProfile.requireLocal(.localProcess)
         let handle = TerminalSessionHandle()
         let process = Process()
         let shell = configuration.shell ?? URL(fileURLWithPath: "/bin/sh")

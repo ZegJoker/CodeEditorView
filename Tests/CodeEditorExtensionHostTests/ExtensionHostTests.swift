@@ -283,3 +283,24 @@ struct ExtensionHostTests {
         serverTask.cancel()
     }
 }
+
+@Suite("Extension Host platform")
+struct ExtensionHostPlatformTests {
+    @Test func processTransportFailsClosedWhenProfileDeniesNativeHelpers() {
+        do {
+            _ = try ProcessRemoteExtensionTransport(
+                executable: URL(fileURLWithPath: "/usr/bin/true"),
+                platformProfile: .processUnavailable
+            )
+            Issue.record("expected unsupportedCapability")
+        } catch let error as CodeEditorPlatformError {
+            guard case .unsupportedCapability(let kind, _) = error else {
+                Issue.record("wrong platform error \(error)")
+                return
+            }
+            #expect(kind == .nativeExtensionProcess)
+        } catch {
+            Issue.record("unexpected \(error)")
+        }
+    }
+}

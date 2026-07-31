@@ -5,6 +5,27 @@ import CodeEditorDocuments
 import CodeEditorLanguageServices
 @testable import CodeEditorLSP
 
+@Suite("LSP platform")
+struct LSPPlatformTests {
+    @Test func processTransportFailsClosedWhenProfileDeniesLocalLanguageServer() {
+        do {
+            _ = try LSPProcessTransport(
+                executable: URL(fileURLWithPath: "/usr/bin/true"),
+                platformProfile: .processUnavailable
+            )
+            Issue.record("expected unsupportedCapability")
+        } catch let error as CodeEditorPlatformError {
+            guard case .unsupportedCapability(let kind, _) = error else {
+                Issue.record("wrong platform error \(error)")
+                return
+            }
+            #expect(kind == .localLanguageServerProcess)
+        } catch {
+            Issue.record("unexpected \(error)")
+        }
+    }
+}
+
 @Suite("LSP framing")
 struct JSONRPCFramingTests {
     @Test func encodeDecodeRoundTrip() {

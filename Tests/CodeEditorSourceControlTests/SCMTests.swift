@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import CodeEditorCore
 import CodeEditorDocuments
 @testable import CodeEditorSourceControl
 
@@ -97,5 +98,24 @@ struct SCMTests {
         #expect(status.contains(where: { $0.path == "f.txt" && $0.state == .modified }))
         let branches = try await provider.branches()
         #expect(branches.current != nil)
+    }
+
+    @Test func gitCLIFailsClosedWhenProfileDeniesLocalGit() async {
+        let provider = GitCLIProvider(
+            repositoryRoot: URL(fileURLWithPath: "/tmp"),
+            platformProfile: .processUnavailable
+        )
+        do {
+            _ = try await provider.status()
+            Issue.record("expected unsupportedCapability")
+        } catch let error as CodeEditorPlatformError {
+            guard case .unsupportedCapability(let kind, _) = error else {
+                Issue.record("wrong platform error \(error)")
+                return
+            }
+            #expect(kind == .localGitCLI)
+        } catch {
+            Issue.record("unexpected \(error)")
+        }
     }
 }
