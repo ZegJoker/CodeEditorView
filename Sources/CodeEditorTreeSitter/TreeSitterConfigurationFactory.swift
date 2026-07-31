@@ -32,32 +32,19 @@ public enum TreeSitterConfigurationFactory: Sendable {
             throw Error.parserUnavailable(language.displayName)
         }
 
-        var urls: [URL] = []
-        if let parentID = language.parent,
-           let parent = CodeLanguages.language(id: parentID),
-           let parentHighlights = parent.queryURL(for: "highlights") {
-            urls.append(parentHighlights)
-        }
-        if let highlights = language.queryURL(for: "highlights") {
-            urls.append(highlights)
-        }
-        for extra in language.additionalQueries.sorted() where isHighlightQueryName(extra) {
-            if let url = language.queryURL(for: extra) {
-                urls.append(url)
-            }
-        }
-
-        guard !urls.isEmpty else {
+        let combinedText = try QuerySetLoader.combinedHighlightsSource(language: language)
+        guard let combined = combinedText.data(using: .utf8), !combined.isEmpty else {
             throw Error.queriesNotFound(language.displayName)
         }
 
-        let combined = try combinedQueryData(urls: urls)
         let query: Query
         do {
             query = try Query(language: tsLanguage, data: combined)
         } catch {
-            if urls.count > 1, let own = language.queryURL(for: "highlights") {
-                let ownData = try combinedQueryData(urls: [own])
+            // Fallback: own highlights only (no parent merge).
+            if let own = language.queryURL(for: "highlights"),
+               let ownText = try? String(contentsOf: own, encoding: .utf8),
+               let ownData = ownText.data(using: .utf8) {
                 query = try Query(language: tsLanguage, data: ownData)
             } else {
                 throw error
@@ -69,7 +56,8 @@ public enum TreeSitterConfigurationFactory: Sendable {
             name: language.displayName,
             queries: [.highlights: query]
         )
-        Cache.shared.store(config, for: language.languageID)
+        let identity = GrammarIdentity(languageID: language.languageID)
+        Cache.shared.store(config, for: language.languageID, identity: identity)
         return config
     }
 
@@ -102,18 +90,24 @@ public enum TreeSitterConfigurationFactory: Sendable {
     private final class Cache: @unchecked Sendable {
         static let shared = Cache()
         private let lock = NSLock()
-        private var storage: [LanguageID: LanguageConfiguration] = [:]
+        private var storage: [LanguageID: (config: LanguageConfiguration, identity: GrammarIdentity)] = [:]
 
         func configuration(for id: LanguageID) -> LanguageConfiguration? {
             lock.lock()
             defer { lock.unlock() }
-            return storage[id]
+            return storage[id]?.config
         }
 
-        func store(_ config: LanguageConfiguration, for id: LanguageID) {
+        func store(_ config: LanguageConfiguration, for id: LanguageID, identity: GrammarIdentity) {
             lock.lock()
             defer { lock.unlock() }
-            storage[id] = config
+            storage[id] = (config, identity)
+        }
+
+        func identity(for id: LanguageID) -> GrammarIdentity? {
+            lock.lock()
+            defer { lock.unlock() }
+            return storage[id]?.identity
         }
     }
 }
