@@ -10,17 +10,33 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
     private var rootURLs: [WorkspaceRootID: URL] = [:]
     private var settings: WorkspaceSettings
     private var eventContinuations: [UUID: AsyncThrowingStream<WorkspaceFileEvent, Error>.Continuation] = [:]
+    private var watchSources: [WorkspaceRootID: DispatchSourceFileSystemObject] = [:]
+    private let watchQueue = DispatchQueue(label: "CodeEditorWorkspace.fsWatch")
     /// Counts how many times `children` hits the filesystem (tests assert laziness).
     public private(set) var directoryListCount: Int = 0
+    /// When true (default), install DispatchSource directory watches per root.
+    public var enablesDirectoryWatching: Bool
 
-    public init(settings: WorkspaceSettings = .default) {
+    public init(settings: WorkspaceSettings = .default, enablesDirectoryWatching: Bool = true) {
         self.settings = settings
+        self.enablesDirectoryWatching = enablesDirectoryWatching
     }
 
-    public init(rootDirectories: [URL], settings: WorkspaceSettings = .default) throws {
+    public init(
+        rootDirectories: [URL],
+        settings: WorkspaceSettings = .default,
+        enablesDirectoryWatching: Bool = true
+    ) throws {
         self.settings = settings
+        self.enablesDirectoryWatching = enablesDirectoryWatching
         for url in rootDirectories {
             _ = try addRootSync(directoryURL: url)
+        }
+    }
+
+    deinit {
+        for (_, source) in watchSources {
+            source.cancel()
         }
     }
 
@@ -184,6 +200,7 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
 
     public func removeRoot(id: WorkspaceRootID) async throws {
         guard rootURLs[id] != nil else { throw WorkspaceFileSystemError.rootNotFound }
+        stopWatching(rootID: id)
         rootList.removeAll { $0.id == id }
         rootURLs.removeValue(forKey: id)
         yield(.rootRemoved(id))
@@ -211,6 +228,7 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         let root = WorkspaceRoot(directoryURL: standardized)
         rootList.append(root)
         rootURLs[root.id] = standardized
+        startWatching(rootID: root.id, url: standardized)
         yield(.rootAdded(root))
         return root
     }
@@ -225,13 +243,39 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         guard let rootURL = rootURLs[item.rootID] else {
             throw WorkspaceFileSystemError.rootNotFound
         }
-        if item.path.isEmpty { return rootURL }
-        return rootURL.appendingPathComponent(item.path)
+        return try WorkspacePathSecurity.resolveUnderRoot(root: rootURL, relativePath: item.path)
     }
 
     private func validateName(_ name: String) throws {
         guard !name.isEmpty, !name.contains("/"), name != ".", name != ".." else {
             throw WorkspaceFileSystemError.invalidName
+        }
+        try WorkspacePathSecurity.validateRelativePath(name)
+    }
+
+    private func startWatching(rootID: WorkspaceRootID, url: URL) {
+        guard enablesDirectoryWatching else { return }
+        stopWatching(rootID: rootID)
+        let fd = open(url.path, O_EVTONLY)
+        guard fd >= 0 else { return }
+        let source = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: fd,
+            eventMask: [.write, .rename, .delete, .extend, .attrib],
+            queue: watchQueue
+        )
+        source.setEventHandler { [weak self] in
+            self?.yield(.rescanRequired(rootID))
+        }
+        source.setCancelHandler {
+            close(fd)
+        }
+        watchSources[rootID] = source
+        source.resume()
+    }
+
+    private func stopWatching(rootID: WorkspaceRootID) {
+        if let source = watchSources.removeValue(forKey: rootID) {
+            source.cancel()
         }
     }
 

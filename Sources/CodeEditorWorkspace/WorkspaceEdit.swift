@@ -58,11 +58,22 @@ public enum WorkspaceEditError: Error, Sendable, Equatable {
     case documentNotFound(String)
     case unsupportedURI(String)
     case validationFailed(String)
+    case rollbackFailed(String)
+    case injectedFault(String)
+}
+
+/// Ordered steps for fault injection during transactional apply.
+public enum WorkspaceEditFaultPoint: String, Sendable, Hashable {
+    case afterFirstDocument
+    case afterDocuments
+    case afterFirstFileOp
 }
 
 @MainActor
 public final class WorkspaceEditService {
     private let workspace: Workspace
+    /// When set, `apply` throws after the named step (for tests).
+    public var faultPoint: WorkspaceEditFaultPoint?
 
     public init(workspace: Workspace) {
         self.workspace = workspace
@@ -70,19 +81,20 @@ public final class WorkspaceEditService {
 
     public func validate(_ edit: WorkspaceEdit) throws {
         for change in edit.documentChanges {
-            if let expected = change.expectedVersion {
-                let doc = resolveDocument(change)
-                guard let doc else {
-                    throw WorkspaceEditError.documentNotFound(change.uri.rawValue)
-                }
-                if doc.version != expected {
-                    throw WorkspaceEditError.versionMismatch(
-                        uri: change.uri.rawValue,
-                        expected: expected.rawValue,
-                        actual: doc.version.rawValue
-                    )
-                }
+            let doc = resolveDocument(change)
+            guard let doc else {
+                throw WorkspaceEditError.documentNotFound(change.uri.rawValue)
             }
+            if let expected = change.expectedVersion, doc.version != expected {
+                throw WorkspaceEditError.versionMismatch(
+                    uri: change.uri.rawValue,
+                    expected: expected.rawValue,
+                    actual: doc.version.rawValue
+                )
+            }
+        }
+        for op in edit.fileOperations {
+            try preflightFileOperation(op)
         }
     }
 
@@ -97,33 +109,65 @@ public final class WorkspaceEditService {
         )
     }
 
+    /// Transactional apply: preflight → mutate with journal → rollback on failure.
     public func apply(_ edit: WorkspaceEdit) async throws -> WorkspaceEditResult {
         try validate(edit)
+
         var applied: [AppliedEditTransaction] = []
         var inverseDocs: [DocumentChange] = []
-
-        for change in edit.documentChanges {
-            guard let doc = resolveDocument(change) else {
-                throw WorkspaceEditError.documentNotFound(change.uri.rawValue)
-            }
-            let result = try doc.apply(change.transaction)
-            applied.append(result)
-            inverseDocs.append(
-                DocumentChange(
-                    uri: change.uri,
-                    documentID: doc.id,
-                    expectedVersion: result.newVersion,
-                    transaction: result.inverse
-                )
-            )
-            // Promote preview tabs when document is edited.
-            workspace.promotePreviewTabs(for: doc.id)
-        }
-
         var completedOps: [WorkspaceFileOperation] = []
         var inverseOps: [WorkspaceFileOperation] = []
-        for op in edit.fileOperations {
-            try await applyFileOperation(op, completed: &completedOps, inverse: &inverseOps)
+
+        do {
+            for (index, change) in edit.documentChanges.enumerated() {
+                guard let doc = resolveDocument(change) else {
+                    throw WorkspaceEditError.documentNotFound(change.uri.rawValue)
+                }
+                // Re-check version immediately before mutation (stale-revision gate).
+                if let expected = change.expectedVersion, doc.version != expected {
+                    throw WorkspaceEditError.versionMismatch(
+                        uri: change.uri.rawValue,
+                        expected: expected.rawValue,
+                        actual: doc.version.rawValue
+                    )
+                }
+                let result = try doc.apply(
+                    change.transaction,
+                    expectedVersion: change.expectedVersion
+                )
+                applied.append(result)
+                inverseDocs.append(
+                    DocumentChange(
+                        uri: change.uri,
+                        documentID: doc.id,
+                        expectedVersion: result.newVersion,
+                        transaction: result.inverse
+                    )
+                )
+                workspace.promotePreviewTabs(for: doc.id)
+
+                if faultPoint == .afterFirstDocument, index == 0, edit.documentChanges.count > 1
+                    || (faultPoint == .afterFirstDocument && !edit.fileOperations.isEmpty) {
+                    throw WorkspaceEditError.injectedFault(WorkspaceEditFaultPoint.afterFirstDocument.rawValue)
+                }
+            }
+
+            if faultPoint == .afterDocuments, !edit.fileOperations.isEmpty {
+                throw WorkspaceEditError.injectedFault(WorkspaceEditFaultPoint.afterDocuments.rawValue)
+            }
+
+            for (index, op) in edit.fileOperations.enumerated() {
+                try await applyFileOperation(op, completed: &completedOps, inverse: &inverseOps)
+                if faultPoint == .afterFirstFileOp, index == 0, edit.fileOperations.count > 1 {
+                    throw WorkspaceEditError.injectedFault(WorkspaceEditFaultPoint.afterFirstFileOp.rawValue)
+                }
+            }
+        } catch {
+            try? await rollback(
+                inverseDocs: inverseDocs,
+                inverseOps: inverseOps
+            )
+            throw error
         }
 
         return WorkspaceEditResult(
@@ -136,11 +180,47 @@ public final class WorkspaceEditService {
         )
     }
 
+    private func rollback(
+        inverseDocs: [DocumentChange],
+        inverseOps: [WorkspaceFileOperation]
+    ) async throws {
+        // Reverse file ops first (they depend on post-edit paths), then docs.
+        for op in inverseOps.reversed() {
+            var completed: [WorkspaceFileOperation] = []
+            var inv: [WorkspaceFileOperation] = []
+            try await applyFileOperation(op, completed: &completed, inverse: &inv)
+        }
+        for change in inverseDocs.reversed() {
+            guard let doc = resolveDocument(change) else { continue }
+            _ = try doc.apply(change.transaction, sortHighToLow: false, registerUndo: false)
+        }
+    }
+
     private func resolveDocument(_ change: DocumentChange) -> TextDocument? {
         if let id = change.documentID, let doc = workspace.documents.document(id: id) {
             return doc
         }
         return workspace.documents.document(uri: change.uri)
+    }
+
+    private func preflightFileOperation(_ op: WorkspaceFileOperation) throws {
+        switch op {
+        case .createFile(let uri, _), .createDirectory(let uri):
+            guard parentItem(for: uri) != nil, fileName(for: uri) != nil else {
+                throw WorkspaceEditError.unsupportedURI(uri.rawValue)
+            }
+        case .delete(let uri):
+            guard workspace.fileSystem.item(for: uri) != nil else {
+                throw WorkspaceEditError.documentNotFound(uri.rawValue)
+            }
+        case .rename(let from, let to):
+            guard workspace.fileSystem.item(for: from) != nil else {
+                throw WorkspaceEditError.documentNotFound(from.rawValue)
+            }
+            guard parentItem(for: to) != nil, fileName(for: to) != nil else {
+                throw WorkspaceEditError.unsupportedURI(to.rawValue)
+            }
+        }
     }
 
     private func applyFileOperation(
@@ -172,10 +252,21 @@ public final class WorkspaceEditService {
             guard let item = workspace.fileSystem.item(for: uri) else {
                 throw WorkspaceEditError.documentNotFound(uri.rawValue)
             }
+            // Capture content for rollback of plain files when possible.
+            var restoreContents: String?
+            if let fileURL = uri.fileURL,
+               let data = try? Data(contentsOf: fileURL),
+               let text = String(data: data, encoding: .utf8) {
+                restoreContents = text
+            }
             try await workspace.fileSystem.delete(item: item.id)
             workspace.fileTree.apply(.removed(item.id))
             completed.append(op)
-            // Best-effort inverse: recreate empty file/dir not always possible; skip full content restore.
+            if let restoreContents, !item.isDirectory {
+                inverse.append(.createFile(uri: uri, contents: restoreContents))
+            } else if item.isDirectory {
+                inverse.append(.createDirectory(uri: uri))
+            }
 
         case .rename(let from, let to):
             guard let item = workspace.fileSystem.item(for: from) else {
@@ -203,7 +294,6 @@ public final class WorkspaceEditService {
         if let item = workspace.fileSystem.item(for: parentURI) {
             return item.id
         }
-        // Parent may be a root directory.
         for root in workspace.fileSystem.roots {
             if root.uri.fileURL?.standardizedFileURL == parentURL.standardizedFileURL {
                 return WorkspaceItemID(rootID: root.id, path: "")

@@ -8,6 +8,8 @@ public enum WorkspaceFileEvent: Sendable, Hashable {
     case renamed(from: WorkspaceItemID, to: WorkspaceItem)
     case rootAdded(WorkspaceRoot)
     case rootRemoved(WorkspaceRootID)
+    /// Watcher overflow or coalesced burst; clients should full-rescan.
+    case rescanRequired(WorkspaceRootID?)
 }
 
 public enum WorkspaceFileSystemError: Error, Sendable, Equatable {
@@ -17,6 +19,29 @@ public enum WorkspaceFileSystemError: Error, Sendable, Equatable {
     case alreadyExists(String)
     case ioFailure(String)
     case invalidName
+    case pathEscapesRoot(String)
+}
+
+/// Whether the workspace is trusted for process-backed tooling.
+public enum WorkspaceTrust: String, Sendable, Hashable, Codable, CaseIterable {
+    /// Full local tooling allowed (subject to platform profile).
+    case trusted
+    /// Restricted: prefer no ambient process launch without prompts.
+    case restricted
+    /// Explicitly untrusted (browser-like).
+    case untrusted
+}
+
+public struct WorkspaceTrustState: Sendable, Hashable, Codable {
+    public var level: WorkspaceTrust
+    public var trustedRootIDs: Set<WorkspaceRootID>
+
+    public init(level: WorkspaceTrust = .trusted, trustedRootIDs: Set<WorkspaceRootID> = []) {
+        self.level = level
+        self.trustedRootIDs = trustedRootIDs
+    }
+
+    public static let `default` = WorkspaceTrustState()
 }
 
 /// Abstract multi-root workspace file system with lazy children and event stream.

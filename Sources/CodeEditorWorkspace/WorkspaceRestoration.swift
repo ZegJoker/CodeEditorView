@@ -83,8 +83,16 @@ public struct WorkspaceRestorationState: Codable, Sendable {
 }
 
 public enum WorkspaceRestoration {
+    /// Forward-migrate older schemas; preserve unknown future schema by clamping to current.
     public static func migrate(_ state: WorkspaceRestorationState) -> WorkspaceRestorationState {
         var state = state
+        if state.schemaVersion > WorkspaceRestorationState.currentSchemaVersion {
+            // Forward-compatible: keep payload, pin schema to current for writers.
+            state.schemaVersion = WorkspaceRestorationState.currentSchemaVersion
+        }
+        if state.schemaVersion < 1 {
+            state.schemaVersion = 1
+        }
         // v1 is baseline; future versions migrate stepwise here.
         if state.schemaVersion < 1 {
             state.schemaVersion = 1

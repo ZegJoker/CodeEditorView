@@ -64,6 +64,8 @@ public final class WorkspaceFileTree {
 
     public func apply(_ event: WorkspaceFileEvent) {
         switch event {
+        case .rescanRequired:
+            invalidateAll()
         case .rootAdded(let root):
             if !roots.contains(where: { $0.id == root.id }) {
                 roots.append(root)

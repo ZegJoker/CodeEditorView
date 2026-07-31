@@ -21,6 +21,7 @@ public final class Workspace {
     public private(set) var focusHistory: [EditorPaneID]
     public let navigationHistory: NavigationHistory
     public let settings: WorkspaceSettings
+    public var trust: WorkspaceTrustState
     /// Bumped on structural UI-affecting changes so SwiftUI hosts can depend on a single token.
     public private(set) var revision: UInt64 = 0
 
@@ -29,7 +30,8 @@ public final class Workspace {
         fileSystem: any WorkspaceFileSystem,
         documentProvider: any DocumentContentProvider = LocalFileDocumentProvider(),
         documents: DocumentRegistry = DocumentRegistry(),
-        settings: WorkspaceSettings = .default
+        settings: WorkspaceSettings = .default,
+        trust: WorkspaceTrustState = .default
     ) {
         self.id = id
         self.fileSystem = fileSystem
@@ -37,6 +39,7 @@ public final class Workspace {
         self.documentProvider = documentProvider
         self.documents = documents
         self.settings = settings
+        self.trust = trust
         self.sessions = [:]
         self.navigationHistory = NavigationHistory()
         self.focusHistory = []
@@ -46,6 +49,25 @@ public final class Workspace {
         self.layout = EditorLayoutStore(singlePane: pane.id)
         self.activePaneID = pane.id
         self.focusHistory = [pane.id]
+    }
+
+    /// Immutable cross-isolation snapshot of workspace content state.
+    public func snapshot() -> WorkspaceSnapshot {
+        var docVersions: [DocumentURI: DocumentVersion] = [:]
+        var docIDs: [DocumentID] = []
+        for doc in documents.documents {
+            docIDs.append(doc.id)
+            docVersions[doc.uri] = doc.version
+        }
+        return WorkspaceSnapshot(
+            workspaceID: id,
+            revision: revision,
+            roots: fileSystem.roots,
+            openDocumentIDs: docIDs,
+            documentVersions: docVersions,
+            activePaneID: activePaneID,
+            trust: trust
+        )
     }
 
     /// Convenience for local disk roots.

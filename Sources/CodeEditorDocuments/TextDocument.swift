@@ -87,7 +87,8 @@ public final class TextDocument {
     public func apply(
         _ transaction: EditTransaction,
         sortHighToLow: Bool = true,
-        registerUndo: Bool = true
+        registerUndo: Bool = true,
+        expectedVersion: DocumentVersion? = nil
     ) throws -> AppliedEditTransaction {
         if lifecyclePolicy.isReadOnly {
             throw DocumentProviderError.readOnly
@@ -95,7 +96,11 @@ public final class TextDocument {
         let pre = store.snapshot()
         yield(.willApply(transaction, pre))
 
-        let applied = try store.apply(transaction, sortHighToLow: sortHighToLow)
+        let applied = try store.apply(
+            transaction,
+            sortHighToLow: sortHighToLow,
+            expectedVersion: expectedVersion
+        )
         lastAppliedTransactionID = applied.transaction.id
 
         if registerUndo {
