@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import CodeEditorCore
 
 public protocol TerminalBackend: Sendable {
@@ -44,7 +45,8 @@ public actor MockTerminalBackend: TerminalBackend {
     }
 }
 
-/// Process-pipe backend (not a full PTY). Suitable for simple shell I/O.
+/// Legacy process-pipe backend (not a PTY). Prefer ``PTYTerminalBackend`` on macOS.
+/// Kept for hosts that only grant `localProcess` without PTY.
 public actor ProcessTerminalBackend: TerminalBackend {
     private struct Entry {
         var process: Process
@@ -64,7 +66,6 @@ public actor ProcessTerminalBackend: TerminalBackend {
     }
 
     public func start(configuration: TerminalConfiguration) async throws -> TerminalSessionHandle {
-        // Pipe backend uses localProcess; full PTY is Phase 7 (require localPTY then).
         try platformProfile.requireLocal(.localProcess)
         let handle = TerminalSessionHandle()
         let process = Process()
@@ -89,6 +90,8 @@ public actor ProcessTerminalBackend: TerminalBackend {
         } catch {
             throw TerminalError.startFailed(String(describing: error))
         }
+        let pid = process.processIdentifier
+        if pid > 0 { _ = setpgid(pid, pid) }
         entries[handle.id] = Entry(process: process, stdin: stdin)
 
         let sessionID = handle.id
@@ -113,11 +116,15 @@ public actor ProcessTerminalBackend: TerminalBackend {
     public func resize(cols: Int, rows: Int, session: TerminalSessionID) async throws {
         _ = cols; _ = rows
         guard entries[session] != nil else { throw TerminalError.sessionNotFound }
-        // No PTY — no-op.
+        // Not a PTY — resize is a no-op by design for the legacy pipe backend.
     }
 
     public func terminate(session: TerminalSessionID) async {
         if let entry = entries.removeValue(forKey: session) {
+            let pid = entry.process.processIdentifier
+            if pid > 0 {
+                kill(-pid, SIGTERM)
+            }
             entry.process.terminate()
             continuation?.yield(.exited(session: session, code: entry.process.terminationStatus))
         }

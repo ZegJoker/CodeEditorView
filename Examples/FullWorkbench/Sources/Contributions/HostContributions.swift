@@ -446,17 +446,19 @@ struct SCMNavigatorView: View {
         case .untracked: return "?"
         case .conflicted: return "C"
         case .renamed: return "R"
+        case .copied: return "C"
         case .ignored: return "I"
+        case .submodule: return "S"
         case .unmodified: return " "
         }
     }
 
     private func statusColor(_ state: SCMState) -> Color {
         switch state {
-        case .modified, .renamed: return .orange
+        case .modified, .renamed, .copied: return .orange
         case .added: return .green
         case .deleted, .conflicted: return .red
-        case .untracked: return .secondary
+        case .untracked, .submodule: return .secondary
         default: return .primary
         }
     }

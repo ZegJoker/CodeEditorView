@@ -36,6 +36,7 @@ require Docs/Architecture/PHASE3-NOTES.md
 require Docs/Architecture/PHASE4-NOTES.md
 require Docs/Architecture/PHASE5-NOTES.md
 require Docs/Architecture/PHASE6-NOTES.md
+require Docs/Architecture/PHASE7-NOTES.md
 require Docs/Architecture/VIEW-PUBLIC-API.md
 require Docs/Architecture/TOOLCHAIN.md
 require scripts/grammar-inventory.json

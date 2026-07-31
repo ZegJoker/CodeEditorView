@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 7: `ProcessService` with process-group kill, streaming I/O, timeouts, shell quoting
+- Phase 7: Task execution handles, concurrency groups, readiness matchers, streaming problem matchers
+- Phase 7: VT parser/screen model, macOS PTY backend, remote terminal transport contract
+- Phase 7: Git `-z` status, discovery, full SCM mutations, path safety, trust/cancel
+- Phase 7: CI tooling matrix job; `PHASE7-NOTES.md` evidence
 - Phase 6: LanguageServices policy engine (timeout, cancel, stale-revision, failure isolation, limits, health)
 - Phase 6: provider categories for highlights, type/call hierarchy, execute command, pull diagnostics
 - Phase 6: full bidirectional LSP JSON-RPC (cancel, server requests, progress), framing caps, position map cache

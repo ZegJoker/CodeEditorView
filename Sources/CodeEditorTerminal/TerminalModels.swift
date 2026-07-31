@@ -78,4 +78,15 @@ public enum TerminalError: Error, Sendable, Equatable {
     case notRunning
     case startFailed(String)
     case sessionNotFound
+    case disconnected(String)
+}
+
+/// Paste payload respecting bracketed paste mode when enabled on the screen.
+public enum TerminalPaste {
+    public static func encode(_ text: String, bracketed: Bool) -> Data {
+        if bracketed {
+            return Data("\u{1b}[200~\(text)\u{1b}[201~".utf8)
+        }
+        return Data(text.utf8)
+    }
 }

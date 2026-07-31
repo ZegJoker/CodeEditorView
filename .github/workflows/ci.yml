@@ -193,6 +193,30 @@ jobs:
             echo "SECOND_SERVER=skipped (clangd missing)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  tooling-matrix:
+    name: Tasks Terminal SourceControl matrix
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache grammars
+        uses: actions/cache@v4
+        with:
+          path: |
+            Grammars
+            ${{ runner.temp }}/codeeditorview-grammars
+          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
+      - name: Bootstrap grammars
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: Tasks / Terminal / SourceControl tests
+        run: swift test --filter 'CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl'
+      - name: Tooling availability
+        run: |
+          set -euo pipefail
+          echo "git=$(command -v git || true)" >> "$GITHUB_STEP_SUMMARY"
+          echo "shell=$(command -v sh || true)" >> "$GITHUB_STEP_SUMMARY"
+
   coverage:
     name: Test with coverage
     runs-on: macos-15
