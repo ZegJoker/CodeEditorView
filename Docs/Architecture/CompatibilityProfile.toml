@@ -1,0 +1,47 @@
+# Zed-style compatibility profile for CodeEditorView extensions.
+# Pin and update per ADR-014 and the stabilization plan §6.
+# Status values: stable | compatibility | experimental | deprecated | unsupported | registry-replacement
+
+profile = "zed-style-2026-07"
+upstream_commit = "unpinned" # Phase 0 scaffold; pin on first S0 fixture import
+manifest_schema = 1
+swift_extension_api = "1.0"
+status = "scaffold" # not a release claim; S0–S4 evidence lands in later phases
+
+[features]
+languages = "experimental"
+themes = "experimental"
+icon_themes = "unsupported"
+snippets = "experimental"
+language_servers = "experimental"
+completion_labels = "unsupported"
+symbol_labels = "unsupported"
+debug_adapters = "unsupported"
+debug_locators = "unsupported"
+mcp_servers = "unsupported"
+process_exec = "experimental"
+download_file = "unsupported"
+npm_install = "unsupported"
+worktree = "experimental"
+project = "unsupported"
+settings = "experimental"
+kv_store = "experimental"
+documentation_indexing = "unsupported"
+slash_commands = "unsupported"
+language_model_provider_metadata = "unsupported"
+legacy_agent_server_hosting = "unsupported"
+
+[runtimes]
+builtin_swift = "experimental"
+data_only = "experimental"
+native_process = "experimental"
+swift_wasm = "unsupported"
+remote_provider = "experimental"
+
+[compatibility_levels]
+S0_package = "pending"
+S1_data = "pending"
+S2_swift_api_parity = "pending"
+S3_behavioral = "pending"
+S4_operational = "pending"
+ZB_zed_binary_bridge = "not-claimed"
