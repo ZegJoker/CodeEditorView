@@ -7,7 +7,16 @@ import TreeSitterJsonGrammar
 ///
 /// Call ``register()`` (or import this module and rely on the static initializer)
 /// before loading Tree-sitter configurations for JSON.
+///
+/// JSONC (JSON with comments) is not a separate grammar here: use
+/// ``LanguageDefinition/allowsComments`` on a host-provided definition when needed.
 public enum CodeEditorLanguageJSON: Sendable {
+    /// Pinned grammar commit (must match `scripts/grammars.tsv`).
+    public static let grammarCommit = "001c28d7a29832b06b0e831ec77845553c89b56d"
+    public static let grammarSourceURL = "https://github.com/tree-sitter/tree-sitter-json"
+    public static let grammarParserSHA256 =
+        "e8e1ff5df0d73e3b82574129724e68ef4fa0faf1b8c43dd3f5c1a84839f830ab"
+
     private final class State: @unchecked Sendable {
         let lock = NSLock()
         var didRegister = false
@@ -25,7 +34,11 @@ public enum CodeEditorLanguageJSON: Sendable {
 
         let language = CodeLanguage.json
         let registry = LanguageRegistry.shared
-        registry.register(LanguageDefinition(language))
+        var definition = LanguageDefinition(language)
+        definition.allowsComments = false
+        definition.fileExtensions.formUnion(["jsonc"]) // detect path; grammar is JSON (strict)
+        definition.queryKinds = [.highlights, .folds, .indents, .locals]
+        registry.register(definition)
         registry.registerParser(for: .json) { tree_sitter_json() }
         let tsName = language.tsName
         registry.registerQueryProvider(for: .json) { queryName in

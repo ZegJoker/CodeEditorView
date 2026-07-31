@@ -1,56 +1,61 @@
-# Phase 4 notes — shared documents
+# Phase 4 notes — Language metadata, Tree-sitter, reproducible packs
 
-## Binding API (unchanged)
+## Goal
 
-```swift
-CodeEditor(text: $text, selection: $selection, editorState: $editorState, language: .swift)
-```
+Every grammar/query loads hermetically; mutable upstream refs are zero; language detection and query kinds are typed and tested.
 
-Creates a private `TextDocument` under the hood.
+## Deliverables
 
-## Shared document API
+### LanguageSupport
 
-```swift
-let document = TextDocument(text: source)
-let sessionA = EditorSession(documentID: document.id)
-let sessionB = EditorSession(documentID: document.id)
+| Item | Status |
+|---|---|
+| `QueryKind` enum | Done |
+| Expanded `LanguageDefinition` (filenames, first-line, content patterns, priority, tab, brackets, queryKinds, tooling IDs, allowsComments) | Done |
+| `LanguageDetector` | Done |
+| Injectable `LanguageRegistry` + `snapshot()` + registration diagnostics | Done |
+| Detection / snapshot / QueryKind tests | Done |
 
-// Programmatic
-let a = EditorController(document: document, session: sessionA, language: .swift)
-let b = EditorController(document: document, session: sessionB, language: .swift)
+### TreeSitter
 
-// SwiftUI
-SharedCodeEditor(document: document, session: sessionA, language: .swift)
-// or
-CodeEditor.shared(document: document, session: sessionB, language: .swift)
-```
+| Item | Status |
+|---|---|
+| `QuerySetLoader` + `TreeSitterQueryLimits` + `GrammarIdentity` | Done |
+| Highlight config uses query set loader | Done |
+| Cache stores grammar identity | Done |
 
-## Load / save
+### Packs & inventory
 
-```swift
-let files = LocalFileDocumentProvider()
-try await document.load(from: files, uri: DocumentURI(fileURL: url))
-try await document.save(using: files)
+| Item | Status |
+|---|---|
+| Swift/JSON `grammarCommit` / URL / SHA256 constants | Done |
+| Swift queryKinds + Package.swift filename | Done |
+| JSON `allowsComments = false`, jsonc extension | Done |
+| `scripts/generate-grammar-inventory.sh` → `grammar-inventory.json` (39) | Done |
+| `scripts/verify-grammars.sh` pin + checksum hermetic check | Done |
+| Wired into `verify-local.sh` | Done |
+| Bootstrap smoke + corpus tests | Done |
 
-let memory = InMemoryDocumentProvider()
-try await document.save(using: memory)
-```
+## Gate evidence
 
-## External reload
+| Check | Result |
+|---|---|
+| Mutable grammar refs | **0** (`check-grammar-pins`) |
+| parser.c checksums vs tsv (when Grammars present) | Pass (`verify-grammars`) |
+| Inventory unique names/symbols | Pass |
+| Detection matrix | Pass |
+| Swift/JSON configs load | Pass |
+| `swift test` | **418 tests / 117 suites — all passed** |
 
-```swift
-try document.applyExternalContent(newText, policy: .reloadIfClean)
-try document.applyExternalContent(newText, policy: .alwaysReload)
-```
+## Residual
 
-## Events
+- Full query-kind goldens for every language (smoke only for suite-wide highlights presence)
+- JSONC as separate language id (documented; extension maps to JSON grammar)
+- Injection recursion enforcement beyond documented limit constant
+- License field still best-effort MIT for most tree-sitter repos
 
-```swift
-for await event in document.makeEventStream() {
-    switch event {
-    case .didApply(let applied): …
-    case .dirtyStateDidChange(let dirty): …
-    default: break
-    }
-}
-```
+## Related
+
+- Phase 1 immutable pins  
+- Phase 5 View façade  
+- Phase 9 Zed language config.toml import  

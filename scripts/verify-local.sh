@@ -4,13 +4,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "======== grammar pins ========"
+echo "======== grammar pins + hermetic verify ========"
 ./scripts/check-grammar-pins.sh
-
 if [[ ! -d Grammars/src/swift ]]; then
   echo "======== bootstrap grammars ========"
   ./scripts/update-grammars.sh
 fi
+./scripts/verify-grammars.sh
 
 echo "======== isolation ========"
 ./scripts/check-product-isolation.sh

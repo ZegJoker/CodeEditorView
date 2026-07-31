@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 4: expanded LanguageDefinition, QueryKind, LanguageDetector, registry snapshots/diagnostics
+- Phase 4: QuerySetLoader/GrammarIdentity, grammar-inventory.json, verify-grammars hermetic checks
+- Phase 4: Swift/JSON grammar provenance constants and pack smoke/corpus tests
 - Phase 3: transactional WorkspaceEdit with rollback, path security, FS directory watchers, workspace snapshots/trust
 - Phase 3: SearchBackend, gitignore-aware native search, SearchReplaceService via WorkspaceEdit
 - Phase 3: async commands, WhenClauseParser, keybinding conflict API, ranked command palette

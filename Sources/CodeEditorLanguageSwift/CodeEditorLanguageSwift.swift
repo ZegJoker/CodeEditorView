@@ -8,6 +8,12 @@ import TreeSitterSwiftGrammar
 /// Call ``register()`` (or import this module and rely on the static initializer)
 /// before loading Tree-sitter configurations for Swift.
 public enum CodeEditorLanguageSwift: Sendable {
+    /// Pinned grammar commit (must match `scripts/grammars.tsv`).
+    public static let grammarCommit = "31d17fe7e818a2048c808b5c6fdc2dc792f4f5b5"
+    public static let grammarSourceURL = "https://github.com/alex-pinkus/tree-sitter-swift"
+    public static let grammarParserSHA256 =
+        "cd57689a482a162c8f5bb2b33ae199adbdbcdc3fb737acec3dba02d07dbd20a6"
+
     private final class State: @unchecked Sendable {
         let lock = NSLock()
         var didRegister = false
@@ -25,7 +31,11 @@ public enum CodeEditorLanguageSwift: Sendable {
 
         let language = CodeLanguage.swift
         let registry = LanguageRegistry.shared
-        registry.register(LanguageDefinition(language))
+        var definition = LanguageDefinition(language)
+        definition.filenames = ["package.swift"]
+        definition.preferredLanguageServers = ["sourcekit-lsp"]
+        definition.queryKinds = [.highlights, .folds, .indents, .injections, .locals, .outline, .textobjects, .tags]
+        registry.register(definition)
         registry.registerParser(for: .swift) { tree_sitter_swift() }
         let tsName = language.tsName
         registry.registerQueryProvider(for: .swift) { queryName in
