@@ -6,6 +6,9 @@ import Foundation
 ///
 /// View-layer layout produces ``LaidOutFragment`` values and maps them into this
 /// Core-friendly shape so selection does not depend on typesetting types.
+///
+/// `@unchecked Sendable`: `CTLine` is not Sendable; fragments are value snapshots
+/// used only on the layout/main actor and never mutated across isolation domains.
 public struct ColumnSelectionFragment: @unchecked Sendable {
     public var frame: CGRect
     public var documentRange: NSRange

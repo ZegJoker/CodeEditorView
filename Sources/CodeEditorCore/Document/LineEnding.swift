@@ -1,7 +1,7 @@
 import Foundation
 
 /// Supported newline styles for code documents.
-public enum LineEnding: String, Sendable, Hashable, CaseIterable {
+public enum LineEnding: String, Sendable, Hashable, Codable, CaseIterable {
     case lineFeed = "\n"
     case carriageReturn = "\r"
     case carriageReturnLineFeed = "\r\n"

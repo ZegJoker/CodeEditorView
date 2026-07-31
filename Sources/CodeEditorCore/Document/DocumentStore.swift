@@ -9,10 +9,16 @@ import TextStory
 /// Content mutations advance ``version`` monotonically. Attribute-only updates
 /// (syntax highlighting) do **not** change the version.
 ///
-/// Not marked `@MainActor` so it can satisfy TextStory's nonisolated `TextStoring`
-/// requirements; call only from the main actor via ``EditorController``.
+/// ## Concurrency
+/// Not `@MainActor` so it can satisfy TextStory's nonisolated `TextStoring`.
+/// **Invariant:** treat as main-actor-affine mutable state. Cross-isolation
+/// sharing must use ``snapshot()`` (`DocumentSnapshot` is `Sendable`).
+/// Marked `@unchecked Sendable` only for TextStory protocol conformance —
+/// concurrent mutation is undefined.
 public final class DocumentStore: @unchecked Sendable, TextStoring {
-    public private(set) var storage: NSMutableAttributedString
+    /// Attributed storage for paint paths. Package-visible so View can paint without
+    /// making the buffer a long-lived public API surface.
+    package private(set) var storage: NSMutableAttributedString
     public private(set) var lineEnding: LineEnding
     public var defaultAttributes: [NSAttributedString.Key: Any]
 
@@ -105,6 +111,11 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
         bumpVersion()
     }
 
+    /// Override detected line ending (e.g. after load with explicit fidelity).
+    public func setPreferredLineEnding(_ ending: LineEnding) {
+        lineEnding = ending
+    }
+
     public func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange) {
         guard let clamped = Self.clampedRange(range, documentLength: storage.length),
               clamped.length > 0
@@ -151,22 +162,24 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
 
     // MARK: - Versioned transactions
 
-    public enum ApplyError: Error, Sendable, Equatable {
-        case emptyTransaction
-    }
-
     /// Applies all changes as **one** content generation.
     ///
     /// - Parameter sortHighToLow: When `true` (default), sorts changes high→low so
     ///   multi-range **pre-edit** coordinates remain valid. When `false`, applies
     ///   `transaction.changes` in the given order (required for undo/redo sequences).
+    /// - Parameter expectedVersion: When set, throws ``DocumentStoreError/staleVersion`` if the
+    ///   store's generation does not match (optimistic concurrency for multi-session hosts).
     @discardableResult
     public func apply(
         _ transaction: EditTransaction,
-        sortHighToLow: Bool = true
+        sortHighToLow: Bool = true,
+        expectedVersion: DocumentVersion? = nil
     ) throws -> AppliedEditTransaction {
         guard !transaction.changes.isEmpty else {
-            throw ApplyError.emptyTransaction
+            throw DocumentStoreError.emptyTransaction
+        }
+        if let expectedVersion, expectedVersion != version {
+            throw DocumentStoreError.staleVersion(expected: expectedVersion, actual: version)
         }
 
         let oldVersion = version
@@ -183,7 +196,13 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
         textEdits.reserveCapacity(ordered.count)
 
         for change in ordered {
-            let edit = makeEdit(in: change.replacedRange.nsRange, replacement: change.replacement)
+            // Validate against current length: high→low pre-edit ranges remain valid;
+            // undo/redo ordered sequences use current-document coordinates.
+            let range = try TextOffsetSemantics.validatedUTF16Range(
+                change.replacedRange.nsRange,
+                documentUTF16Length: length
+            )
+            let edit = makeEdit(in: range, replacement: change.replacement)
             applyMutationWithoutVersionBump(edit.mutation)
             textEdits.append(edit)
         }
