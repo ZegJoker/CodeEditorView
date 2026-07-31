@@ -4,12 +4,14 @@ import CodeEditorDocuments
 
 public actor WorkspaceSearchService {
     private let context: WorkspaceSearchContext
+    private let options: NativeSearchBackend
 
-    public init(context: WorkspaceSearchContext) {
+    public init(context: WorkspaceSearchContext, backendOptions: NativeSearchBackend = NativeSearchBackend()) {
         self.context = context
+        self.options = backendOptions
     }
 
-    public func search(_ query: SearchQuery) -> AsyncThrowingStream<SearchEvent, Error> {
+    nonisolated public func search(_ query: SearchQuery) -> AsyncThrowingStream<SearchEvent, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
@@ -37,12 +39,12 @@ public actor WorkspaceSearchService {
             throw SearchError.invalidRegex(String(describing: error))
         }
 
+        let maxBytes = min(query.maxFileBytes, options.maxFileBytes)
+
         var filesScanned = 0
         var matchCount = 0
         var filesWithMatches = Set<String>()
 
-        // Canonical paths of open docs so disk enumeration does not double-count
-        // the same file when DocumentURI string forms differ (e.g. absoluteString).
         var openCanonicalPaths = Set<String>()
         for uri in context.openDocuments.keys {
             if let path = Self.canonicalPath(for: uri) {
@@ -50,7 +52,7 @@ public actor WorkspaceSearchService {
             }
         }
 
-        // Open documents first (in-memory).
+        // Open documents first (in-memory / dirty).
         for (uri, text) in context.openDocuments.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
             try Task.checkCancellation()
             let path = Self.canonicalPath(for: uri) ?? uri.rawValue
@@ -86,38 +88,46 @@ public actor WorkspaceSearchService {
             }
         }
 
-        // Disk roots (skip files already covered via open documents).
         for root in context.rootDirectories {
             try Task.checkCancellation()
+            let ignore = options.respectGitIgnore ? GitIgnoreLoader.load(root: root) : GitIgnoreRules()
             let enumerator = FileManager.default.enumerator(
                 at: root,
-                includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
+                includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey],
                 options: [.skipsHiddenFiles]
             )
             while let item = enumerator?.nextObject() as? URL {
                 try Task.checkCancellation()
                 let path = item.standardizedFileURL.path
+                let relative = String(path.dropFirst(root.path.count))
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                let values = try? item.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .isDirectoryKey])
+                let isDir = values?.isDirectory == true
+
+                if ignore.isIgnored(relativePath: relative, isDirectory: isDir) {
+                    if isDir { enumerator?.skipDescendants() }
+                    continue
+                }
                 if SearchPathMatching.isExcluded(path: path, excludes: query.excludeGlobs) {
-                    enumerator?.skipDescendants()
+                    if isDir { enumerator?.skipDescendants() }
                     continue
                 }
-                // Also skip named components quickly
                 if path.contains("/.git/") || path.contains("/.build/") {
-                    enumerator?.skipDescendants()
+                    if isDir { enumerator?.skipDescendants() }
                     continue
                 }
+                guard !isDir else { continue }
                 guard SearchPathMatching.isIncluded(path: path, includes: query.includeGlobs) else {
                     continue
                 }
-                let values = try? item.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey])
                 guard values?.isRegularFile == true else { continue }
-                if let size = values?.fileSize, size > query.maxFileBytes { continue }
+                if let size = values?.fileSize, size > maxBytes { continue }
 
-                if openCanonicalPaths.contains(path) { continue } // already searched in-memory
+                if openCanonicalPaths.contains(path) { continue }
 
                 let uri = DocumentURI(fileURL: item.standardizedFileURL)
                 guard let data = try? Data(contentsOf: item) else { continue }
-                if data.count > query.maxFileBytes { continue }
+                if data.count > maxBytes { continue }
                 if SearchPathMatching.isBinary(data) { continue }
                 guard let text = String(data: data, encoding: .utf8) else { continue }
 
@@ -153,7 +163,6 @@ public actor WorkspaceSearchService {
             }
         }
 
-        // `filesScanned` in finished = unique files that produced matches (Xcode-style summary).
         continuation.yield(.finished(filesScanned: filesWithMatches.count, matchCount: matchCount))
     }
 
