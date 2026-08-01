@@ -13,3 +13,8 @@ Examples/.build
 
 # Tree-sitter C grammars (generated — see scripts/update-grammars.sh)
 /Grammars/
+
+# Ghostty source checkout + build artifacts (pin is tracked; see scripts/build-ghostty.sh)
+/Vendor/ghostty/
+/Vendor/ghostty-build.stamp
+/Baselines/evidence/*.log

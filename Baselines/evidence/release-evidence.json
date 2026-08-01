@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-01T13:52:12Z",
+  "commit": "09534e8e34c9fed919b51280c469f8d966470c15",
+  "branch": "remediation/audit-2026-08",
+  "toolchain": {
+    "swift": "swift-driver version: 1.148.6 Apple Swift version 6.3 (swiftlang-6.3.0.123.5 clang-2100.0.123.102)",
+    "xcode": "Xcode 26.4 Build version 17E192 "
+  },
+  "tests": {
+    "exit_code": 0,
+    "reported_tests": 136,
+    "reported_suites": 33,
+    "log": "Baselines/evidence/swift-test.log"
+  },
+  "defects": {
+    "open_p0_p1": 0,
+    "source": "Docs/Architecture/defects.json"
+  },
+  "gates": {
+    "tests_passed": true,
+    "no_open_p0_p1": true
+  },
+  "overall_pass": true
+}

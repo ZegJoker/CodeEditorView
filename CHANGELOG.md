@@ -8,6 +8,38 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ## Unreleased
 
+### Changed — Audit remediation 2026-08 (pre-alpha reset)
+
+- **Withdrawn** Stable/1.0-Ready claims pending open P0/P1 closure (`Docs/Architecture/DEFECTS.md`)
+- DOC-001: atomic multi-edit with full prevalidation and staging buffer
+- DOC-002: throwing undo/redo; stack ownership only after successful apply; savedVersion tracking
+- DOC-003: exact UTF offset conversion; never map invalid interior offsets to EOF
+- EXT-001: validated `ExtensionID` grammar; filesystem uses `directoryKey` hash
+- EXT-002/003/004: package file-set equality, publisher binding, fail-closed install policy
+- WASM-001: WasmKit product documented as **simulation engine** (no bytecode execution)
+- IOS-001: removed duplicate UIKit accessibility overrides
+- LSP-001: debounced document sync uses full-text resync
+- CMD-001/002: retain contribution tokens; chord prefix ambiguity state machine
+- TASK-001: problem matchers keep line/column (no `line*200+col` fabrication)
+- SCM-001: Git rename porcelain dest/src; component-aware path containment
+- DAP-001: register DAP pending continuation before transport write
+- WSP-001: `requestCloseTab` + `WorkspaceCloseDelegate`; fail-closed without host decision
+- WSP-002: durable workspace-edit journal, byte-exact FS capture, rollback errors never swallowed
+- DOC-004: conflict-safe save (`expectedIdentity`, `SaveResult`); metadata-first bounded reads
+- PATH/TRUST/RESTORE: typed path security, trust defaults restricted, unknown schemas rejected
+- WB-001: real Output / Problems / Terminal utility panels (PTY-backed terminal UI)
+- TER-001 partial: non-lossy terminal stream; VT UTF-8 double-append fixed; OSC ST handling
+- CommandID validation + typed notFound/disabled results; chord ambiguity state machine
+- PKG-001: Package.swift grammar path policy + `scripts/filter-package-grammars.py`
+- WASM-002: real WasmKit `parseWasm` / instantiate / export call path + RealWasmExecutionTests
+- TER-001: `CGhosttyShim` C ABI, `CodeEditorTerminalGhostty`, GHOSTTY.pin, workbench PTY terminal
+- LSP-003: `WorkspaceSnapshotResolver` for cross-file location text
+- TASK-002: rolling readiness window; background deps require `.ready`
+- TS-001: `TreeSitterLanguageRuntime` actor; off-main configuration load
+- UI-001: grapheme-aware UITextInput movement, selection rects, BiDi, marked subrange
+- CI-001: `scripts/generate-release-evidence.sh` emits commit/toolchain/test/defect evidence
+- Structured defect register: `Docs/Architecture/defects.json`
+
 ### Added
 
 - Phase 16: RC gates — API freeze baselines, product scorecards, DEFECTS register, S0–S4 conformance report
@@ -82,11 +114,15 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 - `scripts/update-grammars.sh` copies sibling headers (e.g. Haskell `unicode.h`) and rewrites flattened `common/` includes for TypeScript/TSX/PHP/OCaml so a clean clone can build after grammar generation
 - Grammar updater checks out by immutable commit SHA when pinned
 
-## [1.0.0] — Ready
+## [1.0.0] — SUPERSEDED / NOT QUALIFIED
 
-First modular 1.0-ready release of the CodeEditorView package.
+> **Do not treat this entry as release readiness.** The 2026-08 deep audit found open P0/P1
+> defects (data integrity, security, fake Wasm path, terminal, CI honesty). The package remains
+> **pre-alpha** until `Docs/Architecture/DEFECTS.md` has no open P0/P1 and §26 gates pass.
 
-### Added
+Historical note: modular product split and ADRs 001–012 were landed under this label incorrectly.
+
+### Historical content (not a qualification claim)
 
 - Modular SwiftPM products for core, documents, commands, workspace, workbench, language services, extensions, extension host, LSP, search, tasks, terminal, and source control
 - Product isolation script (`scripts/check-product-isolation.sh`)
@@ -94,17 +130,6 @@ First modular 1.0-ready release of the CodeEditorView package.
 - Guides: product selection, migration, extension authoring, API audit, API stability
 - DocC landing pages for library products
 - Examples: SmallEditor, FullWorkbench (plus existing CodeEditorViewDemo)
-
-### Stability
-
-- **Stable:** Core, Documents, LanguageSupport, View, TreeSitter, language pack registration
-- **Evolving:** Commands, Workspace, Workbench, LanguageServices, Search, Tasks
-- **Experimental:** Extensions, ExtensionHost, LSP, Terminal, SourceControl
-
-### Notes
-
-- Tagging `1.0.0` on the remote remains a maintainer action; this entry documents readiness.
-- Experimental products may change in minor releases of 1.x.
 
 ## [0.x] — Pre-1.0 modularization
 

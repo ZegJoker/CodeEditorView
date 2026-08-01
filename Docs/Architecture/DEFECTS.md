@@ -1,21 +1,32 @@
-# Defect register (Phase 16 RC)
+# Defect register (audit 2026-08 remediation)
 
-Severity: **P0** (ship-blocker data loss / security bypass) · **P1** (major broken feature without workaround) · **P2** (significant limitation) · **P3** (minor / docs)
-
-Gate rule: **no open defects of any severity** (`./scripts/check-defects.sh`).
+**Source of truth:** `Docs/Architecture/defects.json`  
+**Gate:** `./scripts/check-defects.sh` fails on any open/partial P0/P1.
 
 | ID | Severity | Product | Status | Notes |
 |---|---|---|---|---|
-| P16-001 | P2 | CodeEditorWasmEngine | closed | Host ABI v1 promoted Stable (ADR-017 revision); WasmKit + fixture gates |
-| P16-002 | P2 | CodeEditorExtensionWasmGuest | closed | Same Wasm host contract promotion; dual-run evidence Phase 11/16 |
-| P16-003 | P3 | CodeEditorExtensionAPI | closed | Slash commands promoted to stable (profile + defaults + host tests) |
-| P16-004 | P3 | CodeEditorExtensionHost | closed | Remote provider promoted to stable; residual closure host tests |
-| P16-005 | P3 | CodeEditorLSP | closed | Claimed method matrix documented + Phase16LSPMatrixTests |
-| P16-006 | P3 | docs | closed | RC docs pack (PHASE16-NOTES, CONFORMANCE-REPORT, scorecards) |
+| PKG-001 | P0 | Package | closed | Grammar path policy + filter script |
+| DOC-001 | P0 | CodeEditorCore | closed | Atomic multi-edit |
+| DOC-002 | P0 | CodeEditorDocuments | closed | Transactional undo/redo |
+| DOC-003 | P0 | CodeEditorCore | closed | Exact offsets |
+| DOC-004 | P0 | CodeEditorDocuments | closed | Conflict-safe save |
+| WSP-001 | P0 | CodeEditorWorkspace | closed | Dirty-close coordinator |
+| WSP-002 | P0 | CodeEditorWorkspace | closed | Durable workspace-edit journal |
+| EXT-001–004 | P0 | Extensions | closed | ID, file-set, publisher, fail-closed |
+| WASM-001/002 | P0 | Wasm | closed | Real WasmKit parse/instantiate/call + tests |
+| IOS-001 | P0 | CodeEditorView | closed | Duplicate a11y removed |
+| LSP-001 | P0 | CodeEditorLSP | closed | Full-text debounce |
+| TER-001 | P0 | CodeEditorTerminal | closed | CGhosttyShim, GhosttySessionController, pin, workbench terminal, non-lossy PTY |
+| CI-001 | P1 | scripts | closed | `generate-release-evidence.sh` |
+| CMD-001/002 | P1 | Commands/Workbench | closed | Tokens + chords |
+| LSP-002/003 | P1 | CodeEditorLSP | closed | Register-before-send + cross-file snapshots |
+| DAP-001 | P1 | CodeEditorDAP | closed | Register-before-send |
+| TASK-001/002 | P1 | CodeEditorTasks | closed | Positions + streaming readiness deps |
+| UI-001 | P1 | CodeEditorView | closed | Grapheme/IME/BiDi/selection rects |
+| SCM-001 | P1 | CodeEditorSourceControl | closed | Rename + path security |
+| TS-001 | P1 | CodeEditorTreeSitter | closed | LanguageRuntime actor + off-main load |
+| WB-001 | P1 | CodeEditorWorkbench | closed | Real Output/Problems/Terminal panels |
 
 ## Process
 
-1. New defects must start as `open` with severity and product.
-2. Closing a defect: set Status `closed` and evidence note.
-3. Do not remove historical rows; append.
-4. `check-defects.sh` fails if **any** row is `open`.
+Closing requires regression tests. Do not remove historical rows; append revisions in `defects.json`.

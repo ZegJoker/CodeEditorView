@@ -1,41 +1,34 @@
-# Phase 16 notes — Release candidates and stabilization
+# Phase 16 notes — superseded by audit 2026-08
 
-## Goal
+## Goal (original)
 
-RC readiness: API freeze, product scorecards, S0–S4 conformance report, migration/rollback rehearsals, performance/accessibility/security/soak gates, docs/examples — **no open P0/P1**, no soft-stubs.
+RC readiness: API freeze, product scorecards, S0–S4 conformance report, migration/rollback rehearsals, performance/accessibility/security/soak gates, docs/examples.
 
-## Deliverables
+## Audit finding (2026-08-01)
 
-| Item | Location |
-|---|---|
-| API freeze inventories | `Baselines/api/*.public.txt` |
-| Freeze checker | `scripts/check-api-freeze.sh` |
-| Product scorecards | `scorecards/products.toml`, PRODUCT-SCORECARDS.md |
-| Defect register | DEFECTS.md |
-| Conformance report | CONFORMANCE-REPORT.md |
-| Security pack | SECURITY-RC.md |
-| RC checklist | Docs/Guides/RC-CHECKLIST.md |
-| Master gate | `scripts/verify-rc.sh` |
-| Tests | `Phase16*` suites |
+The prior “no open P0/P1, no soft-stubs” claim is **incorrect**. See:
 
-## Gate commands
+- `~/Downloads/CodeEditorView_Deep_Audit_Xcode26_Ghostty.md` (external audit)
+- `Docs/Architecture/DEFECTS.md` / `defects.json` (authoritative open register)
 
-```bash
-./scripts/verify-rc.sh
-swift test --filter Phase16
-./scripts/generate-conformance-report.sh   # optional long run
-```
+Major open themes remaining after first remediation batch:
 
-## Soft-stub ban
+- PKG-001 grammar packaging for clean checkout
+- DOC-004 conflict-safe save
+- WSP-001/002 dirty-close and workspace transactions
+- TER-001 Ghostty terminal migration
+- Real Wasm execution (WASM-002)
+- LSP/DAP request ordering and cross-file mapping
+- UI-001 native text input completeness
+- CI evidence-generated gates (not hand-authored scorecards)
+- Workbench placeholder surfaces (WB-001)
 
-| Forbidden | Actual |
-|---|---|
-| Scorecard pass without evidence | TOML evidence fields + checker |
-| Fake S-level claims without tests | Report + CompatibilityProfile |
-| Freeze without baseline | Diff against Baselines/api |
-| Soak N=1 | ≥20 iterations |
-| Perf always-true | Budget compare in tests |
+## Current program status
 
-## Residuals
+**Pre-alpha remediation.** No Stable product claims. Scorecards must not be treated as release inputs until generated from CI artifacts.
 
-**None open.** All P16-001…006 closed (Wasm host ABI stable, slash/remote stable, LSP claimed matrix, docs).
+## Remediation progress (partial)
+
+Closed in first implementation batch (see CHANGELOG Unreleased):
+
+DOC-001, DOC-002, DOC-003, EXT-001–004, WASM-001 (honesty), IOS-001, LSP-001, CMD-001, CMD-002, TASK-001, SCM-001.

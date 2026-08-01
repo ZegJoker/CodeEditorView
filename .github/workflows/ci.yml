@@ -39,6 +39,8 @@ jobs:
         run: ./scripts/check-licenses.sh
       - name: Format
         run: ./scripts/check-format.sh
+      - name: Ghostty pin present
+        run: test -f Docs/Architecture/GHOSTTY.pin && grep -E '^GHOSTTY_COMMIT=' Docs/Architecture/GHOSTTY.pin
 
   macos-debug:
     name: macOS debug test
@@ -58,6 +60,40 @@ jobs:
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: swift test (debug)
         run: swift test
+      - name: Release evidence (CI-001)
+        run: ./scripts/generate-release-evidence.sh Baselines/evidence
+      - name: Upload evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-${{ github.sha }}
+          path: Baselines/evidence/
+          if-no-files-found: warn
+
+  ghostty-pin:
+    name: Ghostty pin metadata
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify GHOSTTY.pin
+        run: |
+          set -euo pipefail
+          test -f Docs/Architecture/GHOSTTY.pin
+          grep -E '^GHOSTTY_COMMIT=[0-9a-f]{40}$' Docs/Architecture/GHOSTTY.pin
+          grep -E '^GHOSTTY_REPO=https://' Docs/Architecture/GHOSTTY.pin
+          echo "Ghostty pin OK:"
+          cat Docs/Architecture/GHOSTTY.pin
+      - name: Optional libghostty-vt build
+        # Best-effort: Ghostty dep CDN can fail; pin verification is required, library build is optional.
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build-ghostty.sh scripts/link-ghostty-flags.sh
+          ./scripts/build-ghostty.sh vt
+          eval "$(./scripts/link-ghostty-flags.sh)"
+          if [[ "${CODEEDITOR_GHOSTTY_LINKED:-}" == "1" ]]; then
+            CODEEDITOR_GHOSTTY_LINKED=1 swift build --product CodeEditorTerminalGhostty
+          fi
 
   macos-release:
     name: macOS release test

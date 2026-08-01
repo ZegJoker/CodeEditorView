@@ -1,5 +1,9 @@
 # CodeEditorView
 
+> **Pre-alpha.** Public APIs, package layout, extension manifests, and runtime behavior may change.
+> Downloadable native/Wasm extensions, terminal UI, LSP/DAP integrations, and full workbench features
+> are experimental and **not** security- or compatibility-qualified. See `Docs/Architecture/DEFECTS.md`.
+
 A multiplatform code editor for **macOS 15** and **iOS 18**, shipped as a modular Swift package.
 
 Use it from SwiftUI, or drive the same engine through `EditorController` on AppKit and UIKit. Optional products add workspace/workbench shells, language services, LSP, extensions, search, tasks, terminal, and source control.
@@ -68,32 +72,33 @@ dependencies: [
 
 | Product | Stability | Role |
 |---|---|---|
-| **CodeEditorView** | Stable | Embeddable editor UI |
-| **CodeEditorCore** | Stable | Document buffer, selection, undo |
-| **CodeEditorDocuments** | Stable | Shared `TextDocument` / sessions |
-| **CodeEditorLanguageSupport** | Stable | Language IDs, registry, highlight contracts |
-| **CodeEditorTreeSitter** | Stable | Tree-sitter provider (no grammars) |
-| **CodeEditorLanguageSwift** / **JSON** | Stable* | Single-language packs |
-| **CodeEditorLanguages** | Stable* | All grammars + `bootstrap()` |
-| **CodeEditorCommands** | Evolving | Commands & keybindings |
-| **CodeEditorWorkspace** | Evolving | Multi-root workspace & edits |
-| **CodeEditorWorkbench** | Evolving | Optional SwiftUI shell |
-| **CodeEditorLanguageServices** | Evolving | Provider contracts & host |
-| **CodeEditorSearch** | Evolving | Workspace search/replace |
-| **CodeEditorTasks** | Evolving | Tasks & problem matchers |
+| **CodeEditorView** | Pre-alpha | Embeddable editor UI (iOS input incomplete) |
+| **CodeEditorCore** | Pre-alpha | Document buffer, selection, undo |
+| **CodeEditorDocuments** | Pre-alpha | Shared `TextDocument` / sessions |
+| **CodeEditorLanguageSupport** | Pre-alpha | Language IDs, registry, highlight contracts |
+| **CodeEditorTreeSitter** | Pre-alpha | Tree-sitter provider (no grammars) |
+| **CodeEditorLanguageSwift** / **JSON** | Pre-alpha* | Single-language packs |
+| **CodeEditorLanguages** | Pre-alpha* | All grammars + `bootstrap()` |
+| **CodeEditorCommands** | Pre-alpha | Commands & keybindings |
+| **CodeEditorWorkspace** | Pre-alpha | Multi-root workspace & edits |
+| **CodeEditorWorkbench** | Pre-alpha | Optional SwiftUI shell (placeholders remain) |
+| **CodeEditorLanguageServices** | Pre-alpha | Provider contracts & host |
+| **CodeEditorSearch** | Pre-alpha | Workspace search/replace |
+| **CodeEditorTasks** | Pre-alpha | Tasks & problem matchers |
 | **CodeEditorExtensionAPI** | Experimental | Author SDK (`extension.toml`, protocols) |
 | **CodeEditorExtensionProtocol** | Experimental | CBOR wire protocol for host ↔ guest |
 | **CodeEditorExtensionGuest** | Experimental | Native helper guest runtime |
 | **CodeEditorWasmEngine** | Experimental | Portable Wasm engine protocol + limits |
-| **CodeEditorWasmEngineWasmKit** | Experimental | WasmKit reference backend |
+| **CodeEditorWasmEngineWasmKit** | Simulation only | **Does not execute Wasm bytecode** (WASM-001) |
 | **CodeEditorExtensionWasmGuest** | Experimental | Cooperative core-Wasm guest glue |
 | **CodeEditorExtensions** | Experimental | In-process runtime / package manager |
 | **CodeEditorExtensionHost** | Experimental | Multi-driver host, broker, signing, Wasm |
 | **CodeEditorLSP** | Experimental | LSP client |
-| **CodeEditorTerminal** | Experimental | Terminal sessions |
+| **CodeEditorTerminal** | Experimental | Terminal — Ghostty migration required (TER-001) |
 | **CodeEditorSourceControl** | Experimental | SCM providers / Git CLI |
+| **CodeEditorDAP** | Experimental | Debug Adapter Protocol client |
 
-\* Pack **registration** API is stable; grammar content is not versioned as API. See `Docs/Guides/API-STABILITY.md`.
+\* Language pack APIs are pre-alpha; grammar C sources are generated/local (`Grammars/`). See `Docs/Guides/API-STABILITY.md`.
 
 ## Compositions
 
