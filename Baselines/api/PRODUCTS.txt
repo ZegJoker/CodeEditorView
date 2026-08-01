@@ -1,0 +1,27 @@
+# API freeze public-surface inventory (source-extracted)
+CodeEditorCore	269
+CodeEditorDocuments	116
+CodeEditorCommands	141
+CodeEditorWorkspace	171
+CodeEditorWorkbench	241
+CodeEditorView	634
+CodeEditorLanguageSupport	120
+CodeEditorLanguageServices	259
+CodeEditorExtensionAPI	377
+CodeEditorExtensionProtocol	141
+CodeEditorExtensionGuest	36
+CodeEditorWasmEngine	62
+CodeEditorWasmEngineWasmKit	4
+CodeEditorExtensionWasmGuest	19
+CodeEditorExtensions	164
+CodeEditorExtensionHost	423
+CodeEditorLSP	175
+CodeEditorDAP	177
+CodeEditorSearch	62
+CodeEditorTasks	123
+CodeEditorTerminal	83
+CodeEditorSourceControl	103
+CodeEditorTreeSitter	35
+CodeEditorLanguageSwift	5
+CodeEditorLanguageJSON	5
+CodeEditorLanguages	6

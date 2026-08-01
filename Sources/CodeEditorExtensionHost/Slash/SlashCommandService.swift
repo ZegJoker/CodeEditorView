@@ -21,7 +21,7 @@ public actor SlashCommandService {
     }
 
     public func compatibilityStatus(for commandID: String) -> CompatibilityFeatureStatus {
-        contributions[commandID]?.compatibility ?? .compatibility
+        contributions[commandID]?.compatibility ?? .stable
     }
 
     public func execute(

@@ -10,6 +10,8 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 16: RC gates — API freeze baselines, product scorecards, DEFECTS register, S0–S4 conformance report
+- Phase 16: migration/rollback rehearsals, soak/performance/security tests, `verify-rc.sh`, RC checklist
 - Phase 15: shipping profiles A–E (`ShippingProfileID`), expanded capability matrix (Wasm/install/registry/remote)
 - Phase 15: `ExtensionHostProfile`, install policy gates, RuntimeSelector profile gates, native helper policy
 - Phase 15: remote tooling coordinator (LS fallback), runnability descriptors, App Review guide

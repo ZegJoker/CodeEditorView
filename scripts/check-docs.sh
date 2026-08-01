@@ -31,7 +31,17 @@ require Docs/Architecture/EXTENSION-API-INVENTORY.md
 require Docs/Architecture/PHASE13-NOTES.md
 require Docs/Architecture/PHASE14-NOTES.md
 require Docs/Architecture/PHASE15-NOTES.md
+require Docs/Architecture/PHASE16-NOTES.md
+require Docs/Architecture/CONFORMANCE-REPORT.md
+require Docs/Architecture/PRODUCT-SCORECARDS.md
+require Docs/Architecture/API-FREEZE.md
+require Docs/Architecture/DEFECTS.md
+require Docs/Architecture/LSP-CLAIMED-MATRIX.md
+require Docs/Architecture/SECURITY-RC.md
+require Docs/Architecture/scorecards/products.toml
 require Docs/Guides/APP-REVIEW.md
+require Docs/Guides/RC-CHECKLIST.md
+require Baselines/api/PRODUCTS.txt
 require Docs/Architecture/PHASE0-NOTES.md
 require Docs/Architecture/PHASE1-NOTES.md
 require Docs/Architecture/PHASE2-NOTES.md

@@ -48,7 +48,7 @@ Add one or both:
 |---|---|
 | `CodeEditorLSP` | process / test LSP client |
 | `CodeEditorExtensions` | in-process providers |
-| `CodeEditorExtensionHost` | out-of-process extensions (experimental) |
+| `CodeEditorExtensionHost` | multi-runtime host (built-in, native, Wasm, remote) |
 
 Wire providers into `LanguageServiceRegistry`, then `EditorController.installLanguageServices` / adapters (Phase 8).
 
@@ -67,7 +67,7 @@ None of these depend on each other; omit freely.
 
 - Linking `CodeEditorLanguages` when you only need Swift — use `CodeEditorLanguageSwift`.
 - Importing View from headless tools/extensions — keep UI at the host edge.
-- Depending on experimental products without pinning a patch/minor.
+- Depending on products without reading [API-STABILITY](API-STABILITY.md) tiers and scorecards.
 
 ## Related
 

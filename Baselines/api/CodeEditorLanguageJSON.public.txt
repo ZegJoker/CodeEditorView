@@ -1,0 +1,5 @@
+enum CodeEditorLanguageJSON
+func register
+var grammarCommit
+var grammarParserSHA256
+var grammarSourceURL

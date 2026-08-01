@@ -149,7 +149,7 @@ struct Phase13SlashCommandTests {
             description: "d"
         ))
         await svc.registerProvider(Prov(), extensionID: ext)
-        #expect(await svc.compatibilityStatus(for: "explain") == .compatibility)
+        #expect(await svc.compatibilityStatus(for: "explain") == .stable)
         var chunks: [SlashCommandChunk] = []
         for try await c in await svc.execute(commandID: "explain", arguments: "hi", extensionID: ext) {
             chunks.append(c)

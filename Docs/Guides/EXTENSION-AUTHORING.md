@@ -226,9 +226,9 @@ transport = "stdio"
 
 `MCPServerProvider` returns an `MCPServerLaunchPlan`. The host MCP client speaks initialize / tools / resources / prompts over stdio. Extensions do not get unbounded network access.
 
-## Slash commands (compatibility)
+## Slash commands
 
-Slash commands are labelled **`compatibility`** in `CompatibilityProfile`. Use `SlashCommandProvider` with streaming chunks; the host sanitizes markdown and enforces argument size limits.
+Slash commands are **stable**. Use `SlashCommandProvider` with streaming chunks; the host sanitizes markdown and enforces argument size limits.
 
 ## Documentation indexing
 

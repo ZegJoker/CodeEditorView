@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "hardwareClass": "apple-silicon-dev-or-ci",
+  "slackFactor": 3.0,
+  "units": "milliseconds",
+  "budgets": {
+    "core_edit_1000_applies_ms": 500,
+    "line_index_rebuild_10k_lines_ms": 800,
+    "contribution_snapshot_rebuild_ms": 200,
+    "store_install_update_rollback_ms": 2000
+  }
+}

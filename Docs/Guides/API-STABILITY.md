@@ -45,8 +45,18 @@ Experimental products still ship isolation tests and PHASE notes; they are usabl
 - Prefer `@available(*, deprecated, message:)` for at least one minor before removal of Stable/Evolving API.
 - Experimental API may be removed without deprecation if called out in `CHANGELOG`.
 
+## Phase 16 freeze & scorecards
+
+- Stable public surface inventories: `Baselines/api/` (checked by `./scripts/check-api-freeze.sh`)
+- Product scorecards: [PRODUCT-SCORECARDS](../Architecture/PRODUCT-SCORECARDS.md)
+- Defect register (no open P0/P1 for RC): [DEFECTS](../Architecture/DEFECTS.md)
+- Conformance S0–S4: [CONFORMANCE-REPORT](../Architecture/CONFORMANCE-REPORT.md)
+- Master RC gate: `./scripts/verify-rc.sh`
+
 ## Related
 
 - [API audit](API-AUDIT.md)
+- [API freeze](../Architecture/API-FREEZE.md)
+- [RC checklist](RC-CHECKLIST.md)
 - [ADR-012](../Architecture/ADR-012-1.0-stability.md)
 - [Product selection](PRODUCT-SELECTION.md)

@@ -42,7 +42,7 @@ struct Phase13TOMLTests {
         #expect(plan.mcpServers.count == 1)
         #expect(plan.mcpServers[0].startupTimeoutMS == 8000)
         #expect(plan.slashCommands.count == 1)
-        #expect(plan.slashCommands[0].compatibility == .compatibility)
+        #expect(plan.slashCommands[0].compatibility == .stable)
         #expect(plan.documentationPackages.count == 1)
         #expect(plan.parityProfile == "codeeditor-dap-mcp-s2")
         let seed = plan.debugAdapters[0].makeSeedPlan()
@@ -62,8 +62,8 @@ struct CompatibilityProfileTests {
         #expect(p.status(for: .debugLocators) == .stable)
         #expect(p.status(for: .mcpServers) == .stable)
         #expect(p.status(for: .documentationIndexing) == .stable)
-        #expect(p.status(for: .slashCommands) == .compatibility)
-        #expect(p.status(for: .languageModelProviderMetadata) == .experimental)
+        #expect(p.status(for: .slashCommands) == .stable)
+        #expect(p.status(for: .languageModelProviderMetadata) == .unsupported)
         #expect(p.status(for: .legacyAgentServerHosting) == .unsupported)
     }
 
@@ -71,11 +71,11 @@ struct CompatibilityProfileTests {
         let text = """
         profile = "test"
         [features]
-        slash_commands = "compatibility"
+        slash_commands = "stable"
         mcp_servers = "stable"
         """
         let p = try CompatibilityProfileLoader.load(toml: text)
-        #expect(p.status(for: .slashCommands) == .compatibility)
+        #expect(p.status(for: .slashCommands) == .stable)
         #expect(p.status(for: .mcpServers) == .stable)
     }
 

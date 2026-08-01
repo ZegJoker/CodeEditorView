@@ -1,0 +1,4 @@
+func instantiate
+func validate
+func withDefaultGuestFactory
+struct WasmKitEngine

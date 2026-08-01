@@ -25,6 +25,14 @@ jobs:
         run: ./scripts/check-docs.sh
       - name: Feature profiles (Phase 15)
         run: ./scripts/check-feature-profiles.sh
+      - name: Product scorecards (Phase 16)
+        run: ./scripts/check-product-scorecards.sh
+      - name: Defects no open P0/P1 (Phase 16)
+        run: ./scripts/check-defects.sh
+      - name: API freeze Stable products (Phase 16)
+        run: ./scripts/check-api-freeze.sh
+      - name: Accessibility surface (Phase 16)
+        run: ./scripts/check-accessibility.sh
       - name: Grammar pins
         run: ./scripts/check-grammar-pins.sh
       - name: Licenses

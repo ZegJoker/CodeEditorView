@@ -7,7 +7,7 @@ public struct SlashCommandContribution: Sendable, Hashable, Codable, Identifiabl
     public var requiresWorktree: Bool
     public var maxArgumentLength: Int
     public var extensionID: ExtensionID?
-    /// Compatibility classification — slash commands are labelled `compatibility`.
+    /// Feature classification (stable after residual closure).
     public var compatibility: CompatibilityFeatureStatus
 
     public init(
@@ -17,7 +17,7 @@ public struct SlashCommandContribution: Sendable, Hashable, Codable, Identifiabl
         requiresWorktree: Bool = false,
         maxArgumentLength: Int = 4_096,
         extensionID: ExtensionID? = nil,
-        compatibility: CompatibilityFeatureStatus = .compatibility
+        compatibility: CompatibilityFeatureStatus = .stable
     ) {
         self.id = id
         self.name = name

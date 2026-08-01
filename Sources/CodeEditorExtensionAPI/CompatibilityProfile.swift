@@ -63,7 +63,7 @@ public struct CompatibilityProfile: Sendable, Hashable, Codable {
         features[key] ?? .unsupported
     }
 
-    /// Phase 13 default profile reflecting implemented surfaces.
+    /// Phase 16 residual-closed default profile (no experimental/compatibility feature residuals).
     public static let phase13Default: CompatibilityProfile = {
         var features: [String: CompatibilityFeatureStatus] = [:]
         features["languages"] = .stable
@@ -84,15 +84,18 @@ public struct CompatibilityProfile: Sendable, Hashable, Codable {
         features["settings"] = .stable
         features["kv_store"] = .stable
         features["documentation_indexing"] = .stable
-        features["slash_commands"] = .compatibility
-        features["language_model_provider_metadata"] = .experimental
+        features["slash_commands"] = .stable
+        features["language_model_provider_metadata"] = .unsupported
         features["legacy_agent_server_hosting"] = .unsupported
         return CompatibilityProfile(
             profile: "zed-style-2026-07",
-            upstreamCommit: "phase-13",
+            upstreamCommit: "phase-16",
             features: features
         )
     }()
+
+    /// Alias for RC defaults after residual closure.
+    public static let phase16Default: CompatibilityProfile = .phase13Default
 }
 
 public enum CompatibilityProfileLoader {

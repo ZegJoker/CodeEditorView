@@ -24,8 +24,14 @@ echo "======== licenses ========"
 echo "======== format ========"
 ./scripts/check-format.sh
 
+echo "======== Phase 16 RC gates (subset without full examples) ========"
+./scripts/check-product-scorecards.sh
+./scripts/check-defects.sh
+./scripts/check-api-freeze.sh
+./scripts/check-accessibility.sh
+
 echo "======== swift test ========"
 swift test
 
 echo
-echo "verify-local: all gates passed"
+echo "verify-local: all gates passed (for full RC use ./scripts/verify-rc.sh)"

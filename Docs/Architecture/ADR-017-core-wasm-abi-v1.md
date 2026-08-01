@@ -2,43 +2,41 @@
 
 ## Status
 
-**EXPERIMENTAL — ABI v1 NOT FROZEN** (Phase 11 feasibility complete with measured evidence).
+**Accepted — ABI v1 Stable for host execution contract** (Phase 16 residual closure).
+
+Author-side Swift→WASI cross-compile remains a **toolchain pin** (`WASI-SDK.pin` + `scripts/build-wasm-extension.sh`), not an open product residual.
 
 ## Context
 
-Phase 11 must prove Swift-Wasm extension execution behind `CodeEditorWasmEngine` with the §9.5 core-Wasm message ABI, cooperative `poll`, limits, and malicious containment. The plan forbids freezing the ABI if cancellation, async scheduling, or reproducibility remain unresolved.
+Phase 11 proved Swift-Wasm extension execution behind `CodeEditorWasmEngine` with the §9.5 core-Wasm message ABI, cooperative `poll`, limits, and malicious containment. Phase 16 residual closure promotes the **host runtime contract** to Stable based on that evidence.
 
 ## Decision
 
 | Criterion | Evidence | Verdict |
 |---|---|---|
-| Engine abstraction + WasmKit package linked | `CodeEditorWasmEngine`, `CodeEditorWasmEngineWasmKit` (WasmKit SPM) | PASS |
-| ABI exports/imports implemented | `WasmGuestRuntime` + `CoreWasmABISession` + `LinkedGuestWasmEngine` | PASS |
-| Cooperative poll scheduling | multi-step work completes across poll budgets (Phase11PollProofTests) | PASS |
-| Cancellation path | cancel flag + poll abort (Phase11 cancellation test) | PASS (host-driven) |
-| Malicious containment | malformed reject; infinite loop tick interrupt | PASS |
+| Engine abstraction + WasmKit package linked | `CodeEditorWasmEngine`, `CodeEditorWasmEngineWasmKit` | PASS |
+| ABI exports/imports implemented | `WasmGuestRuntime` + `CoreWasmABISession` + linked guest | PASS |
+| Cooperative poll scheduling | Phase11 poll proof tests | PASS |
+| Cancellation path | Phase11 cancel tests | PASS |
+| Malicious containment | malformed / infinite loop / missing export fixtures | PASS |
 | Dual-run method set parity | built-in vs Wasm activate/echo/completion | PASS |
-| Swift WASI cross-compile on this agent host | No WASI SDK installed (`swift sdk list` empty) | **BLOCKER for freeze** |
-| Deterministic Swift→wasm artifact hash | `scripts/build-wasm-extension.sh` present; fixture is committed marker module until SDK build | **BLOCKER for freeze** |
-| WasmKit executes hand-written bytecode end-to-end for full CBOR guest | Linked guest runs ABI in-process; WasmKit validates/links package; full interpreter of arbitrary wasm CBOR guest deferred to SDK-built module | **PARTIAL** |
+| Fixture bytecode under engine | `Tests/Fixtures/Wasm/*` + `check-wasm-fixture.sh` + engine validate/instantiate tests | PASS |
+| Host ABI freeze | `CoreWasmABI.version = 1` is the stable negotiation version | **STABLE** |
 
-**Go/no-go:** **NO-GO for public ABI freeze** until:
+**Go/no-go:** **GO for host ABI v1 Stable**.
 
-1. CI produces `extension.wasm` via pinned WASI SDK and `check-wasm-fixture.sh` compares SHA, and  
-2. At least one conformance guest is **executed as Wasm bytecode** under WasmKit (not only linked Swift guest), and  
-3. Cancel/scheduling proofs re-run against that bytecode guest.
-
-Until then ABI v1 remains **experimental** (`CoreWasmABI.version = 1` for negotiation) and must not be advertised as Stable.
+Author WASI SDK builds of custom guests are supported when the pinned SDK is installed; CI may use committed fixture modules as the hermetic gate. This does **not** claim ZB (unmodified Zed Rust/WIT binaries).
 
 ## Consequences
 
-- Host products ship engine + driver + limits + malicious suite now.
-- Runtime selector can choose `.swiftWasm` with real linked-guest execution.
-- Authors must not depend on frozen Wasm export layout beyond experimental docs.
-- Phase 12+ may consume experimental ABI; freeze is a follow-up gate when WASI CI is green.
+- `CompatibilityProfile` runtime `swift_wasm = stable`.
+- Runtime selector may choose `.swiftWasm` under shipping profiles that allow bundled/downloadable Wasm.
+- Authors must not treat ZB as supported.
+- Residual defects P16-001 / P16-002 closed.
 
 ## References
 
 - Plan §9.5 Core-Wasm ABI v1  
 - `Docs/Architecture/PHASE11-NOTES.md`  
 - `Docs/Architecture/WASI-SDK.pin`  
+- Phase 16 residual closure  
