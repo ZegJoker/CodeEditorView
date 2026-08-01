@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 public struct LanguageServerID: Hashable, Codable, Sendable, RawRepresentable, ExpressibleByStringLiteral {
     public let rawValue: String

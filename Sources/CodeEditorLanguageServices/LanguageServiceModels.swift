@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageSupport
+import Foundation
 
 // MARK: - Edits
 

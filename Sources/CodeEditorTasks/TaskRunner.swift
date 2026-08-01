@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 public protocol TaskRunner: Sendable {
     /// Start a task and return a live execution handle.
@@ -9,8 +9,8 @@ public protocol TaskRunner: Sendable {
     func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult
 }
 
-public extension TaskRunner {
-    func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult {
+extension TaskRunner {
+    public func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult {
         let handle = try await start(definition, output: output)
         return try await handle.wait()
     }
@@ -59,7 +59,8 @@ public final class TaskExecutionHandle: @unchecked Sendable {
 
     /// Whether readiness was observed (background deps).
     public var isReady: Bool {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return becameReady
     }
 
@@ -140,12 +141,14 @@ public final class TaskExecutionHandle: @unchecked Sendable {
     }
 
     public var collectedStdout: String {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return stdout
     }
 
     public var collectedStderr: String {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return stderr
     }
 

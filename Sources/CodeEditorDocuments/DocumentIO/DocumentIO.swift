@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Low-level byte load/save. Implementations must never leave a partial primary file
 /// after a failed save (temp + replace, or no change).
@@ -15,8 +15,8 @@ public protocol DocumentIO: Sendable {
     func removeItem(at url: URL) async throws
 }
 
-public extension DocumentIO {
-    func read(url: URL, maxBytes: UInt64) async throws -> Data {
+extension DocumentIO {
+    public func read(url: URL, maxBytes: UInt64) async throws -> Data {
         let data = try await read(url: url)
         if UInt64(data.count) > maxBytes {
             throw DocumentIOError.tooLarge(UInt64(data.count))
@@ -55,9 +55,9 @@ public struct LocalDocumentIO: DocumentIO {
         try await Task.detached(priority: .userInitiated) {
             // Metadata-first size check before full allocation.
             if maxBytes < UInt64.max,
-               let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
-               let size = values.fileSize,
-               UInt64(size) > maxBytes
+                let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
+                let size = values.fileSize,
+                UInt64(size) > maxBytes
             {
                 throw DocumentIOError.tooLarge(UInt64(size))
             }

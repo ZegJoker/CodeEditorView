@@ -1,7 +1,8 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
+
 #if canImport(CryptoKit)
-import CryptoKit
+    import CryptoKit
 #endif
 
 /// Minimal SPDX 2.3 JSON SBOM for extension packages.
@@ -9,17 +10,22 @@ public enum PackageSBOM {
     public struct Document: Sendable, Hashable, Codable {
         public var spdxVersion: String
         public var dataLicense: String
-        public var SPDXID: String
+        public var spdxId: String
         public var name: String
         public var documentNamespace: String
         public var creationInfo: CreationInfo
         public var packages: [Package]
         public var files: [File]
 
+        private enum CodingKeys: String, CodingKey {
+            case spdxVersion, dataLicense, name, documentNamespace, creationInfo, packages, files
+            case spdxId = "SPDXID"
+        }
+
         public init(
             spdxVersion: String = "SPDX-2.3",
             dataLicense: String = "CC0-1.0",
-            SPDXID: String = "SPDXRef-DOCUMENT",
+            spdxId: String = "SPDXRef-DOCUMENT",
             name: String,
             documentNamespace: String,
             creationInfo: CreationInfo,
@@ -28,7 +34,7 @@ public enum PackageSBOM {
         ) {
             self.spdxVersion = spdxVersion
             self.dataLicense = dataLicense
-            self.SPDXID = SPDXID
+            self.spdxId = spdxId
             self.name = name
             self.documentNamespace = documentNamespace
             self.creationInfo = creationInfo
@@ -43,19 +49,29 @@ public enum PackageSBOM {
     }
 
     public struct Package: Sendable, Hashable, Codable {
-        public var SPDXID: String
+        public var spdxId: String
         public var name: String
         public var versionInfo: String
         public var downloadLocation: String
         public var licenseConcluded: String
         public var licenseDeclared: String
         public var copyrightText: String
+
+        private enum CodingKeys: String, CodingKey {
+            case name, versionInfo, downloadLocation, licenseConcluded, licenseDeclared, copyrightText
+            case spdxId = "SPDXID"
+        }
     }
 
     public struct File: Sendable, Hashable, Codable {
-        public var SPDXID: String
+        public var spdxId: String
         public var fileName: String
         public var checksums: [Checksum]
+
+        private enum CodingKeys: String, CodingKey {
+            case fileName, checksums
+            case spdxId = "SPDXID"
+        }
     }
 
     public struct Checksum: Sendable, Hashable, Codable {
@@ -71,7 +87,9 @@ public enum PackageSBOM {
         public init(
             requireLicense: Bool = false,
             requireSBOM: Bool = false,
-            allowedLicenses: Set<String> = ["MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "CC0-1.0", "Unlicense"]
+            allowedLicenses: Set<String> = [
+                "MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "CC0-1.0", "Unlicense",
+            ]
         ) {
             self.requireLicense = requireLicense
             self.requireSBOM = requireSBOM
@@ -93,11 +111,13 @@ public enum PackageSBOM {
         let license = declaredLicense(packageRoot: packageRoot, plan: plan) ?? "NOASSERTION"
         var files: [File] = []
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(
-            at: packageRoot,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard
+            let enumerator = fm.enumerator(
+                at: packageRoot,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            )
+        else {
             throw SBOMError.invalidSBOM("cannot enumerate package")
         }
         var index = 0
@@ -110,11 +130,12 @@ public enum PackageSBOM {
             if rel == "sbom.spdx.json" { continue }
             index += 1
             let data = try Data(contentsOf: url)
-            files.append(File(
-                SPDXID: "SPDXRef-File-\(index)",
-                fileName: rel,
-                checksums: [Checksum(algorithm: "SHA256", checksumValue: sha256Hex(data))]
-            ))
+            files.append(
+                File(
+                    spdxId: "SPDXRef-File-\(index)",
+                    fileName: rel,
+                    checksums: [Checksum(algorithm: "SHA256", checksumValue: sha256Hex(data))]
+                ))
         }
         files.sort { $0.fileName < $1.fileName }
         let created = ISO8601DateFormatter().string(from: Date())
@@ -127,14 +148,14 @@ public enum PackageSBOM {
             ),
             packages: [
                 Package(
-                    SPDXID: "SPDXRef-Package",
+                    spdxId: "SPDXRef-Package",
                     name: plan.packageID.rawValue,
                     versionInfo: plan.version.description,
                     downloadLocation: "NOASSERTION",
                     licenseConcluded: license,
                     licenseDeclared: license,
                     copyrightText: "NOASSERTION"
-                ),
+                )
             ],
             files: files
         )
@@ -172,7 +193,9 @@ public enum PackageSBOM {
             if !policy.allowedLicenses.contains(license) {
                 throw SBOMError.disallowedLicense(license)
             }
-        } else if let license, license != "NOASSERTION", !policy.allowedLicenses.contains(license), !policy.allowedLicenses.isEmpty {
+        } else if let license, license != "NOASSERTION", !policy.allowedLicenses.contains(license),
+            !policy.allowedLicenses.isEmpty
+        {
             throw SBOMError.disallowedLicense(license)
         }
         if policy.requireSBOM {
@@ -187,7 +210,8 @@ public enum PackageSBOM {
         for name in candidates {
             let url = packageRoot.appendingPathComponent(name)
             if let text = try? String(contentsOf: url, encoding: .utf8) {
-                let first = text.split(separator: "\n").first.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? ""
+                let first =
+                    text.split(separator: "\n").first.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? ""
                 if first.uppercased().contains("MIT") { return "MIT" }
                 if first.uppercased().contains("APACHE") { return "Apache-2.0" }
                 if !first.isEmpty { return first }
@@ -211,9 +235,9 @@ public enum PackageSBOM {
 
     private static func sha256Hex(_ data: Data) -> String {
         #if canImport(CryptoKit)
-        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         #else
-        return String(data.count)
+            return String(data.count)
         #endif
     }
 }

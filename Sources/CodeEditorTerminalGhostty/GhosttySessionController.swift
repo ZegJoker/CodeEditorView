@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorTerminal
+import Foundation
 
 #if canImport(CGhosttyShim)
-import CGhosttyShim
+    import CGhosttyShim
 #endif
 
 /// Actor-isolated Ghostty surface controller (TER-001).
@@ -18,7 +18,7 @@ public actor GhosttySessionController {
     public private(set) var rows: Int
 
     #if canImport(CGhosttyShim)
-    private var surface: OpaquePointer?
+        private var surface: OpaquePointer?
     #endif
 
     public init(id: TerminalSessionID = TerminalSessionID(), cols: Int = 80, rows: Int = 24) {
@@ -26,33 +26,33 @@ public actor GhosttySessionController {
         self.cols = cols
         self.rows = rows
         #if canImport(CGhosttyShim)
-        self.isLinkedToGhostty = ce_ghostty_is_linked()
-        var cfg = ce_ghostty_config(cols: UInt32(cols), rows: UInt32(rows), font_size_milli: 12_000)
-        self.surface = ce_ghostty_surface_create(&cfg)
+            self.isLinkedToGhostty = ce_ghostty_is_linked()
+            var cfg = ce_ghostty_config(cols: UInt32(cols), rows: UInt32(rows), font_size_milli: 12_000)
+            self.surface = ce_ghostty_surface_create(&cfg)
         #else
-        self.isLinkedToGhostty = false
+            self.isLinkedToGhostty = false
         #endif
     }
 
     public func shutdown() {
         #if canImport(CGhosttyShim)
-        if let surface {
-            ce_ghostty_surface_destroy(surface)
-            self.surface = nil
-        }
+            if let surface {
+                ce_ghostty_surface_destroy(surface)
+                self.surface = nil
+            }
         #endif
     }
 
     public func write(_ bytes: Data) throws {
         #if canImport(CGhosttyShim)
-        guard let surface else { throw TerminalError.notRunning }
-        let rc = bytes.withUnsafeBytes { raw -> Int32 in
-            guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
-            return ce_ghostty_surface_write(surface, base, bytes.count)
-        }
-        if rc < 0 { throw TerminalError.startFailed("ghostty write failed") }
+            guard let surface else { throw TerminalError.notRunning }
+            let rc = bytes.withUnsafeBytes { raw -> Int32 in
+                guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
+                return ce_ghostty_surface_write(surface, base, bytes.count)
+            }
+            if rc < 0 { throw TerminalError.startFailed("ghostty write failed") }
         #else
-        throw TerminalError.startFailed("CGhosttyShim not available")
+            throw TerminalError.startFailed("CGhosttyShim not available")
         #endif
     }
 
@@ -60,36 +60,36 @@ public actor GhosttySessionController {
         self.cols = cols
         self.rows = rows
         #if canImport(CGhosttyShim)
-        guard let surface else { throw TerminalError.notRunning }
-        let size = ce_ghostty_size(
-            cols: UInt32(cols),
-            rows: UInt32(rows),
-            width_px: UInt32(widthPx),
-            height_px: UInt32(heightPx)
-        )
-        if ce_ghostty_surface_resize(surface, size) != 0 {
-            throw TerminalError.startFailed("ghostty resize failed")
-        }
+            guard let surface else { throw TerminalError.notRunning }
+            let size = ce_ghostty_size(
+                cols: UInt32(cols),
+                rows: UInt32(rows),
+                width_px: UInt32(widthPx),
+                height_px: UInt32(heightPx)
+            )
+            if ce_ghostty_surface_resize(surface, size) != 0 {
+                throw TerminalError.startFailed("ghostty resize failed")
+            }
         #endif
     }
 
     public func snapshotUTF8() throws -> String {
         #if canImport(CGhosttyShim)
-        guard let surface else { return "" }
-        var buf = [CChar](repeating: 0, count: 256 * 1024)
-        let n = ce_ghostty_surface_snapshot_utf8(surface, &buf, buf.count)
-        if n < 0 { throw TerminalError.startFailed("ghostty snapshot failed") }
-        return String(cString: buf)
+            guard let surface else { return "" }
+            var buf = [CChar](repeating: 0, count: 256 * 1024)
+            let n = ce_ghostty_surface_snapshot_utf8(surface, &buf, buf.count)
+            if n < 0 { throw TerminalError.startFailed("ghostty snapshot failed") }
+            return String(cString: buf)
         #else
-        return ""
+            return ""
         #endif
     }
 
     public static var shimABI: Int {
         #if canImport(CGhosttyShim)
-        return Int(ce_ghostty_shim_abi())
+            return Int(ce_ghostty_shim_abi())
         #else
-        return 0
+            return 0
         #endif
     }
 }

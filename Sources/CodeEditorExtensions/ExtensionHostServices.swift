@@ -1,8 +1,8 @@
-import Foundation
-import CodeEditorExtensionAPI
 import CodeEditorCommands
-import CodeEditorLanguageSupport
+import CodeEditorExtensionAPI
 import CodeEditorLanguageServices
+import CodeEditorLanguageSupport
+import Foundation
 
 /// Host-injected factories and shared stores for the extension runtime.
 public struct ExtensionHostServices: Sendable {

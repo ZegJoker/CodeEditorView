@@ -1,9 +1,10 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import Foundation
+
 #if canImport(CryptoKit)
-import CryptoKit
+    import CryptoKit
 #endif
 
 // MARK: - Handles
@@ -341,7 +342,9 @@ public actor CapabilityBroker {
         return issue(extensionID, kind: "download", ops: ["fetch"])
     }
 
-    public func downloadFetch(handle: BrokerHandleID, urlString: String, expectedDigest: String? = nil) async throws -> URL {
+    public func downloadFetch(
+        handle: BrokerHandleID, urlString: String, expectedDigest: String? = nil
+    ) async throws -> URL {
         let h = try resolve(handle, kind: "download", op: "fetch")
         guard let url = URL(string: urlString), let host = url.host else {
             throw BrokerError.invalidRequest("bad url")
@@ -424,8 +427,8 @@ public actor CapabilityBroker {
             .appendingPathComponent(package)
         try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
         let meta = """
-        {"name":"\(package)","version":"\(version ?? "*")","scripts_disabled":true}
-        """
+            {"name":"\(package)","version":"\(version ?? "*")","scripts_disabled":true}
+            """
         try meta.write(to: dest.appendingPathComponent("package.json"), atomically: true, encoding: .utf8)
         return dest
     }
@@ -475,7 +478,7 @@ public actor CapabilityBroker {
             let key = obj["key"] as? String ?? ""
             let data = try storageGet(handle: hid, key: key)
             return try JSONSerialization.data(withJSONObject: [
-                "data_b64": data?.base64EncodedString() as Any,
+                "data_b64": data?.base64EncodedString() as Any
             ])
         case .storageSet:
             let hid = BrokerHandleID(rawValue: obj["handle"] as? String ?? "")
@@ -500,9 +503,9 @@ public actor CapabilityBroker {
         case .downloadFetch:
             let hid = BrokerHandleID(rawValue: obj["handle"] as? String ?? "")
             if let host = obj["fixture_host"] as? String,
-               let path = obj["fixture_path"] as? String,
-               let b64 = obj["fixture_b64"] as? String,
-               let data = Data(base64Encoded: b64)
+                let path = obj["fixture_path"] as? String,
+                let b64 = obj["fixture_b64"] as? String,
+                let data = Data(base64Encoded: b64)
             {
                 let url = try downloadWriteFixture(handle: hid, host: host, path: path, data: data)
                 return try JSONSerialization.data(withJSONObject: ["path": url.path])
@@ -656,10 +659,10 @@ public actor CapabilityBroker {
 
     private func sha256Hex(_ data: Data) -> String {
         #if canImport(CryptoKit)
-        let d = SHA256.hash(data: data)
-        return d.map { String(format: "%02x", $0) }.joined()
+            let d = SHA256.hash(data: data)
+            return d.map { String(format: "%02x", $0) }.joined()
         #else
-        return String(data.count)
+            return String(data.count)
         #endif
     }
 }

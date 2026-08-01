@@ -14,16 +14,16 @@ public enum ExtensionActivationEvent: Hashable, Codable, Sendable {
     public func matches(_ other: ExtensionActivationEvent) -> Bool {
         switch (self, other) {
         case (.startup, .startup),
-             (.workspaceOpened, .workspaceOpened),
-             (.manual, .manual):
+            (.workspaceOpened, .workspaceOpened),
+            (.manual, .manual):
             return true
-        case let (.language(a), .language(b)):
+        case (.language(let a), .language(let b)):
             return a.lowercased() == b.lowercased()
-        case let (.command(a), .command(b)):
+        case (.command(let a), .command(let b)):
             return a == b
-        case let (.view(a), .view(b)):
+        case (.view(let a), .view(let b)):
             return a == b
-        case let (.fileMatch(pattern), .fileMatch(path)):
+        case (.fileMatch(let pattern), .fileMatch(let path)):
             return filePattern(pattern, matches: path)
         default:
             return false

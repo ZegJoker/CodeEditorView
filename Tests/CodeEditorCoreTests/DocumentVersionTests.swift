@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import CodeEditorCore
 
 @Suite("Document versioning")
@@ -40,8 +41,8 @@ struct DocumentVersionTests {
         let before = store.version
         let tx = EditTransaction(
             changes: [
-                TextChange(range: NSRange(location: 3, length: 1), replacement: "X"), // d
-                TextChange(range: NSRange(location: 0, length: 1), replacement: "A"), // a
+                TextChange(range: NSRange(location: 3, length: 1), replacement: "X"),  // d
+                TextChange(range: NSRange(location: 0, length: 1), replacement: "A"),  // a
             ],
             origin: .programmatic
         )

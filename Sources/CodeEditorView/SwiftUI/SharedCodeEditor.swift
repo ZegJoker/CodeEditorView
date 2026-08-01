@@ -1,6 +1,6 @@
-import SwiftUI
-import CodeEditorLanguageSupport
 import CodeEditorDocuments
+import CodeEditorLanguageSupport
+import SwiftUI
 
 /// SwiftUI editor driven by a shared ``TextDocument`` and ``EditorSession``.
 ///
@@ -62,9 +62,9 @@ private struct SharedEditorIdentity: Hashable {
     let sessionID: EditorSessionID
 }
 
-public extension CodeEditor {
+extension CodeEditor {
     /// Shared-document entry point (same parameters as ``SharedCodeEditor``).
-    static func shared(
+    public static func shared(
         document: TextDocument,
         session: EditorSession,
         configuration: EditorConfiguration = EditorConfiguration(),
@@ -92,143 +92,138 @@ public extension CodeEditor {
 // MARK: - Representable
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 
-struct SharedEditorRepresentable: NSViewRepresentable {
-    var document: TextDocument
-    var session: EditorSession
-    var configuration: EditorConfiguration
-    var language: CodeLanguage?
-    var highlightProviders: [any HighlightProviding]
-    var coordinators: [any EditorCoordinator]
-    var completionDelegate: (any CodeSuggestionDelegate)?
-    var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
+    struct SharedEditorRepresentable: NSViewRepresentable {
+        var document: TextDocument
+        var session: EditorSession
+        var configuration: EditorConfiguration
+        var language: CodeLanguage?
+        var highlightProviders: [any HighlightProviding]
+        var coordinators: [any EditorCoordinator]
+        var completionDelegate: (any CodeSuggestionDelegate)?
+        var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+        func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeNSView(context: Context) -> EditorChromeView {
-        let controller = EditorController(
-            document: document,
-            session: session,
-            configuration: configuration,
-            coordinators: coordinators,
-            highlightProviders: highlightProviders,
-            language: language
-        )
-        controller.completionDelegate = completionDelegate
-        controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
-        context.coordinator.controller = controller
-
-        let editor = AppKitEditorView(controller: controller)
-        editor.onSelectionChange = { [weak controller, session] range in
-            controller?.setSelectedRange(range)
-            session.setSelectedNSRanges(controller?.selectedRanges ?? [range])
-        }
-        controller.onSelectionDidChange = { [session] range in
-            session.setSelectedNSRanges([range])
-        }
-        let chrome = EditorChromeView(
-            controller: controller,
-            editorView: editor,
-            wrapLines: configuration.wrapLines
-        )
-        context.coordinator.chromeView = chrome
-        return chrome
-    }
-
-    func updateNSView(_ chrome: EditorChromeView, context: Context) {
-        guard let controller = context.coordinator.controller else { return }
-        // Document/session switches are handled by remounting via SharedCodeEditor `.id(...)`.
-        // Do not rebind here: EditorChromeView owns an immutable controller.
-        if controller.configuration != configuration {
-            controller.configuration = configuration
-        }
-        if controller.language != language {
-            controller.language = language
-        }
-        // Apply external selection (Find in Files jump) without remounting.
-        let sessionRanges = session.selectedNSRanges
-        if sessionRanges != controller.selectedRanges, !sessionRanges.isEmpty {
-            controller.setSelectedRanges(sessionRanges)
-        }
-        // Only assign when identity changes. Unconditional writes on @Observable
-        // properties re-enter SwiftUI's update cycle and freeze the main thread.
-        if !sameOptionalObject(controller.completionDelegate, completionDelegate) {
+        func makeNSView(context: Context) -> EditorChromeView {
+            let controller = EditorController(
+                document: document,
+                session: session,
+                configuration: configuration,
+                coordinators: coordinators,
+                highlightProviders: highlightProviders,
+                language: language
+            )
             controller.completionDelegate = completionDelegate
-        }
-        if !sameOptionalObject(controller.jumpToDefinitionDelegate, jumpToDefinitionDelegate) {
             controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
-        }
-        if !highlightProviders.isEmpty {
-            controller.setHighlightProviders(highlightProviders)
-        }
-    }
+            context.coordinator.controller = controller
 
-    final class Coordinator {
-        var controller: EditorController?
-        var chromeView: EditorChromeView?
+            let editor = AppKitEditorView(controller: controller)
+            editor.onSelectionChange = { [weak controller, session] range in
+                controller?.setSelectedRange(range)
+                session.setSelectedNSRanges(controller?.selectedRanges ?? [range])
+            }
+            controller.onSelectionDidChange = { [session] range in
+                session.setSelectedNSRanges([range])
+            }
+            let chrome = EditorChromeView(
+                controller: controller,
+                editorView: editor,
+                wrapLines: configuration.wrapLines
+            )
+            context.coordinator.chromeView = chrome
+            return chrome
+        }
+
+        func updateNSView(_ chrome: EditorChromeView, context: Context) {
+            guard let controller = context.coordinator.controller else { return }
+            // Document/session switches are handled by remounting via SharedCodeEditor `.id(...)`.
+            // Do not rebind here: EditorChromeView owns an immutable controller.
+            if controller.configuration != configuration {
+                controller.configuration = configuration
+            }
+            if controller.language != language {
+                controller.language = language
+            }
+            // Apply external selection (Find in Files jump) without remounting.
+            let sessionRanges = session.selectedNSRanges
+            if sessionRanges != controller.selectedRanges, !sessionRanges.isEmpty {
+                controller.setSelectedRanges(sessionRanges)
+            }
+            // Only assign when identity changes. Unconditional writes on @Observable
+            // properties re-enter SwiftUI's update cycle and freeze the main thread.
+            if !sameOptionalObject(controller.completionDelegate, completionDelegate) {
+                controller.completionDelegate = completionDelegate
+            }
+            if !sameOptionalObject(controller.jumpToDefinitionDelegate, jumpToDefinitionDelegate) {
+                controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
+            }
+            if !highlightProviders.isEmpty {
+                controller.setHighlightProviders(highlightProviders)
+            }
+        }
+
+        final class Coordinator {
+            var controller: EditorController?
+            var chromeView: EditorChromeView?
+        }
     }
-}
 
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 
-struct SharedEditorRepresentable: UIViewRepresentable {
-    var document: TextDocument
-    var session: EditorSession
-    var configuration: EditorConfiguration
-    var language: CodeLanguage?
-    var highlightProviders: [any HighlightProviding]
-    var coordinators: [any EditorCoordinator]
-    var completionDelegate: (any CodeSuggestionDelegate)?
-    var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
+    struct SharedEditorRepresentable: UIViewRepresentable {
+        var document: TextDocument
+        var session: EditorSession
+        var configuration: EditorConfiguration
+        var language: CodeLanguage?
+        var highlightProviders: [any HighlightProviding]
+        var coordinators: [any EditorCoordinator]
+        var completionDelegate: (any CodeSuggestionDelegate)?
+        var jumpToDefinitionDelegate: (any JumpToDefinitionDelegate)?
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+        func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeUIView(context: Context) -> EditorChromeView {
-        let controller = EditorController(
-            document: document,
-            session: session,
-            configuration: configuration,
-            coordinators: coordinators,
-            highlightProviders: highlightProviders,
-            language: language
-        )
-        controller.completionDelegate = completionDelegate
-        controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
-        context.coordinator.controller = controller
-        let editor = UIKitEditorView(controller: controller)
-        let chrome = EditorChromeView(
-            controller: controller,
-            editorView: editor,
-            wrapLines: configuration.wrapLines
-        )
-        return chrome
-    }
-
-    func updateUIView(_ uiView: EditorChromeView, context: Context) {
-        guard let controller = context.coordinator.controller else { return }
-        if controller.configuration != configuration {
-            controller.configuration = configuration
-        }
-        if controller.language != language {
-            controller.language = language
-        }
-        if !sameOptionalObject(controller.completionDelegate, completionDelegate) {
+        // EditorChromeView is AppKit-only; iOS hosts UIKitEditorView directly.
+        func makeUIView(context: Context) -> UIKitEditorView {
+            let controller = EditorController(
+                document: document,
+                session: session,
+                configuration: configuration,
+                coordinators: coordinators,
+                highlightProviders: highlightProviders,
+                language: language
+            )
             controller.completionDelegate = completionDelegate
-        }
-        if !sameOptionalObject(controller.jumpToDefinitionDelegate, jumpToDefinitionDelegate) {
             controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
+            context.coordinator.controller = controller
+            return UIKitEditorView(controller: controller)
         }
-        if !highlightProviders.isEmpty {
-            controller.setHighlightProviders(highlightProviders)
-        }
-    }
 
-    final class Coordinator {
-        var controller: EditorController?
+        func updateUIView(_ uiView: UIKitEditorView, context: Context) {
+            guard let controller = context.coordinator.controller else { return }
+            if controller.configuration != configuration {
+                controller.configuration = configuration
+            }
+            if controller.language != language {
+                controller.language = language
+            }
+            if !sameOptionalObject(controller.completionDelegate, completionDelegate) {
+                controller.completionDelegate = completionDelegate
+            }
+            if !sameOptionalObject(controller.jumpToDefinitionDelegate, jumpToDefinitionDelegate) {
+                controller.jumpToDefinitionDelegate = jumpToDefinitionDelegate
+            }
+            if !highlightProviders.isEmpty {
+                controller.setHighlightProviders(highlightProviders)
+            }
+        }
+
+        final class Coordinator {
+            var controller: EditorController?
+        }
     }
-}
 #endif
 
 /// Compare weak delegate existentials without forcing an Observable write.
@@ -239,7 +234,7 @@ private func sameOptionalObject(
     switch (lhs, rhs) {
     case (nil, nil):
         return true
-    case let (l?, r?):
+    case (let l?, let r?):
         return l === r
     default:
         return false

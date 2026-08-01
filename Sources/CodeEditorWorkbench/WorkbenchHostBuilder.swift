@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCommands
 import CodeEditorDocuments
-import CodeEditorWorkspace
 import CodeEditorView
+import CodeEditorWorkspace
+import Foundation
 
 /// Fluent host configuration builder — hosts need not assemble Workbench internals manually.
 @MainActor

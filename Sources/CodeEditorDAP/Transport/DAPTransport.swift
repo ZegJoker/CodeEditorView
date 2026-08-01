@@ -1,6 +1,6 @@
-import Foundation
-import Darwin
 import CodeEditorCore
+import Darwin
+import Foundation
 
 /// Duplex raw-byte transport; framing applied by ``DAPJSONRPCConnection``.
 public protocol DAPTransport: Sendable {
@@ -106,7 +106,8 @@ public final class DAPProcessTransport: DAPTransport, @unchecked Sendable {
             lock.unlock()
         }
         func snapshot() -> Data {
-            lock.lock(); defer { lock.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             return data
         }
     }

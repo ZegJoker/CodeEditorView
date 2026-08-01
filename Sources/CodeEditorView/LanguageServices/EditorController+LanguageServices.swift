@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 // MARK: - Optional language services install
 

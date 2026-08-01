@@ -1,7 +1,7 @@
-import Foundation
-import Darwin
 import CodeEditorCore
 import CodeEditorExtensionAPI
+import Darwin
+import Foundation
 
 /// Bounded host-owned MCP client over stdio JSON-RPC (Content-Length framing).
 public actor MCPClientSession {
@@ -48,10 +48,12 @@ public actor MCPClientSession {
     }
 
     public func callTool(name: String, arguments: MCPJSON = MCPJSON()) async throws -> MCPJSON {
-        try await connection!.request("tools/call", params: MCPJSON([
-            "name": name,
-            "arguments": arguments.dictionary,
-        ]))
+        try await connection!.request(
+            "tools/call",
+            params: MCPJSON([
+                "name": name,
+                "arguments": arguments.dictionary,
+            ]))
     }
 
     public func listResources() async throws -> MCPJSON {
@@ -176,7 +178,8 @@ private final class MCPTransportState: @unchecked Sendable {
     var closed = false
     var continuation: AsyncStream<Data>.Continuation?
     func withLock<T>(_ body: (MCPTransportState) -> T) -> T {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return body(self)
     }
 }
@@ -203,7 +206,8 @@ public final class MCPTestTransport: MCPTransport, @unchecked Sendable {
         var cont: AsyncStream<Data>.Continuation?
         var closed = false
         func withLock<T>(_ body: (State) -> T) -> T {
-            lock.lock(); defer { lock.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             return body(self)
         }
     }
@@ -341,8 +345,8 @@ public actor MCPJSONRPCConnection {
             let body = buffer.subdata(in: bodyStart..<bodyEnd)
             buffer.removeSubrange(buffer.startIndex..<bodyEnd)
             if let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
-               let id = (obj["id"] as? Int) ?? (obj["id"] as? NSNumber)?.intValue,
-               let cont = pending.removeValue(forKey: id)
+                let id = (obj["id"] as? Int) ?? (obj["id"] as? NSNumber)?.intValue,
+                let cont = pending.removeValue(forKey: id)
             {
                 if let err = obj["error"] as? [String: Any] {
                     cont.resume(throwing: MCPClientError.serverError(err["message"] as? String ?? "error"))
@@ -401,7 +405,7 @@ public actor MockMCPServer {
 
     private func respond(to body: Data) async {
         guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
-              let method = obj["method"] as? String
+            let method = obj["method"] as? String
         else { return }
         calls.append(method)
         guard let id = (obj["id"] as? Int) ?? (obj["id"] as? NSNumber)?.intValue else { return }
@@ -415,16 +419,18 @@ public actor MockMCPServer {
             ]
         case "tools/list":
             result = [
-                "tools": [[
-                    "name": "echo",
-                    "description": "Echo",
-                    "inputSchema": ["type": "object"],
-                ]],
+                "tools": [
+                    [
+                        "name": "echo",
+                        "description": "Echo",
+                        "inputSchema": ["type": "object"],
+                    ]
+                ]
             ]
         case "tools/call":
             let params = obj["params"] as? [String: Any] ?? [:]
             result = [
-                "content": [["type": "text", "text": "ok:\(params["name"] as? String ?? "")"]],
+                "content": [["type": "text", "text": "ok:\(params["name"] as? String ?? "")"]]
             ]
         case "resources/list":
             result = ["resources": [["uri": "mem://a", "name": "A"]]]

@@ -32,14 +32,15 @@ public final class EditorLayoutStore {
         fraction: Double = 0.5
     ) {
         let frac = min(max(fraction, 0.05), 0.95)
-        root = replacePane(pane, in: root) { _ in
-            .split(
-                id: EditorSplitID(),
-                axis: axis,
-                children: [.pane(pane), .pane(newPane)],
-                fractions: [frac, 1 - frac]
-            )
-        } ?? root
+        root =
+            replacePane(pane, in: root) { _ in
+                .split(
+                    id: EditorSplitID(),
+                    axis: axis,
+                    children: [.pane(pane), .pane(newPane)],
+                    fractions: [frac, 1 - frac]
+                )
+            } ?? root
         normalize()
     }
 

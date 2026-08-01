@@ -1,10 +1,11 @@
-import Foundation
-import Testing
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import CodeEditorExtensionWasmGuest
 import CodeEditorExtensions
 import CodeEditorWasmEngine
-import CodeEditorExtensionWasmGuest
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 private func fixtureModule() -> Data {
@@ -104,10 +105,11 @@ struct Phase11DualRunTests {
         let brokerRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("p11-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: brokerRoot, withIntermediateDirectories: true)
-        let broker = CapabilityBroker(config: .init(
-            storageRoot: brokerRoot.appendingPathComponent("s"),
-            toolCacheRoot: brokerRoot.appendingPathComponent("c")
-        ))
+        let broker = CapabilityBroker(
+            config: .init(
+                storageRoot: brokerRoot.appendingPathComponent("s"),
+                toolCacheRoot: brokerRoot.appendingPathComponent("c")
+            ))
         let env = HostEnvironment(
             capabilities: Set(HostCapability.allCases),
             grantedPermissions: [.readWorkspace]
@@ -139,11 +141,12 @@ struct Phase11DualRunTests {
             builtInExtension: Ext()
         )
         let prep = try await builtIn.prepare(package: pkg, policy: .testing)
-        let biInst = try await builtIn.start(
-            prepared: prep,
-            handshake: ExtensionHostHandshake(environment: env, generation: 1),
-            broker: broker
-        ) as! BuiltInExtensionInstance
+        let biInst =
+            try await builtIn.start(
+                prepared: prep,
+                handshake: ExtensionHostHandshake(environment: env, generation: 1),
+                broker: broker
+            ) as! BuiltInExtensionInstance
         _ = try await biInst.request(.echo, payload: Data("x".utf8))
         _ = try await biInst.request(.completion, payload: Data())
         let biTrace = await biInst.conformanceTrace()
@@ -161,11 +164,12 @@ struct Phase11DualRunTests {
             runtimePreference: .swiftWasm
         )
         let wprep = try await wasmDriver.prepare(package: wasmPkg, policy: .testing)
-        let wInst = try await wasmDriver.start(
-            prepared: wprep,
-            handshake: ExtensionHostHandshake(environment: env, generation: 2),
-            broker: broker
-        ) as! SwiftWasmExtensionInstance
+        let wInst =
+            try await wasmDriver.start(
+                prepared: wprep,
+                handshake: ExtensionHostHandshake(environment: env, generation: 2),
+                broker: broker
+            ) as! SwiftWasmExtensionInstance
         _ = try await wInst.request(.echo, payload: Data("x".utf8))
         _ = try await wInst.request(.completion, payload: Data())
         let wTrace = await wInst.conformanceTrace()
@@ -209,21 +213,23 @@ struct Phase11PollProofTests {
         guest.hostShouldCancel = { _, _ in 0 }
 
         // start with good schema
-        let config = CBORCodec.encode(CBORValue.stringMap([
-            "schema": .text(ExtensionMethodCatalog.schemaHash),
-            "generation": .unsigned(1),
-        ]))
+        let config = CBORCodec.encode(
+            CBORValue.stringMap([
+                "schema": .text(ExtensionMethodCatalog.schemaHash),
+                "generation": .unsigned(1),
+            ]))
         let p = guest.alloc(Int32(config.count))
         try guest.writeToMemory(config, at: Int(p))
         #expect(guest.start(configPtr: p, configLen: Int32(config.count)) == 0)
 
-        let req = try ExtensionEnvelopeCodec.encode(.request(
-            id: ExtensionRequestID(),
-            method: .echo,
-            payload: Data("ab".utf8),
-            timeoutMS: 1000,
-            generation: 1
-        ))
+        let req = try ExtensionEnvelopeCodec.encode(
+            .request(
+                id: ExtensionRequestID(),
+                method: .echo,
+                payload: Data("ab".utf8),
+                timeoutMS: 1000,
+                generation: 1
+            ))
         let rp = guest.alloc(Int32(req.count))
         try guest.writeToMemory(req, at: Int(rp))
         #expect(guest.receive(ptr: rp, len: Int32(req.count)) == 0)

@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorExtensions
 import CodeEditorLanguageServices
+import Foundation
 
 public actor RemoteExtensionHost {
     public let environment: HostEnvironment

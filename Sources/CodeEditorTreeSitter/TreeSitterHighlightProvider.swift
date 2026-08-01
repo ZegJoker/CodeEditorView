@@ -1,6 +1,6 @@
+import CodeEditorLanguageSupport
 import Foundation
 import SwiftTreeSitter
-import CodeEditorLanguageSupport
 
 /// Tree-sitter based ``HighlightProviding`` implementation with **incremental** edits.
 ///
@@ -151,7 +151,8 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         }
 
         if let languageID, languageID != self.languageID,
-           let language = Self.resolveLanguage(id: languageID) {
+            let language = Self.resolveLanguage(id: languageID)
+        {
             await loadAsync(language: language)
         }
     }
@@ -312,10 +313,11 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
     public func queryHighlights(in range: NSRange, text: String) async throws -> [HighlightRange] {
         try Task.checkCancellation()
         guard let configuration,
-              let highlightsQuery = configuration.queries[.highlights],
-              let tree,
-              range.length > 0,
-              !source.isEmpty else {
+            let highlightsQuery = configuration.queries[.highlights],
+            let tree,
+            range.length > 0,
+            !source.isEmpty
+        else {
             return []
         }
 
@@ -323,7 +325,8 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         let cursor = highlightsQuery.execute(in: tree)
         cursor.setRange(range)
 
-        let named = cursor
+        let named =
+            cursor
             .resolve(with: Predicate.Context(string: source))
             .highlights()
 

@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Line fold collapse layout")
@@ -7,13 +8,13 @@ import Foundation
 struct LineFoldCollapseLayoutTests {
     @Test func collapseShrinksContentHeight() {
         let text = """
-        func f() {
-            let a = 1
-            let b = 2
-            let c = 3
-        }
+            func f() {
+                let a = 1
+                let b = 2
+                let c = 3
+            }
 
-        """
+            """
         let controller = EditorController(
             text: text,
             configuration: EditorConfiguration(
@@ -103,7 +104,7 @@ struct LineFoldCollapseLayoutTests {
         #expect(!controller.foldModel.collapsedFolds.isEmpty)
 
         guard let header = controller.layout.lineIndex.line(atIndex: 0),
-              let body = controller.layout.lineIndex.line(atIndex: 1)
+            let body = controller.layout.lineIndex.line(atIndex: 1)
         else {
             Issue.record("lines missing")
             return

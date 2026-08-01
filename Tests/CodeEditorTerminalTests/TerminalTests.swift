@@ -1,6 +1,7 @@
+import CodeEditorCore
 import Foundation
 import Testing
-import CodeEditorCore
+
 @testable import CodeEditorTerminal
 
 @Suite("Terminal")
@@ -134,9 +135,9 @@ struct VTParserScreenTests {
 
     @Test func adversarialCSIDoesNotCrash() {
         let screen = TerminalScreen(cols: 10, rows: 3)
-        var junk = Data([0x1b, 0x5b]) // ESC [
+        var junk = Data([0x1b, 0x5b])  // ESC [
         junk.append(contentsOf: Array(repeating: UInt8(0x3b), count: 200))
-        junk.append(0x6d) // m
+        junk.append(0x6d)  // m
         junk.append(contentsOf: [0x1b, 0x5b, 0xff, 0x48])
         screen.feed(junk)
         screen.feed(String(repeating: "x", count: 1000))
@@ -171,38 +172,38 @@ struct VTParserScreenTests {
         await backend.terminate(session: handle.id)
     }
 
-#if os(macOS)
-    @Test func ptyInteractiveEchoAndResize() async throws {
-        let backend = PTYTerminalBackend()
-        let config = TerminalConfiguration(
-            shell: URL(fileURLWithPath: "/bin/sh"),
-            arguments: [],
-            cols: 40,
-            rows: 12
-        )
-        let handle = try await backend.start(configuration: config)
-        final class Box: @unchecked Sendable { var chunks: [Data] = [] }
-        let box = Box()
-        let stream = backend.output
-        let collector = Task {
-            for await event in stream {
-                if case .data(_, let bytes) = event {
-                    box.chunks.append(bytes)
-                    let all = box.chunks.reduce(Data(), +)
-                    if String(data: all, encoding: .utf8)?.contains("PTYOK") == true {
-                        break
+    #if os(macOS)
+        @Test func ptyInteractiveEchoAndResize() async throws {
+            let backend = PTYTerminalBackend()
+            let config = TerminalConfiguration(
+                shell: URL(fileURLWithPath: "/bin/sh"),
+                arguments: [],
+                cols: 40,
+                rows: 12
+            )
+            let handle = try await backend.start(configuration: config)
+            final class Box: @unchecked Sendable { var chunks: [Data] = [] }
+            let box = Box()
+            let stream = backend.output
+            let collector = Task {
+                for await event in stream {
+                    if case .data(_, let bytes) = event {
+                        box.chunks.append(bytes)
+                        let all = box.chunks.reduce(Data(), +)
+                        if String(data: all, encoding: .utf8)?.contains("PTYOK") == true {
+                            break
+                        }
                     }
                 }
             }
+            try await backend.write(Data("printf 'PTYOK\\n'\n".utf8), to: handle.id)
+            try await backend.resize(cols: 50, rows: 20, session: handle.id)
+            try await Task.sleep(nanoseconds: 400_000_000)
+            collector.cancel()
+            let all = box.chunks.reduce(Data(), +)
+            let text = String(data: all, encoding: .utf8) ?? ""
+            #expect(text.contains("PTYOK") || !box.chunks.isEmpty)  // received some PTY output
+            await backend.terminate(session: handle.id)
         }
-        try await backend.write(Data("printf 'PTYOK\\n'\n".utf8), to: handle.id)
-        try await backend.resize(cols: 50, rows: 20, session: handle.id)
-        try await Task.sleep(nanoseconds: 400_000_000)
-        collector.cancel()
-        let all = box.chunks.reduce(Data(), +)
-        let text = String(data: all, encoding: .utf8) ?? ""
-        #expect(text.contains("PTYOK") || !box.chunks.isEmpty) // received some PTY output
-        await backend.terminate(session: handle.id)
-    }
-#endif
+    #endif
 }

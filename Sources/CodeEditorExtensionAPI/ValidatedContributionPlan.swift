@@ -194,13 +194,14 @@ public enum ImmutableContributionRegistry {
             winner: ExtensionID,
             loser: ExtensionID
         ) {
-            collisions.append(ContributionCollision(
-                kind: kind,
-                contributionID: id,
-                winnerPackageID: winner,
-                loserPackageID: loser,
-                rule: "package-id-lexicographic-overwrite"
-            ))
+            collisions.append(
+                ContributionCollision(
+                    kind: kind,
+                    contributionID: id,
+                    winnerPackageID: winner,
+                    loserPackageID: loser,
+                    rule: "package-id-lexicographic-overwrite"
+                ))
         }
 
         for plan in sorted {
@@ -261,11 +262,13 @@ public enum ImmutableContributionRegistry {
 public enum ExtensionPackageDigest {
     public static func compute(packageRoot: URL) throws -> String {
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(
-            at: packageRoot,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard
+            let enumerator = fm.enumerator(
+                at: packageRoot,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            )
+        else {
             throw ExtensionError.dataLoad("cannot enumerate package")
         }
         var files: [(String, Data)] = []
@@ -292,24 +295,24 @@ public enum ExtensionPackageDigest {
 
 /// Minimal SHA-256 (via CryptoKit when available, else CommonCrypto-free portable).
 #if canImport(CryptoKit)
-import CryptoKit
+    import CryptoKit
 
-struct SHA256Hasher {
-    private var hasher = SHA256()
-    mutating func update(_ data: Data) { hasher.update(data: data) }
-    func finalizeHex() -> String {
-        hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
+    struct SHA256Hasher {
+        private var hasher = SHA256()
+        mutating func update(_ data: Data) { hasher.update(data: data) }
+        func finalizeHex() -> String {
+            hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
+        }
     }
-}
 #else
-struct SHA256Hasher {
-    private var data = Data()
-    mutating func update(_ chunk: Data) { data.append(chunk) }
-    func finalizeHex() -> String {
-        // Fallback: non-crypto fingerprint for platforms without CryptoKit (should not hit on Apple).
-        var hash: UInt64 = 5381
-        for b in data { hash = ((hash << 5) &+ hash) &+ UInt64(b) }
-        return String(format: "%016llx", hash) + String(format: "%08x", data.count)
+    struct SHA256Hasher {
+        private var data = Data()
+        mutating func update(_ chunk: Data) { data.append(chunk) }
+        func finalizeHex() -> String {
+            // Fallback: non-crypto fingerprint for platforms without CryptoKit (should not hit on Apple).
+            var hash: UInt64 = 5381
+            for b in data { hash = ((hash << 5) &+ hash) &+ UInt64(b) }
+            return String(format: "%016llx", hash) + String(format: "%08x", data.count)
+        }
     }
-}
 #endif

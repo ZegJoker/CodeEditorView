@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorWorkspace
 
 @Suite("Local workspace file system")
@@ -105,7 +106,8 @@ struct PreviewTabPolicyTests {
 
     @Test func pinPromotesPreview() {
         let pane = EditorPane()
-        let tab = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:x", preview: true)
+        let tab = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:x", preview: true)
         pane.pin(tab: tab.tab.id)
         #expect(pane.tabs[0].isPinned)
         #expect(!pane.tabs[0].isPreview)
@@ -218,9 +220,12 @@ struct PaneSplitAndTabsTests {
 
     @Test func moveTabReordersWithinPane() {
         let pane = EditorPane()
-        let a = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:a", preview: false)
-        let b = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:b", preview: false)
-        let c = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:c", preview: false)
+        let a = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:a", preview: false)
+        let b = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:b", preview: false)
+        let c = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:c", preview: false)
         #expect(pane.tabs.map(\.id) == [a.tab.id, b.tab.id, c.tab.id])
         pane.moveTab(from: 0, to: 2)
         #expect(pane.tabs.map(\.id) == [b.tab.id, c.tab.id, a.tab.id])
@@ -270,8 +275,10 @@ struct WorkspaceHeadlessTests {
         let root = try makeTempRoot(files: ["a.txt": "a", "b.txt": "b"])
         defer { try? FileManager.default.removeItem(at: root) }
         let workspace = try await Workspace.local(rootDirectories: [root])
-        _ = try await workspace.openInActivePane(uri: DocumentURI(fileURL: root.appendingPathComponent("a.txt")), preview: true)
-        _ = try await workspace.openInActivePane(uri: DocumentURI(fileURL: root.appendingPathComponent("b.txt")), preview: true)
+        _ = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: root.appendingPathComponent("a.txt")), preview: true)
+        _ = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: root.appendingPathComponent("b.txt")), preview: true)
         let activeID = try #require(workspace.activePaneID)
         let pane = try #require(workspace.panes[activeID])
         #expect(pane.tabs.count == 1)

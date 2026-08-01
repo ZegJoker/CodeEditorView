@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCommands
 import CodeEditorExtensionAPI
+import Foundation
 
 // ExtensionDisposable, ExtensionRegistrationToken, CompositeExtensionDisposable
 // live in CodeEditorExtensionAPI. Host adapters:

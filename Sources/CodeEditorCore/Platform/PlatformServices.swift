@@ -99,7 +99,7 @@ public struct ProfileFileSystemAccess: FileSystemAccess, Sendable {
                 kind: .workspaceFilesystem,
                 reason: "Filesystem is data-only on profile \(profile.name)"
             )
-        case let .unavailable(reason):
+        case .unavailable(let reason):
             throw CodeEditorPlatformError.unsupportedCapability(kind: .workspaceFilesystem, reason: reason)
         }
     }

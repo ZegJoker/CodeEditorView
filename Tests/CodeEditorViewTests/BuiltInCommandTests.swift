@@ -1,6 +1,7 @@
+import CodeEditorCommands
 import Foundation
 import Testing
-import CodeEditorCommands
+
 @testable import CodeEditorView
 
 @Suite("Built-in commands")

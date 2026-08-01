@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 // MARK: - Versioned edit funnel
 

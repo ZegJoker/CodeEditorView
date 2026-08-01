@@ -1,7 +1,7 @@
-import Foundation
-import Testing
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import Foundation
+import Testing
 
 @Suite("CBOR codec")
 struct CBORCodecTests {
@@ -26,7 +26,7 @@ struct CBORCodecTests {
 
     @Test func rejectsTruncated() {
         #expect(throws: CBORError.self) {
-            try CBORCodec.decode(Data([0x45, 0x61])) // text length 5 but short
+            try CBORCodec.decode(Data([0x45, 0x61]))  // text length 5 but short
         }
     }
 }

@@ -1,5 +1,5 @@
-import SwiftUI
 import CodeEditorCommands
+import SwiftUI
 
 /// Optional command-palette UI driven by ``CommandPaletteModel`` and a ``CommandDispatcher``.
 public struct CommandPaletteView: View {

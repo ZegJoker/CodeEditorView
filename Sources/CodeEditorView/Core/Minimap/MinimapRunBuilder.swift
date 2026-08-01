@@ -1,6 +1,6 @@
+import CodeEditorLanguageSupport
 import CoreGraphics
 import Foundation
-import CodeEditorLanguageSupport
 
 /// A non-whitespace run to paint as a bubble in the minimap.
 public struct MinimapBubbleRun: Equatable, Sendable {

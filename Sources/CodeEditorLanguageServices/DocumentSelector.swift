@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Selects documents by language, URI scheme, and simple path patterns.
 public struct DocumentSelector: Sendable, Hashable, Codable {

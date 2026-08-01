@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensions
+import Foundation
 
 public enum ExtensionRuntimeKind: String, Sendable, Hashable, Codable {
     case dataOnly
@@ -283,7 +283,8 @@ public enum RuntimeSelector {
             return .builtIn
         }
         if package.hasRemoteDescriptor, policy.allowsRemoteProviders,
-           policy.hostProfile.allowedRuntimes.contains(.remote) {
+            policy.hostProfile.allowedRuntimes.contains(.remote)
+        {
             // Prefer remote when local native/process is denied and remote is available.
             if !policy.platformAllowsNativeProcess {
                 return .remote
@@ -314,12 +315,14 @@ public enum RuntimeSelector {
         package: PreparedExtensionPackage,
         policy: ExtensionExecutionPolicy
     ) throws -> ExtensionRuntimeKind {
-        guard policy.hostProfile.allowedRuntimes.contains(pref.dto)
+        guard
+            policy.hostProfile.allowedRuntimes.contains(pref.dto)
                 || pref == .dataOnly || pref == .builtIn
         else {
             // Explicit remote fallback when preferred runtime denied
             if package.hasRemoteDescriptor, policy.allowsRemoteProviders,
-               policy.hostProfile.allowedRuntimes.contains(.remote) {
+                policy.hostProfile.allowedRuntimes.contains(.remote)
+            {
                 return .remote
             }
             throw RuntimeSelectionError.profileDenied(

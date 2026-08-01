@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
+import Testing
+
 @testable import CodeEditorWorkbench
 
 @Suite("Document view registry")

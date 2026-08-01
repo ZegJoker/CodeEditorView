@@ -1,5 +1,5 @@
-import SwiftUI
 import CodeEditorDocuments
+import SwiftUI
 
 /// Centered HUD for Open Quickly (Xcode-like floating panel, not a modal sheet).
 public struct OpenQuicklyView: View {

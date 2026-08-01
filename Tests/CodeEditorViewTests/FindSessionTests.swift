@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Find session")
@@ -7,7 +8,7 @@ import Foundation
 struct FindSessionTests {
     @Test func showSeedsFromSelectionAndFinds() {
         let controller = EditorController(text: "hello test world test")
-        controller.setSelectedRange(NSRange(location: 6, length: 4)) // "test"
+        controller.setSelectedRange(NSRange(location: 6, length: 4))  // "test"
         controller.showFindPanel()
         #expect(controller.findSession.isShowing)
         #expect(controller.findSession.findText == "test")
@@ -56,13 +57,13 @@ struct FindSessionTests {
     @Test func replaceGreetWithWelcomeKeepsSecondMatchAligned() {
         // Demo sample regression: replace first "greet" → "welcome"; next match must still be "greet".
         let src = """
-        // Swift — CodeEditorView demo
-        func greet(_ name: String) {
-            print("Hello, \\(name)!")
-        }
+            // Swift — CodeEditorView demo
+            func greet(_ name: String) {
+                print("Hello, \\(name)!")
+            }
 
-        greet("world")
-        """
+            greet("world")
+            """
         let controller = EditorController(text: src)
         var mirrored = src
         controller.onTextDidChange = { mirrored = $0 }

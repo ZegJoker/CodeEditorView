@@ -1,12 +1,12 @@
+import CodeEditorCore
 import CoreGraphics
 import CoreText
 import Foundation
-import CodeEditorCore
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Draws the line-number gutter (+ optional fold ribbon) into a Core Graphics context.
@@ -163,9 +163,9 @@ package enum GutterRenderer {
 
     private static func platformColor(from cgColor: CGColor) -> PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        NSColor(cgColor: cgColor) ?? PlatformDefaults.textColor
+            NSColor(cgColor: cgColor) ?? PlatformDefaults.textColor
         #else
-        UIColor(cgColor: cgColor)
+            UIColor(cgColor: cgColor)
         #endif
     }
 }

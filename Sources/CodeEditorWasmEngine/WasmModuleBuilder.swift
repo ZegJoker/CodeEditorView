@@ -4,7 +4,7 @@ import Foundation
 public struct WasmModuleBuilder: Sendable {
     public init() {}
 
-    public static let magic: [UInt8] = [0x00, 0x61, 0x73, 0x6D] // \0asm
+    public static let magic: [UInt8] = [0x00, 0x61, 0x73, 0x6D]  // \0asm
     public static let version: [UInt8] = [0x01, 0x00, 0x00, 0x00]
 
     // MARK: - Public fixtures
@@ -14,14 +14,14 @@ public struct WasmModuleBuilder: Sendable {
     public static func conformanceModule() -> Data {
         // Type section: (func) (), (func i32)->i32, (func i32 i32)->i32, (func i32 i32), (func i32), (func i32 i32)->i32 host send, (func i32 i32 i32), (func)->i64, (func i64 i64)->i32
         var types: [[UInt8]] = []
-        types.append(funcType([], []))                    // 0 stop-like
-        types.append(funcType([], [.i32]))                // 1 abi_version, millis
-        types.append(funcType([.i32], [.i32]))            // 2 alloc, poll
-        types.append(funcType([.i32, .i32], []))          // 3 dealloc
-        types.append(funcType([.i32, .i32], [.i32]))      // 4 start, receive, host_send
-        types.append(funcType([.i32], []))                // 5 stop
-        types.append(funcType([.i32, .i32, .i32], []))    // 6 host_log
-        types.append(funcType([.i64, .i64], [.i32]))      // 7 should_cancel
+        types.append(funcType([], []))  // 0 stop-like
+        types.append(funcType([], [.i32]))  // 1 abi_version, millis
+        types.append(funcType([.i32], [.i32]))  // 2 alloc, poll
+        types.append(funcType([.i32, .i32], []))  // 3 dealloc
+        types.append(funcType([.i32, .i32], [.i32]))  // 4 start, receive, host_send
+        types.append(funcType([.i32], []))  // 5 stop
+        types.append(funcType([.i32, .i32, .i32], []))  // 6 host_log
+        types.append(funcType([.i64, .i64], [.i32]))  // 7 should_cancel
 
         // Import 4 host funcs from "codeeditor"
         var imports: [UInt8] = []
@@ -35,11 +35,11 @@ public struct WasmModuleBuilder: Sendable {
         let funcTypes: [UInt8] = [1, 2, 3, 4, 4, 2, 5]
 
         // Memory: 1 page min, max 2
-        let memory: [UInt8] = [0x01, 0x01, 0x01, 0x02] // 1 memory, limits min=1 max=2
+        let memory: [UInt8] = [0x01, 0x01, 0x01, 0x02]  // 1 memory, limits min=1 max=2
 
         // Export section
         var exports: [UInt8] = []
-        exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 4) // after 4 imports
+        exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 4)  // after 4 imports
         exports += exportFunc(CoreWasmExport.alloc.rawValue, index: 5)
         exports += exportFunc(CoreWasmExport.dealloc.rawValue, index: 6)
         exports += exportFunc(CoreWasmExport.start.rawValue, index: 7)
@@ -50,9 +50,9 @@ public struct WasmModuleBuilder: Sendable {
 
         // Code for each function
         // abi_version: i32.const 1; return
-        let abiCode = funcBody([0x41, 0x01, 0x0B]) // i32.const 1; end
+        let abiCode = funcBody([0x41, 0x01, 0x0B])  // i32.const 1; end
         // alloc(len): return fixed heap pointer 1024 (ignore free list for fixture)
-        let allocCode = funcBody([0x41, 0x80, 0x08, 0x0B]) // i32.const 1024; end
+        let allocCode = funcBody([0x41, 0x80, 0x08, 0x0B])  // i32.const 1024; end
         // dealloc: nop
         let deallocCode = funcBody([0x0B])
         // start: return 0
@@ -60,26 +60,26 @@ public struct WasmModuleBuilder: Sendable {
         // receive: store ptr/len at 0/4 then return 0
         // local.get 0; i32.const 0; i32.store; local.get 1; i32.const 4; i32.store; i32.const 0
         let receiveCode = funcBody([
-            0x20, 0x00, 0x41, 0x00, 0x36, 0x02, 0x00, // local.get 0; i32.const 0; i32.store align2 offset0
-            0x20, 0x01, 0x41, 0x04, 0x36, 0x02, 0x00, // local.get 1; i32.const 4; i32.store
+            0x20, 0x00, 0x41, 0x00, 0x36, 0x02, 0x00,  // local.get 0; i32.const 0; i32.store align2 offset0
+            0x20, 0x01, 0x41, 0x04, 0x36, 0x02, 0x00,  // local.get 1; i32.const 4; i32.store
             0x41, 0x00, 0x0B,
         ])
         // poll: load len at 4; if zero return 0; else call host_send(ptr,len); store 0 at 4; return 0
         // i32.const 4; i32.load; local.tee 1; i32.eqz; if; i32.const 0; return; end;
         // i32.const 0; i32.load; local.get 1; call 0; drop; i32.const 0; i32.const 4; i32.store; i32.const 0
         let pollCode = funcBody([
-            0x01, 0x01, 0x7F, // locals: 1 x i32
-            0x41, 0x04, 0x28, 0x02, 0x00, // i32.const 4; i32.load
-            0x22, 0x01, // local.tee 1
-            0x45, // i32.eqz
-            0x04, 0x40, // if
-            0x41, 0x00, 0x0F, // i32.const 0; return
-            0x0B, // end if
-            0x41, 0x00, 0x28, 0x02, 0x00, // i32.const 0; i32.load ptr
-            0x20, 0x01, // local.get 1 len
-            0x10, 0x00, // call 0 host_send
-            0x1A, // drop
-            0x41, 0x00, 0x41, 0x04, 0x36, 0x02, 0x00, // clear len
+            0x01, 0x01, 0x7F,  // locals: 1 x i32
+            0x41, 0x04, 0x28, 0x02, 0x00,  // i32.const 4; i32.load
+            0x22, 0x01,  // local.tee 1
+            0x45,  // i32.eqz
+            0x04, 0x40,  // if
+            0x41, 0x00, 0x0F,  // i32.const 0; return
+            0x0B,  // end if
+            0x41, 0x00, 0x28, 0x02, 0x00,  // i32.const 0; i32.load ptr
+            0x20, 0x01,  // local.get 1 len
+            0x10, 0x00,  // call 0 host_send
+            0x1A,  // drop
+            0x41, 0x00, 0x41, 0x04, 0x36, 0x02, 0x00,  // clear len
             0x41, 0x00, 0x0B,
         ])
         // stop: nop
@@ -91,7 +91,7 @@ public struct WasmModuleBuilder: Sendable {
         var module: [UInt8] = []
         module += magic
         module += version
-        module += section(1, vector(types.map { Array($0) }.map { $0 })) // need flatten types properly
+        module += section(1, vector(types.map { Array($0) }.map { $0 }))  // need flatten types properly
 
         // Rebuild type section carefully
         module = []
@@ -99,7 +99,7 @@ public struct WasmModuleBuilder: Sendable {
         module += section(1, encodeVector(types))
         module += section(2, encodeVectorRaw(imports, count: 4))
         module += section(3, encodeVectorBytes(funcTypes.map { [$0] }))
-        module += section(5, Array(memory.dropFirst())) // memory section body without recount - fix below
+        module += section(5, Array(memory.dropFirst()))  // memory section body without recount - fix below
 
         // Fix memory section: count + limits
         module = []
@@ -107,12 +107,14 @@ public struct WasmModuleBuilder: Sendable {
         module += section(1, encodeVector(types))
         module += section(2, encodeCounted(imports, count: 4))
         module += section(3, encodeCounted(funcTypes.flatMap { uleb(UInt32($0)) }, count: funcTypes.count))
-        module += section(5, encodeCounted([0x01, 0x01, 0x02], count: 1)) // 1 mem, min1 max2 flags=1
+        module += section(5, encodeCounted([0x01, 0x01, 0x02], count: 1))  // 1 mem, min1 max2 flags=1
         module += section(7, encodeCounted(exports, count: 8))
-        module += section(10, encodeCounted(
-            abiCode + allocCode + deallocCode + startCode + receiveCode + pollCode + stopCode,
-            count: 7
-        ))
+        module += section(
+            10,
+            encodeCounted(
+                abiCode + allocCode + deallocCode + startCode + receiveCode + pollCode + stopCode,
+                count: 7
+            ))
         return Data(module)
     }
 
@@ -153,7 +155,7 @@ public struct WasmModuleBuilder: Sendable {
         module += section(2, encodeCounted(imports, count: 4))
         let funcTypes: [UInt8] = [1, 2, 3, 4, 4, 2, 5]
         module += section(3, encodeCounted(funcTypes.flatMap { uleb(UInt32($0)) }, count: 7))
-        module += section(5, encodeCounted([0x00, 0x01], count: 1)) // mem min 1 no max
+        module += section(5, encodeCounted([0x00, 0x01], count: 1))  // mem min 1 no max
         var exports: [UInt8] = []
         exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 4)
         exports += exportFunc(CoreWasmExport.alloc.rawValue, index: 5)
@@ -166,21 +168,18 @@ public struct WasmModuleBuilder: Sendable {
         module += section(7, encodeCounted(exports, count: 8))
         // poll: loop br 0 forever
         let pollLoop = funcBody([
-            0x03, 0x40, // loop
-            0x0C, 0x00, // br 0
-            0x0B, // end loop
+            0x03, 0x40,  // loop
+            0x0C, 0x00,  // br 0
+            0x0B,  // end loop
             0x41, 0x00, 0x0B,
         ])
-        module += section(10, encodeCounted(
-            funcBody([0x41, 0x01, 0x0B]) +
-            funcBody([0x41, 0x80, 0x08, 0x0B]) +
-            funcBody([0x0B]) +
-            funcBody([0x41, 0x00, 0x0B]) +
-            funcBody([0x41, 0x00, 0x0B]) +
-            pollLoop +
-            funcBody([0x0B]),
-            count: 7
-        ))
+        module += section(
+            10,
+            encodeCounted(
+                funcBody([0x41, 0x01, 0x0B]) + funcBody([0x41, 0x80, 0x08, 0x0B]) + funcBody([0x0B])
+                    + funcBody([0x41, 0x00, 0x0B]) + funcBody([0x41, 0x00, 0x0B]) + pollLoop + funcBody([0x0B]),
+                count: 7
+            ))
         return Data(module)
     }
 
@@ -217,7 +216,7 @@ public struct WasmModuleBuilder: Sendable {
         if expr.first == 0x01 || expr.first == 0x00 {
             body = expr
         } else {
-            body = [0x00] + expr // 0 local entries
+            body = [0x00] + expr  // 0 local entries
         }
         return uleb(UInt32(body.count)) + body
     }
@@ -226,7 +225,7 @@ public struct WasmModuleBuilder: Sendable {
         var b: [UInt8] = []
         b += nameBytes(module)
         b += nameBytes(name)
-        b += [0x00] // func
+        b += [0x00]  // func
         b += uleb(UInt32(typeIndex))
         return b
     }
@@ -234,7 +233,7 @@ public struct WasmModuleBuilder: Sendable {
     private static func exportFunc(_ name: String, index: Int) -> [UInt8] {
         var b: [UInt8] = []
         b += nameBytes(name)
-        b += [0x00] // func
+        b += [0x00]  // func
         b += uleb(UInt32(index))
         return b
     }
@@ -242,7 +241,7 @@ public struct WasmModuleBuilder: Sendable {
     private static func exportMemory(_ name: String, index: Int) -> [UInt8] {
         var b: [UInt8] = []
         b += nameBytes(name)
-        b += [0x02] // memory
+        b += [0x02]  // memory
         b += uleb(UInt32(index))
         return b
     }

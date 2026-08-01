@@ -41,7 +41,8 @@ extension EditorState {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         cursorPositions = try container.decodeIfPresent([CursorPosition].self, forKey: .cursorPositions)
         if let x = try container.decodeIfPresent(CGFloat.self, forKey: .scrollX),
-           let y = try container.decodeIfPresent(CGFloat.self, forKey: .scrollY) {
+            let y = try container.decodeIfPresent(CGFloat.self, forKey: .scrollY)
+        {
             scrollPosition = CGPoint(x: x, y: y)
         } else {
             scrollPosition = nil

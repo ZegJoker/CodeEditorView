@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @MainActor
@@ -59,7 +60,7 @@ struct JumpToDefinitionModelTests {
                 url: nil,
                 targetRange: target,
                 label: "world"
-            ),
+            )
         ]
         controller.jumpToDefinitionDelegate = mock
 
@@ -82,7 +83,7 @@ struct JumpToDefinitionModelTests {
                 url: url,
                 targetRange: CursorPosition(range: NSRange(location: 0, length: 0), line: 0, column: 0),
                 label: "Example"
-            ),
+            )
         ]
         controller.jumpToDefinitionDelegate = mock
         controller.performJumpToDefinition(at: NSRange(location: 0, length: 3))
@@ -165,7 +166,7 @@ struct JumpToDefinitionModelTests {
                 url: nil,
                 targetRange: CursorPosition(range: NSRange(location: 0, length: 0), line: 0, column: 0),
                 label: "Start"
-            ),
+            )
         ]
         controller.jumpToDefinitionDelegate = mock
 
@@ -238,7 +239,7 @@ struct JumpToDefinitionModelTests {
         let controller = EditorController(text: text)
         let pos = CursorPosition(range: NSRange(location: 0, length: 0), line: 1, column: 1)
         let range = controller.rangeForCursorPosition(pos)
-        #expect(range?.location == 4) // "ab\n" + 'c' then column 1 → 'd' at 4
+        #expect(range?.location == 4)  // "ab\n" + 'c' then column 1 → 'd' at 4
     }
 
     @Test func rangeForCursorPositionStartOfDocument() {

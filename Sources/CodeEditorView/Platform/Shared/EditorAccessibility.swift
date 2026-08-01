@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Pure helpers for accessibility labels/values (testable without AppKit/UIKit).
 public enum EditorAccessibility: Sendable {

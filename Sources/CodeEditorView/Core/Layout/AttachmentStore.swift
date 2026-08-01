@@ -1,6 +1,6 @@
+import CodeEditorCore
 import CoreGraphics
 import Foundation
-import CodeEditorCore
 
 public enum TextAttachmentAction: Sendable {
     case none
@@ -16,8 +16,8 @@ public protocol TextAttachment: AnyObject {
     func attachmentAction() -> TextAttachmentAction
 }
 
-public extension TextAttachment {
-    func attachmentAction() -> TextAttachmentAction { .discard }
+extension TextAttachment {
+    public func attachmentAction() -> TextAttachmentAction { .discard }
 }
 
 public struct AnyTextAttachment: Equatable {

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorExtensionAPI
-import CodeEditorExtensions
 import CodeEditorExtensionHost
+import CodeEditorExtensions
+import Foundation
 
 @main
 struct CodeEditorExtensionCLI {
@@ -159,16 +159,18 @@ struct CodeEditorExtensionCLI {
             directory: root,
             writeSwiftTemplate: swiftTemplate
         )
-        let reportURL = reportPath.map { URL(fileURLWithPath: $0) }
+        let reportURL =
+            reportPath.map { URL(fileURLWithPath: $0) }
             ?? root.appendingPathComponent("MIGRATION-REPORT.md")
         try result.report.write(to: reportURL, atomically: true, encoding: .utf8)
         let tel = StoreTelemetrySink(fileURL: root.appendingPathComponent(".codeeditor/telemetry.ndjson"))
-        tel.append(StoreTelemetryEvent(
-            event: "migration.json_to_toml",
-            packageID: result.packageID.rawValue,
-            success: true,
-            todos: result.todos.count
-        ))
+        tel.append(
+            StoreTelemetryEvent(
+                event: "migration.json_to_toml",
+                packageID: result.packageID.rawValue,
+                success: true,
+                todos: result.todos.count
+            ))
         print("migrated \(result.packageID.rawValue) → extension.toml")
         print("parity: \(result.plan.parityProfile)")
         print("digest: \(result.plan.digest ?? "n/a")")
@@ -188,9 +190,9 @@ struct CodeEditorExtensionCLI {
 
     static func sign(args: [String]) throws {
         guard let dir = flag(args, "--dir"),
-              let keyPath = flag(args, "--private-key"),
-              let keyID = flag(args, "--key-id"),
-              let subject = flag(args, "--subject")
+            let keyPath = flag(args, "--private-key"),
+            let keyID = flag(args, "--key-id"),
+            let subject = flag(args, "--subject")
         else { fail("sign requires --dir --private-key --key-id --subject") }
         let privateKey = try Data(contentsOf: URL(fileURLWithPath: keyPath))
         try ExtensionPackageSigner.sign(
@@ -224,7 +226,8 @@ struct CodeEditorExtensionCLI {
         guard let dir = flag(args, "--dir") else { fail("sbom requires --dir") }
         let root = URL(fileURLWithPath: dir, isDirectory: true)
         let plan = try ExtensionPackageLoader.load(directory: root, options: .init(computeDigest: false))
-        let out = flag(args, "--out").map { URL(fileURLWithPath: $0) }
+        let out =
+            flag(args, "--out").map { URL(fileURLWithPath: $0) }
             ?? root.appendingPathComponent("sbom.spdx.json")
         let doc = try PackageSBOM.generate(packageRoot: root, plan: plan)
         let enc = JSONEncoder()
@@ -312,7 +315,8 @@ struct CodeEditorExtensionCLI {
             RevocationListDocument.self,
             from: Data(contentsOf: URL(fileURLWithPath: rev))
         )
-        for entry in list.entries where entry.matches(packageID: plan.packageID.rawValue, version: plan.version.description) {
+        for entry in list.entries
+        where entry.matches(packageID: plan.packageID.rawValue, version: plan.version.description) {
             print("REVOKED: \(entry.reason)")
             exit(1)
         }
@@ -328,17 +332,17 @@ struct CodeEditorExtensionCLI {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let id = name.contains(".") ? name : "com.example.\(name)"
         let toml = """
-        id = "\(id)"
-        name = "\(name)"
-        version = "0.1.0"
-        schema_version = 1
-        api_version = "1.0"
-        license = "MIT"
-        [activation]
-        events = ["startup"]
-        [runtime]
-        kind = "data-only"
-        """
+            id = "\(id)"
+            name = "\(name)"
+            version = "0.1.0"
+            schema_version = 1
+            api_version = "1.0"
+            license = "MIT"
+            [activation]
+            events = ["startup"]
+            [runtime]
+            kind = "data-only"
+            """
         try toml.write(to: root.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "MIT License\n".write(to: root.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
         try FileManager.default.createDirectory(
@@ -347,9 +351,9 @@ struct CodeEditorExtensionCLI {
         )
         if args.contains("--swift-template") {
             let swift = """
-            // Scaffold only — link CodeEditorExtensionAPI / Guest for procedural extensions.
-            // import CodeEditorExtensionAPI
-            """
+                // Scaffold only — link CodeEditorExtensionAPI / Guest for procedural extensions.
+                // import CodeEditorExtensionAPI
+                """
             try swift.write(to: root.appendingPathComponent("Extension.swift"), atomically: true, encoding: .utf8)
         }
         let plan = try ExtensionPackageLoader.load(directory: root, options: .init(computeDigest: false))

@@ -1,8 +1,8 @@
-import Foundation
+import CodeEditorExtensionProtocol
+import CodeEditorExtensionWasmGuest
 import CodeEditorWasmEngine
 import CodeEditorWasmEngineWasmKit
-import CodeEditorExtensionWasmGuest
-import CodeEditorExtensionProtocol
+import Foundation
 
 /// Adapts ``WasmGuestRuntime`` to ``LinkedWasmGuest`` for the engine.
 public final class WasmGuestLink: LinkedWasmGuest, @unchecked Sendable {

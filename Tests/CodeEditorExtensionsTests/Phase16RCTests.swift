@@ -1,6 +1,7 @@
+import CodeEditorExtensionAPI
 import Foundation
 import Testing
-import CodeEditorExtensionAPI
+
 @testable import CodeEditorExtensions
 
 private enum P16Store {
@@ -8,15 +9,15 @@ private enum P16Store {
         let dir = root.appendingPathComponent("\(id)-\(version)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let toml = """
-        id = "\(id)"
-        name = "\(id)"
-        version = "\(version)"
-        schema_version = 1
-        api_version = "1.0"
-        license = "MIT"
-        [activation]
-        events = ["startup"]
-        """
+            id = "\(id)"
+            name = "\(id)"
+            version = "\(version)"
+            schema_version = 1
+            api_version = "1.0"
+            license = "MIT"
+            [activation]
+            events = ["startup"]
+            """
         try toml.write(to: dir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "MIT".write(to: dir.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
         return dir
@@ -46,12 +47,13 @@ struct Phase16MigrationRehearsalTests {
         #expect(!plan.hasErrors)
 
         let tel = StoreTelemetrySink(fileURL: pkg.appendingPathComponent(".codeeditor/telemetry.ndjson"))
-        tel.append(StoreTelemetryEvent(
-            event: "migration.json_to_toml",
-            packageID: plan.packageID.rawValue,
-            success: true,
-            todos: result.todos.count
-        ))
+        tel.append(
+            StoreTelemetryEvent(
+                event: "migration.json_to_toml",
+                packageID: plan.packageID.rawValue,
+                success: true,
+                todos: result.todos.count
+            ))
         let events = try tel.readAll()
         #expect(events.contains { $0.event == "migration.json_to_toml" && $0.success })
     }
@@ -80,15 +82,17 @@ struct Phase16RollbackRehearsalTests {
         #expect(await manager.package(id: plan.packageID)?.currentVersion == "1.0.0")
         #expect(FileManager.default.fileExists(atPath: dataDir.appendingPathComponent("prefs.txt").path))
 
-        let staging = root.appendingPathComponent("packages/109973770aefe76e1955af6c3b8bcbe7b9181e7e142a552a023d84bac951189d/.staging-rc")
+        let staging = root.appendingPathComponent(
+            "packages/109973770aefe76e1955af6c3b8bcbe7b9181e7e142a552a023d84bac951189d/.staging-rc")
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
         try "x".write(to: staging.appendingPathComponent("junk"), atomically: true, encoding: .utf8)
         await manager.recoverCorruptedState()
         #expect(!FileManager.default.fileExists(atPath: staging.path))
 
-        try await manager.setRevocationList(RevocationListDocument(entries: [
-            RevocationEntry(packageID: "com.example.rc", version: "*", reason: "rc-rehearsal"),
-        ]))
+        try await manager.setRevocationList(
+            RevocationListDocument(entries: [
+                RevocationEntry(packageID: "com.example.rc", version: "*", reason: "rc-rehearsal")
+            ]))
         do {
             try await manager.assertCanActivate(id: plan.packageID)
             Issue.record("expected revoke deny after rehearsal")

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import Foundation
 
 /// UI-free manager model for workbench / settings screens.
 @MainActor

@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorCommands
 
 @Suite("Context expressions")
@@ -13,8 +14,11 @@ struct ContextExpressionTests {
         #expect(ContextExpressionEvaluator.evaluate(.and([.editable, .hasDocument]), in: input))
         #expect(ContextExpressionEvaluator.evaluate(.or([.hasSelection, .editable]), in: input))
         #expect(ContextExpressionEvaluator.evaluate(.not(.hasSelection), in: input))
-        #expect(ContextExpressionEvaluator.evaluate(.language("swift"), in: ContextEvaluationInput(languageID: "swift")))
-        #expect(ContextExpressionEvaluator.evaluate(.key("completionVisible"), in: ContextEvaluationInput(flags: ["completionVisible": true])))
+        #expect(
+            ContextExpressionEvaluator.evaluate(.language("swift"), in: ContextEvaluationInput(languageID: "swift")))
+        #expect(
+            ContextExpressionEvaluator.evaluate(
+                .key("completionVisible"), in: ContextEvaluationInput(flags: ["completionVisible": true])))
     }
 }
 

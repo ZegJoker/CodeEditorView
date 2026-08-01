@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 public enum ExtensionRegistryError: Error, Sendable, Equatable {
     case invalidScheme(String)
@@ -95,7 +95,8 @@ public struct ExtensionRegistryClient: Sendable {
         into destinationDirectory: URL
     ) async throws -> URL {
         try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
-        let dest = destinationDirectory
+        let dest =
+            destinationDirectory
             .appendingPathComponent(ref.packageID, isDirectory: true)
             .appendingPathComponent(ref.version, isDirectory: true)
         try FileManager.default.createDirectory(

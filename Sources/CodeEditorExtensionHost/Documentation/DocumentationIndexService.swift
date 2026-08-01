@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Host-owned documentation index store with quotas. Never invents entries without source or provider data.
 public actor DocumentationIndexService {
@@ -143,7 +143,8 @@ public actor DocumentationIndexService {
         for line in lines {
             if line.hasPrefix("#") {
                 try flush()
-                currentTitle = line.trimmingCharacters(in: CharacterSet(charactersIn: "# ")).isEmpty
+                currentTitle =
+                    line.trimmingCharacters(in: CharacterSet(charactersIn: "# ")).isEmpty
                     ? title
                     : line.trimmingCharacters(in: CharacterSet(charactersIn: "# "))
                 currentBody = []
@@ -158,7 +159,9 @@ public actor DocumentationIndexService {
         return try store(packageID: packageID, entries: built)
     }
 
-    private func store(packageID: String, entries newEntries: [DocumentationIndexEntry]) throws -> [DocumentationIndexEntry] {
+    private func store(
+        packageID: String, entries newEntries: [DocumentationIndexEntry]
+    ) throws -> [DocumentationIndexEntry] {
         let addBytes = newEntries.reduce(0) { $0 + $1.snippet.utf8.count }
         if bytesUsed + addBytes > config.maxBytes {
             throw DocumentationIndexError.quotaExceeded

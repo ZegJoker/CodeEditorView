@@ -1,7 +1,7 @@
-import Foundation
-import Darwin
 import CodeEditorCore
 import CodeEditorExtensionProtocol
+import Darwin
+import Foundation
 
 /// Stdio transport that launches a helper in its own process group and kills all descendants on close.
 public final class NativeHelperProcessTransport: ExtensionWireTransport, @unchecked Sendable {

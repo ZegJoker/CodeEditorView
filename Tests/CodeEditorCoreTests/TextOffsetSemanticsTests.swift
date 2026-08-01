@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorCore
 
 @Suite("TextOffsetSemantics")
@@ -14,11 +15,11 @@ struct TextOffsetSemanticsTests {
     }
 
     @Test func utf16Utf8Emoji() throws {
-        let text = "a😀b" // emoji is 2 UTF-16 units, 4 UTF-8 bytes
+        let text = "a😀b"  // emoji is 2 UTF-16 units, 4 UTF-8 bytes
         // Offset 1 is the start of the emoji (valid scalar boundary).
         let emojiStartUTF16 = 1
         let u8 = try TextOffsetSemantics.utf8Offset(fromUTF16Offset: emojiStartUTF16, in: text)
-        #expect(u8 == 1) // after 'a'
+        #expect(u8 == 1)  // after 'a'
         // Offset 2 is inside the surrogate pair — must throw, never map to EOF.
         #expect(throws: DocumentStoreError.self) {
             try TextOffsetSemantics.utf8Offset(fromUTF16Offset: 2, in: text, policy: .exact)
@@ -170,9 +171,10 @@ struct DocumentStorePropertyTests {
                 let maxDel = len - loc
                 let del = maxDel == 0 ? 0 : Int(rng.next() % UInt64(min(8, maxDel + 1)))
                 let insertLen = Int(rng.next() % 6)
-                let insert = String((0..<insertLen).map { _ in
-                    "abcdefghijklmnopqrstuvwxyz \n".randomElement(using: &rng)!
-                })
+                let insert = String(
+                    (0..<insertLen).map { _ in
+                        "abcdefghijklmnopqrstuvwxyz \n".randomElement(using: &rng)!
+                    })
                 let before = store.fullString
                 let edit = store.replaceCharacters(
                     in: NSRange(location: loc, length: del),
@@ -212,7 +214,7 @@ struct DocumentStorePropertyTests {
     @Test func unicodeCorpusSurvivesEdits() throws {
         let corpus = [
             "👨‍👩‍👧‍👦",
-            "e\u{0301}", // e + combining acute
+            "e\u{0301}",  // e + combining acute
             "שלום",
             "日本語",
             "a\r\nb\nc\rd",
@@ -241,16 +243,16 @@ struct SplitMix64: RandomNumberGenerator {
     private var state: UInt64
     init(seed: UInt64) { state = seed }
     mutating func next() -> UInt64 {
-        state &+= 0x9E3779B97F4A7C15
+        state &+= 0x9E37_79B9_7F4A_7C15
         var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
-        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
         return z ^ (z >> 31)
     }
 }
 
-private extension String {
-    func randomElement(using rng: inout SplitMix64) -> Character {
+extension String {
+    fileprivate func randomElement(using rng: inout SplitMix64) -> Character {
         let idx = Int(rng.next() % UInt64(utf16.count))
         let i = index(startIndex, offsetBy: idx % count)
         return self[i]

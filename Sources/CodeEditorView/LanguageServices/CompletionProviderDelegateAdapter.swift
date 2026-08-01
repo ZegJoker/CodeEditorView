@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 /// Bridges ``LanguageServiceHost`` completions into the editor's ``CodeSuggestionDelegate``.
 @MainActor

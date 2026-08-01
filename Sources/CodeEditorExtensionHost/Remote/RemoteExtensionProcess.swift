@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensions
+import Foundation
 
 public actor RemoteExtensionProcess {
     public let descriptor: RemoteExtensionDescriptor
@@ -128,7 +128,8 @@ public actor RemoteExtensionProcess {
     private var handshakeContinuation: CheckedContinuation<ExtensionRPCHandshake, Error>?
 
     private func waitForHandshakeAndAccept() async throws {
-        let handshake: ExtensionRPCHandshake = try await withThrowingTaskGroup(of: ExtensionRPCHandshake.self) { group in
+        let handshake: ExtensionRPCHandshake = try await withThrowingTaskGroup(of: ExtensionRPCHandshake.self) {
+            group in
             group.addTask {
                 try await withCheckedThrowingContinuation { (cont: CheckedContinuation<ExtensionRPCHandshake, Error>) in
                     Task { await self.setHandshakeContinuation(cont) }
@@ -147,7 +148,8 @@ public actor RemoteExtensionProcess {
             let result = ExtensionRPCHandshakeResult(
                 accepted: false,
                 protocolVersion: .current,
-                rejectReason: "incompatible protocol \(handshake.protocolVersion.major).\(handshake.protocolVersion.minor)"
+                rejectReason:
+                    "incompatible protocol \(handshake.protocolVersion.major).\(handshake.protocolVersion.minor)"
             )
             try await connection?.send(.handshakeResult(result))
             throw ExtensionHostError.incompatibleProtocol(result.rejectReason ?? "")

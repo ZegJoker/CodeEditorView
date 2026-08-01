@@ -5,7 +5,9 @@ import Foundation
 /// Conforms to ``CodeSuggestionEntry`` so multi-target results can reuse the
 /// completion panel as a popover (same approach as CodeEditSourceEditor).
 public final class JumpToDefinitionLink: CodeSuggestionEntry, Identifiable {
-    public var id: String { url?.absoluteString ?? "\(targetRange.line):\(targetRange.column):\(targetRange.range.location)" }
+    public var id: String {
+        url?.absoluteString ?? "\(targetRange.line):\(targetRange.column):\(targetRange.range.location)"
+    }
 
     /// Leave as `nil` when the target is in the same document.
     public let url: URL?

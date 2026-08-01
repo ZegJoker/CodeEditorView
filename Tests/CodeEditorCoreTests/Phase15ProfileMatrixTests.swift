@@ -1,6 +1,6 @@
+import CodeEditorCore
 import Foundation
 import Testing
-import CodeEditorCore
 
 @Suite("Phase 15 profile matrix")
 struct Phase15ProfileMatrixTests {

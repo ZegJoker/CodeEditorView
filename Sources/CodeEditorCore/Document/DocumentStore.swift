@@ -47,7 +47,7 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
 
     public func substring(from range: NSRange) -> String? {
         guard let clamped = Self.clampedRange(range, documentLength: storage.length),
-              clamped.length > 0
+            clamped.length > 0
         else {
             // Empty-but-valid range (e.g. caret at end) → empty string; invalid → nil.
             if range.length == 0, range.location >= 0, range.location <= storage.length {
@@ -118,7 +118,7 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
 
     public func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange) {
         guard let clamped = Self.clampedRange(range, documentLength: storage.length),
-              clamped.length > 0
+            clamped.length > 0
         else { return }
         let range = clamped
         // Replace keys (especially foregroundColor) instead of only adding, so language

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 public struct ProblemMatcher: Sendable {
     public var id: ProblemMatcherID
@@ -112,7 +112,7 @@ public struct MatchedProblem: Sendable, Hashable {
         }
         var utf16Offset = 0
         for i in 0..<position.line {
-            utf16Offset += (String(lines[i]) as NSString).length + 1 // +1 for '\n'
+            utf16Offset += (String(lines[i]) as NSString).length + 1  // +1 for '\n'
         }
         let lineText = String(lines[position.line])
         let lineUTF16 = (lineText as NSString).length
@@ -203,18 +203,21 @@ public enum ProblemMatcherEngine {
                     }
                     var diag = problem.diagnostic
                     diag.message = message
-                    results.append(MatchedProblem(
-                        uri: problem.uri,
-                        path: problem.path,
-                        diagnostic: diag,
-                        position: problem.position
-                    ))
+                    results.append(
+                        MatchedProblem(
+                            uri: problem.uri,
+                            path: problem.path,
+                            diagnostic: diag,
+                            position: problem.position
+                        ))
                     if results.count >= matcher.maxProblems { return results }
                     matched = true
                     break
                 }
             }
-            if !matched { i += 1 } else if matchers.allSatisfy({ $0.multilineEndPattern == nil }) {
+            if !matched {
+                i += 1
+            } else if matchers.allSatisfy({ $0.multilineEndPattern == nil }) {
                 i += 1
             }
         }
@@ -316,7 +319,8 @@ public final class StreamingProblemMatcherEngine: @unchecked Sendable {
     }
 
     public var allProblems: [MatchedProblem] {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return problems
     }
 }

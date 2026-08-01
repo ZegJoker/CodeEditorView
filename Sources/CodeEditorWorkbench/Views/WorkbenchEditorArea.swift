@@ -1,12 +1,12 @@
-import SwiftUI
 import CodeEditorDocuments
-import CodeEditorWorkspace
 import CodeEditorView
+import CodeEditorWorkspace
+import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Recursively renders the workspace editor layout tree.
@@ -177,8 +177,8 @@ private struct WorkbenchSplitDivider: View {
                             dragStartFractions = currentFractions
                         }
                         guard let base = dragStartFractions,
-                              base.indices.contains(dividerIndex),
-                              base.indices.contains(dividerIndex + 1)
+                            base.indices.contains(dividerIndex),
+                            base.indices.contains(dividerIndex + 1)
                         else { return }
                         let delta = isHorizontal ? value.translation.width : value.translation.height
                         let deltaFrac = Double(delta / max(available, 1))
@@ -199,17 +199,17 @@ private struct WorkbenchSplitDivider: View {
                     }
             )
             #if os(macOS)
-            .onHover { hovering in
-                if hovering {
-                    if isHorizontal {
-                        NSCursor.resizeLeftRight.set()
+                .onHover { hovering in
+                    if hovering {
+                        if isHorizontal {
+                            NSCursor.resizeLeftRight.set()
+                        } else {
+                            NSCursor.resizeUpDown.set()
+                        }
                     } else {
-                        NSCursor.resizeUpDown.set()
+                        NSCursor.arrow.set()
                     }
-                } else {
-                    NSCursor.arrow.set()
                 }
-            }
             #endif
     }
 }
@@ -257,9 +257,9 @@ public struct WorkbenchPaneView: View {
 
     private var paneBackground: Color {
         #if os(macOS)
-        Color(nsColor: .textBackgroundColor)
+            Color(nsColor: .textBackgroundColor)
         #else
-        Color(uiColor: .systemBackground)
+            Color(uiColor: .systemBackground)
         #endif
     }
 
@@ -270,8 +270,9 @@ public struct WorkbenchPaneView: View {
         let _ = selectedTabID
         ZStack {
             if let tab = pane.selectedTab,
-               let document = model.workspace.documents.document(id: tab.documentID),
-               let session = model.workspace.sessions[tab.sessionID] {
+                let document = model.workspace.documents.document(id: tab.documentID),
+                let session = model.workspace.sessions[tab.sessionID]
+            {
                 let context = DocumentViewContext(
                     workspace: model.workspace,
                     document: document,
@@ -386,7 +387,7 @@ struct WorkbenchTabBar: View {
                 Task { @MainActor in
                     let result = await model.workspace.requestCloseTab(tab.id, in: pane.id)
                     if result == .closed {
-                        withAnimation(WorkbenchMotion.tab) { }
+                        withAnimation(WorkbenchMotion.tab) {}
                     }
                 }
             } label: {
@@ -429,7 +430,7 @@ struct WorkbenchTabBar: View {
         }
         .onDrop(of: [.text], isTargeted: nil) { providers in
             guard let fromID = draggingTabID,
-                  let fromIndex = pane.tabs.firstIndex(where: { $0.id == fromID })
+                let fromIndex = pane.tabs.firstIndex(where: { $0.id == fromID })
             else { return false }
             var toIndex = index
             if fromIndex < toIndex {
@@ -486,14 +487,15 @@ struct WorkbenchTabBar: View {
 
     /// Disambiguate duplicate filenames with parent folder (Xcode-like).
     private func displayTitle(for tab: EditorTab) -> String {
-        let name = tab.documentURI.fileURL?.lastPathComponent
+        let name =
+            tab.documentURI.fileURL?.lastPathComponent
             ?? tab.documentURI.rawValue
         let sameNameCount = pane.tabs.filter {
             ($0.documentURI.fileURL?.lastPathComponent ?? $0.documentURI.rawValue) == name
         }.count
         guard sameNameCount > 1,
-              let parent = tab.documentURI.fileURL?.deletingLastPathComponent().lastPathComponent,
-              !parent.isEmpty
+            let parent = tab.documentURI.fileURL?.deletingLastPathComponent().lastPathComponent,
+            !parent.isEmpty
         else { return name }
         return "\(parent)/\(name)"
     }

@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Explicit multi-provider merge strategies for language service results.
 public enum MergePolicy: Sendable, Hashable {
@@ -163,7 +163,8 @@ public enum LanguageServiceMerge {
     // MARK: - Private
 
     private static func completionDedupeKey(_ item: CompletionItem) -> String {
-        let edit = item.textEdit.map { "\($0.range.location):\($0.range.length):\($0.newText)" }
+        let edit =
+            item.textEdit.map { "\($0.range.location):\($0.range.length):\($0.newText)" }
             ?? item.insertText
             ?? item.label
         return "\(item.label)|\(edit)"

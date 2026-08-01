@@ -1,8 +1,7 @@
-import Foundation
-import SwiftTreeSitter
 import CodeEditorLanguageSupport
 import CodeEditorTreeSitter
-
+import Foundation
+import SwiftTreeSitter
 import TreeSitterAgdaGrammar
 import TreeSitterBashGrammar
 import TreeSitterCGrammar
@@ -104,8 +103,6 @@ public enum CodeEditorLanguages: Sendable {
     }
 }
 
-
-
 // MARK: - Configuration provider
 
 private struct UmbrellaConfigurationProvider: TreeSitterConfigurationProviding {
@@ -191,11 +188,13 @@ func queryURLFromUmbrellaBundle(tsName: String, query: String) -> URL? {
     if let url = Bundle.module.resourceURL?
         .appendingPathComponent("Resources")
         .appendingPathComponent(relative),
-       FileManager.default.fileExists(atPath: url.path) {
+        FileManager.default.fileExists(atPath: url.path)
+    {
         return url
     }
     if let url = Bundle.module.resourceURL?.appendingPathComponent(relative),
-       FileManager.default.fileExists(atPath: url.path) {
+        FileManager.default.fileExists(atPath: url.path)
+    {
         return url
     }
     if let url = Bundle.module.url(

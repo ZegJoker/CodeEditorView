@@ -7,9 +7,9 @@ public enum CommandError: Error, Sendable, Equatable {
     case notFound(String)
 }
 
-public extension CommandResult {
+extension CommandResult {
     /// Map errors to structured results for palette/menus (audit §9.6 — no silent success).
-    static func from(error: CommandError) -> CommandResult {
+    public static func from(error: CommandError) -> CommandResult {
         switch error {
         case .unknownCommand(let s), .notFound(let s):
             return .failed("notFound:\(s)")

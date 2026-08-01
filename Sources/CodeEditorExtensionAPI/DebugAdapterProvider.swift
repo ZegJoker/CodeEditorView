@@ -233,17 +233,17 @@ public protocol DebugAdapterProvider: Sendable {
     ) async -> VariablePresentationHint?
 }
 
-public extension DebugAdapterProvider {
-    func resolveConfigurations(
+extension DebugAdapterProvider {
+    public func resolveConfigurations(
         adapterID: String,
         context: LanguageServerResolveContext
     ) async throws -> [DebugConfiguration] { [] }
 
-    func requestClassification(adapterID: String, command: String) async -> DebugRequestClassification? {
+    public func requestClassification(adapterID: String, command: String) async -> DebugRequestClassification? {
         nil
     }
 
-    func transformVariablePresentation(
+    public func transformVariablePresentation(
         name: String,
         value: String,
         type: String?

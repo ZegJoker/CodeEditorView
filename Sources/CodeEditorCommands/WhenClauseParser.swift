@@ -88,21 +88,36 @@ private struct Lexer {
             guard index < source.endIndex else { break }
             let start = offset
             let c = source[index]
-            if c == "(" { advance(); tokens.append(Token(kind: .lparen, offset: start)); continue }
-            if c == ")" { advance(); tokens.append(Token(kind: .rparen, offset: start)); continue }
-            if c == "!" { advance(); tokens.append(Token(kind: .not, offset: start)); continue }
+            if c == "(" {
+                advance()
+                tokens.append(Token(kind: .lparen, offset: start))
+                continue
+            }
+            if c == ")" {
+                advance()
+                tokens.append(Token(kind: .rparen, offset: start))
+                continue
+            }
+            if c == "!" {
+                advance()
+                tokens.append(Token(kind: .not, offset: start))
+                continue
+            }
             if c == "&", peekNext() == "&" {
-                advance(); advance()
+                advance()
+                advance()
                 tokens.append(Token(kind: .and, offset: start))
                 continue
             }
             if c == "|", peekNext() == "|" {
-                advance(); advance()
+                advance()
+                advance()
                 tokens.append(Token(kind: .or, offset: start))
                 continue
             }
             if c == "=", peekNext() == "=" {
-                advance(); advance()
+                advance()
+                advance()
                 tokens.append(Token(kind: .eq, offset: start))
                 continue
             }
@@ -112,7 +127,8 @@ private struct Lexer {
             if c == "!", index < source.endIndex {
                 let n = source.index(after: index)
                 if n < source.endIndex, source[n] == "=" {
-                    advance(); advance()
+                    advance()
+                    advance()
                     tokens.append(Token(kind: .neq, offset: start))
                     continue
                 }

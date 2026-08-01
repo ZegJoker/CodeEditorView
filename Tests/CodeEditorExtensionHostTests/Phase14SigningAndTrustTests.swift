@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 @Suite("Phase 14 signing policy")
@@ -47,7 +48,7 @@ struct Phase14SigningTests {
         let t2 = try ExtensionPackageVerifier.verify(
             packageRoot: root,
             policy: ExtensionTrustPolicy(trustedKeys: [
-                ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Pub"),
+                ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Pub")
             ])
         )
         #expect(t2 == .trustedSigned)
@@ -58,7 +59,7 @@ struct Phase14SigningTests {
                 packageRoot: root,
                 policy: ExtensionTrustPolicy(
                     trustedKeys: [
-                        ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Pub"),
+                        ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Pub")
                     ],
                     revokedKeyIDs: ["k1"]
                 )
@@ -123,11 +124,12 @@ struct Phase14ActivationGateTests {
             .appendingPathComponent("p14orch-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         let services = ExtensionHostServices()
-        let broker = CapabilityBroker(config: .init(
-            worktreeRoots: [tmp],
-            storageRoot: tmp.appendingPathComponent("storage"),
-            toolCacheRoot: tmp.appendingPathComponent("cache")
-        ))
+        let broker = CapabilityBroker(
+            config: .init(
+                worktreeRoots: [tmp],
+                storageRoot: tmp.appendingPathComponent("storage"),
+                toolCacheRoot: tmp.appendingPathComponent("cache")
+            ))
         return (services, broker)
     }
 
@@ -159,9 +161,10 @@ struct Phase14ActivationGateTests {
         )
         await manager.bootstrap()
         let plan = try await manager.install(from: pkgDir)
-        try await manager.setRevocationList(RevocationListDocument(entries: [
-            RevocationEntry(packageID: "com.example.act", version: "*", reason: "blocked"),
-        ]))
+        try await manager.setRevocationList(
+            RevocationListDocument(entries: [
+                RevocationEntry(packageID: "com.example.act", version: "*", reason: "blocked")
+            ]))
 
         let (services, broker) = try makeServices()
         let orch = ExtensionHostOrchestrator(
@@ -258,11 +261,12 @@ struct Phase14CLISurfaceTests {
             subject: "CLI Pub"
         )
         // Keyring lives outside the package tree (CLI authoring layout).
-        let keyringDir = root.deletingLastPathComponent().appendingPathComponent("p14-keyring-\(UUID().uuidString)", isDirectory: true)
+        let keyringDir = root.deletingLastPathComponent().appendingPathComponent(
+            "p14-keyring-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: keyringDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: keyringDir) }
         var keyring = PublisherKeyring(keys: [
-            ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "CLI Pub"),
+            ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "CLI Pub")
         ])
         let keyringURL = keyringDir.appendingPathComponent("keyring.json")
         try keyring.save(to: keyringURL)

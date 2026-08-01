@@ -37,12 +37,13 @@ public enum ExtensionPackageLoader {
         var diagnostics: [ExtensionPackageDiagnostic] = []
 
         if hasTOML && hasJSON {
-            diagnostics.append(.init(
-                code: "package.dual_manifest",
-                severity: .warning,
-                message: "both extension.toml and extension.json present; TOML wins",
-                path: "extension.toml"
-            ))
+            diagnostics.append(
+                .init(
+                    code: "package.dual_manifest",
+                    severity: .warning,
+                    message: "both extension.toml and extension.json present; TOML wins",
+                    path: "extension.toml"
+                ))
         }
 
         let plan: ValidatedContributionPlan
@@ -52,12 +53,13 @@ public enum ExtensionPackageLoader {
             if !options.allowLegacyJSON {
                 throw ExtensionError.dataLoad("extension.json not allowed (legacy disabled)")
             }
-            diagnostics.append(.init(
-                code: "package.legacy_json",
-                severity: .warning,
-                message: "loading legacy extension.json; migrate to extension.toml",
-                path: "extension.json"
-            ))
+            diagnostics.append(
+                .init(
+                    code: "package.legacy_json",
+                    severity: .warning,
+                    message: "loading legacy extension.json; migrate to extension.toml",
+                    path: "extension.json"
+                ))
             plan = try loadLegacyJSON(directory: root, diagnostics: &diagnostics)
         } else {
             throw ExtensionError.dataLoad("no extension.toml or extension.json in \(root.path)")
@@ -129,23 +131,25 @@ public enum ExtensionPackageLoader {
             for file in files.sorted(by: { $0.path < $1.path })
             where file.pathExtension == "json" || file.pathExtension == "toml" {
                 guard isPathContained(url: file, within: directory) else {
-                    diagnostics.append(.init(
-                        code: "package.path_escape",
-                        severity: .error,
-                        message: "theme path escapes package: \(file.lastPathComponent)",
-                        path: file.lastPathComponent
-                    ))
+                    diagnostics.append(
+                        .init(
+                            code: "package.path_escape",
+                            severity: .error,
+                            message: "theme path escapes package: \(file.lastPathComponent)",
+                            path: file.lastPathComponent
+                        ))
                     continue
                 }
                 do {
                     themes.append(try loadThemeFile(file, extensionID: manifest.id))
                 } catch {
-                    diagnostics.append(.init(
-                        code: "theme.load_failed",
-                        severity: .error,
-                        message: "failed to load theme \(file.lastPathComponent): \(error)",
-                        path: relativePath(file, root: directory)
-                    ))
+                    diagnostics.append(
+                        .init(
+                            code: "theme.load_failed",
+                            severity: .error,
+                            message: "failed to load theme \(file.lastPathComponent): \(error)",
+                            path: relativePath(file, root: directory)
+                        ))
                 }
             }
         }
@@ -157,12 +161,13 @@ public enum ExtensionPackageLoader {
                 do {
                     snippets.append(contentsOf: try loadSnippetsFile(file, extensionID: manifest.id))
                 } catch {
-                    diagnostics.append(.init(
-                        code: "snippet.load_failed",
-                        severity: .error,
-                        message: "failed to load snippets \(file.lastPathComponent): \(error)",
-                        path: relativePath(file, root: directory)
-                    ))
+                    diagnostics.append(
+                        .init(
+                            code: "snippet.load_failed",
+                            severity: .error,
+                            message: "failed to load snippets \(file.lastPathComponent): \(error)",
+                            path: relativePath(file, root: directory)
+                        ))
                 }
             }
         }
@@ -175,12 +180,13 @@ public enum ExtensionPackageLoader {
                 do {
                     icons.append(try loadIconThemeFile(file, extensionID: manifest.id))
                 } catch {
-                    diagnostics.append(.init(
-                        code: "icon_theme.load_failed",
-                        severity: .error,
-                        message: "failed to load icon theme \(file.lastPathComponent): \(error)",
-                        path: relativePath(file, root: directory)
-                    ))
+                    diagnostics.append(
+                        .init(
+                            code: "icon_theme.load_failed",
+                            severity: .error,
+                            message: "failed to load icon theme \(file.lastPathComponent): \(error)",
+                            path: relativePath(file, root: directory)
+                        ))
                 }
             }
         }
@@ -211,21 +217,23 @@ public enum ExtensionPackageLoader {
                         for kind in queryKinds {
                             let q = langDir.appendingPathComponent("\(kind).scm")
                             if FileManager.default.fileExists(atPath: q.path) {
-                                queries.append(QueryContribution(
-                                    languageID: lang.id,
-                                    kind: kind,
-                                    relativePath: relativePath(q, root: directory),
-                                    extensionID: manifest.id
-                                ))
+                                queries.append(
+                                    QueryContribution(
+                                        languageID: lang.id,
+                                        kind: kind,
+                                        relativePath: relativePath(q, root: directory),
+                                        extensionID: manifest.id
+                                    ))
                             }
                         }
                     } catch {
-                        diagnostics.append(.init(
-                            code: "language.load_failed",
-                            severity: .error,
-                            message: "failed to load language \(folder): \(error)",
-                            path: relativePath(config, root: directory)
-                        ))
+                        diagnostics.append(
+                            .init(
+                                code: "language.load_failed",
+                                severity: .error,
+                                message: "failed to load language \(folder): \(error)",
+                                path: relativePath(config, root: directory)
+                            ))
                     }
                 }
             }
@@ -248,7 +256,7 @@ public enum ExtensionPackageLoader {
                 var commit: String?
                 var grammarPath: String?
                 if FileManager.default.fileExists(atPath: grammarToml.path),
-                   let text = try? String(contentsOf: grammarToml, encoding: .utf8)
+                    let text = try? String(contentsOf: grammarToml, encoding: .utf8)
                 {
                     for line in text.split(separator: "\n") {
                         let l = line.trimmingCharacters(in: .whitespaces)
@@ -275,14 +283,15 @@ public enum ExtensionPackageLoader {
                         }
                     }
                 }
-                grammars.append(GrammarContribution(
-                    id: name,
-                    languageID: name,
-                    grammarPath: grammarPath,
-                    repository: repository,
-                    commit: commit,
-                    extensionID: manifest.id
-                ))
+                grammars.append(
+                    GrammarContribution(
+                        id: name,
+                        languageID: name,
+                        grammarPath: grammarPath,
+                        repository: repository,
+                        commit: commit,
+                        extensionID: manifest.id
+                    ))
             }
         }
 
@@ -294,20 +303,22 @@ public enum ExtensionPackageLoader {
         ) {
             for case let url as URL in enumerator {
                 guard isPathContained(url: url, within: directory) else {
-                    diagnostics.append(.init(
-                        code: "package.path_escape",
-                        severity: .error,
-                        message: "asset path escapes package",
-                        path: url.path
-                    ))
+                    diagnostics.append(
+                        .init(
+                            code: "package.path_escape",
+                            severity: .error,
+                            message: "asset path escapes package",
+                            path: url.path
+                        ))
                     continue
                 }
                 let values = try? url.resourceValues(forKeys: [.isRegularFileKey])
                 guard values?.isRegularFile == true else { continue }
-                assets.append(AssetContribution(
-                    relativePath: relativePath(url, root: directory),
-                    absoluteURL: url
-                ))
+                assets.append(
+                    AssetContribution(
+                        relativePath: relativePath(url, root: directory),
+                        absoluteURL: url
+                    ))
             }
         }
 
@@ -337,7 +348,8 @@ public enum ExtensionPackageLoader {
             return c
         }
 
-        let hasData = !themes.isEmpty || !snippets.isEmpty || !icons.isEmpty
+        let hasData =
+            !themes.isEmpty || !snippets.isEmpty || !icons.isEmpty
             || !languages.isEmpty || !grammars.isEmpty || !queries.isEmpty
             || !languageServers.isEmpty || !debugAdapters.isEmpty || !mcpServers.isEmpty
             || !slashCommands.isEmpty || !documentationPackages.isEmpty
@@ -394,7 +406,8 @@ public enum ExtensionPackageLoader {
         let eventsRaw = obj["activationEvents"] as? [String] ?? ["startup"]
         let events = eventsRaw.compactMap(ExtensionTOMLManifest.parseActivationEvent)
         let caps = Set((obj["requiredHostCapabilities"] as? [String] ?? []).compactMap { HostCapability(rawValue: $0) })
-        let perms = Set((obj["requestedPermissions"] as? [String] ?? []).compactMap { ExtensionPermission(rawValue: $0) })
+        let perms = Set(
+            (obj["requestedPermissions"] as? [String] ?? []).compactMap { ExtensionPermission(rawValue: $0) })
         let extensionID: ExtensionID
         do {
             extensionID = try ExtensionID(validating: id)
@@ -415,12 +428,13 @@ public enum ExtensionPackageLoader {
         if let arr = obj["themes"] as? [[String: Any]] {
             for t in arr {
                 guard let tid = t["id"] as? String, let name = t["displayName"] as? String else { continue }
-                themes.append(ThemeContribution(
-                    id: tid,
-                    displayName: name,
-                    tokens: t["tokens"] as? [String: String] ?? [:],
-                    extensionID: manifest.id
-                ))
+                themes.append(
+                    ThemeContribution(
+                        id: tid,
+                        displayName: name,
+                        tokens: t["tokens"] as? [String: String] ?? [:],
+                        extensionID: manifest.id
+                    ))
             }
         }
 
@@ -428,17 +442,18 @@ public enum ExtensionPackageLoader {
         if let arr = obj["snippets"] as? [[String: Any]] {
             for s in arr {
                 guard let sid = s["id"] as? String,
-                      let prefix = s["prefix"] as? String,
-                      let body = s["body"] as? String
+                    let prefix = s["prefix"] as? String,
+                    let body = s["body"] as? String
                 else { continue }
-                snippets.append(SnippetContribution(
-                    id: sid,
-                    prefix: prefix,
-                    body: body,
-                    languageID: s["languageID"] as? String,
-                    description: s["description"] as? String,
-                    extensionID: manifest.id
-                ))
+                snippets.append(
+                    SnippetContribution(
+                        id: sid,
+                        prefix: prefix,
+                        body: body,
+                        languageID: s["languageID"] as? String,
+                        description: s["description"] as? String,
+                        extensionID: manifest.id
+                    ))
             }
         }
 
@@ -446,16 +461,17 @@ public enum ExtensionPackageLoader {
         if let arr = obj["languages"] as? [[String: Any]] {
             for l in arr {
                 guard let lid = l["id"] as? String else { continue }
-                languages.append(LanguageDefinitionDTO(
-                    id: lid,
-                    displayName: l["displayName"] as? String ?? lid,
-                    tsName: l["tsName"] as? String ?? lid,
-                    fileExtensions: l["fileExtensions"] as? [String] ?? [],
-                    aliases: l["aliases"] as? [String] ?? [],
-                    lineComment: l["lineComment"] as? String ?? "",
-                    blockCommentStart: l["blockCommentStart"] as? String ?? "",
-                    blockCommentEnd: l["blockCommentEnd"] as? String ?? ""
-                ))
+                languages.append(
+                    LanguageDefinitionDTO(
+                        id: lid,
+                        displayName: l["displayName"] as? String ?? lid,
+                        tsName: l["tsName"] as? String ?? lid,
+                        fileExtensions: l["fileExtensions"] as? [String] ?? [],
+                        aliases: l["aliases"] as? [String] ?? [],
+                        lineComment: l["lineComment"] as? String ?? "",
+                        blockCommentStart: l["blockCommentStart"] as? String ?? "",
+                        blockCommentEnd: l["blockCommentEnd"] as? String ?? ""
+                    ))
             }
         }
 
@@ -463,13 +479,14 @@ public enum ExtensionPackageLoader {
         if let arr = obj["iconThemes"] as? [[String: Any]] {
             for t in arr {
                 guard let tid = t["id"] as? String else { continue }
-                icons.append(IconThemeContribution(
-                    id: tid,
-                    displayName: t["displayName"] as? String ?? tid,
-                    fileIcons: t["fileIcons"] as? [String: String] ?? [:],
-                    folderIcons: t["folderIcons"] as? [String: String] ?? [:],
-                    extensionID: manifest.id
-                ))
+                icons.append(
+                    IconThemeContribution(
+                        id: tid,
+                        displayName: t["displayName"] as? String ?? tid,
+                        fileIcons: t["fileIcons"] as? [String: String] ?? [:],
+                        folderIcons: t["folderIcons"] as? [String: String] ?? [:],
+                        extensionID: manifest.id
+                    ))
             }
         }
 
@@ -477,19 +494,21 @@ public enum ExtensionPackageLoader {
         if let arr = obj["keybindings"] as? [[String: Any]] {
             for k in arr {
                 guard let cmd = k["commandID"] as? String, let key = k["key"] as? String else { continue }
-                keybindings.append(KeybindingOverrideDTO(
-                    commandID: cmd,
-                    key: key,
-                    modifiers: k["modifiers"] as? [String] ?? [],
-                    priority: k["priority"] as? Int ?? 0
-                ))
+                keybindings.append(
+                    KeybindingOverrideDTO(
+                        commandID: cmd,
+                        key: key,
+                        modifiers: k["modifiers"] as? [String] ?? [],
+                        priority: k["priority"] as? Int ?? 0
+                    ))
             }
         }
 
         // Also pick up conventional folders next to legacy JSON if present
         if themes.isEmpty {
             let themesDir = directory.appendingPathComponent("themes")
-            if let files = try? FileManager.default.contentsOfDirectory(at: themesDir, includingPropertiesForKeys: nil) {
+            if let files = try? FileManager.default.contentsOfDirectory(at: themesDir, includingPropertiesForKeys: nil)
+            {
                 for file in files where file.pathExtension == "json" {
                     if let theme = try? loadThemeFile(file, extensionID: manifest.id) {
                         themes.append(theme)
@@ -565,8 +584,8 @@ public enum ExtensionPackageLoader {
         if let arr = json as? [[String: Any]] {
             return arr.compactMap { s in
                 guard let id = s["id"] as? String,
-                      let prefix = s["prefix"] as? String,
-                      let body = s["body"] as? String
+                    let prefix = s["prefix"] as? String,
+                    let body = s["body"] as? String
                 else { return nil }
                 return SnippetContribution(
                     id: id,

@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 // MARK: - Runtime kind DTO (transport-neutral; Host owns full enum)
 
@@ -111,8 +111,9 @@ public struct ExtensionHostProfile: Sendable, Hashable, Codable {
         // Bundled-only when install is data-only and downloadable Wasm is unavailable
         let dynFinal: DynamicInstallationPolicy = {
             if dyn == .dataOnly,
-               case .unavailable = platformProfile.availability(for: .downloadableWasm),
-               case .unavailable = platformProfile.availability(for: .nativeExtensionProcess) {
+                case .unavailable = platformProfile.availability(for: .downloadableWasm),
+                case .unavailable = platformProfile.availability(for: .nativeExtensionProcess)
+            {
                 // MAS-like: data install + bundled wasm, not marketplace executables
                 return .dataOnly
             }
@@ -188,7 +189,9 @@ public struct ShippingInstallPolicy: Sendable, Hashable, Codable {
         self.shippingProfileID = shippingProfileID
     }
 
-    public static func from(hostProfile: ExtensionHostProfile, platform: PlatformCapabilityProfile) -> ShippingInstallPolicy {
+    public static func from(
+        hostProfile: ExtensionHostProfile, platform: PlatformCapabilityProfile
+    ) -> ShippingInstallPolicy {
         ShippingInstallPolicy(
             dynamicInstallation: hostProfile.dynamicInstallation,
             executableExtensionPolicy: hostProfile.executableExtensionPolicy,
@@ -258,30 +261,36 @@ public enum ArtifactRunnability {
     ) -> ArtifactRunnabilityDescriptor {
         var reasons: [String] = []
         if !hostProfile.allowedRuntimes.contains(requestedRuntime) {
-            reasons.append("Runtime \(requestedRuntime.rawValue) not allowed on \(hostProfile.shippingProfileID.rawValue)")
+            reasons.append(
+                "Runtime \(requestedRuntime.rawValue) not allowed on \(hostProfile.shippingProfileID.rawValue)")
         }
         switch requestedRuntime {
         case .nativeProcess:
             if hostProfile.executableExtensionPolicy == .bundledWasmOnly
                 || hostProfile.executableExtensionPolicy == .remoteOnly
-                || hostProfile.executableExtensionPolicy == .dataAndBuiltInOnly {
-                reasons.append("Executable policy \(hostProfile.executableExtensionPolicy.rawValue) denies native helpers")
+                || hostProfile.executableExtensionPolicy == .dataAndBuiltInOnly
+            {
+                reasons.append(
+                    "Executable policy \(hostProfile.executableExtensionPolicy.rawValue) denies native helpers")
             }
             if origin == .workspaceDev,
-               hostProfile.enterpriseOptions?.requireSignedNativeHelpers == true {
+                hostProfile.enterpriseOptions?.requireSignedNativeHelpers == true
+            {
                 reasons.append("Enterprise profile requires signed native helpers")
             }
         case .swiftWasm:
             if origin == .installed || origin == .remote {
                 if hostProfile.executableExtensionPolicy == .bundledWasmOnly
                     || hostProfile.executableExtensionPolicy == .dataAndBuiltInOnly
-                    || hostProfile.executableExtensionPolicy == .remoteOnly {
+                    || hostProfile.executableExtensionPolicy == .remoteOnly
+                {
                     reasons.append("Downloadable/marketplace Wasm denied by executable policy")
                 }
             }
             if origin == .bundled,
-               hostProfile.executableExtensionPolicy == .dataAndBuiltInOnly
-                || hostProfile.executableExtensionPolicy == .remoteOnly {
+                hostProfile.executableExtensionPolicy == .dataAndBuiltInOnly
+                    || hostProfile.executableExtensionPolicy == .remoteOnly
+            {
                 reasons.append("Wasm not allowed under \(hostProfile.executableExtensionPolicy.rawValue)")
             }
         case .remote:

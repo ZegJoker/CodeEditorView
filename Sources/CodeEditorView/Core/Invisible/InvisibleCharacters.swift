@@ -31,7 +31,8 @@ public final class DefaultInvisibleCharactersDelegate: InvisibleCharactersDelega
         self.newlineColor = newlineColor
     }
 
-    public func invisibleStyle(for character: UInt16, at range: NSRange, lineRange: NSRange) -> InvisibleCharacterStyle? {
+    public func invisibleStyle(for character: UInt16, at range: NSRange, lineRange: NSRange) -> InvisibleCharacterStyle?
+    {
         switch character {
         case 0x20:
             return .replace(replacement: "·", color: spaceColor)

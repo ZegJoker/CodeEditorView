@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorLanguageSupport
+import Foundation
 
 /// Limits applied when loading / executing Tree-sitter queries.
 public struct TreeSitterQueryLimits: Sendable, Hashable {
@@ -83,21 +83,24 @@ public enum QuerySetLoader: Sendable {
         var parts: [String] = []
         var total = 0
         if let parentID = language.parent,
-           let parent = CodeLanguages.language(id: parentID),
-           let url = registry.queryURL(for: parent.languageID, kind: .highlights),
-           let text = try? String(contentsOf: url, encoding: .utf8) {
+            let parent = CodeLanguages.language(id: parentID),
+            let url = registry.queryURL(for: parent.languageID, kind: .highlights),
+            let text = try? String(contentsOf: url, encoding: .utf8)
+        {
             total += text.utf8.count
             parts.append(text)
         }
         if let url = registry.queryURL(for: language.languageID, kind: .highlights),
-           let text = try? String(contentsOf: url, encoding: .utf8) {
+            let text = try? String(contentsOf: url, encoding: .utf8)
+        {
             total += text.utf8.count
             parts.append(text)
         }
         for name in language.additionalQueries.sorted()
         where name == "highlights" || name.hasPrefix("highlights-") || name.hasPrefix("highlights_") {
             if let url = registry.queryURL(for: language.languageID, query: name),
-               let text = try? String(contentsOf: url, encoding: .utf8) {
+                let text = try? String(contentsOf: url, encoding: .utf8)
+            {
                 total += text.utf8.count
                 parts.append(text)
             }

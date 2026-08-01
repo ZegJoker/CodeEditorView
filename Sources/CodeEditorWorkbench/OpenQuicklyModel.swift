@@ -1,7 +1,7 @@
-import Foundation
-import Observation
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
+import Observation
 
 public struct OpenQuicklyItem: Identifiable, Hashable, Sendable {
     public var id: DocumentURI { uri }
@@ -129,11 +129,11 @@ public final class OpenQuicklyModel {
         let pathScore = subsequenceScore(query: q, in: path, baseBonus: 40)
 
         switch (nameScore, pathScore) {
-        case let (n?, p?):
+        case (let n?, let p?):
             return max(n, p)
-        case let (n?, nil):
+        case (let n?, nil):
             return n
-        case let (nil, p?):
+        case (nil, let p?):
             return p
         case (nil, nil):
             return nil

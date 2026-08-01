@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCommands
+import Foundation
 
 public enum SearchCommands {
     public static let findInFiles = CommandID(stringLiteral: "codeeditor.search.findInFiles")

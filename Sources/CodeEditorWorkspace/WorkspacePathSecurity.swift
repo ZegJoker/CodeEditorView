@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Typed relative-path security for workspace FS (audit §8.3).
 ///

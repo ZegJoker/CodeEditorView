@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorLanguageSupport
+import Foundation
 
 /// Simple regex-based highlight provider for tests and lightweight demos.
 @MainActor
@@ -41,14 +41,15 @@ public final class RegexHighlightProvider: HighlightProviding {
             // Block comments before line comments / strings.
             .init(pattern: #"/\*[\s\S]*?\*/"#, capture: .comment),
             .init(pattern: #"//[^\n]*"#, capture: .comment),
-            .init(pattern: #"#(?:[^\n]*)"#, capture: .comment), // python/ruby/shell-ish
+            .init(pattern: #"#(?:[^\n]*)"#, capture: .comment),  // python/ruby/shell-ish
             // Strings (simple double/single quotes).
             .init(pattern: #""([^"\\]|\\.)*""#, capture: .string),
             .init(pattern: #"'([^'\\]|\\.)*'"#, capture: .string),
             .init(pattern: #"`([^`\\]|\\.)*`"#, capture: .string),
             // Keywords (common across Swift / TS / JS / C-like).
             .init(
-                pattern: #"\b(func|function|fn|def|let|var|const|if|else|return|import|export|from|struct|class|enum|protocol|interface|type|guard|switch|case|for|while|in|of|true|false|nil|null|undefined|self|this|async|await|throws|try|catch|public|private|static|void|string|int|bool|new|as|is)\b"#,
+                pattern:
+                    #"\b(func|function|fn|def|let|var|const|if|else|return|import|export|from|struct|class|enum|protocol|interface|type|guard|switch|case|for|while|in|of|true|false|nil|null|undefined|self|this|async|await|throws|try|catch|public|private|static|void|string|int|bool|new|as|is)\b"#,
                 capture: .keyword
             ),
             .init(pattern: #"\b\d+(?:\.\d+)?\b"#, capture: .number),

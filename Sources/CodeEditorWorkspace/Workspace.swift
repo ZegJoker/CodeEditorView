@@ -1,8 +1,8 @@
+import CodeEditorCore
+import CodeEditorDocuments
 import CoreGraphics
 import Foundation
 import Observation
-import CodeEditorCore
-import CodeEditorDocuments
 
 /// Headless multi-root workspace: files, open documents, panes/tabs, layout, history.
 @MainActor
@@ -114,7 +114,9 @@ public final class Workspace {
     }
 
     @discardableResult
-    public func openInActivePane(uri: DocumentURI, preview: Bool = false) async throws -> (document: TextDocument, session: EditorSession, tab: EditorTab) {
+    public func openInActivePane(
+        uri: DocumentURI, preview: Bool = false
+    ) async throws -> (document: TextDocument, session: EditorSession, tab: EditorTab) {
         let paneID = activePaneID ?? ensureActivePane()
         return try await open(uri: uri, in: paneID, preview: preview)
     }
@@ -131,7 +133,8 @@ public final class Workspace {
         let doc = try await openDocument(uri: uri)
         // Reuse session if tab already exists for document.
         if let existingTab = pane.tabs.first(where: { $0.documentID == doc.id }),
-           let session = sessions[existingTab.sessionID] {
+            let session = sessions[existingTab.sessionID]
+        {
             pane.select(tab: existingTab.id)
             // Permanent open / double-click must keep the tab (promote preview).
             if !preview {
@@ -171,7 +174,7 @@ public final class Workspace {
     /// Prefer ``requestCloseTab(_:in:)`` for UI and commands (WSP-001).
     public func closeTab(_ tabID: EditorTabID, in paneID: EditorPaneID) {
         guard let pane = panes[paneID],
-              let tab = pane.tabs.first(where: { $0.id == tabID })
+            let tab = pane.tabs.first(where: { $0.id == tabID })
         else { return }
         if let doc = documents.document(id: tab.documentID), doc.isDirty {
             let remaining = tabCount(for: tab.documentID) - 1
@@ -191,7 +194,7 @@ public final class Workspace {
         policy: DirtyTabClosePolicy? = nil
     ) async -> CloseTransactionResult {
         guard let pane = panes[paneID],
-              let tab = pane.tabs.first(where: { $0.id == tabID })
+            let tab = pane.tabs.first(where: { $0.id == tabID })
         else { return .closed }
 
         let remainingAfter = tabCount(for: tab.documentID) - 1
@@ -288,7 +291,9 @@ public final class Workspace {
         }
     }
 
-    public func requestCloseOtherTabs(keeping tabID: EditorTabID, in paneID: EditorPaneID) async -> CloseTransactionResult {
+    public func requestCloseOtherTabs(
+        keeping tabID: EditorTabID, in paneID: EditorPaneID
+    ) async -> CloseTransactionResult {
         guard let pane = panes[paneID] else { return .closed }
         let toClose = pane.tabs.map(\.id).filter { $0 != tabID }
         for id in toClose {
@@ -303,7 +308,7 @@ public final class Workspace {
 
     public func closeTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID) {
         guard let pane = panes[paneID],
-              let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
+            let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
         else { return }
         let toClose = pane.tabs.suffix(from: idx + 1).map(\.id)
         for id in toClose {
@@ -311,9 +316,11 @@ public final class Workspace {
         }
     }
 
-    public func requestCloseTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID) async -> CloseTransactionResult {
+    public func requestCloseTabsToTheRight(
+        of tabID: EditorTabID, in paneID: EditorPaneID
+    ) async -> CloseTransactionResult {
         guard let pane = panes[paneID],
-              let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
+            let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
         else { return .closed }
         let toClose = pane.tabs.suffix(from: idx + 1).map(\.id)
         for id in toClose {
@@ -358,8 +365,9 @@ public final class Workspace {
         layout.split(pane: active, axis: axis, newPane: newPane.id, fraction: fraction)
         // Clone the active tab into the new pane (Xcode-like), not an empty editor.
         if let tab = source.selectedTab,
-           let session = sessions[tab.sessionID],
-           let doc = documents.document(id: tab.documentID) {
+            let session = sessions[tab.sessionID],
+            let doc = documents.document(id: tab.documentID)
+        {
             let cloned = EditorSession(documentID: doc.id)
             cloned.selections = session.selections
             cloned.scrollPosition = session.scrollPosition
@@ -400,7 +408,8 @@ public final class Workspace {
         fileTree.apply(.renamed(from: id, to: moved))
         // Retarget open documents that pointed at the old URI.
         if let oldURI,
-           let doc = documents.document(uri: oldURI) {
+            let doc = documents.document(uri: oldURI)
+        {
             doc.setURI(moved.uri)
             documents.reindexURI(for: doc)
             updateTabURIs(documentID: doc.id, uri: moved.uri)
@@ -447,7 +456,9 @@ public final class Workspace {
 
     /// Create a file under `parent` (empty path = workspace root item).
     @discardableResult
-    public func createFile(in parent: WorkspaceItemID, name: String, contents: Data = Data()) async throws -> WorkspaceItem {
+    public func createFile(
+        in parent: WorkspaceItemID, name: String, contents: Data = Data()
+    ) async throws -> WorkspaceItem {
         let item = try await fileSystem.createFile(in: parent, name: name, contents: contents)
         fileTree.apply(.added(item))
         fileTree.invalidate(parent)

@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Base metadata for language service providers.
 public protocol LanguageServiceProvider: Sendable {
@@ -10,8 +10,8 @@ public protocol LanguageServiceProvider: Sendable {
     var priority: Int { get }
 }
 
-public extension LanguageServiceProvider {
-    var priority: Int { 0 }
+extension LanguageServiceProvider {
+    public var priority: Int { 0 }
 }
 
 // MARK: - Requests
@@ -136,8 +136,8 @@ public protocol FormattingProvider: LanguageServiceProvider {
     ) async throws -> [TextEditPlan]
 }
 
-public extension FormattingProvider {
-    func formatRange(
+extension FormattingProvider {
+    public func formatRange(
         _ request: RangeRequest,
         options: FormattingOptions
     ) async throws -> [TextEditPlan] {
@@ -167,8 +167,8 @@ public protocol SemanticTokensProvider: LanguageServiceProvider {
     func semanticTokens(for request: RangeRequest) async throws -> [SemanticTokenSpan]
 }
 
-public extension SemanticTokensProvider {
-    func semanticTokens(for request: RangeRequest) async throws -> [SemanticTokenSpan] {
+extension SemanticTokensProvider {
+    public func semanticTokens(for request: RangeRequest) async throws -> [SemanticTokenSpan] {
         let all = try await semanticTokens(
             for: DocumentRequest(document: request.document, context: request.context)
         )
@@ -210,14 +210,14 @@ public protocol TypeHierarchyProvider: LanguageServiceProvider {
     func subtypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem]
 }
 
-public extension TypeHierarchyProvider {
-    func supertypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem] {
+extension TypeHierarchyProvider {
+    public func supertypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem] {
         _ = item
         _ = context
         return []
     }
 
-    func subtypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem] {
+    public func subtypes(of item: HierarchyItem, context: LanguageServiceContext) async throws -> [HierarchyItem] {
         _ = item
         _ = context
         return []
@@ -236,8 +236,8 @@ public protocol CallHierarchyProvider: LanguageServiceProvider {
     ) async throws -> [CallHierarchyOutgoingCall]
 }
 
-public extension CallHierarchyProvider {
-    func incomingCalls(
+extension CallHierarchyProvider {
+    public func incomingCalls(
         of item: CallHierarchyItem,
         context: LanguageServiceContext
     ) async throws -> [CallHierarchyIncomingCall] {
@@ -246,7 +246,7 @@ public extension CallHierarchyProvider {
         return []
     }
 
-    func outgoingCalls(
+    public func outgoingCalls(
         of item: CallHierarchyItem,
         context: LanguageServiceContext
     ) async throws -> [CallHierarchyOutgoingCall] {
@@ -262,8 +262,8 @@ public protocol ExecuteCommandProvider: LanguageServiceProvider {
     func execute(_ request: ExecuteCommandRequest) async throws -> ExecuteCommandResult
 }
 
-public extension ExecuteCommandProvider {
-    var supportedCommands: Set<String> { [] }
+extension ExecuteCommandProvider {
+    public var supportedCommands: Set<String> { [] }
 }
 
 public protocol PullDiagnosticsProvider: LanguageServiceProvider {

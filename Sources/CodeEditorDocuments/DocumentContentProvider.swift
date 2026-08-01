@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Host decision when a conflict-safe save detects external modification (DOC-004).
 public enum SaveConflictPolicy: Sendable, Hashable, Codable {
@@ -35,8 +35,8 @@ public protocol DocumentContentProvider: Sendable {
     ) async throws -> SaveResult
 }
 
-public extension DocumentContentProvider {
-    func save(
+extension DocumentContentProvider {
+    public func save(
         _ snapshot: DocumentSnapshot,
         to uri: DocumentURI,
         encoding: DocumentEncoding,
@@ -115,7 +115,7 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         }
         // DOC: enforce size from metadata before full allocation when possible.
         if let identity = try? await io.resourceIdentity(at: url),
-           identity.size > policy.maxLoadBytes
+            identity.size > policy.maxLoadBytes
         {
             throw DocumentProviderError.tooLarge(identity.size)
         }
@@ -308,10 +308,11 @@ extension TextDocument {
         }
 
         if let fileURL = target.fileURL,
-           let io,
-           let local = provider as? LocalFileDocumentProvider,
-           local.policy.writeRecoveryJournal,
-           isDirty {
+            let io,
+            let local = provider as? LocalFileDocumentProvider,
+            local.policy.writeRecoveryJournal,
+            isDirty
+        {
             let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
             try await journal.write(text: text, forPrimary: fileURL, io: io)
         }

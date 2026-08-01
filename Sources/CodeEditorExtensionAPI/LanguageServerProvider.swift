@@ -44,23 +44,23 @@ public struct ExtensionPlatformInfo: Sendable, Hashable, Codable {
 
     public static var current: ExtensionPlatformInfo {
         #if os(macOS)
-        let os = "macOS"
+            let os = "macOS"
         #elseif os(iOS)
-        let os = "iOS"
+            let os = "iOS"
         #else
-        let os = "unknown"
+            let os = "unknown"
         #endif
         #if targetEnvironment(simulator)
-        let sim = true
+            let sim = true
         #else
-        let sim = false
+            let sim = false
         #endif
         #if arch(arm64)
-        let arch = "arm64"
+            let arch = "arm64"
         #elseif arch(x86_64)
-        let arch = "x86_64"
+            let arch = "x86_64"
         #else
-        let arch = "unknown"
+            let arch = "unknown"
         #endif
         return ExtensionPlatformInfo(os: os, arch: arch, isSimulator: sim)
     }
@@ -228,26 +228,26 @@ public protocol LanguageServerProvider: Sendable {
     func transformSymbolLabel(_ item: SymbolLabelTransform) async -> SymbolLabelTransform
 }
 
-public extension LanguageServerProvider {
-    func initializationOptions(
+extension LanguageServerProvider {
+    public func initializationOptions(
         serverID: String,
         context: LanguageServerResolveContext
     ) async throws -> Data? {
         nil
     }
 
-    func workspaceConfiguration(
+    public func workspaceConfiguration(
         serverID: String,
         items: [WorkspaceConfigurationItem]
     ) async throws -> [Data?] {
         items.map { _ in nil }
     }
 
-    func transformCompletionLabel(_ item: CompletionLabelTransform) async -> CompletionLabelTransform {
+    public func transformCompletionLabel(_ item: CompletionLabelTransform) async -> CompletionLabelTransform {
         item
     }
 
-    func transformSymbolLabel(_ item: SymbolLabelTransform) async -> SymbolLabelTransform {
+    public func transformSymbolLabel(_ item: SymbolLabelTransform) async -> SymbolLabelTransform {
         item
     }
 }

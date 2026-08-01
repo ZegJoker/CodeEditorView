@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Runtime context passed to ``CodeEditorExtension/activate(in:)``.
 public final class ExtensionContext: ExtensionAuthorContext, @unchecked Sendable {
@@ -122,4 +122,3 @@ public final class ExtensionContext: ExtensionAuthorContext, @unchecked Sendable
         }
     }
 }
-

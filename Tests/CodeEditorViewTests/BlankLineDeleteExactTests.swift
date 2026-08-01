@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Blank line delete exact")
@@ -8,7 +9,9 @@ struct BlankLineDeleteExactTests {
     func dump(_ controller: EditorController, label: String) {
         print("== \(label) ==")
         print("text=\(controller.text.debugDescription)")
-        print("caret=\(controller.selectedRange) docLen=\(controller.document.length) indexLen=\(controller.layout.lineIndex.length) lines=\(controller.layout.lineIndex.count)")
+        print(
+            "caret=\(controller.selectedRange) docLen=\(controller.document.length) indexLen=\(controller.layout.lineIndex.length) lines=\(controller.layout.lineIndex.count)"
+        )
         for i in 0..<controller.layout.lineIndex.count {
             guard let line = controller.layout.lineIndex.line(atIndex: i) else { continue }
             let r = line.utf16Range
@@ -38,13 +41,17 @@ struct BlankLineDeleteExactTests {
         controller.deleteBackward()
         dump(controller, label: "after blank delete")
         #expect(controller.text == "func welcome(name: String) {\n}")
-        #expect(controller.layout.lineIndex.count == 2, "should be open line + closer only, got \(controller.layout.lineIndex.count)")
+        #expect(
+            controller.layout.lineIndex.count == 2,
+            "should be open line + closer only, got \(controller.layout.lineIndex.count)")
         let afterOpen = (controller.text as NSString).range(of: "{").location + 1
-        #expect(controller.selectedRange.location == afterOpen,
-                "caret must stay after '{{' (CESE), not jump to col 0 of closer")
+        #expect(
+            controller.selectedRange.location == afterOpen,
+            "caret must stay after '{{' (CESE), not jump to col 0 of closer")
         // No phantom empty between
         if let l0 = controller.layout.lineIndex.line(atIndex: 0),
-           let l1 = controller.layout.lineIndex.line(atIndex: 1) {
+            let l1 = controller.layout.lineIndex.line(atIndex: 1)
+        {
             #expect(l0.metrics.utf16Length > 0)
             #expect(l1.metrics.utf16Length > 0, "no zero-length phantom before closer")
             #expect(l1.utf16Offset == l0.utf16Offset + l0.metrics.utf16Length)

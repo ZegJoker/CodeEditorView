@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
 import CodeEditorLanguageSupport
+import Foundation
 
 // Internal LSP wire types (subset). Not part of the public module API surface intent,
 // but SwiftPM modules make them public by default — treat as implementation detail.

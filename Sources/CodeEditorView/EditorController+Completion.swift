@@ -19,16 +19,18 @@ extension EditorController {
         completionRequestTask = Task { @MainActor in
             defer { controller.completionRequestTask = nil }
             guard !controller.isJumpLinkPopoverVisible else { return }
-            guard let result = await delegate.completionSuggestionsRequested(
-                textView: controller,
-                cursorPosition: primary
-            ) else {
+            guard
+                let result = await delegate.completionSuggestionsRequested(
+                    textView: controller,
+                    cursorPosition: primary
+                )
+            else {
                 return
             }
             // Discard stale responses after the document content generation moved on.
             guard !Task.isCancelled,
-                  !controller.isJumpLinkPopoverVisible,
-                  controller.textDocument.version == requestVersion
+                !controller.isJumpLinkPopoverVisible,
+                controller.textDocument.version == requestVersion
             else { return }
             if result.items.isEmpty {
                 controller.hideCompletions()
@@ -136,7 +138,7 @@ extension EditorController {
         }
 
         guard let items = delegate.completionOnCursorMove(textView: self, cursorPosition: primary),
-              !items.isEmpty
+            !items.isEmpty
         else {
             hideCompletions()
             return

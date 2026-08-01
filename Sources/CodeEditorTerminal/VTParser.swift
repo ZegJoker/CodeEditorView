@@ -3,7 +3,7 @@ import Foundation
 /// Bounded VT/ANSI escape parser producing high-level actions for ``TerminalScreen``.
 public enum VTAction: Sendable, Hashable {
     case print(Character)
-    case execute(UInt8) // C0 controls
+    case execute(UInt8)  // C0 controls
     case csi(params: [Int], intermediates: [UInt8], final: UInt8)
     case osc(String)
     case esc(UInt8)
@@ -75,14 +75,14 @@ public final class VTParser: @unchecked Sendable {
             // collectUTF8 owns buffer initialization when empty.
             return collectUTF8(byte)
         case .escape:
-            if byte == 0x5B { // [
+            if byte == 0x5B {  // [
                 state = .csiEntry
                 params = []
                 currentParam = nil
                 intermediates = []
                 return []
             }
-            if byte == 0x5D { // ]
+            if byte == 0x5D {  // ]
                 state = .oscString
                 oscBuffer = ""
                 return []
@@ -90,7 +90,7 @@ public final class VTParser: @unchecked Sendable {
             state = .ground
             return [.esc(byte)]
         case .csiEntry, .csiParam:
-            if byte >= 0x30 && byte <= 0x39 { // 0-9
+            if byte >= 0x30 && byte <= 0x39 {  // 0-9
                 state = .csiParam
                 let digit = Int(byte - 0x30)
                 if let cur = currentParam {
@@ -100,7 +100,7 @@ public final class VTParser: @unchecked Sendable {
                 }
                 return []
             }
-            if byte == 0x3B { // ;
+            if byte == 0x3B {  // ;
                 state = .csiParam
                 params.append(currentParam ?? 0)
                 currentParam = nil
@@ -109,7 +109,7 @@ public final class VTParser: @unchecked Sendable {
                 }
                 return []
             }
-            if byte >= 0x20 && byte <= 0x2F { // intermediates
+            if byte >= 0x20 && byte <= 0x2F {  // intermediates
                 state = .csiIntermediate
                 intermediates.append(byte)
                 return []
@@ -152,7 +152,7 @@ public final class VTParser: @unchecked Sendable {
             state = .ground
             return [.invalid]
         case .oscString:
-            if byte == 0x07 { // BEL terminator
+            if byte == 0x07 {  // BEL terminator
                 let s = oscBuffer
                 state = .ground
                 oscBuffer = ""
@@ -171,7 +171,7 @@ public final class VTParser: @unchecked Sendable {
             }
             return []
         case .oscStringMaybeST:
-            if byte == 0x5C { // ST = ESC \
+            if byte == 0x5C {  // ST = ESC \
                 let s = oscBuffer
                 state = .ground
                 oscBuffer = ""

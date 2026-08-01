@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Insert blank line corruption")
@@ -7,12 +8,12 @@ import Foundation
 struct InsertBlankLineCorruptionTests {
     @Test func typeOnBlankLineBetweenBlocks() {
         let src = """
-        func greet() {
-            return
-        }
+            func greet() {
+                return
+            }
 
-        greet()
-        """
+            greet()
+            """
         let controller = EditorController(text: src)
         let ns = src as NSString
         // Find the blank line between } and greet
@@ -24,12 +25,17 @@ struct InsertBlankLineCorruptionTests {
         let linesBefore = controller.layout.lineIndex.count
         controller.insertText("x")
         print("AFTER INSERT text=\(controller.text.debugDescription)")
-        print("lines before=\(linesBefore) after=\(controller.layout.lineIndex.count) docLen=\(controller.document.length) indexLen=\(controller.layout.lineIndex.length)")
+        print(
+            "lines before=\(linesBefore) after=\(controller.layout.lineIndex.count) docLen=\(controller.document.length) indexLen=\(controller.layout.lineIndex.length)"
+        )
         for i in 0..<controller.layout.lineIndex.count {
             if let line = controller.layout.lineIndex.line(atIndex: i) {
                 let r = line.utf16Range
-                let piece = (controller.text as NSString).substring(with: NSIntersectionRange(r, NSRange(location: 0, length: controller.document.length)))
-                print("  line \(i) off=\(line.utf16Offset) len=\(line.metrics.utf16Length) text=\(piece.debugDescription)")
+                let piece = (controller.text as NSString).substring(
+                    with: NSIntersectionRange(r, NSRange(location: 0, length: controller.document.length)))
+                print(
+                    "  line \(i) off=\(line.utf16Offset) len=\(line.metrics.utf16Length) text=\(piece.debugDescription)"
+                )
             }
         }
         #expect(controller.layout.lineIndex.length == controller.document.length)

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCommands
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
 
 /// Tracks command clients for open editor sessions (text views).
 @MainActor
@@ -24,8 +24,8 @@ public final class WorkbenchEditorClientRegistry {
 
     public func activeClient(workspace: Workspace) -> (any EditorCommandClient)? {
         guard let paneID = workspace.activePaneID,
-              let pane = workspace.panes[paneID],
-              let tab = pane.selectedTab
+            let pane = workspace.panes[paneID],
+            let tab = pane.selectedTab
         else { return nil }
         return clients[tab.sessionID]
     }

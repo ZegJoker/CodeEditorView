@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public actor WorkspaceSearchService {
     private let context: WorkspaceSearchContext
@@ -60,11 +60,13 @@ public actor WorkspaceSearchService {
             if !SearchPathMatching.isIncluded(path: path, includes: query.includeGlobs) { continue }
 
             filesScanned += 1
-            continuation.yield(.progress(SearchProgress(
-                filesScanned: filesScanned,
-                matchesFound: matchCount,
-                currentPath: path
-            )))
+            continuation.yield(
+                .progress(
+                    SearchProgress(
+                        filesScanned: filesScanned,
+                        matchesFound: matchCount,
+                        currentPath: path
+                    )))
 
             let matches = Self.findMatches(
                 in: text,
@@ -79,10 +81,11 @@ public actor WorkspaceSearchService {
                 matchCount += 1
                 continuation.yield(.match(m))
                 if matchCount >= query.maxResults {
-                    continuation.yield(.finished(
-                        filesScanned: filesWithMatches.count,
-                        matchCount: matchCount
-                    ))
+                    continuation.yield(
+                        .finished(
+                            filesScanned: filesWithMatches.count,
+                            matchCount: matchCount
+                        ))
                     return
                 }
             }
@@ -133,11 +136,13 @@ public actor WorkspaceSearchService {
 
                 filesScanned += 1
                 if filesScanned % 25 == 0 {
-                    continuation.yield(.progress(SearchProgress(
-                        filesScanned: filesScanned,
-                        matchesFound: matchCount,
-                        currentPath: path
-                    )))
+                    continuation.yield(
+                        .progress(
+                            SearchProgress(
+                                filesScanned: filesScanned,
+                                matchesFound: matchCount,
+                                currentPath: path
+                            )))
                 }
 
                 let matches = Self.findMatches(
@@ -153,10 +158,11 @@ public actor WorkspaceSearchService {
                     matchCount += 1
                     continuation.yield(.match(m))
                     if matchCount >= query.maxResults {
-                        continuation.yield(.finished(
-                            filesScanned: filesWithMatches.count,
-                            matchCount: matchCount
-                        ))
+                        continuation.yield(
+                            .finished(
+                                filesScanned: filesWithMatches.count,
+                                matchCount: matchCount
+                            ))
                         return
                     }
                 }

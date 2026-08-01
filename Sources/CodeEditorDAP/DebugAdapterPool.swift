@@ -22,7 +22,9 @@ public actor DebugAdapterPool {
         let key = definition.poolKey
         if let existing = sessions[key] {
             let state = await existing.state
-            if state == .running || state == .starting || state == .initialized || state == .configured || state == .stopped {
+            if state == .running || state == .starting || state == .initialized || state == .configured
+                || state == .stopped
+            {
                 return existing
             }
         }

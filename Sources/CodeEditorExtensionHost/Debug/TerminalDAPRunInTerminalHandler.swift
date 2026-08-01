@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorDAP
 import CodeEditorTerminal
+import Foundation
 
 /// Bridges DAP `runInTerminal` reverse requests to a real ``TerminalSessionManager`` backend.
 public struct TerminalDAPRunInTerminalHandler: DAPRunInTerminalHandler {
@@ -46,11 +46,13 @@ public final class TerminalInvokeCounter: @unchecked Sendable {
     public init() {}
 
     public var count: Int {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _count
     }
     public var lastArgs: [String] {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _lastArgs
     }
     public func record(_ args: [String]) {
@@ -67,7 +69,10 @@ public struct MockTerminalDAPRunInTerminalHandler: DAPRunInTerminalHandler {
     public let manager: TerminalSessionManager
     public let counter: TerminalInvokeCounter
 
-    public init(backend: MockTerminalBackend, manager: TerminalSessionManager, counter: TerminalInvokeCounter = TerminalInvokeCounter()) {
+    public init(
+        backend: MockTerminalBackend, manager: TerminalSessionManager,
+        counter: TerminalInvokeCounter = TerminalInvokeCounter()
+    ) {
         self.backend = backend
         self.manager = manager
         self.counter = counter

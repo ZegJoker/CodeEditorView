@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensions
+import Foundation
 
 public enum RemoteExtensionLaunch: Sendable, Hashable {
     case process(executable: URL, arguments: [String])

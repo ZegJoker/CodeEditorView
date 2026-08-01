@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorLanguageServices
+import Foundation
 
 /// ``CodeSuggestionEntry`` backed by a language-service ``CompletionItem``.
 public final class LanguageCompletionItem: CodeSuggestionEntry {

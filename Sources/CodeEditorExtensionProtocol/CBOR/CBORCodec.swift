@@ -158,7 +158,7 @@ public enum CBORCodec {
 
     private static func advance(_ data: Data, index: Data.Index, count: Int) throws -> Data.Index {
         guard let end = data.index(index, offsetBy: count, limitedBy: data.endIndex),
-              data.distance(from: index, to: end) == count
+            data.distance(from: index, to: end) == count
         else { throw CBORError.truncated }
         return end
     }

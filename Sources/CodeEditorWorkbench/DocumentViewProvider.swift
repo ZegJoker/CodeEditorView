@@ -1,16 +1,16 @@
-import SwiftUI
-import Foundation
+import CodeEditorCommands
 import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorCommands
-import CodeEditorWorkspace
-import CodeEditorView
 import CodeEditorLanguageSupport
+import CodeEditorView
+import CodeEditorWorkspace
+import Foundation
+import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 public struct DocumentContentSelector: Sendable, Hashable {
@@ -259,13 +259,13 @@ struct ImageDocumentView: View {
     @ViewBuilder
     private func platformImage(url: URL) -> Image? {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        if let ns = NSImage(contentsOf: url) {
-            return Image(nsImage: ns)
-        }
+            if let ns = NSImage(contentsOf: url) {
+                return Image(nsImage: ns)
+            }
         #elseif canImport(UIKit)
-        if let ui = UIImage(contentsOfFile: url.path) {
-            return Image(uiImage: ui)
-        }
+            if let ui = UIImage(contentsOfFile: url.path) {
+                return Image(uiImage: ui)
+            }
         #endif
         return nil
     }
@@ -291,49 +291,49 @@ struct PDFDocumentView: View {
 
     var body: some View {
         #if canImport(PDFKit)
-        if let url = uri.fileURL {
-            PDFKitRepresentable(url: url)
-        } else {
-            ContentUnavailableView("Unable to load PDF", systemImage: "doc.richtext")
-        }
+            if let url = uri.fileURL {
+                PDFKitRepresentable(url: url)
+            } else {
+                ContentUnavailableView("Unable to load PDF", systemImage: "doc.richtext")
+            }
         #else
-        ContentUnavailableView("PDFKit unavailable", systemImage: "doc.richtext")
+            ContentUnavailableView("PDFKit unavailable", systemImage: "doc.richtext")
         #endif
     }
 }
 
 #if canImport(PDFKit)
-import PDFKit
+    import PDFKit
 
-#if canImport(AppKit) && !targetEnvironment(macCatalyst)
-struct PDFKitRepresentable: NSViewRepresentable {
-    let url: URL
-    func makeNSView(context: Context) -> PDFView {
-        let view = PDFView()
-        view.autoScales = true
-        view.document = PDFDocument(url: url)
-        return view
-    }
-    func updateNSView(_ nsView: PDFView, context: Context) {
-        if nsView.document?.documentURL != url {
-            nsView.document = PDFDocument(url: url)
+    #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        struct PDFKitRepresentable: NSViewRepresentable {
+            let url: URL
+            func makeNSView(context: Context) -> PDFView {
+                let view = PDFView()
+                view.autoScales = true
+                view.document = PDFDocument(url: url)
+                return view
+            }
+            func updateNSView(_ nsView: PDFView, context: Context) {
+                if nsView.document?.documentURL != url {
+                    nsView.document = PDFDocument(url: url)
+                }
+            }
         }
-    }
-}
-#elseif canImport(UIKit)
-struct PDFKitRepresentable: UIViewRepresentable {
-    let url: URL
-    func makeUIView(context: Context) -> PDFView {
-        let view = PDFView()
-        view.autoScales = true
-        view.document = PDFDocument(url: url)
-        return view
-    }
-    func updateUIView(_ uiView: PDFView, context: Context) {
-        if uiView.document?.documentURL != url {
-            uiView.document = PDFDocument(url: url)
+    #elseif canImport(UIKit)
+        struct PDFKitRepresentable: UIViewRepresentable {
+            let url: URL
+            func makeUIView(context: Context) -> PDFView {
+                let view = PDFView()
+                view.autoScales = true
+                view.document = PDFDocument(url: url)
+                return view
+            }
+            func updateUIView(_ uiView: PDFView, context: Context) {
+                if uiView.document?.documentURL != url {
+                    uiView.document = PDFDocument(url: url)
+                }
+            }
         }
-    }
-}
-#endif
+    #endif
 #endif

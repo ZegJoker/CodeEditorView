@@ -1,6 +1,6 @@
+import CodeEditorLanguageSupport
 import Foundation
 import SwiftTreeSitter
-import CodeEditorLanguageSupport
 
 /// Builds highlight-only ``LanguageConfiguration`` values from ``LanguageRegistry``
 /// registrations (parsers + query URLs) and catalog metadata on ``CodeLanguage``.
@@ -43,8 +43,9 @@ public enum TreeSitterConfigurationFactory: Sendable {
         } catch {
             // Fallback: own highlights only (no parent merge).
             if let own = language.queryURL(for: "highlights"),
-               let ownText = try? String(contentsOf: own, encoding: .utf8),
-               let ownData = ownText.data(using: .utf8) {
+                let ownText = try? String(contentsOf: own, encoding: .utf8),
+                let ownData = ownText.data(using: .utf8)
+            {
                 query = try Query(language: tsLanguage, data: ownData)
             } else {
                 throw error

@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDAP
 import CodeEditorExtensionAPI
 import CodeEditorTasks
+import Foundation
 
 public enum DebugLaunchPlanError: Error, Sendable, Equatable {
     case diagnostic(DebugAdapterDiagnostic)
@@ -57,20 +57,22 @@ public actor DebugAdapterLaunchPlanExecutor {
         runInTerminal: (any DAPRunInTerminalHandler)? = nil
     ) async throws -> DebugAdapterSession {
         let aid = plan.adapterID
-        await statusStore.set(DebugAdapterStatus(
-            adapterID: aid,
-            extensionID: extensionID,
-            state: .resolving,
-            message: "resolving"
-        ))
-        do {
-            try validate(plan: plan, extensionID: extensionID)
-            await statusStore.set(DebugAdapterStatus(
+        await statusStore.set(
+            DebugAdapterStatus(
                 adapterID: aid,
                 extensionID: extensionID,
-                state: .installing,
-                message: "materializing"
+                state: .resolving,
+                message: "resolving"
             ))
+        do {
+            try validate(plan: plan, extensionID: extensionID)
+            await statusStore.set(
+                DebugAdapterStatus(
+                    adapterID: aid,
+                    extensionID: extensionID,
+                    state: .installing,
+                    message: "materializing"
+                ))
             let material = try await materialize(plan: plan, extensionID: extensionID, workspaceRoots: workspaceRoots)
 
             if let pre = plan.preDebugTaskID, let tasks = taskService {
@@ -87,84 +89,92 @@ public actor DebugAdapterLaunchPlanExecutor {
                 preDebugTaskID: plan.preDebugTaskID,
                 postDebugTaskID: plan.postDebugTaskID
             )
-            await statusStore.set(DebugAdapterStatus(
-                adapterID: aid,
-                extensionID: extensionID,
-                state: .starting,
-                message: "starting",
-                binaryPath: material.resolvedCommand
-            ))
+            await statusStore.set(
+                DebugAdapterStatus(
+                    adapterID: aid,
+                    extensionID: extensionID,
+                    state: .starting,
+                    message: "starting",
+                    binaryPath: material.resolvedCommand
+                ))
             let session = try await pool.adapter(for: definition)
             if let runInTerminal {
                 await session.setRunInTerminalHandler(runInTerminal)
             }
-            await statusStore.set(DebugAdapterStatus(
-                adapterID: aid,
-                extensionID: extensionID,
-                state: .running,
-                message: "running",
-                binaryPath: material.resolvedCommand
-            ))
+            await statusStore.set(
+                DebugAdapterStatus(
+                    adapterID: aid,
+                    extensionID: extensionID,
+                    state: .running,
+                    message: "running",
+                    binaryPath: material.resolvedCommand
+                ))
             return session
         } catch let DebugLaunchPlanError.diagnostic(d) {
             await statusStore.recordDiagnostic(d)
-            await statusStore.set(DebugAdapterStatus(
-                adapterID: aid,
-                extensionID: extensionID,
-                state: .failed,
-                lastError: d.message
-            ))
+            await statusStore.set(
+                DebugAdapterStatus(
+                    adapterID: aid,
+                    extensionID: extensionID,
+                    state: .failed,
+                    lastError: d.message
+                ))
             throw DebugLaunchPlanError.diagnostic(d)
         } catch {
             let msg = String(describing: error)
-            await statusStore.set(DebugAdapterStatus(
-                adapterID: aid,
-                extensionID: extensionID,
-                state: .failed,
-                lastError: msg
-            ))
+            await statusStore.set(
+                DebugAdapterStatus(
+                    adapterID: aid,
+                    extensionID: extensionID,
+                    state: .failed,
+                    lastError: msg
+                ))
             throw error
         }
     }
 
     public func stop(adapterID: String, extensionID: ExtensionID) async {
         await pool.remove(id: DebugAdapterID(rawValue: adapterID))
-        await statusStore.set(DebugAdapterStatus(
-            adapterID: adapterID,
-            extensionID: extensionID,
-            state: .stopped,
-            message: "stopped"
-        ))
+        await statusStore.set(
+            DebugAdapterStatus(
+                adapterID: adapterID,
+                extensionID: extensionID,
+                state: .stopped,
+                message: "stopped"
+            ))
     }
 
     public func restart(adapterID: String, extensionID: ExtensionID, configuration: DAPJSONObject? = nil) async throws {
         try await pool.restart(id: DebugAdapterID(rawValue: adapterID), configuration: configuration)
-        await statusStore.set(DebugAdapterStatus(
-            adapterID: adapterID,
-            extensionID: extensionID,
-            state: .running,
-            message: "restarted"
-        ))
+        await statusStore.set(
+            DebugAdapterStatus(
+                adapterID: adapterID,
+                extensionID: extensionID,
+                state: .running,
+                message: "restarted"
+            ))
     }
 
     private func validate(plan: DebugAdapterLaunchPlan, extensionID: ExtensionID) throws {
         if plan.adapterID.isEmpty || plan.command.isEmpty {
-            throw DebugLaunchPlanError.diagnostic(.init(
-                code: .planInvalid,
-                message: "adapterID and command required",
-                adapterID: plan.adapterID,
-                extensionID: extensionID
-            ))
+            throw DebugLaunchPlanError.diagnostic(
+                .init(
+                    code: .planInvalid,
+                    message: "adapterID and command required",
+                    adapterID: plan.adapterID,
+                    extensionID: extensionID
+                ))
         }
         switch plan.binarySource {
         case .worktreeRelative(let path), .absolute(let path):
             if path.contains("..") {
-                throw DebugLaunchPlanError.diagnostic(.init(
-                    code: .pathEscape,
-                    message: "path escape",
-                    adapterID: plan.adapterID,
-                    extensionID: extensionID
-                ))
+                throw DebugLaunchPlanError.diagnostic(
+                    .init(
+                        code: .pathEscape,
+                        message: "path escape",
+                        adapterID: plan.adapterID,
+                        extensionID: extensionID
+                    ))
             }
         default:
             break
@@ -182,21 +192,23 @@ public actor DebugAdapterLaunchPlanExecutor {
         extensionID: ExtensionID,
         workspaceRoots: [URL]
     ) async throws -> Materialized {
-        let cwd = plan.workingDirectoryRelative.flatMap { rel in
-            workspaceRoots.first?.appendingPathComponent(rel)
-        } ?? workspaceRoots.first
+        let cwd =
+            plan.workingDirectoryRelative.flatMap { rel in
+                workspaceRoots.first?.appendingPathComponent(rel)
+            } ?? workspaceRoots.first
 
         switch plan.binarySource {
         case .testFactory(let id):
             return Materialized(launch: .test(factoryID: id), resolvedCommand: "test://\(id)", workingDirectory: cwd)
         case .systemPath(let name):
             guard let path = findOnPath(name) else {
-                throw DebugLaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "not on PATH: \(name)",
-                    adapterID: plan.adapterID,
-                    extensionID: extensionID
-                ))
+                throw DebugLaunchPlanError.diagnostic(
+                    .init(
+                        code: .binaryNotFound,
+                        message: "not on PATH: \(name)",
+                        adapterID: plan.adapterID,
+                        extensionID: extensionID
+                    ))
             }
             try await ensureProcess(path, extensionID: extensionID, adapterID: plan.adapterID)
             return Materialized(
@@ -213,12 +225,13 @@ public actor DebugAdapterLaunchPlanExecutor {
             )
         case .worktreeRelative(let rel):
             guard let root = workspaceRoots.first else {
-                throw DebugLaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "no worktree",
-                    adapterID: plan.adapterID,
-                    extensionID: extensionID
-                ))
+                throw DebugLaunchPlanError.diagnostic(
+                    .init(
+                        code: .binaryNotFound,
+                        message: "no worktree",
+                        adapterID: plan.adapterID,
+                        extensionID: extensionID
+                    ))
             }
             let url = root.appendingPathComponent(rel)
             try await ensureProcess(url.path, extensionID: extensionID, adapterID: plan.adapterID)
@@ -232,7 +245,7 @@ public actor DebugAdapterLaunchPlanExecutor {
                 let handle = try await broker.downloadHandle(extensionID: extensionID)
                 let dest: URL
                 if urlString.hasPrefix("fixture://"),
-                   let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
+                    let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
                 {
                     dest = try await broker.downloadWriteFixture(
                         handle: handle.id, host: "cdn.example", path: "/\(cacheKey)", data: b64, expectedDigest: digest
@@ -249,12 +262,13 @@ public actor DebugAdapterLaunchPlanExecutor {
                     workingDirectory: cwd
                 )
             } catch {
-                throw DebugLaunchPlanError.diagnostic(.init(
-                    code: .downloadDenied,
-                    message: String(describing: error),
-                    adapterID: plan.adapterID,
-                    extensionID: extensionID
-                ))
+                throw DebugLaunchPlanError.diagnostic(
+                    .init(
+                        code: .downloadDenied,
+                        message: String(describing: error),
+                        adapterID: plan.adapterID,
+                        extensionID: extensionID
+                    ))
             }
         case .npm(let package, let version, let bin):
             let handle = try await broker.npmHandle(extensionID: extensionID)
@@ -262,12 +276,13 @@ public actor DebugAdapterLaunchPlanExecutor {
             let exec = dest.appendingPathComponent(bin)
             // Do not invent binaries — package install must provide the declared bin.
             guard FileManager.default.fileExists(atPath: exec.path) else {
-                throw DebugLaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "npm bin missing after install: \(bin)",
-                    adapterID: plan.adapterID,
-                    extensionID: extensionID
-                ))
+                throw DebugLaunchPlanError.diagnostic(
+                    .init(
+                        code: .binaryNotFound,
+                        message: "npm bin missing after install: \(bin)",
+                        adapterID: plan.adapterID,
+                        extensionID: extensionID
+                    ))
             }
             try await ensureProcess(exec.path, extensionID: extensionID, adapterID: plan.adapterID)
             return Materialized(
@@ -282,21 +297,23 @@ public actor DebugAdapterLaunchPlanExecutor {
         do {
             _ = try await broker.processHandle(extensionID: extensionID)
         } catch {
-            throw DebugLaunchPlanError.diagnostic(.init(
-                code: .processDenied,
-                message: "process capability denied",
-                adapterID: adapterID,
-                extensionID: extensionID
-            ))
+            throw DebugLaunchPlanError.diagnostic(
+                .init(
+                    code: .processDenied,
+                    message: "process capability denied",
+                    adapterID: adapterID,
+                    extensionID: extensionID
+                ))
         }
         let allowed = await broker.processAllowed(executable: executable)
         if !allowed {
-            throw DebugLaunchPlanError.diagnostic(.init(
-                code: .processDenied,
-                message: "not on allowlist: \(executable)",
-                adapterID: adapterID,
-                extensionID: extensionID
-            ))
+            throw DebugLaunchPlanError.diagnostic(
+                .init(
+                    code: .processDenied,
+                    message: "not on allowlist: \(executable)",
+                    adapterID: adapterID,
+                    extensionID: extensionID
+                ))
         }
     }
 

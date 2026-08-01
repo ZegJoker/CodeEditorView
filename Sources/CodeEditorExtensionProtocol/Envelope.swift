@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 public struct ExtensionWireProtocolVersion: Hashable, Codable, Sendable {
     public var major: Int
@@ -304,55 +304,62 @@ public enum ExtensionEnvelopeCodec {
         }
         switch kind {
         case "handshake":
-            return .handshake(ExtensionWireHandshake(
-                protocolVersion: ExtensionWireProtocolVersion(
-                    major: map["major"]?.intValue ?? 1,
-                    minor: map["minor"]?.intValue ?? 0
-                ),
-                schemaHash: map["schema"]?.stringValue ?? "",
-                apiVersion: map["api"]?.stringValue ?? "1.0.0",
-                packageID: map["id"]?.stringValue ?? "",
-                packageVersion: map["ver"]?.stringValue ?? "0",
-                packageDigest: map["digest"]?.stringValue,
-                displayName: map["name"]?.stringValue ?? "",
-                capabilities: map["caps"]?.arrayValue?.compactMap(\.stringValue) ?? [],
-                permissions: map["perms"]?.arrayValue?.compactMap(\.stringValue) ?? [],
-                runtimeKind: map["runtime"]?.stringValue ?? "native-process",
-                platform: map["platform"]?.stringValue ?? "",
-                arch: map["arch"]?.stringValue ?? "",
-                processID: map["pid"]?.intValue.map { Int32($0) }
-            ))
+            return .handshake(
+                ExtensionWireHandshake(
+                    protocolVersion: ExtensionWireProtocolVersion(
+                        major: map["major"]?.intValue ?? 1,
+                        minor: map["minor"]?.intValue ?? 0
+                    ),
+                    schemaHash: map["schema"]?.stringValue ?? "",
+                    apiVersion: map["api"]?.stringValue ?? "1.0.0",
+                    packageID: map["id"]?.stringValue ?? "",
+                    packageVersion: map["ver"]?.stringValue ?? "0",
+                    packageDigest: map["digest"]?.stringValue,
+                    displayName: map["name"]?.stringValue ?? "",
+                    capabilities: map["caps"]?.arrayValue?.compactMap(\.stringValue) ?? [],
+                    permissions: map["perms"]?.arrayValue?.compactMap(\.stringValue) ?? [],
+                    runtimeKind: map["runtime"]?.stringValue ?? "native-process",
+                    platform: map["platform"]?.stringValue ?? "",
+                    arch: map["arch"]?.stringValue ?? "",
+                    processID: map["pid"]?.intValue.map { Int32($0) }
+                ))
         case "handshakeResult":
             let limits = ExtensionHostLimits(
                 maxPayloadBytes: map["max_payload"]?.intValue ?? ExtensionHostLimits.default.maxPayloadBytes,
                 maxFrameBytes: map["max_frame"]?.intValue ?? ExtensionHostLimits.default.maxFrameBytes,
                 streamWindow: map["stream_window"]?.intValue ?? ExtensionHostLimits.default.streamWindow,
-                maxConcurrentRequests: map["max_concurrent"]?.intValue ?? ExtensionHostLimits.default.maxConcurrentRequests,
+                maxConcurrentRequests: map["max_concurrent"]?.intValue
+                    ?? ExtensionHostLimits.default.maxConcurrentRequests,
                 requestTimeoutMS: map["timeout_ms"]?.intValue ?? ExtensionHostLimits.default.requestTimeoutMS
             )
-            return .handshakeResult(ExtensionWireHandshakeResult(
-                accepted: map["ok"]?.boolValue ?? false,
-                protocolVersion: ExtensionWireProtocolVersion(
-                    major: map["major"]?.intValue ?? 1,
-                    minor: map["minor"]?.intValue ?? 0
-                ),
-                schemaHash: map["schema"]?.stringValue ?? "",
-                hostCapabilities: map["caps"]?.arrayValue?.compactMap(\.stringValue) ?? [],
-                grantedPermissions: map["perms"]?.arrayValue?.compactMap(\.stringValue) ?? [],
-                limits: limits,
-                generation: map["generation"]?.intValue.map { UInt64($0) } ?? {
-                    if case .unsigned(let u) = map["generation"] { return u }
-                    return 1
-                }(),
-                rejectReason: map["reason"]?.stringValue
-            ))
+            return .handshakeResult(
+                ExtensionWireHandshakeResult(
+                    accepted: map["ok"]?.boolValue ?? false,
+                    protocolVersion: ExtensionWireProtocolVersion(
+                        major: map["major"]?.intValue ?? 1,
+                        minor: map["minor"]?.intValue ?? 0
+                    ),
+                    schemaHash: map["schema"]?.stringValue ?? "",
+                    hostCapabilities: map["caps"]?.arrayValue?.compactMap(\.stringValue) ?? [],
+                    grantedPermissions: map["perms"]?.arrayValue?.compactMap(\.stringValue) ?? [],
+                    limits: limits,
+                    generation: map["generation"]?.intValue.map { UInt64($0) }
+                        ?? {
+                            if case .unsigned(let u) = map["generation"] { return u }
+                            return 1
+                        }(),
+                    rejectReason: map["reason"]?.stringValue
+                ))
         case "request":
             guard let idStr = map["id"]?.stringValue, let uuid = UUID(uuidString: idStr),
-                  let method = map["method"]?.stringValue
+                let method = map["method"]?.stringValue
             else { throw CBORError.typeMismatch("request") }
             let gen: UInt64
-            if case .unsigned(let u) = map["generation"] { gen = u }
-            else { gen = UInt64(map["generation"]?.intValue ?? 0) }
+            if case .unsigned(let u) = map["generation"] {
+                gen = u
+            } else {
+                gen = UInt64(map["generation"]?.intValue ?? 0)
+            }
             return .request(
                 id: ExtensionRequestID(uuid),
                 method: ExtensionMethodID(rawValue: method),
@@ -365,15 +372,17 @@ public enum ExtensionEnvelopeCodec {
                 throw CBORError.typeMismatch("response")
             }
             let gen: UInt64
-            if case .unsigned(let u) = map["generation"] { gen = u }
-            else { gen = UInt64(map["generation"]?.intValue ?? 0) }
+            if case .unsigned(let u) = map["generation"] {
+                gen = u
+            } else {
+                gen = UInt64(map["generation"]?.intValue ?? 0)
+            }
             var error: ExtensionWireError?
             if let code = map["error_code"]?.intValue {
                 error = ExtensionWireError(code: code, message: map["error_msg"]?.stringValue ?? "")
             }
             let result: Data?
-            if case .null = map["result"] { result = nil }
-            else { result = map["result"]?.dataValue }
+            if case .null = map["result"] { result = nil } else { result = map["result"]?.dataValue }
             return .response(id: ExtensionRequestID(uuid), result: result, error: error, generation: gen)
         case "cancel":
             guard let idStr = map["id"]?.stringValue, let uuid = UUID(uuidString: idStr) else {
@@ -391,14 +400,13 @@ public enum ExtensionEnvelopeCodec {
             )
         case "streamOpen":
             guard let idStr = map["id"]?.stringValue, let uuid = UUID(uuidString: idStr),
-                  let stream = map["stream"]?.stringValue
+                let stream = map["stream"]?.stringValue
             else { throw CBORError.typeMismatch("streamOpen") }
             return .streamOpen(id: ExtensionRequestID(uuid), streamID: stream, window: map["window"]?.intValue ?? 8)
         case "streamChunk":
             guard let stream = map["stream"]?.stringValue else { throw CBORError.typeMismatch("streamChunk") }
             let seq: UInt64
-            if case .unsigned(let u) = map["seq"] { seq = u }
-            else { seq = UInt64(map["seq"]?.intValue ?? 0) }
+            if case .unsigned(let u) = map["seq"] { seq = u } else { seq = UInt64(map["seq"]?.intValue ?? 0) }
             return .streamChunk(
                 streamID: stream,
                 sequence: seq,

@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("LayoutInvalidation")
@@ -61,7 +62,7 @@ struct LayoutInvalidationTests {
         await MainActor.run {
             let controller = EditorController(text: "line1\nline2\nline3\nline4")
             let before = controller.layout.lineIndex.count
-            controller.setSelectedRange(NSRange(location: 6, length: 5)) // "line2"
+            controller.setSelectedRange(NSRange(location: 6, length: 5))  // "line2"
             controller.insertText("XX")
             #expect(controller.layout.lineIndex.length == controller.document.length)
             #expect(controller.layout.lineIndex.count >= before - 1)

@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Resolves document text/version for any URI (open buffer or disk) for cross-file LSP positions.
 ///
@@ -59,7 +59,8 @@ public struct DefaultWorkspaceSnapshotResolver: WorkspaceSnapshotResolver {
         } catch {
             throw LSPError.decode("snapshot read failed: \(uri.rawValue): \(error)")
         }
-        let text = String(data: data, encoding: .utf8)
+        let text =
+            String(data: data, encoding: .utf8)
             ?? String(decoding: data, as: UTF8.self)
         return TextSnapshot(uri: uri, text: text, version: nil)
     }

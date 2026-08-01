@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 /// One running language server connection.
 public actor LanguageServerSession {
@@ -47,9 +47,11 @@ public actor LanguageServerSession {
         self.log = log
         self.budgets = budgets
         self.makeTransport = transportFactory
-        self.snapshotResolver = snapshotResolver ?? LSPSnapshotResolverBox(
-            DefaultWorkspaceSnapshotResolver(openDocumentText: { _ in nil })
-        )
+        self.snapshotResolver =
+            snapshotResolver
+            ?? LSPSnapshotResolverBox(
+                DefaultWorkspaceSnapshotResolver(openDocumentText: { _ in nil })
+            )
         var cont: AsyncStream<LSPDiagnosticsEvent>.Continuation!
         self.diagnosticsStream = AsyncStream { cont = $0 }
         self.diagnosticsContinuation = cont
@@ -159,9 +161,11 @@ public actor LanguageServerSession {
 
     private func restartBackoffNanoseconds(attempt: Int) -> UInt64 {
         // Exponential backoff from initial to max.
-        let initial = Double(budgets.restartInitialBackoff.components.seconds)
+        let initial =
+            Double(budgets.restartInitialBackoff.components.seconds)
             + Double(budgets.restartInitialBackoff.components.attoseconds) / 1e18
-        let maximum = Double(budgets.restartMaxBackoff.components.seconds)
+        let maximum =
+            Double(budgets.restartMaxBackoff.components.seconds)
             + Double(budgets.restartMaxBackoff.components.attoseconds) / 1e18
         let delay = min(maximum, initial * pow(2.0, Double(attempt)))
         return UInt64(delay * 1_000_000_000)
@@ -197,7 +201,7 @@ public actor LanguageServerSession {
                     "languageId": languageID,
                     "version": Int(version.rawValue),
                     "text": text,
-                ] as [String: Any],
+                ] as [String: Any]
             ])
         )
     }
@@ -288,7 +292,7 @@ public actor LanguageServerSession {
     public func didSave(uri: DocumentURI, text: String?) async throws {
         try requireRunning()
         var params: [String: Any] = [
-            "textDocument": ["uri": uri.rawValue],
+            "textDocument": ["uri": uri.rawValue]
         ]
         if let text {
             params["text"] = text
@@ -303,7 +307,7 @@ public actor LanguageServerSession {
         try await connection?.notifyDictionary(
             "textDocument/didClose",
             params: LSPJSONObject([
-                "textDocument": ["uri": uri.rawValue],
+                "textDocument": ["uri": uri.rawValue]
             ])
         )
     }
@@ -387,7 +391,7 @@ public actor LanguageServerSession {
             "locale": "en-us",
             "capabilities": [
                 "general": [
-                    "positionEncodings": ["utf-16"],
+                    "positionEncodings": ["utf-16"]
                 ],
                 "textDocument": [
                     "synchronization": [
@@ -408,7 +412,9 @@ public actor LanguageServerSession {
                     "references": ["dynamicRegistration": true],
                     "documentHighlight": ["dynamicRegistration": true],
                     "documentSymbol": ["hierarchicalDocumentSymbolSupport": true, "dynamicRegistration": true],
-                    "codeAction": ["dynamicRegistration": true, "resolveSupport": ["properties": ["edit", "command"]]],
+                    "codeAction": [
+                        "dynamicRegistration": true, "resolveSupport": ["properties": ["edit", "command"]],
+                    ],
                     "formatting": ["dynamicRegistration": true],
                     "rangeFormatting": ["dynamicRegistration": true],
                     "rename": ["dynamicRegistration": true, "prepareSupport": false],
@@ -418,7 +424,9 @@ public actor LanguageServerSession {
                     "documentLink": ["dynamicRegistration": true],
                     "colorProvider": ["dynamicRegistration": true],
                     "foldingRange": ["dynamicRegistration": true],
-                    "inlayHint": ["dynamicRegistration": true, "resolveSupport": ["properties": ["tooltip", "textEdits"]]],
+                    "inlayHint": [
+                        "dynamicRegistration": true, "resolveSupport": ["properties": ["tooltip", "textEdits"]],
+                    ],
                     "typeHierarchy": ["dynamicRegistration": true],
                     "callHierarchy": ["dynamicRegistration": true],
                     "semanticTokens": [
@@ -463,17 +471,19 @@ public actor LanguageServerSession {
                 let text = openDocuments[uri]?.text ?? ""
                 let diags = params.diagnostics.map { LSPConvert.diagnostic($0, in: text) }
                 diagnosticsContinuation?.yield(
-                    LSPDiagnosticsEvent(uri: uri, version: params.version.map { DocumentVersion(rawValue: UInt64($0)) }, diagnostics: diags)
+                    LSPDiagnosticsEvent(
+                        uri: uri, version: params.version.map { DocumentVersion(rawValue: UInt64($0)) },
+                        diagnostics: diags)
                 )
             }
         case "window/logMessage", "window/showMessage":
             if let obj = try? JSONSerialization.jsonObject(with: paramsData) as? [String: Any],
-               let message = obj["message"] as? String
+                let message = obj["message"] as? String
             {
                 log.append(level: .info, message: message, serverID: definition.id.rawValue)
             }
         case "$/progress":
-            break // handled via progress stream
+            break  // handled via progress stream
         default:
             log.append(level: .debug, message: "Notification \(method)", serverID: definition.id.rawValue)
         }
@@ -515,9 +525,10 @@ public actor LanguageServerSession {
             }
             return LSPAnyJSON(items.map { _ in NSNull() })
         case "workspace/workspaceFolders":
-            return LSPAnyJSON(definition.workspaceRootURIs.map {
-                ["uri": $0.rawValue, "name": $0.rawValue] as [String: Any]
-            })
+            return LSPAnyJSON(
+                definition.workspaceRootURIs.map {
+                    ["uri": $0.rawValue, "name": $0.rawValue] as [String: Any]
+                })
         case "client/registerCapability":
             if let registrations = params["registrations"] as? [[String: Any]] {
                 for reg in registrations {
@@ -576,12 +587,13 @@ public actor LanguageServerSession {
                 let documentURI = DocumentURI(rawValue: uri)
                 let text = await text(for: documentURI)
                 if let data = try? JSONSerialization.data(withJSONObject: edits),
-                   let decoded = try? JSONDecoder().decode([LSPTextEdit].self, from: data)
+                    let decoded = try? JSONDecoder().decode([LSPTextEdit].self, from: data)
                 {
-                    docs.append(DocumentEditPlan(
-                        uri: documentURI,
-                        edits: decoded.map { LSPConvert.textEditPlan($0, in: text) }
-                    ))
+                    docs.append(
+                        DocumentEditPlan(
+                            uri: documentURI,
+                            edits: decoded.map { LSPConvert.textEditPlan($0, in: text) }
+                        ))
                 }
             }
         }

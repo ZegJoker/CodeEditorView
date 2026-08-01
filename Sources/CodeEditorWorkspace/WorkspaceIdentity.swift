@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 public struct WorkspaceID: Hashable, Codable, Sendable, RawRepresentable {
     public let rawValue: UUID

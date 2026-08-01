@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorSourceControl
 
 @Suite("Source Control")
@@ -9,12 +10,12 @@ struct SCMTests {
     @Test func porcelainParser() {
         let root = URL(fileURLWithPath: "/repo")
         let text = """
-        M  Sources/A.swift
-         M Sources/B.swift
-        ?? Notes.md
-        D  gone.txt
-        UU conflict.swift
-        """
+            M  Sources/A.swift
+             M Sources/B.swift
+            ?? Notes.md
+            D  gone.txt
+            UU conflict.swift
+            """
         let statuses = GitPorcelain.parseStatus(text, repositoryRoot: root)
         #expect(statuses.count == 5)
         let byPath = Dictionary(uniqueKeysWithValues: statuses.map { ($0.path, $0) })
@@ -87,7 +88,7 @@ struct SCMTests {
                         path: "a.swift",
                         state: .modified,
                         staged: false
-                    ),
+                    )
                 ]
             }
             func branches() async throws -> SCMBranchList {
@@ -153,15 +154,15 @@ struct SCMTests {
 
     @Test func parseDiffHunks() {
         let raw = """
-        diff --git a/a.swift b/a.swift
-        --- a/a.swift
-        +++ b/a.swift
-        @@ -1,2 +1,3 @@
-         line1
-        -old
-        +new
-        +extra
-        """
+            diff --git a/a.swift b/a.swift
+            --- a/a.swift
+            +++ b/a.swift
+            @@ -1,2 +1,3 @@
+             line1
+            -old
+            +new
+            +extra
+            """
         let diff = GitPorcelain.parseDiff(raw, path: "a.swift")
         #expect(diff.hunks.count == 1)
         #expect(diff.hunks[0].newStart == 1)

@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Computes which logical lines must be rebuilt after a document edit.
 public enum LayoutInvalidation {

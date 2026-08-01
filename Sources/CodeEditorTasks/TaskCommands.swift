@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCommands
+import Foundation
 
 public enum TaskCommands {
     public static let run = CommandID(stringLiteral: "codeeditor.tasks.run")

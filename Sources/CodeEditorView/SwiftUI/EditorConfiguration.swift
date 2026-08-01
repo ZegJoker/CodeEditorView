@@ -1,6 +1,6 @@
+import CodeEditorCore
 import CoreGraphics
 import Foundation
-import CodeEditorCore
 
 /// Visual and interaction configuration for ``CodeEditor`` / ``EditorController``.
 ///

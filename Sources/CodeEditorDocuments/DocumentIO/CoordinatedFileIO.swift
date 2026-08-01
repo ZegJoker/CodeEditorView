@@ -21,9 +21,9 @@ public struct CoordinatedDocumentIO: DocumentIO {
                 do {
                     // Delegate bounded read to LocalDocumentIO semantics.
                     if maxBytes < UInt64.max,
-                       let values = try? newURL.resourceValues(forKeys: [.fileSizeKey]),
-                       let size = values.fileSize,
-                       UInt64(size) > maxBytes
+                        let values = try? newURL.resourceValues(forKeys: [.fileSizeKey]),
+                        let size = values.fileSize,
+                        UInt64(size) > maxBytes
                     {
                         result = .failure(DocumentIOError.tooLarge(UInt64(size)))
                         return

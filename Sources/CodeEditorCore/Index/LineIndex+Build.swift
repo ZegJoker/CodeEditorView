@@ -1,9 +1,9 @@
 import CoreGraphics
 import Foundation
 
-public extension LineIndex {
+extension LineIndex {
     /// Splits `string` into lines (keeping line terminators on each line) and rebuilds the index.
-    static func build(
+    public static func build(
         from string: String,
         estimatedLineHeight: CGFloat,
         makePayload: (Int) -> Payload
@@ -21,12 +21,12 @@ public extension LineIndex {
             var foundTerminator = false
             while end < utf16.endIndex {
                 let unit = utf16[end]
-                if unit == 0x0A { // \n
+                if unit == 0x0A {  // \n
                     end = utf16.index(after: end)
                     foundTerminator = true
                     break
                 }
-                if unit == 0x0D { // \r
+                if unit == 0x0D {  // \r
                     end = utf16.index(after: end)
                     if end < utf16.endIndex, utf16[end] == 0x0A {
                         end = utf16.index(after: end)
@@ -70,7 +70,7 @@ public extension LineIndex {
     }
 
     /// Convenience using ``LineMetrics/splitLines`` with trailing empty-line semantics.
-    static func buildUsingSplitLines(
+    public static func buildUsingSplitLines(
         from string: String,
         estimatedLineHeight: CGFloat,
         makePayload: (Int) -> Payload

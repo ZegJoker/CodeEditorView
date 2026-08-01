@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Parses machine-safe Git status / diff output.
 public enum GitPorcelain {
@@ -13,8 +13,10 @@ public enum GitPorcelain {
             let chunk = parts[i]
             i += 1
             guard chunk.count >= 3 else { continue }
-            guard let line = String(data: chunk, encoding: .utf8)
-                    ?? String(data: chunk, encoding: .isoLatin1) else { continue }
+            guard
+                let line = String(data: chunk, encoding: .utf8)
+                    ?? String(data: chunk, encoding: .isoLatin1)
+            else { continue }
             guard line.count >= 3 else { continue }
             let x = line[line.startIndex]
             let y = line[line.index(line.startIndex, offsetBy: 1)]
@@ -24,7 +26,8 @@ public enum GitPorcelain {
             var original: String?
             if x == "R" || x == "C" || y == "R" || y == "C" {
                 if i < parts.count {
-                    let src = String(data: parts[i], encoding: .utf8)
+                    let src =
+                        String(data: parts[i], encoding: .utf8)
                         ?? String(data: parts[i], encoding: .isoLatin1)
                     if let src, !src.isEmpty {
                         original = src
@@ -92,11 +95,21 @@ public enum GitPorcelain {
         var staged = false
         var state: SCMState = .unmodified
         switch x {
-        case "M": state = .modified; staged = true
-        case "A": state = .added; staged = true
-        case "D": state = .deleted; staged = true
-        case "R": state = .renamed; staged = true
-        case "C": state = .copied; staged = true
+        case "M":
+            state = .modified
+            staged = true
+        case "A":
+            state = .added
+            staged = true
+        case "D":
+            state = .deleted
+            staged = true
+        case "R":
+            state = .renamed
+            staged = true
+        case "C":
+            state = .copied
+            staged = true
         default: break
         }
         switch y {
@@ -105,16 +118,28 @@ public enum GitPorcelain {
         case "A": state = .added
         default: break
         }
-        if x == " " && y == "M" { staged = false; state = .modified }
-        if x == "M" && y == " " { staged = true; state = .modified }
-        if x == "A" && y == " " { staged = true; state = .added }
+        if x == " " && y == "M" {
+            staged = false
+            state = .modified
+        }
+        if x == "M" && y == " " {
+            staged = true
+            state = .modified
+        }
+        if x == "A" && y == " " {
+            staged = true
+            state = .added
+        }
         return (state, staged)
     }
 
     public static func parseDiff(_ raw: String, path: String) -> SCMDiff {
         var hunks: [SCMDiffHunk] = []
         var currentHeader = ""
-        var oldStart = 0, oldCount = 0, newStart = 0, newCount = 0
+        var oldStart = 0
+        var oldCount = 0
+        var newStart = 0
+        var newCount = 0
         var lines: [String] = []
         let hunkRe = try! NSRegularExpression(
             pattern: #"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@"#,
@@ -142,10 +167,12 @@ public enum GitPorcelain {
                 flush()
                 currentHeader = line
                 oldStart = Int(ns.substring(with: m.range(at: 1))) ?? 0
-                oldCount = m.range(at: 2).location != NSNotFound
+                oldCount =
+                    m.range(at: 2).location != NSNotFound
                     ? Int(ns.substring(with: m.range(at: 2))) ?? 0 : 1
                 newStart = Int(ns.substring(with: m.range(at: 3))) ?? 0
-                newCount = m.range(at: 4).location != NSNotFound
+                newCount =
+                    m.range(at: 4).location != NSNotFound
                     ? Int(ns.substring(with: m.range(at: 4))) ?? 0 : 1
             } else if line.hasPrefix("+") || line.hasPrefix("-") || line.hasPrefix(" ") {
                 lines.append(line)
@@ -205,7 +232,7 @@ public enum GitRepositoryDiscovery {
         let rootComponents = rootURL.pathComponents
         let fullComponents = full.pathComponents
         guard fullComponents.count >= rootComponents.count,
-              Array(fullComponents.prefix(rootComponents.count)) == rootComponents
+            Array(fullComponents.prefix(rootComponents.count)) == rootComponents
         else {
             throw SCMError.pathEscape(path)
         }

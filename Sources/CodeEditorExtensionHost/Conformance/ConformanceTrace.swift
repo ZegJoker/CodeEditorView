@@ -1,12 +1,13 @@
-import Foundation
 import CodeEditorExtensionProtocol
+import Foundation
+
 #if canImport(CryptoKit)
-import CryptoKit
+    import CryptoKit
 #endif
 
 public struct ConformanceEvent: Sendable, Equatable, Hashable, Codable {
     public var method: String
-    public var direction: String // "host→guest" | "guest→host" | "local"
+    public var direction: String  // "host→guest" | "guest→host" | "local"
     public var payloadDigest: String
     public var errorCode: Int?
     public var generation: UInt64
@@ -27,9 +28,9 @@ public struct ConformanceEvent: Sendable, Equatable, Hashable, Codable {
 
     public static func payloadDigest(_ data: Data) -> String {
         #if canImport(CryptoKit)
-        return SHA256.hash(data: data).prefix(8).map { String(format: "%02x", $0) }.joined()
+            return SHA256.hash(data: data).prefix(8).map { String(format: "%02x", $0) }.joined()
         #else
-        return String(format: "%08x", data.count)
+            return String(format: "%08x", data.count)
         #endif
     }
 }
@@ -53,13 +54,14 @@ public final class ConformanceTracer: @unchecked Sendable {
         errorCode: Int? = nil,
         generation: UInt64 = 0
     ) {
-        record(ConformanceEvent(
-            method: method.rawValue,
-            direction: direction,
-            payloadDigest: ConformanceEvent.payloadDigest(payload),
-            errorCode: errorCode,
-            generation: generation
-        ))
+        record(
+            ConformanceEvent(
+                method: method.rawValue,
+                direction: direction,
+                payloadDigest: ConformanceEvent.payloadDigest(payload),
+                errorCode: errorCode,
+                generation: generation
+            ))
     }
 
     public func snapshot() -> [ConformanceEvent] {

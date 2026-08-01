@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Pluggable search execution surface.
 public protocol SearchBackend: Sendable {

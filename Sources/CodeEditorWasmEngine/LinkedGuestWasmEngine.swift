@@ -19,7 +19,7 @@ public struct LinkedGuestWasmEngine: CodeEditorWasmEngine {
             throw WasmEngineError.moduleTooLarge(module.count)
         }
         guard module.count >= 8,
-              module.starts(with: Data([0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00]))
+            module.starts(with: Data([0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00]))
         else {
             throw WasmEngineError.invalidModule("bad magic")
         }
@@ -76,17 +76,22 @@ public final class LinkedGuestWasmInstance: CodeEditorWasmInstance, @unchecked S
     public var memory: any WasmMemoryView { guest.memoryView }
 
     public var meters: WasmMeters {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _meters
     }
 
     public var isInterrupted: Bool {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return interrupted
     }
 
     public func interrupt() {
-        lock.lock(); interrupted = true; _meters.interrupted = true; lock.unlock()
+        lock.lock()
+        interrupted = true
+        _meters.interrupted = true
+        lock.unlock()
     }
 
     public func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
@@ -139,7 +144,10 @@ final class InfiniteLoopInstance: CodeEditorWasmInstance, @unchecked Sendable {
     var memory: any WasmMemoryView { mem }
     var meters: WasmMeters { _meters }
     var isInterrupted: Bool { interrupted }
-    func interrupt() { interrupted = true; _meters.interrupted = true }
+    func interrupt() {
+        interrupted = true
+        _meters.interrupted = true
+    }
     func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
         if interrupted { throw WasmEngineError.interrupted }
         switch name {

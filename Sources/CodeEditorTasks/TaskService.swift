@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 public actor TaskService {
     private var definitions: [TaskID: TaskDefinition] = [:]

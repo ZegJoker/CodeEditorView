@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 public protocol RemoteExtensionTransport: Sendable {
     func send(_ data: Data) async throws

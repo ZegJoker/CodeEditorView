@@ -1,9 +1,9 @@
 import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 // MARK: - Border / shadow (mchakravarty MessageBorder)
@@ -13,7 +13,8 @@ private struct MessageBorder: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
-        let shadow = colorScheme == .dark
+        let shadow =
+            colorScheme == .dark
             ? Color(.sRGBLinear, white: 0, opacity: 0.66)
             : Color(.sRGBLinear, white: 0, opacity: 0.33)
 
@@ -147,9 +148,9 @@ private struct CategoryCard: View {
 
     private func platformColor(_ color: PlatformColor) -> Color {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        Color(nsColor: color)
+            Color(nsColor: color)
         #else
-        Color(uiColor: color)
+            Color(uiColor: color)
         #endif
     }
 }

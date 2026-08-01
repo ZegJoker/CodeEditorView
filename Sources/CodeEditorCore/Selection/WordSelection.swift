@@ -15,8 +15,8 @@ public enum WordSelection: Sendable {
         if probe == length {
             probe = max(0, probe - 1)
         } else if probe > 0,
-                  isWhitespace(ns.character(at: probe)),
-                  isWordChar(ns.character(at: probe - 1))
+            isWhitespace(ns.character(at: probe)),
+            isWordChar(ns.character(at: probe - 1))
         {
             probe -= 1
         }
@@ -39,7 +39,7 @@ public enum WordSelection: Sendable {
     }
 
     private static func isWordChar(_ unit: unichar) -> Bool {
-        if unit == 0x5F { return true } // _
+        if unit == 0x5F { return true }  // _
         if unit >= 0x30 && unit <= 0x39 { return true }
         if unit >= 0x41 && unit <= 0x5A { return true }
         if unit >= 0x61 && unit <= 0x7A { return true }

@@ -1,9 +1,9 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import CodeEditorExtensionWasmGuest
 import CodeEditorExtensions
 import CodeEditorWasmEngine
-import CodeEditorExtensionWasmGuest
+import Foundation
 
 public struct SwiftWasmRuntimeDriver: ExtensionRuntimeDriver {
     public let kind: ExtensionRuntimeKind = .swiftWasm
@@ -34,8 +34,9 @@ public struct SwiftWasmRuntimeDriver: ExtensionRuntimeDriver {
         handshake: ExtensionHostHandshake,
         broker: CapabilityBroker
     ) async throws -> any ExtensionInstance {
-        guard let wasm = prepared.package.wasmModuleData
-            ?? prepared.package.wasmModuleURL.flatMap({ try? Data(contentsOf: $0) })
+        guard
+            let wasm = prepared.package.wasmModuleData
+                ?? prepared.package.wasmModuleURL.flatMap({ try? Data(contentsOf: $0) })
         else {
             throw RuntimeSelectionError.missingArtifact
         }
@@ -51,7 +52,8 @@ public struct SwiftWasmRuntimeDriver: ExtensionRuntimeDriver {
         await broker.registerExtension(
             id: prepared.package.packageID,
             generation: handshake.generation,
-            granted: prepared.package.manifest.requestedPermissions.intersection(handshake.environment.grantedPermissions)
+            granted: prepared.package.manifest.requestedPermissions.intersection(
+                handshake.environment.grantedPermissions)
         )
         return SwiftWasmExtensionInstance(
             identity: prepared.package.packageID,

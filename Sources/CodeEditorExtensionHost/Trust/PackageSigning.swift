@@ -1,8 +1,9 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import Foundation
+
 #if canImport(CryptoKit)
-import CryptoKit
+    import CryptoKit
 #endif
 
 public enum ExtensionTrustClass: String, Sendable, Hashable, Codable {
@@ -50,9 +51,9 @@ public struct PublisherKeyring: Sendable, Hashable, Codable {
         if let arr = obj["keys"] as? [[String: String]] {
             for item in arr {
                 guard let id = item["key_id"] ?? item["keyID"],
-                      let b64 = item["public_key_b64"] ?? item["publicKeyB64"],
-                      let raw = Data(base64Encoded: b64),
-                      let subject = item["subject"]
+                    let b64 = item["public_key_b64"] ?? item["publicKeyB64"],
+                    let raw = Data(base64Encoded: b64),
+                    let subject = item["subject"]
                 else { continue }
                 keys.append(ExtensionPublisherKey(keyID: id, publicKeyRaw: raw, subject: subject))
             }
@@ -140,14 +141,14 @@ public enum ExtensionPackageSigner {
 
     public static func generateKeyPair(keyID: String = UUID().uuidString) throws -> KeyPair {
         #if canImport(CryptoKit)
-        let privateKey = Curve25519.Signing.PrivateKey()
-        return KeyPair(
-            publicKeyRaw: privateKey.publicKey.rawRepresentation,
-            privateKeyRaw: privateKey.rawRepresentation,
-            keyID: keyID
-        )
+            let privateKey = Curve25519.Signing.PrivateKey()
+            return KeyPair(
+                publicKeyRaw: privateKey.publicKey.rawRepresentation,
+                privateKeyRaw: privateKey.rawRepresentation,
+                keyID: keyID
+            )
         #else
-        throw PackageSignatureError.cryptoUnavailable
+            throw PackageSignatureError.cryptoUnavailable
         #endif
     }
 
@@ -159,8 +160,8 @@ public enum ExtensionPackageSigner {
         try writeExclusive(data: pair.privateKeyRaw, to: privateURL, mode: 0o600)
         try writeExclusive(data: pair.publicKeyRaw, to: publicURL, mode: 0o644)
         let meta = """
-        {"key_id":"\(pair.keyID)","public_key_b64":"\(pair.publicKeyRaw.base64EncodedString())"}
-        """
+            {"key_id":"\(pair.keyID)","public_key_b64":"\(pair.publicKeyRaw.base64EncodedString())"}
+            """
         try meta.write(to: directory.appendingPathComponent("key.json"), atomically: true, encoding: .utf8)
     }
 
@@ -200,19 +201,19 @@ public enum ExtensionPackageSigner {
 
     public static func sign(packageRoot: URL, privateKeyRaw: Data, keyID: String, subject: String) throws {
         #if canImport(CryptoKit)
-        let checksums = try writeChecksums(packageRoot: packageRoot)
-        let privateKey = try Curve25519.Signing.PrivateKey(rawRepresentation: privateKeyRaw)
-        let signature = try privateKey.signature(for: checksums)
-        try signature.write(to: packageRoot.appendingPathComponent("signature.ed25519"), options: .atomic)
-        let publisher: [String: String] = [
-            "key_id": keyID,
-            "subject": subject,
-            "public_key_b64": privateKey.publicKey.rawRepresentation.base64EncodedString(),
-        ]
-        let pubData = try JSONSerialization.data(withJSONObject: publisher, options: [.sortedKeys, .prettyPrinted])
-        try pubData.write(to: packageRoot.appendingPathComponent("publisher.json"), options: .atomic)
+            let checksums = try writeChecksums(packageRoot: packageRoot)
+            let privateKey = try Curve25519.Signing.PrivateKey(rawRepresentation: privateKeyRaw)
+            let signature = try privateKey.signature(for: checksums)
+            try signature.write(to: packageRoot.appendingPathComponent("signature.ed25519"), options: .atomic)
+            let publisher: [String: String] = [
+                "key_id": keyID,
+                "subject": subject,
+                "public_key_b64": privateKey.publicKey.rawRepresentation.base64EncodedString(),
+            ]
+            let pubData = try JSONSerialization.data(withJSONObject: publisher, options: [.sortedKeys, .prettyPrinted])
+            try pubData.write(to: packageRoot.appendingPathComponent("publisher.json"), options: .atomic)
         #else
-        throw PackageSignatureError.cryptoUnavailable
+            throw PackageSignatureError.cryptoUnavailable
         #endif
     }
 
@@ -220,11 +221,13 @@ public enum ExtensionPackageSigner {
         let root = packageRoot.resolvingSymlinksInPath()
         let digest = try ExtensionPackageDigest.compute(packageRoot: root)
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(
-            at: root,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard
+            let enumerator = fm.enumerator(
+                at: root,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            )
+        else {
             throw PackageSignatureError.missingChecksums
         }
         var map: [String: String] = [:]
@@ -251,10 +254,10 @@ public enum ExtensionPackageSigner {
 
     private static func sha256Hex(_ data: Data) -> String {
         #if canImport(CryptoKit)
-        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         #else
-        // EXT-007: never fall back to a non-cryptographic digest.
-        fatalError("CryptoKit unavailable: package digests require SHA-256 (fail closed)")
+            // EXT-007: never fall back to a non-cryptographic digest.
+            fatalError("CryptoKit unavailable: package digests require SHA-256 (fail closed)")
         #endif
     }
 }
@@ -334,75 +337,76 @@ public enum ExtensionPackageVerifier {
 
         if hasSig && hasPub {
             #if canImport(CryptoKit)
-            let pubObj = try JSONSerialization.jsonObject(with: Data(contentsOf: pubURL)) as? [String: String]
-            guard let b64 = pubObj?["public_key_b64"],
-                  let keyData = Data(base64Encoded: b64),
-                  let keyID = pubObj?["key_id"],
-                  let subject = pubObj?["subject"]
-            else { throw PackageSignatureError.missingPublisher }
+                let pubObj = try JSONSerialization.jsonObject(with: Data(contentsOf: pubURL)) as? [String: String]
+                guard let b64 = pubObj?["public_key_b64"],
+                    let keyData = Data(base64Encoded: b64),
+                    let keyID = pubObj?["key_id"],
+                    let subject = pubObj?["subject"]
+                else { throw PackageSignatureError.missingPublisher }
 
-            if policy.revokedKeyIDs.contains(keyID) {
-                throw PackageSignatureError.revokedKey(keyID)
-            }
+                if policy.revokedKeyIDs.contains(keyID) {
+                    throw PackageSignatureError.revokedKey(keyID)
+                }
 
-            let known = policy.trustedKeys.contains { $0.keyID == keyID && $0.publicKeyRaw == keyData }
-            if policy.trustedKeys.isEmpty {
-                // Fail closed unless explicit test escape hatch
-                if !policy.allowUnknownSelfSigned {
-                    throw PackageSignatureError.unknownPublisher
-                }
-            } else if !known {
-                throw PackageSignatureError.unknownPublisher
-            }
-
-            // EXT-003: bind publisher subject/key into the signed content.
-            // Preferred: signature covers canonical `SignedPackageStatement` bytes when present.
-            // Compatibility: signature covers checksums.json; require subject match trusted key record.
-            let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: keyData)
-            let signature = try Data(contentsOf: sigURL)
-            let statementURL = packageRoot.appendingPathComponent("signed-statement.json")
-            if FileManager.default.fileExists(atPath: statementURL.path) {
-                let statementData = try Data(contentsOf: statementURL)
-                guard publicKey.isValidSignature(signature, for: statementData) else {
-                    throw PackageSignatureError.invalidSignature
-                }
-                if let stmt = try? JSONSerialization.jsonObject(with: statementData) as? [String: Any] {
-                    let stmtSubject = stmt["publisherDisplayName"] as? String
-                        ?? stmt["publisher_display_name"] as? String
-                    let stmtKey = stmt["keyID"] as? String ?? stmt["key_id"] as? String
-                    if let stmtSubject, stmtSubject != subject {
-                        throw PackageSignatureError.invalidSignature
-                    }
-                    if let stmtKey, stmtKey != keyID {
-                        throw PackageSignatureError.invalidSignature
-                    }
-                    if let pkgDigest = stmt["packageManifestDigest"] as? String
-                        ?? stmt["package_manifest_digest"] as? String,
-                       let expected = map["__package__"],
-                       pkgDigest != expected
-                    {
-                        throw PackageSignatureError.checksumMismatch("__package__")
-                    }
-                }
-            } else {
-                guard publicKey.isValidSignature(signature, for: checksumsData) else {
-                    throw PackageSignatureError.invalidSignature
-                }
-                // Without a signed statement, bind subject to the trusted key record when known.
-                if let trusted = policy.trustedKeys.first(where: { $0.keyID == keyID }) {
-                    if trusted.subject != subject {
+                let known = policy.trustedKeys.contains { $0.keyID == keyID && $0.publicKeyRaw == keyData }
+                if policy.trustedKeys.isEmpty {
+                    // Fail closed unless explicit test escape hatch
+                    if !policy.allowUnknownSelfSigned {
                         throw PackageSignatureError.unknownPublisher
                     }
+                } else if !known {
+                    throw PackageSignatureError.unknownPublisher
                 }
-            }
-            return PackageVerifyReport(
-                trustClass: .trustedSigned,
-                publisher: subject,
-                keyID: keyID,
-                errors: []
-            )
+
+                // EXT-003: bind publisher subject/key into the signed content.
+                // Preferred: signature covers canonical `SignedPackageStatement` bytes when present.
+                // Compatibility: signature covers checksums.json; require subject match trusted key record.
+                let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: keyData)
+                let signature = try Data(contentsOf: sigURL)
+                let statementURL = packageRoot.appendingPathComponent("signed-statement.json")
+                if FileManager.default.fileExists(atPath: statementURL.path) {
+                    let statementData = try Data(contentsOf: statementURL)
+                    guard publicKey.isValidSignature(signature, for: statementData) else {
+                        throw PackageSignatureError.invalidSignature
+                    }
+                    if let stmt = try? JSONSerialization.jsonObject(with: statementData) as? [String: Any] {
+                        let stmtSubject =
+                            stmt["publisherDisplayName"] as? String
+                            ?? stmt["publisher_display_name"] as? String
+                        let stmtKey = stmt["keyID"] as? String ?? stmt["key_id"] as? String
+                        if let stmtSubject, stmtSubject != subject {
+                            throw PackageSignatureError.invalidSignature
+                        }
+                        if let stmtKey, stmtKey != keyID {
+                            throw PackageSignatureError.invalidSignature
+                        }
+                        if let pkgDigest = stmt["packageManifestDigest"] as? String
+                            ?? stmt["package_manifest_digest"] as? String,
+                            let expected = map["__package__"],
+                            pkgDigest != expected
+                        {
+                            throw PackageSignatureError.checksumMismatch("__package__")
+                        }
+                    }
+                } else {
+                    guard publicKey.isValidSignature(signature, for: checksumsData) else {
+                        throw PackageSignatureError.invalidSignature
+                    }
+                    // Without a signed statement, bind subject to the trusted key record when known.
+                    if let trusted = policy.trustedKeys.first(where: { $0.keyID == keyID }) {
+                        if trusted.subject != subject {
+                            throw PackageSignatureError.unknownPublisher
+                        }
+                    }
+                }
+                return PackageVerifyReport(
+                    trustClass: .trustedSigned,
+                    publisher: subject,
+                    keyID: keyID,
+                    errors: []
+                )
             #else
-            throw PackageSignatureError.cryptoUnavailable
+                throw PackageSignatureError.cryptoUnavailable
             #endif
         }
 
@@ -458,8 +462,8 @@ public struct HostPackageVerifier: PackageVerifying {
 /// Native helper is a reliability boundary, not automatically a security sandbox.
 public enum NativeProcessTrustNotice {
     public static let message = """
-    A native Swift helper is a reliability boundary, not automatically a security boundary. \
-    Unsandboxed helpers retain ambient OS authority. Only OS-enforced sandboxes or Swift-Wasm \
-    provide capability containment for untrusted code.
-    """
+        A native Swift helper is a reliability boundary, not automatically a security boundary. \
+        Unsandboxed helpers retain ambient OS authority. Only OS-enforced sandboxes or Swift-Wasm \
+        provide capability containment for untrusted code.
+        """
 }

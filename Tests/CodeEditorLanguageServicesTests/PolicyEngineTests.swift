@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorLanguageServices
 
 @Suite("LanguageServices policy engine")
@@ -16,17 +17,19 @@ struct PolicyEngineTests {
 
     @Test func failureIsolationKeepsHealthyProvider() async throws {
         let registry = LanguageServiceRegistry()
-        await registry.register(MockLanguageSuite(
-            id: "bad",
-            priority: 100,
-            completionItems: [CompletionItem(label: "bad")],
-            failure: .provider("boom")
-        ) as any CompletionProvider)
-        await registry.register(MockLanguageSuite(
-            id: "good",
-            priority: 1,
-            completionItems: [CompletionItem(label: "good")]
-        ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "bad",
+                priority: 100,
+                completionItems: [CompletionItem(label: "bad")],
+                failure: .provider("boom")
+            ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "good",
+                priority: 1,
+                completionItems: [CompletionItem(label: "good")]
+            ) as any CompletionProvider)
         let host = LanguageServiceHost(registry: registry)
         let list = try await host.completions(
             for: CompletionRequest(document: snapshot(), position: TextPosition(utf16Offset: 0)),
@@ -41,17 +44,19 @@ struct PolicyEngineTests {
 
     @Test func providerTimeoutIsIsolated() async throws {
         let registry = LanguageServiceRegistry()
-        await registry.register(MockLanguageSuite(
-            id: "slow",
-            priority: 50,
-            completionItems: [CompletionItem(label: "slow")],
-            delayNanoseconds: 200_000_000
-        ) as any CompletionProvider)
-        await registry.register(MockLanguageSuite(
-            id: "fast",
-            priority: 1,
-            completionItems: [CompletionItem(label: "fast")]
-        ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "slow",
+                priority: 50,
+                completionItems: [CompletionItem(label: "slow")],
+                delayNanoseconds: 200_000_000
+            ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "fast",
+                priority: 1,
+                completionItems: [CompletionItem(label: "fast")]
+            ) as any CompletionProvider)
         var limits = LanguageServiceLimits.default
         limits.providerTimeout = .milliseconds(20)
         let host = LanguageServiceHost(registry: registry, limits: limits)
@@ -81,10 +86,11 @@ struct PolicyEngineTests {
             context: ctx
         )
 
-        #expect(!(try await host.completions(
-            for: CompletionRequest(document: doc, position: TextPosition(utf16Offset: 0), context: ctx),
-            currentVersion: version1
-        )).items.isEmpty)
+        #expect(
+            !(try await host.completions(
+                for: CompletionRequest(document: doc, position: TextPosition(utf16Offset: 0), context: ctx),
+                currentVersion: version1
+            )).items.isEmpty)
         #expect(try await host.hover(for: pos, currentVersion: version1) != nil)
         #expect(!(try await host.definitions(for: pos, currentVersion: version1)).isEmpty)
         #expect(!(try await host.declarations(for: pos, currentVersion: version1)).isEmpty)
@@ -144,10 +150,11 @@ struct PolicyEngineTests {
     @Test func largeResultLimitsApplied() async throws {
         let registry = LanguageServiceRegistry()
         let many = (0..<100).map { CompletionItem(label: "item\($0)") }
-        await registry.register(MockLanguageSuite(
-            id: "many",
-            completionItems: many
-        ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "many",
+                completionItems: many
+            ) as any CompletionProvider)
         var limits = LanguageServiceLimits.default
         limits.maxCompletionItems = 5
         let host = LanguageServiceHost(registry: registry, limits: limits)

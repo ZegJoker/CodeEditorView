@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Represents a fold boundary encountered while scanning a single line (CESE-aligned).
 public enum LineFoldProviderLineInfo: Equatable, Sendable {

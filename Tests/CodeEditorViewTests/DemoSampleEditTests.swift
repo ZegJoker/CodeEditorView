@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Demo sample edit")
 @MainActor
@@ -11,16 +11,16 @@ struct DemoSampleEditTests {
 
     @Test func swiftSampleTypeOnBlankLineBeforeGreet() {
         let src = """
-        // Swift — CodeEditorView demo
-        func greet(_ name: String) {
-            print("Hello, \\(name)!")
-            if name.isEmpty {
-                return
+            // Swift — CodeEditorView demo
+            func greet(_ name: String) {
+                print("Hello, \\(name)!")
+                if name.isEmpty {
+                    return
+                }
             }
-        }
 
-        greet("world")
-        """
+            greet("world")
+            """
         let controller = EditorController(text: src, language: .swift)
         let caret = (src as NSString).range(of: "}\n\n").location + 2
         controller.setSelectedRange(NSRange(location: caret, length: 0))
@@ -51,6 +51,8 @@ struct DemoSampleEditTests {
             return (controller.text as NSString).substring(with: r)
         }.joined()
         #expect(joined == controller.text, "line index must cover full document text")
-        #expect(controller.layout.lineIndex.count == lineCountBefore || controller.layout.lineIndex.count == lineCountBefore + 0)
+        #expect(
+            controller.layout.lineIndex.count == lineCountBefore
+                || controller.layout.lineIndex.count == lineCountBefore + 0)
     }
 }

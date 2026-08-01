@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Language switch highlighting")
 @MainActor
@@ -10,7 +10,7 @@ struct LanguageSwitchHighlightTests {
     init() { CodeEditorLanguages.bootstrap() }
 
     @Test func multiSwitchKeepsContiguousTokenColors() async throws {
-        let controller = EditorController(text: DemoCSharp, language: .swift)
+        let controller = EditorController(text: demoCSharp, language: .swift)
         let languages: [CodeLanguage] = [.swift, .python, .javascript, .rust, .cSharp, .go, .cSharp]
         for lang in languages {
             controller.language = lang
@@ -95,19 +95,19 @@ struct LanguageSwitchHighlightTests {
     }
 }
 
-private let DemoCSharp = """
-using System;
-class Program {
-    static void Greet(string name) {
-        Console.WriteLine("hi");
-        return;
+private let demoCSharp = """
+    using System;
+    class Program {
+        static void Greet(string name) {
+            Console.WriteLine("hi");
+            return;
+        }
     }
-}
-"""
+    """
 
 private func sample(for language: CodeLanguage) -> String {
     switch language.id {
-    case .cSharp: return DemoCSharp
+    case .cSharp: return demoCSharp
     case .swift: return "func hello() { return }\n"
     case .python: return "def hello():\n    return\n"
     case .javascript: return "function hello() { return }\n"

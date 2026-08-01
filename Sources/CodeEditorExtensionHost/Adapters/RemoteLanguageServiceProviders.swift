@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorExtensions
 import CodeEditorLanguageServices
+import Foundation
 
 /// Registers remote-backed providers for one extension process.
 public final class RemoteProviderRegistration: @unchecked Sendable {
@@ -18,7 +18,10 @@ public final class RemoteProviderRegistration: @unchecked Sendable {
 
     public func dispose() {
         lock.lock()
-        if disposed { lock.unlock(); return }
+        if disposed {
+            lock.unlock()
+            return
+        }
         disposed = true
         lock.unlock()
         let registry = self.registry

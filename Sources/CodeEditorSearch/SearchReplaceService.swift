@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
 
 /// Applies a search-replace plan through transactional ``WorkspaceEditService``.
 @MainActor

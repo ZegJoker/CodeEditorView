@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorWorkspace
+import Foundation
 
 // MARK: - Lifecycle
 
@@ -139,7 +139,8 @@ public final class WorkbenchWindowRegistry {
     public init() {}
 
     @discardableResult
-    public func create(title: String = "Workbench", from template: WorkbenchWindowState? = nil) -> WorkbenchWindowState {
+    public func create(title: String = "Workbench", from template: WorkbenchWindowState? = nil) -> WorkbenchWindowState
+    {
         var state = template ?? WorkbenchWindowState(title: title)
         state.id = WorkbenchWindowID()
         state.title = title

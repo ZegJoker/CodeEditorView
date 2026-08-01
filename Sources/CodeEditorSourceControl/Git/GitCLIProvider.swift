@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Source-control provider backed by the `git` CLI with streaming I/O and path safety.
 public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {

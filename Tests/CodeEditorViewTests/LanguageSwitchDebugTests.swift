@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Language switch debug")
 @MainActor
@@ -38,7 +38,8 @@ struct LanguageSwitchDebugTests {
             let ns = source as NSString
             for h in highlights.prefix(40) {
                 let piece = ns.substring(with: h.range)
-                print("  \(h.range.location)+\(h.range.length) raw=\(h.rawCapture ?? "") text=\(piece.debugDescription)")
+                print(
+                    "  \(h.range.location)+\(h.range.length) raw=\(h.rawCapture ?? "") text=\(piece.debugDescription)")
             }
         } else {
             print("NO TreeSitter provider")
@@ -52,7 +53,9 @@ struct LanguageSwitchDebugTests {
             let attrs = storage.attributes(at: loc, effectiveRange: &effective)
             let color = attrs[.foregroundColor] as? PlatformColor
             let piece = (storage.string as NSString).substring(with: effective)
-            print("ATTR \(effective.location)+\(effective.length) color=\(color.map { String(describing: $0) } ?? "nil") text=\(piece.debugDescription)")
+            print(
+                "ATTR \(effective.location)+\(effective.length) color=\(color.map { String(describing: $0) } ?? "nil") text=\(piece.debugDescription)"
+            )
             loc = effective.location + effective.length
         }
     }
@@ -62,14 +65,14 @@ private func sample(for language: CodeLanguage) -> String {
     switch language.id {
     case .cSharp:
         return """
-        using System;
-        class Program {
-            static void Greet(string name) {
-                Console.WriteLine("hi");
-                return;
+            using System;
+            class Program {
+                static void Greet(string name) {
+                    Console.WriteLine("hi");
+                    return;
+                }
             }
-        }
-        """
+            """
     case .swift: return "func hello() { return }\n"
     case .python: return "def hello():\n    return\n"
     case .javascript: return "function hello() { return }\n"

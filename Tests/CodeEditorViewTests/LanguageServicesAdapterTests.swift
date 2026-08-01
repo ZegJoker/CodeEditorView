@@ -1,9 +1,10 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorLanguageSupport
 import CodeEditorLanguageServices
+import CodeEditorLanguageSupport
+import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Language service adapters")
@@ -75,7 +76,7 @@ struct LanguageServicesAdapterTests {
                 range: CodeEditorCore.TextRange(location: 0, length: 3),
                 capture: .keyword,
                 rawType: "keyword"
-            ),
+            )
         ]
         let mock = MockLanguageSuite(id: "sem", semanticTokens: tokens)
         await registry.register(mock as any SemanticTokensProvider)
@@ -92,7 +93,7 @@ struct LanguageServicesAdapterTests {
 
     @Test func foldingAdapterEmitsStartAndEnd() {
         let adapter = FoldingRangeProviderAdapter(ranges: [
-            FoldingRange(startLine: 0, endLine: 2, startCharacter: 0, endCharacter: 1),
+            FoldingRange(startLine: 0, endLine: 2, startCharacter: 0, endCharacter: 1)
         ])
         let ctx = LineFoldProviderContext(document: "a\nb\nc\n", indentOption: .spaces(count: 4), lineCount: 3)
         let start = adapter.foldLevelAtLine(
@@ -163,10 +164,11 @@ struct LanguageServicesAdapterTests {
         )
         let version: @Sendable () -> DocumentVersion = { DocumentVersion(rawValue: 1) }
 
-        #expect(!(try await host.completions(
-            for: CompletionRequest(document: snap, position: TextPosition(utf16Offset: 0), context: ctx),
-            currentVersion: version
-        )).items.isEmpty)
+        #expect(
+            !(try await host.completions(
+                for: CompletionRequest(document: snap, position: TextPosition(utf16Offset: 0), context: ctx),
+                currentVersion: version
+            )).items.isEmpty)
         #expect(try await host.hover(for: pos, currentVersion: version) != nil)
         #expect(!(try await host.definitions(for: pos, currentVersion: version)).isEmpty)
         #expect(!(try await host.diagnostics(for: full, currentVersion: version)).isEmpty)

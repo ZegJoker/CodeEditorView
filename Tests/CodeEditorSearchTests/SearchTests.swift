@@ -1,8 +1,9 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
+import Testing
+
 @testable import CodeEditorSearch
 
 @Suite("Search")

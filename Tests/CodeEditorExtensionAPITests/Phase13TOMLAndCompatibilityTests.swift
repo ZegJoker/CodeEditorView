@@ -1,6 +1,6 @@
+import CodeEditorExtensionAPI
 import Foundation
 import Testing
-import CodeEditorExtensionAPI
 
 @Suite("Phase 13 TOML contributions")
 struct Phase13TOMLTests {
@@ -10,31 +10,31 @@ struct Phase13TOMLTests {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         let toml = """
-        id = "com.example.p13"
-        name = "P13"
-        version = "1.0.0"
-        schema_version = 1
-        api_version = "1.0"
-        [activation]
-        events = ["startup"]
-        [debug_adapters.lldb]
-        name = "LLDB"
-        languages = ["Swift"]
-        command = "lldb-dap"
-        [mcp_servers.ctx]
-        name = "Context"
-        command = "ctx-mcp"
-        transport = "stdio"
-        startup_timeout_ms = 8000
-        [slash_commands.explain]
-        name = "explain"
-        description = "Explain"
-        requires_worktree = true
-        [documentation_packages.swift]
-        title = "Swift docs"
-        languages = ["Swift"]
-        source_path = "docs/swift.md"
-        """
+            id = "com.example.p13"
+            name = "P13"
+            version = "1.0.0"
+            schema_version = 1
+            api_version = "1.0"
+            [activation]
+            events = ["startup"]
+            [debug_adapters.lldb]
+            name = "LLDB"
+            languages = ["Swift"]
+            command = "lldb-dap"
+            [mcp_servers.ctx]
+            name = "Context"
+            command = "ctx-mcp"
+            transport = "stdio"
+            startup_timeout_ms = 8000
+            [slash_commands.explain]
+            name = "explain"
+            description = "Explain"
+            requires_worktree = true
+            [documentation_packages.swift]
+            title = "Swift docs"
+            languages = ["Swift"]
+            source_path = "docs/swift.md"
+            """
         try toml.write(to: dir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         let plan = try ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
         #expect(plan.debugAdapters.count == 1)
@@ -69,11 +69,11 @@ struct CompatibilityProfileTests {
 
     @Test func loadFromTOMLText() throws {
         let text = """
-        profile = "test"
-        [features]
-        slash_commands = "stable"
-        mcp_servers = "stable"
-        """
+            profile = "test"
+            [features]
+            slash_commands = "stable"
+            mcp_servers = "stable"
+            """
         let p = try CompatibilityProfileLoader.load(toml: text)
         #expect(p.status(for: .slashCommands) == .stable)
         #expect(p.status(for: .mcpServers) == .stable)

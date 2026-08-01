@@ -37,7 +37,7 @@ public final class CommandRegistry {
     /// Soft register for migration: replaces existing without throwing.
     @discardableResult
     public func register(_ command: EditorCommand) -> any CommandDisposable {
-        (try? register(command, replaceExisting: true)) ?? RegistrationToken { }
+        (try? register(command, replaceExisting: true)) ?? RegistrationToken {}
     }
 
     public func unregister(id: CommandID) {

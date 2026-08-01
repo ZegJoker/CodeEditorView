@@ -1,13 +1,14 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorExtensions
 import CodeEditorExtensionAPI
-import CodeEditorExtensionProtocol
-import CodeEditorLanguageServices
-@testable import CodeEditorExtensionHost
 import CodeEditorExtensionGuest
+import CodeEditorExtensionProtocol
+import CodeEditorExtensions
+import CodeEditorLanguageServices
+import Foundation
+import Testing
+
+@testable import CodeEditorExtensionHost
 
 // MARK: - Helpers
 
@@ -15,25 +16,26 @@ private func makeBroker(roots: [URL] = []) -> CapabilityBroker {
     let tmp = FileManager.default.temporaryDirectory
         .appendingPathComponent("broker-\(UUID().uuidString)", isDirectory: true)
     try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
-    return CapabilityBroker(config: .init(
-        worktreeRoots: roots,
-        storageRoot: tmp.appendingPathComponent("storage"),
-        toolCacheRoot: tmp.appendingPathComponent("cache"),
-        processAllowlist: [
-            .init(command: "/bin/sleep"),
-            .init(command: "sleep"),
-            .init(command: "/bin/echo"),
-            .init(command: "echo"),
-        ],
-        downloadAllowlist: [
-            .init(host: "example.com", pathPrefix: ["ok"]),
-            .init(host: "cdn.example", pathPrefix: []),
-        ],
-        npmAllowlist: [
-            .init(package: "left-pad", version: "1.0.0"),
-            .init(package: "**"),
-        ]
-    ))
+    return CapabilityBroker(
+        config: .init(
+            worktreeRoots: roots,
+            storageRoot: tmp.appendingPathComponent("storage"),
+            toolCacheRoot: tmp.appendingPathComponent("cache"),
+            processAllowlist: [
+                .init(command: "/bin/sleep"),
+                .init(command: "sleep"),
+                .init(command: "/bin/echo"),
+                .init(command: "echo"),
+            ],
+            downloadAllowlist: [
+                .init(host: "example.com", pathPrefix: ["ok"]),
+                .init(host: "cdn.example", pathPrefix: []),
+            ],
+            npmAllowlist: [
+                .init(package: "left-pad", version: "1.0.0"),
+                .init(package: "**"),
+            ]
+        ))
 }
 
 private struct ConformanceExt: CodeEditorExtension {
@@ -291,11 +293,12 @@ struct Phase10BrokerTests {
     @Test func storageQuota() async throws {
         let tmp = FileManager.default.temporaryDirectory
             .appendingPathComponent("quota-\(UUID().uuidString)", isDirectory: true)
-        let broker = CapabilityBroker(config: .init(
-            storageRoot: tmp.appendingPathComponent("s"),
-            toolCacheRoot: tmp.appendingPathComponent("c"),
-            storageQuotaBytes: 16
-        ))
+        let broker = CapabilityBroker(
+            config: .init(
+                storageRoot: tmp.appendingPathComponent("s"),
+                toolCacheRoot: tmp.appendingPathComponent("c"),
+                storageQuotaBytes: 16
+            ))
         let id: ExtensionID = "ext.q"
         await broker.registerExtension(id: id, generation: 1, granted: [])
         let h = try await broker.storageHandle(extensionID: id)
@@ -333,7 +336,7 @@ struct Phase10SigningTests {
             policy: ExtensionTrustPolicy(
                 allowWorkspaceDevNative: false,
                 trustedKeys: [
-                    ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Test Publisher"),
+                    ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Test Publisher")
                 ]
             )
         )
@@ -349,7 +352,7 @@ struct Phase10SigningTests {
                 packageRoot: root,
                 policy: ExtensionTrustPolicy(
                     trustedKeys: [
-                        ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "T"),
+                        ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "T")
                     ]
                 )
             )
@@ -431,47 +434,47 @@ struct Phase10OrchestratorTests {
 // MARK: - Descendant kill (macOS process)
 
 #if os(macOS)
-@Suite("Phase 10 process group teardown")
-struct Phase10ProcessGroupTests {
-    @Test func stopKillsHelperAndChildren() async throws {
-        // Build path to ConformanceExtensionGuest if available, else skip with sleep-wrapper script
-        let binDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("helper-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: binDir, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: binDir) }
+    @Suite("Phase 10 process group teardown")
+    struct Phase10ProcessGroupTests {
+        @Test func stopKillsHelperAndChildren() async throws {
+            // Build path to ConformanceExtensionGuest if available, else skip with sleep-wrapper script
+            let binDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("helper-\(UUID().uuidString)", isDirectory: true)
+            try FileManager.default.createDirectory(at: binDir, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: binDir) }
 
-        // Minimal shell helper that forks sleep child and speaks enough to stay up
-        // Use native transport with /bin/sleep as helper and verify group kill via broker spawn instead.
-        let broker = makeBroker()
-        let id: ExtensionID = "ext.desc"
-        await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
-        let handle = try await broker.processHandle(extensionID: id)
-        let lease = try await broker.processSpawn(
-            handle: handle.id,
-            executable: "/bin/sleep",
-            arguments: ["60"]
-        )
-        let pid = lease.pid
-        #expect(NativeHelperProcessTransport.isProcessAlive(pid))
-        // Revoke extension should kill live processes
-        await broker.revokeExtension(id: id)
-        try await Task.sleep(for: .milliseconds(200))
-        #expect(!NativeHelperProcessTransport.isProcessAlive(pid))
-    }
+            // Minimal shell helper that forks sleep child and speaks enough to stay up
+            // Use native transport with /bin/sleep as helper and verify group kill via broker spawn instead.
+            let broker = makeBroker()
+            let id: ExtensionID = "ext.desc"
+            await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
+            let handle = try await broker.processHandle(extensionID: id)
+            let lease = try await broker.processSpawn(
+                handle: handle.id,
+                executable: "/bin/sleep",
+                arguments: ["60"]
+            )
+            let pid = lease.pid
+            #expect(NativeHelperProcessTransport.isProcessAlive(pid))
+            // Revoke extension should kill live processes
+            await broker.revokeExtension(id: id)
+            try await Task.sleep(for: .milliseconds(200))
+            #expect(!NativeHelperProcessTransport.isProcessAlive(pid))
+        }
 
-    @Test func nativeHelperTransportTerminatesGroup() async throws {
-        let transport = try NativeHelperProcessTransport(
-            executable: URL(fileURLWithPath: "/bin/sleep"),
-            arguments: ["60"]
-        )
-        let pid = transport.processIdentifier
-        #expect(pid > 0)
-        #expect(NativeHelperProcessTransport.isProcessAlive(pid))
-        await transport.close()
-        try await Task.sleep(for: .milliseconds(200))
-        #expect(!NativeHelperProcessTransport.isProcessAlive(pid))
+        @Test func nativeHelperTransportTerminatesGroup() async throws {
+            let transport = try NativeHelperProcessTransport(
+                executable: URL(fileURLWithPath: "/bin/sleep"),
+                arguments: ["60"]
+            )
+            let pid = transport.processIdentifier
+            #expect(pid > 0)
+            #expect(NativeHelperProcessTransport.isProcessAlive(pid))
+            await transport.close()
+            try await Task.sleep(for: .milliseconds(200))
+            #expect(!NativeHelperProcessTransport.isProcessAlive(pid))
+        }
     }
-}
 #endif
 
 // MARK: - Guest handlers for dual-run
@@ -480,7 +483,7 @@ extension ExtensionGuestRuntime {
     func installDefaultLanguageHandlers() {
         completionHandler = { _ in
             let list = CompletionList(items: [
-                CompletionItem(label: "conformanceHello", kind: .function, insertText: "conformanceHello()"),
+                CompletionItem(label: "conformanceHello", kind: .function, insertText: "conformanceHello()")
             ])
             return try JSONEncoder().encode(list)
         }

@@ -1,17 +1,19 @@
+import CodeEditorDAP
 import Foundation
 import Testing
-import CodeEditorDAP
 
 private final class TerminalCallBox: @unchecked Sendable {
     private let lock = NSLock()
     private var _called = false
     private var _argCount = 0
     var called: Bool {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _called
     }
     var argCount: Int {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _argCount
     }
     func mark(args: DAPRunInTerminalArgs) {
@@ -149,11 +151,12 @@ struct DAPSessionTests {
         let client = pair.client
         await pool.registerTestFactory(id: "f1") { client }
 
-        let session = try await pool.adapter(for: DebugAdapterDefinition(
-            id: "p1",
-            displayName: "P",
-            launch: .test(factoryID: "f1")
-        ))
+        let session = try await pool.adapter(
+            for: DebugAdapterDefinition(
+                id: "p1",
+                displayName: "P",
+                launch: .test(factoryID: "f1")
+            ))
         #expect(await session.state == .initialized)
         try await session.launch(configuration: DAPJSONObject([:]))
         try await pool.restart(id: "p1", configuration: DAPJSONObject([:]))

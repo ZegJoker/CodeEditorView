@@ -1,7 +1,7 @@
-import Foundation
+import CodeEditorCommands
 import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorCommands
+import Foundation
 
 // MARK: - EditorCommandClient
 
@@ -91,7 +91,8 @@ extension EditorController: EditorCommandClient {
             jumpToDefinition()
         case .foldToggle:
             if let range = selectedRanges.first,
-               let line = layout.lineIndex.line(atUTF16Offset: range.location) {
+                let line = layout.lineIndex.line(atUTF16Offset: range.location)
+            {
                 toggleFold(atLine: line.index)
             }
         case .foldAll:
@@ -160,75 +161,101 @@ extension EditorController {
         }
 
         // Edit
-        reg(BuiltInCommandID.undo, "Undo", category: .edit,
+        reg(
+            BuiltInCommandID.undo, "Undo", category: .edit,
             keys: [.command("z")], action: .undo)
-        reg(BuiltInCommandID.redo, "Redo", category: .edit,
+        reg(
+            BuiltInCommandID.redo, "Redo", category: .edit,
             keys: [Keybinding(key: "z", modifiers: [.command, .shift])], action: .redo)
-        reg(BuiltInCommandID.indent, "Indent", category: .edit,
+        reg(
+            BuiltInCommandID.indent, "Indent", category: .edit,
             keys: [.command("]")], action: .indent)
-        reg(BuiltInCommandID.outdent, "Outdent", category: .edit,
+        reg(
+            BuiltInCommandID.outdent, "Outdent", category: .edit,
             keys: [.command("[")], action: .outdent)
-        reg(BuiltInCommandID.toggleLineComment, "Toggle Line Comment", category: .edit,
+        reg(
+            BuiltInCommandID.toggleLineComment, "Toggle Line Comment", category: .edit,
             keys: [.command("/")], action: .toggleLineComment)
-        reg(BuiltInCommandID.toggleBlockComment, "Toggle Block Comment", category: .edit,
+        reg(
+            BuiltInCommandID.toggleBlockComment, "Toggle Block Comment", category: .edit,
             keys: [Keybinding(key: "/", modifiers: [.command, .shift])], action: .toggleBlockComment)
-        reg(BuiltInCommandID.moveLinesUp, "Move Line Up", category: .edit,
+        reg(
+            BuiltInCommandID.moveLinesUp, "Move Line Up", category: .edit,
             keys: [Keybinding(key: "up", modifiers: .option)], action: .moveLines(up: true))
-        reg(BuiltInCommandID.moveLinesDown, "Move Line Down", category: .edit,
+        reg(
+            BuiltInCommandID.moveLinesDown, "Move Line Down", category: .edit,
             keys: [Keybinding(key: "down", modifiers: .option)], action: .moveLines(up: false))
-        reg(BuiltInCommandID.selectAll, "Select All", category: .edit,
+        reg(
+            BuiltInCommandID.selectAll, "Select All", category: .edit,
             keys: [.command("a")], enablement: .always, action: .selectAll)
-        reg(BuiltInCommandID.deleteBackward, "Delete Backward", category: .edit,
+        reg(
+            BuiltInCommandID.deleteBackward, "Delete Backward", category: .edit,
             keys: [Keybinding(key: "backspace")], placement: .hiddenInPalette, action: .deleteBackward)
-        reg(BuiltInCommandID.deleteForward, "Delete Forward", category: .edit,
+        reg(
+            BuiltInCommandID.deleteForward, "Delete Forward", category: .edit,
             keys: [Keybinding(key: "delete")], placement: .hiddenInPalette, action: .deleteForward)
-        reg(BuiltInCommandID.insertNewline, "New Line", category: .edit,
+        reg(
+            BuiltInCommandID.insertNewline, "New Line", category: .edit,
             keys: [Keybinding(key: "return", when: .not(.key("completionVisible")))],
             placement: .hiddenInPalette, action: .insertNewline)
-        reg(BuiltInCommandID.insertTab, "Insert Tab", category: .edit,
+        reg(
+            BuiltInCommandID.insertTab, "Insert Tab", category: .edit,
             keys: [Keybinding(key: "tab")], placement: .hiddenInPalette, action: .insertTab)
-        reg(BuiltInCommandID.insertBacktab, "Insert Backtab", category: .edit,
+        reg(
+            BuiltInCommandID.insertBacktab, "Insert Backtab", category: .edit,
             keys: [Keybinding(key: "tab", modifiers: .shift)], placement: .hiddenInPalette, action: .insertBacktab)
 
         // Find
-        reg(BuiltInCommandID.findShow, "Find", category: .find,
+        reg(
+            BuiltInCommandID.findShow, "Find", category: .find,
             keys: [.command("f")], enablement: .always, action: .showFind)
-        reg(BuiltInCommandID.findShowReplace, "Find and Replace", category: .find,
+        reg(
+            BuiltInCommandID.findShowReplace, "Find and Replace", category: .find,
             keys: [
                 Keybinding(key: "f", modifiers: [.command, .option]),
                 Keybinding(key: "r", modifiers: .command),
             ],
             enablement: .always, action: .showReplace)
-        reg(BuiltInCommandID.findNext, "Find Next", category: .find,
+        reg(
+            BuiltInCommandID.findNext, "Find Next", category: .find,
             keys: [.command("g")], enablement: .always, action: .findNext)
-        reg(BuiltInCommandID.findPrevious, "Find Previous", category: .find,
+        reg(
+            BuiltInCommandID.findPrevious, "Find Previous", category: .find,
             keys: [Keybinding(key: "g", modifiers: [.command, .shift])],
             enablement: .always, action: .findPrevious)
-        reg(BuiltInCommandID.findReplace, "Replace", category: .find,
+        reg(
+            BuiltInCommandID.findReplace, "Replace", category: .find,
             enablement: .and([.editable, .key("findVisible")]), action: .replaceCurrent)
-        reg(BuiltInCommandID.findReplaceAll, "Replace All", category: .find,
+        reg(
+            BuiltInCommandID.findReplaceAll, "Replace All", category: .find,
             enablement: .and([.editable, .key("findVisible")]), action: .replaceAll)
 
         // Completion
-        reg(BuiltInCommandID.completionShow, "Show Completions", category: .edit,
+        reg(
+            BuiltInCommandID.completionShow, "Show Completions", category: .edit,
             keys: [Keybinding(key: "space", modifiers: .control)],
             enablement: .always, action: .showCompletions)
-        reg(BuiltInCommandID.completionHide, "Hide Completions", category: .edit,
+        reg(
+            BuiltInCommandID.completionHide, "Hide Completions", category: .edit,
             enablement: .key("completionVisible"), placement: .hiddenInPalette, action: .hideCompletions)
-        reg(BuiltInCommandID.completionApply, "Apply Completion", category: .edit,
+        reg(
+            BuiltInCommandID.completionApply, "Apply Completion", category: .edit,
             keys: [Keybinding(key: "return", when: .key("completionVisible"))],
             enablement: .key("completionVisible"), placement: .hiddenInPalette, action: .applyCompletion)
-        reg(BuiltInCommandID.completionUp, "Completion Up", category: .edit,
+        reg(
+            BuiltInCommandID.completionUp, "Completion Up", category: .edit,
             keys: [Keybinding(key: "up", when: .key("completionVisible"))],
             enablement: .key("completionVisible"), placement: .hiddenInPalette,
             action: .moveCompletion(delta: -1))
-        reg(BuiltInCommandID.completionDown, "Completion Down", category: .edit,
+        reg(
+            BuiltInCommandID.completionDown, "Completion Down", category: .edit,
             keys: [Keybinding(key: "down", when: .key("completionVisible"))],
             enablement: .key("completionVisible"), placement: .hiddenInPalette,
             action: .moveCompletion(delta: 1))
 
         // Navigate / fold
-        reg(BuiltInCommandID.jumpToDefinition, "Jump to Definition", category: .navigate,
+        reg(
+            BuiltInCommandID.jumpToDefinition, "Jump to Definition", category: .navigate,
             keys: [Keybinding(key: "j", modifiers: [.command, .control])],
             enablement: .always, action: .jumpToDefinition)
         reg(BuiltInCommandID.foldToggle, "Toggle Fold", category: .view, action: .foldToggle)
@@ -236,7 +263,8 @@ extension EditorController {
         reg(BuiltInCommandID.unfoldAll, "Unfold All", category: .view, action: .unfoldAll)
 
         // Cancel / Escape
-        reg(BuiltInCommandID.cancel, "Cancel", category: .general,
+        reg(
+            BuiltInCommandID.cancel, "Cancel", category: .general,
             keys: [Keybinding(key: "escape")],
             enablement: .always, placement: .hiddenInPalette, action: .cancel)
 
@@ -263,11 +291,13 @@ extension EditorController {
 
     /// Executes a command by ID using this controller as the client.
     public func executeCommand(_ id: CommandID) throws {
-        let dispatcher = commandDispatcher ?? {
-            let d = CommandDispatcher()
-            _ = installBuiltInCommands(into: d)
-            return d
-        }()
+        let dispatcher =
+            commandDispatcher
+            ?? {
+                let d = CommandDispatcher()
+                _ = installBuiltInCommands(into: d)
+                return d
+            }()
         try dispatcher.execute(id, context: makeCommandContext())
     }
 }

@@ -1,10 +1,12 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import Foundation
 
 /// Real Phase 13 `dap.*` / `mcp.*` / `slash.*` / `docs.*` wire dispatch — providers required, no canned payloads.
 public enum Phase13WireCodec {
-    public static func parseID(_ data: Data, keys: [String] = ["adapterID", "serverID", "commandID", "packageID", "id"]) -> String {
+    public static func parseID(
+        _ data: Data, keys: [String] = ["adapterID", "serverID", "commandID", "packageID", "id"]
+    ) -> String {
         let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
         for k in keys {
             if let s = obj[k] as? String, !s.isEmpty { return s }

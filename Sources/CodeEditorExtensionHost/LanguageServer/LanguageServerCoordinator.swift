@@ -1,16 +1,16 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
-import CodeEditorLanguageServices
 import CodeEditorLSP
+import CodeEditorLanguageServices
+import Foundation
 
 /// Host-side language-server lifecycle: providers, language maps, start/stop/restart, settings invalidation.
 public actor LanguageServerCoordinator {
     public let executor: LanguageServerLaunchPlanExecutor
     private var providers: [ExtensionID: any LanguageServerProvider] = [:]
     private var activeKeys: Set<String> = []
-    private var settingsWatchKeys: [String: Set<String>] = [:] // serverID → setting keys
+    private var settingsWatchKeys: [String: Set<String>] = [:]  // serverID → setting keys
     private var languageMap = LanguageServerLanguageMap()
 
     public init(executor: LanguageServerLaunchPlanExecutor) {
@@ -129,7 +129,8 @@ public actor LanguageServerCoordinator {
         }
         let statusStore = await executor.statusStore
         let serverID = LanguageServerWireCodec.parseServerID(payload)
-        let status = await statusStore.status(serverID: serverID.isEmpty ? "unknown" : serverID, extensionID: extensionID)
+        let status = await statusStore.status(
+            serverID: serverID.isEmpty ? "unknown" : serverID, extensionID: extensionID)
         if method == .lsRestart {
             if !serverID.isEmpty {
                 try await restart(serverID: serverID)

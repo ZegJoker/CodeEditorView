@@ -1,14 +1,14 @@
-import Foundation
-import CoreGraphics
-import Observation
-import CodeEditorCore
 import CodeEditorCommands
+import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorWorkspace
 import CodeEditorView
+import CodeEditorWorkspace
+import CoreGraphics
+import Foundation
+import Observation
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #endif
 
 @MainActor
@@ -483,13 +483,13 @@ public final class WorkbenchModel {
 
     public func revealInFinder(_ id: WorkspaceItemID) {
         guard let uri = workspace.fileSystem.uri(for: id),
-              let url = uri.fileURL
+            let url = uri.fileURL
         else {
             navigatorError = "Cannot reveal item"
             return
         }
         #if os(macOS)
-        NSWorkspace.shared.activateFileViewerSelecting([url])
+            NSWorkspace.shared.activateFileViewerSelecting([url])
         #endif
     }
 
@@ -511,7 +511,8 @@ public final class WorkbenchModel {
             return item
         }
         if let uri = workspace.fileSystem.uri(for: item),
-           let meta = workspace.fileSystem.item(for: uri) {
+            let meta = workspace.fileSystem.item(for: uri)
+        {
             return meta.isDirectory
                 ? item
                 : WorkspaceItemID(rootID: item.rootID, path: item.parentPath ?? "")
@@ -525,7 +526,7 @@ public final class WorkbenchModel {
     public var activeDocument: TextDocument? {
         _ = workspace.revision
         guard let paneID = workspace.activePaneID,
-              let tab = workspace.panes[paneID]?.selectedTab
+            let tab = workspace.panes[paneID]?.selectedTab
         else { return nil }
         return workspace.documents.document(id: tab.documentID)
     }
@@ -533,7 +534,7 @@ public final class WorkbenchModel {
     public var activeSession: EditorSession? {
         _ = workspace.revision
         guard let paneID = workspace.activePaneID,
-              let tab = workspace.panes[paneID]?.selectedTab
+            let tab = workspace.panes[paneID]?.selectedTab
         else { return nil }
         return workspace.sessions[tab.sessionID]
     }

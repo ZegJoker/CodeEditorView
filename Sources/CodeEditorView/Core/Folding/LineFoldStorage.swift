@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Sendable fold index over a document (CESE `LineFoldStorage` semantics on our `RangeStore`).
 public struct LineFoldStorage: Sendable {
@@ -141,7 +141,7 @@ public struct LineFoldStorage: Sendable {
         let candidates = folds(in: query)
         return candidates.max { a, b in
             if a.isCollapsed != b.isCollapsed {
-                return !a.isCollapsed && b.isCollapsed // collapsed wins
+                return !a.isCollapsed && b.isCollapsed  // collapsed wins
             }
             if a.isCollapsed {
                 return a.depth < b.depth

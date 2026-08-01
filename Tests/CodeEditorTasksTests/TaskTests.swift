@@ -1,8 +1,9 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
+import Testing
+
 @testable import CodeEditorTasks
 
 @Suite("Tasks")
@@ -10,9 +11,10 @@ struct TaskTests {
     @Test func resolveOrderLinear() async throws {
         let service = TaskService(runner: ProcessTaskRunner())
         await service.register(TaskDefinition(id: "a", label: "A", executable: "/bin/echo", arguments: ["a"]))
-        await service.register(TaskDefinition(
-            id: "b", label: "B", executable: "/bin/echo", arguments: ["b"], dependsOn: ["a"]
-        ))
+        await service.register(
+            TaskDefinition(
+                id: "b", label: "B", executable: "/bin/echo", arguments: ["b"], dependsOn: ["a"]
+            ))
         let order = try await service.resolveOrder("b")
         #expect(order.map(\.rawValue) == ["a", "b"])
     }
@@ -63,7 +65,7 @@ struct TaskTests {
             }
             if case .completed = event { break }
         }
-        #expect(sawA || sawB) // at least one chunk delivered live
+        #expect(sawA || sawB)  // at least one chunk delivered live
         let result = try await handle.wait()
         #expect(result.run.state == .succeeded)
     }
@@ -183,7 +185,7 @@ struct TaskTests {
         let matcher = try ProblemMatcher.swiftCompiler()
         let engine = StreamingProblemMatcherEngine(matchers: [matcher], cwd: nil)
         let part1 = engine.feed("/tmp/A.swift:1:1: error: ")
-        #expect(part1.isEmpty) // incomplete line
+        #expect(part1.isEmpty)  // incomplete line
         let part2 = engine.feed("boom\n")
         #expect(part2.count == 1)
         #expect(part2[0].diagnostic.message == "boom")
@@ -208,12 +210,13 @@ struct TaskTests {
         let svc = TaskService(runner: FakeRunner())
         await svc.setDiagnosticsSink(sink)
         await svc.registerMatcher(try ProblemMatcher.swiftCompiler())
-        await svc.register(TaskDefinition(
-            id: "build",
-            label: "Build",
-            executable: "swift",
-            problemMatchers: ["swift"]
-        ))
+        await svc.register(
+            TaskDefinition(
+                id: "build",
+                label: "Build",
+                executable: "swift",
+                problemMatchers: ["swift"]
+            ))
         _ = try await svc.run(id: "build")
         // Allow streaming publish task to run
         try await Task.sleep(nanoseconds: 50_000_000)
@@ -238,7 +241,10 @@ struct TaskTests {
         let handle = try await runner.start(def, output: channel)
         var ready = false
         for await event in handle.events {
-            if case .ready = event { ready = true; break }
+            if case .ready = event {
+                ready = true
+                break
+            }
             if case .completed = event { break }
         }
         #expect(ready)
@@ -251,20 +257,22 @@ struct TaskTests {
             chunkDelayNanoseconds: 30_000_000
         )
         let service = TaskService(runner: runner)
-        await service.register(TaskDefinition(
-            id: "a",
-            label: "A",
-            executable: "a",
-            concurrencyGroup: "g",
-            isExclusive: true
-        ))
-        await service.register(TaskDefinition(
-            id: "b",
-            label: "B",
-            executable: "b",
-            concurrencyGroup: "g",
-            isExclusive: true
-        ))
+        await service.register(
+            TaskDefinition(
+                id: "a",
+                label: "A",
+                executable: "a",
+                concurrencyGroup: "g",
+                isExclusive: true
+            ))
+        await service.register(
+            TaskDefinition(
+                id: "b",
+                label: "B",
+                executable: "b",
+                concurrencyGroup: "g",
+                isExclusive: true
+            ))
         async let r1 = service.run(id: "a")
         try await Task.sleep(nanoseconds: 5_000_000)
         async let r2 = service.run(id: "b")

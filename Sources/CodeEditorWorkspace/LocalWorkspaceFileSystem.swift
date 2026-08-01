@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Local disk implementation of ``WorkspaceFileSystem`` with lazy directory reads.
 ///
@@ -148,7 +148,8 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         return item
     }
 
-    public func move(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem {
+    public func move(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem
+    {
         let sourceURL = try fileURL(for: item)
         let name = newName ?? item.name
         if let newName { try validateName(newName) }
@@ -161,12 +162,14 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         }
         var isDir: ObjCBool = false
         _ = FileManager.default.fileExists(atPath: dest.path, isDirectory: &isDir)
-        let moved = makeItem(rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
+        let moved = makeItem(
+            rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
         yield(.renamed(from: item, to: moved))
         return moved
     }
 
-    public func copy(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem {
+    public func copy(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem
+    {
         let sourceURL = try fileURL(for: item)
         let name = newName ?? item.name
         if let newName { try validateName(newName) }
@@ -179,7 +182,8 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         }
         var isDir: ObjCBool = false
         _ = FileManager.default.fileExists(atPath: dest.path, isDirectory: &isDir)
-        let copied = makeItem(rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
+        let copied = makeItem(
+            rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
         yield(.added(copied))
         return copied
     }

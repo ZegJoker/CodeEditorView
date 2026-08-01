@@ -1,6 +1,6 @@
-import Foundation
-import CryptoKit
 import CodeEditorCore
+import CryptoKit
+import Foundation
 
 /// On-disk identity snapshot for external-change detection.
 public struct DocumentFileIdentity: Sendable, Hashable, Codable {

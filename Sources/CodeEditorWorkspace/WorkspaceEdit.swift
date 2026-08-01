@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public struct DocumentChange: Codable, Sendable, Hashable {
     public var uri: DocumentURI
@@ -195,8 +195,8 @@ public final class WorkspaceEditService {
                     )
                 }
                 if let expectedID = change.expectedFileIdentity,
-                   let live = doc.fileIdentity,
-                   live.contentHash != expectedID.contentHash
+                    let live = doc.fileIdentity,
+                    live.contentHash != expectedID.contentHash
                 {
                     throw WorkspaceEditError.conflict(uri: change.uri.rawValue)
                 }
@@ -216,7 +216,7 @@ public final class WorkspaceEditService {
                 workspace.promotePreviewTabs(for: doc.id)
 
                 if faultPoint == .afterFirstDocument, index == 0,
-                   edit.documentChanges.count > 1 || !edit.fileOperations.isEmpty
+                    edit.documentChanges.count > 1 || !edit.fileOperations.isEmpty
                 {
                     throw WorkspaceEditError.injectedFault(WorkspaceEditFaultPoint.afterFirstDocument.rawValue)
                 }
@@ -296,7 +296,8 @@ public final class WorkspaceEditService {
 
     // MARK: - Capture / journal
 
-    private func captureForOperation(_ op: WorkspaceFileOperation, into captures: inout [CapturedFSEntry]) async throws {
+    private func captureForOperation(_ op: WorkspaceFileOperation, into captures: inout [CapturedFSEntry]) async throws
+    {
         switch op {
         case .createFile, .createFileBytes, .createDirectory:
             break
@@ -319,13 +320,14 @@ public final class WorkspaceEditService {
         if isDir.boolValue {
             // Capture directory as empty recreate + we also walk children for files.
             var entries: [CapturedFSEntry] = []
-            entries.append(CapturedFSEntry(
-                uri: uri,
-                isDirectory: true,
-                bytes: nil,
-                posixPermissions: attrs?[.posixPermissions] as? NSNumber,
-                modificationDate: attrs?[.modificationDate] as? Date
-            ))
+            entries.append(
+                CapturedFSEntry(
+                    uri: uri,
+                    isDirectory: true,
+                    bytes: nil,
+                    posixPermissions: attrs?[.posixPermissions] as? NSNumber,
+                    modificationDate: attrs?[.modificationDate] as? Date
+                ))
             if let enumerator = FileManager.default.enumerator(
                 at: url,
                 includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
@@ -335,23 +337,25 @@ public final class WorkspaceEditService {
                     let values = try child.resourceValues(forKeys: [.isDirectoryKey, .isRegularFileKey])
                     if values.isDirectory == true {
                         let childAttrs = try? FileManager.default.attributesOfItem(atPath: child.path)
-                        entries.append(CapturedFSEntry(
-                            uri: DocumentURI(fileURL: child),
-                            isDirectory: true,
-                            bytes: nil,
-                            posixPermissions: childAttrs?[.posixPermissions] as? NSNumber,
-                            modificationDate: childAttrs?[.modificationDate] as? Date
-                        ))
+                        entries.append(
+                            CapturedFSEntry(
+                                uri: DocumentURI(fileURL: child),
+                                isDirectory: true,
+                                bytes: nil,
+                                posixPermissions: childAttrs?[.posixPermissions] as? NSNumber,
+                                modificationDate: childAttrs?[.modificationDate] as? Date
+                            ))
                     } else if values.isRegularFile == true {
                         let data = try Data(contentsOf: child)
                         let childAttrs = try FileManager.default.attributesOfItem(atPath: child.path)
-                        entries.append(CapturedFSEntry(
-                            uri: DocumentURI(fileURL: child),
-                            isDirectory: false,
-                            bytes: data,
-                            posixPermissions: childAttrs[.posixPermissions] as? NSNumber,
-                            modificationDate: childAttrs[.modificationDate] as? Date
-                        ))
+                        entries.append(
+                            CapturedFSEntry(
+                                uri: DocumentURI(fileURL: child),
+                                isDirectory: false,
+                                bytes: data,
+                                posixPermissions: childAttrs[.posixPermissions] as? NSNumber,
+                                modificationDate: childAttrs[.modificationDate] as? Date
+                            ))
                     }
                 }
             }
@@ -386,11 +390,13 @@ public final class WorkspaceEditService {
     /// Encode directory tree as a simple length-prefixed path/data archive (byte-exact).
     private func encodeDirectoryArchive(url: URL) throws -> Data {
         var out = Data()
-        guard let enumerator = FileManager.default.enumerator(
-            at: url,
-            includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
-            options: []
-        ) else {
+        guard
+            let enumerator = FileManager.default.enumerator(
+                at: url,
+                includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
+                options: []
+            )
+        else {
             return out
         }
         let rootPath = url.standardizedFileURL.path
@@ -421,7 +427,8 @@ public final class WorkspaceEditService {
         var offset = 0
         let bytes = [UInt8](archive)
         while offset < bytes.count {
-            let flag = bytes[offset]; offset += 1
+            let flag = bytes[offset]
+            offset += 1
             guard offset + 4 <= bytes.count else { break }
             let relLen = Int(UInt32(bigEndian: readU32(bytes, offset)))
             offset += 4
@@ -460,7 +467,9 @@ public final class WorkspaceEditService {
         captures: [CapturedFSEntry],
         operations: [WorkspaceFileOperation]
     ) throws -> (URL, [URL]) {
-        let root = journalRoot ?? FileManager.default.temporaryDirectory
+        let root =
+            journalRoot
+            ?? FileManager.default.temporaryDirectory
             .appendingPathComponent("CodeEditorWorkspaceJournals", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let txID = UUID().uuidString
@@ -664,7 +673,7 @@ public final class WorkspaceEditService {
             }
             // Inverse is restored from capture; record delete for inverse stack only if capture missing.
             if let url = uri.fileURL, !item.isDirectory,
-               let data = try? Data(contentsOf: url)
+                let data = try? Data(contentsOf: url)
             {
                 inverse.append(.createFileBytes(uri: uri, contentsBase64: data.base64EncodedString()))
             } else if item.isDirectory {
@@ -716,4 +725,3 @@ public final class WorkspaceEditService {
         uri.fileURL?.lastPathComponent
     }
 }
-

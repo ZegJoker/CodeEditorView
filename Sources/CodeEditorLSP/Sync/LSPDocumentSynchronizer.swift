@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public struct LSPSyncOptions: Sendable, Hashable {
     /// Debounce for change notifications (0 = immediate).

@@ -1,6 +1,6 @@
+import CodeEditorCore
 import CoreGraphics
 import Foundation
-import CodeEditorCore
 
 /// Draws editor chrome that is not part of text fragments (line highlight, column guide).
 package enum ChromeRenderer {

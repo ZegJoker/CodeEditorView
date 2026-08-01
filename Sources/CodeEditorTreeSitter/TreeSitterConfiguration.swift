@@ -1,6 +1,6 @@
+import CodeEditorLanguageSupport
 import Foundation
 import SwiftTreeSitter
-import CodeEditorLanguageSupport
 
 /// Supplies language catalog + compiled highlight configurations to the generic Tree-sitter layer.
 ///

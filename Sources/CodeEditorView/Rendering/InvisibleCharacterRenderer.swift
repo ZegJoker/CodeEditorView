@@ -1,7 +1,7 @@
+import CodeEditorCore
 import CoreGraphics
 import CoreText
 import Foundation
-import CodeEditorCore
 
 package enum InvisibleCharacterRenderer {
     public static func draw(
@@ -17,7 +17,8 @@ package enum InvisibleCharacterRenderer {
         for item in fragments {
             let range = item.fragment.documentRange
             guard range.length > 0,
-                  let text = document.substring(from: range) else { continue }
+                let text = document.substring(from: range)
+            else { continue }
             let ns = text as NSString
             var utf16Offset = 0
             while utf16Offset < ns.length {
@@ -25,7 +26,7 @@ package enum InvisibleCharacterRenderer {
                 let charRange = NSRange(location: range.location + utf16Offset, length: 1)
                 defer { utf16Offset += 1 }
                 guard triggers.contains(unit),
-                      let style = delegate.invisibleStyle(for: unit, at: charRange, lineRange: range)
+                    let style = delegate.invisibleStyle(for: unit, at: charRange, lineRange: range)
                 else { continue }
 
                 let local = utf16Offset
@@ -39,7 +40,8 @@ package enum InvisibleCharacterRenderer {
 
                 switch style {
                 case .replace(let replacement, let color):
-                    drawString(replacement, at: origin, height: item.frame.height, font: font, color: color, in: context)
+                    drawString(
+                        replacement, at: origin, height: item.frame.height, font: font, color: color, in: context)
                 case .emphasize(let color):
                     context.saveGState()
                     context.setFillColor(color)

@@ -1,10 +1,11 @@
-import Foundation
-import Testing
 import CodeEditorCommands
 import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorLanguageSupport
 import CodeEditorLanguageServices
+import CodeEditorLanguageSupport
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensions
 
 // MARK: - Sample extensions
@@ -142,8 +143,16 @@ final class LockedFlag: @unchecked Sendable {
     private let lock = NSLock()
     private var _value = false
     var value: Bool {
-        get { lock.lock(); defer { lock.unlock() }; return _value }
-        set { lock.lock(); _value = newValue; lock.unlock() }
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _value
+        }
+        set {
+            lock.lock()
+            _value = newValue
+            lock.unlock()
+        }
     }
 }
 
@@ -216,7 +225,9 @@ struct LifecycleTests {
         let commands = CommandRegistry()
         let services = ExtensionHostServices.makeFull(commands: commands)
         let env = HostEnvironment(
-            capabilities: [.commands, .keybindings, .languages, .languageServices, .panels, .themes, .snippets, .storage],
+            capabilities: [
+                .commands, .keybindings, .languages, .languageServices, .panels, .themes, .snippets, .storage,
+            ],
             grantedPermissions: [.presentUI]
         )
         let runtime = ExtensionRuntime(environment: env, services: services)
@@ -268,7 +279,7 @@ struct PermissionTests {
         let services = ExtensionHostServices()
         let env = HostEnvironment(
             capabilities: [.panels],
-            grantedPermissions: [] // deny presentUI
+            grantedPermissions: []  // deny presentUI
         )
         let runtime = ExtensionRuntime(environment: env, services: services)
         await runtime.register(PanelSampleExtension())
@@ -353,32 +364,32 @@ struct DataLoaderTests {
     @MainActor
     @Test func loadsJSONAndActivates() async throws {
         let json = """
-        {
-          "id": "data.theme",
-          "displayName": "Data Theme",
-          "version": "1.2.0",
-          "activationEvents": ["startup"],
-          "requiredHostCapabilities": ["themes", "snippets", "languages"],
-          "themes": [
-            { "id": "darkish", "displayName": "Darkish", "tokens": { "keyword": "#ff00aa" } }
-          ],
-          "snippets": [
-            { "id": "sn1", "prefix": "log", "body": "print($0)", "languageID": "swift" }
-          ],
-          "languages": [
             {
-              "id": "dataLang",
-              "displayName": "Data Lang",
-              "tsName": "dataLang",
-              "fileExtensions": ["dl"],
-              "aliases": [],
-              "lineComment": "#",
-              "blockCommentStart": "",
-              "blockCommentEnd": ""
+              "id": "data.theme",
+              "displayName": "Data Theme",
+              "version": "1.2.0",
+              "activationEvents": ["startup"],
+              "requiredHostCapabilities": ["themes", "snippets", "languages"],
+              "themes": [
+                { "id": "darkish", "displayName": "Darkish", "tokens": { "keyword": "#ff00aa" } }
+              ],
+              "snippets": [
+                { "id": "sn1", "prefix": "log", "body": "print($0)", "languageID": "swift" }
+              ],
+              "languages": [
+                {
+                  "id": "dataLang",
+                  "displayName": "Data Lang",
+                  "tsName": "dataLang",
+                  "fileExtensions": ["dl"],
+                  "aliases": [],
+                  "lineComment": "#",
+                  "blockCommentStart": "",
+                  "blockCommentEnd": ""
+                }
+              ]
             }
-          ]
-        }
-        """.data(using: .utf8)!
+            """.data(using: .utf8)!
 
         let bundle = try DataExtensionLoader.load(json: json)
         #expect(bundle.manifest.id.rawValue == "data.theme")

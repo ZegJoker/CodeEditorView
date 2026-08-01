@@ -1,8 +1,8 @@
-import Foundation
-import CodeEditorExtensionAPI
 import CodeEditorCommands
-import CodeEditorLanguageSupport
+import CodeEditorExtensionAPI
 import CodeEditorLanguageServices
+import CodeEditorLanguageSupport
+import Foundation
 
 // MARK: - Commands
 

@@ -1,7 +1,7 @@
-import SwiftUI
-import Observation
 import CodeEditorDocuments
 import CodeEditorTerminal
+import Observation
+import SwiftUI
 
 // MARK: - Output panel
 
@@ -145,8 +145,11 @@ struct WorkbenchProblemsPanelView: View {
             } else {
                 List(model.items) { item in
                     HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: item.severity == "warning" ? "exclamationmark.triangle.fill" : "xmark.octagon.fill")
-                            .foregroundStyle(item.severity == "warning" ? Color.orange : Color.red)
+                        Image(
+                            systemName: item.severity == "warning"
+                                ? "exclamationmark.triangle.fill" : "xmark.octagon.fill"
+                        )
+                        .foregroundStyle(item.severity == "warning" ? Color.orange : Color.red)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.message).font(.caption)
                             Text("\(item.path):\(item.line + 1):\(item.column + 1)")
@@ -188,33 +191,33 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
     public func startIfNeeded() {
         guard session == nil else { return }
         #if os(macOS)
-        Task {
-            await manager.attach(backend: PTYTerminalBackend())
-            do {
-                let s = try await manager.create(title: "Terminal")
-                await MainActor.run {
-                    self.session = s
-                    self.sessionID = s.id
-                    self.pollTask = Task { @MainActor in
-                        while !Task.isCancelled {
-                            if let id = self.sessionID,
-                               let screen = await manager.screen(for: id)
-                            {
-                                self.screenText = screen.accessibilityText(includeScrollback: true)
-                                if let live = await manager.allSessions().first(where: { $0.id == id }) {
-                                    self.session = live
+            Task {
+                await manager.attach(backend: PTYTerminalBackend())
+                do {
+                    let s = try await manager.create(title: "Terminal")
+                    await MainActor.run {
+                        self.session = s
+                        self.sessionID = s.id
+                        self.pollTask = Task { @MainActor in
+                            while !Task.isCancelled {
+                                if let id = self.sessionID,
+                                    let screen = await manager.screen(for: id)
+                                {
+                                    self.screenText = screen.accessibilityText(includeScrollback: true)
+                                    if let live = await manager.allSessions().first(where: { $0.id == id }) {
+                                        self.session = live
+                                    }
                                 }
+                                try? await Task.sleep(nanoseconds: 50_000_000)
                             }
-                            try? await Task.sleep(nanoseconds: 50_000_000)
                         }
                     }
+                } catch {
+                    await MainActor.run { self.errorMessage = String(describing: error) }
                 }
-            } catch {
-                await MainActor.run { self.errorMessage = String(describing: error) }
             }
-        }
         #else
-        errorMessage = "Local PTY is unavailable on this platform profile"
+            errorMessage = "Local PTY is unavailable on this platform profile"
         #endif
     }
 

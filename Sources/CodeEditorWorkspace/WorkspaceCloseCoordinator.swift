@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Decision for a single dirty document during close (WSP-001).
 public enum CloseDecision: Sendable, Hashable {

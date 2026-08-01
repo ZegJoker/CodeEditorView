@@ -69,8 +69,8 @@ public protocol DocumentationIndexProvider: Sendable {
     func invalidate(packageID: String?) async
 }
 
-public extension DocumentationIndexProvider {
-    func invalidate(packageID: String?) async {}
+extension DocumentationIndexProvider {
+    public func invalidate(packageID: String?) async {}
 }
 
 public struct DocumentationPackageContribution: Sendable, Hashable, Codable, Identifiable {

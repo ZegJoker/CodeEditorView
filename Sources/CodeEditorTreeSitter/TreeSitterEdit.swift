@@ -51,10 +51,10 @@ public enum TreeSitterEdit {
         var i = 0
         while i < clamped {
             let unit = string.character(at: i)
-            if unit == 0x0A { // \n
+            if unit == 0x0A {  // \n
                 row += 1
                 lineStart = i + 1
-            } else if unit == 0x0D { // \r or \r\n
+            } else if unit == 0x0D {  // \r or \r\n
                 if i + 1 < length, string.character(at: i + 1) == 0x0A {
                     // Count the pair as one line break; point after \n.
                     if i + 1 < clamped {

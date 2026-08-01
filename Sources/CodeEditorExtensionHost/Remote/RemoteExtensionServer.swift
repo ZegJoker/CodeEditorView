@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorExtensions
 import CodeEditorLanguageServices
+import Foundation
 
 /// Peer-side server for out-of-process (or mock) extensions.
 public actor RemoteExtensionServer {
@@ -19,7 +19,7 @@ public actor RemoteExtensionServer {
         extension ext: any CodeEditorExtension,
         transport: any RemoteExtensionTransport,
         completionItems: [CompletionItem] = [
-            CompletionItem(label: "remoteHello", kind: .function, insertText: "remoteHello()"),
+            CompletionItem(label: "remoteHello", kind: .function, insertText: "remoteHello()")
         ]
     ) {
         self.ext = ext
@@ -102,7 +102,7 @@ public actor RemoteExtensionServer {
                 let uri = DocumentURI(rawValue: "inmemory:remote")
                 let range = CodeEditorCore.TextRange(location: 0, length: 1)
                 let links = [
-                    LocationLink(targetURI: uri, targetRange: range, targetSelectionRange: range),
+                    LocationLink(targetURI: uri, targetRange: range, targetSelectionRange: range)
                 ]
                 data = try ExtensionRPCCodec.encodePayload(links)
             case .diagnostics:

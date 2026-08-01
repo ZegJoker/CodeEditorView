@@ -138,7 +138,9 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
 public enum ExtensionTOMLParser {
     public static let maxManifestBytes = 256 * 1024
 
-    public static func parse(string: String) throws -> (manifest: ExtensionTOMLManifest, diagnostics: [ExtensionPackageDiagnostic]) {
+    public static func parse(
+        string: String
+    ) throws -> (manifest: ExtensionTOMLManifest, diagnostics: [ExtensionPackageDiagnostic]) {
         var diagnostics: [ExtensionPackageDiagnostic] = []
         let data = Data(string.utf8)
         if data.count > maxManifestBytes {
@@ -174,11 +176,12 @@ public enum ExtensionTOMLParser {
             }
 
             guard let eq = line.firstIndex(of: "=") else {
-                diagnostics.append(.init(
-                    code: "toml.bad_line",
-                    severity: .warning,
-                    message: "unparsed line \(lineNumber + 1)"
-                ))
+                diagnostics.append(
+                    .init(
+                        code: "toml.bad_line",
+                        severity: .warning,
+                        message: "unparsed line \(lineNumber + 1)"
+                    ))
                 continue
             }
             let key = line[..<eq].trimmingCharacters(in: .whitespaces)
@@ -217,11 +220,12 @@ public enum ExtensionTOMLParser {
                 && !$0.hasPrefix("documentation_packages")
         }
         for u in unsupported {
-            diagnostics.append(.init(
-                code: "toml.unsupported_field",
-                severity: .note,
-                message: "unsupported or host-only field: \(u)"
-            ))
+            diagnostics.append(
+                .init(
+                    code: "toml.unsupported_field",
+                    severity: .note,
+                    message: "unsupported or host-only field: \(u)"
+                ))
         }
 
         guard let id = root["id"]?.string, !id.isEmpty else {
@@ -231,11 +235,12 @@ public enum ExtensionTOMLParser {
         let version = root["version"]?.string ?? "1.0.0"
         let schemaVersion = root["schema_version"]?.int ?? 1
         if schemaVersion != 1 {
-            diagnostics.append(.init(
-                code: "toml.schema",
-                severity: .error,
-                message: "unsupported schema_version \(schemaVersion); expected 1"
-            ))
+            diagnostics.append(
+                .init(
+                    code: "toml.schema",
+                    severity: .error,
+                    message: "unsupported schema_version \(schemaVersion); expected 1"
+                ))
             throw ExtensionError.dataLoad("unsupported schema_version")
         }
         let apiVersion = root["api_version"]?.string ?? "1.0"
@@ -265,11 +270,12 @@ public enum ExtensionTOMLParser {
                     // Host capability tokens (e.g. process:exec) — record raw for unsupported reporting
                     capabilities.append(k)
                     if HostCapability(rawValue: k) == nil {
-                        diagnostics.append(.init(
-                            code: "toml.capability_unmapped",
-                            severity: .note,
-                            message: "capability kind not mapped to HostCapability: \(k)"
-                        ))
+                        diagnostics.append(
+                            .init(
+                                code: "toml.capability_unmapped",
+                                severity: .note,
+                                message: "capability kind not mapped to HostCapability: \(k)"
+                            ))
                     }
                 }
             }
@@ -313,24 +319,26 @@ public enum ExtensionTOMLParser {
                 "download_url", "download_digest", "npm_package", "npm_version", "npm_bin",
             ])
             for k in table.keys where !knownLS.contains(k) {
-                diagnostics.append(.init(
-                    code: "language_server.unsupported",
-                    severity: .note,
-                    message: "unsupported language_server field \(k) on \(serverID)"
-                ))
+                diagnostics.append(
+                    .init(
+                        code: "language_server.unsupported",
+                        severity: .note,
+                        message: "unsupported language_server field \(k) on \(serverID)"
+                    ))
             }
-            languageServers.append(LanguageServerContribution(
-                serverID: serverID,
-                displayName: table["name"]?.string ?? table["display_name"]?.string ?? serverID,
-                languages: langs,
-                command: table["command"]?.string,
-                arguments: args,
-                downloadURL: table["download_url"]?.string,
-                downloadDigest: table["download_digest"]?.string,
-                npmPackage: table["npm_package"]?.string,
-                npmVersion: table["npm_version"]?.string,
-                npmBin: table["npm_bin"]?.string
-            ))
+            languageServers.append(
+                LanguageServerContribution(
+                    serverID: serverID,
+                    displayName: table["name"]?.string ?? table["display_name"]?.string ?? serverID,
+                    languages: langs,
+                    command: table["command"]?.string,
+                    arguments: args,
+                    downloadURL: table["download_url"]?.string,
+                    downloadDigest: table["download_digest"]?.string,
+                    npmPackage: table["npm_package"]?.string,
+                    npmVersion: table["npm_version"]?.string,
+                    npmBin: table["npm_bin"]?.string
+                ))
         }
         languageServers.sort { $0.serverID < $1.serverID }
 
@@ -348,18 +356,19 @@ public enum ExtensionTOMLParser {
                 if case .array(let arr) = table["args"] ?? table["arguments"] { return arr.compactMap(\.string) }
                 return []
             }()
-            debugAdapters.append(DebugAdapterContribution(
-                adapterID: adapterID,
-                displayName: table["name"]?.string ?? table["display_name"]?.string ?? adapterID,
-                languages: langs,
-                command: table["command"]?.string,
-                arguments: args,
-                downloadURL: table["download_url"]?.string,
-                downloadDigest: table["download_digest"]?.string,
-                npmPackage: table["npm_package"]?.string,
-                npmVersion: table["npm_version"]?.string,
-                npmBin: table["npm_bin"]?.string
-            ))
+            debugAdapters.append(
+                DebugAdapterContribution(
+                    adapterID: adapterID,
+                    displayName: table["name"]?.string ?? table["display_name"]?.string ?? adapterID,
+                    languages: langs,
+                    command: table["command"]?.string,
+                    arguments: args,
+                    downloadURL: table["download_url"]?.string,
+                    downloadDigest: table["download_digest"]?.string,
+                    npmPackage: table["npm_package"]?.string,
+                    npmVersion: table["npm_version"]?.string,
+                    npmBin: table["npm_bin"]?.string
+                ))
         }
         debugAdapters.sort { $0.adapterID < $1.adapterID }
 
@@ -374,19 +383,20 @@ public enum ExtensionTOMLParser {
                 return []
             }()
             let transport = MCPTransportKind(rawValue: table["transport"]?.string ?? "stdio") ?? .stdio
-            mcpServers.append(MCPServerContribution(
-                serverID: serverID,
-                displayName: table["name"]?.string ?? table["display_name"]?.string ?? serverID,
-                command: table["command"]?.string,
-                arguments: args,
-                transport: transport,
-                startupTimeoutMS: table["startup_timeout_ms"]?.int ?? 10_000,
-                downloadURL: table["download_url"]?.string,
-                downloadDigest: table["download_digest"]?.string,
-                npmPackage: table["npm_package"]?.string,
-                npmVersion: table["npm_version"]?.string,
-                npmBin: table["npm_bin"]?.string
-            ))
+            mcpServers.append(
+                MCPServerContribution(
+                    serverID: serverID,
+                    displayName: table["name"]?.string ?? table["display_name"]?.string ?? serverID,
+                    command: table["command"]?.string,
+                    arguments: args,
+                    transport: transport,
+                    startupTimeoutMS: table["startup_timeout_ms"]?.int ?? 10_000,
+                    downloadURL: table["download_url"]?.string,
+                    downloadDigest: table["download_digest"]?.string,
+                    npmPackage: table["npm_package"]?.string,
+                    npmVersion: table["npm_version"]?.string,
+                    npmBin: table["npm_bin"]?.string
+                ))
         }
         mcpServers.sort { $0.serverID < $1.serverID }
 
@@ -396,14 +406,15 @@ public enum ExtensionTOMLParser {
             guard key.hasPrefix("slash_commands."), case .table(let table) = value else { continue }
             let cmdID = String(key.dropFirst("slash_commands.".count))
             guard !cmdID.isEmpty else { continue }
-            slashCommands.append(SlashCommandContribution(
-                id: cmdID,
-                name: table["name"]?.string ?? cmdID,
-                description: table["description"]?.string ?? "",
-                requiresWorktree: table["requires_worktree"]?.bool ?? false,
-                maxArgumentLength: table["max_argument_length"]?.int ?? 4_096,
-                compatibility: .stable
-            ))
+            slashCommands.append(
+                SlashCommandContribution(
+                    id: cmdID,
+                    name: table["name"]?.string ?? cmdID,
+                    description: table["description"]?.string ?? "",
+                    requiresWorktree: table["requires_worktree"]?.bool ?? false,
+                    maxArgumentLength: table["max_argument_length"]?.int ?? 4_096,
+                    compatibility: .stable
+                ))
         }
         slashCommands.sort { $0.id < $1.id }
 
@@ -419,12 +430,13 @@ public enum ExtensionTOMLParser {
                 }
                 return []
             }()
-            documentationPackages.append(DocumentationPackageContribution(
-                id: pkgID,
-                title: table["title"]?.string ?? table["name"]?.string ?? pkgID,
-                languages: langs,
-                sourcePath: table["source_path"]?.string ?? table["path"]?.string
-            ))
+            documentationPackages.append(
+                DocumentationPackageContribution(
+                    id: pkgID,
+                    title: table["title"]?.string ?? table["name"]?.string ?? pkgID,
+                    languages: langs,
+                    sourcePath: table["source_path"]?.string ?? table["path"]?.string
+                ))
         }
         documentationPackages.sort { $0.id < $1.id }
 
@@ -453,7 +465,9 @@ public enum ExtensionTOMLParser {
         return (manifest, diagnostics)
     }
 
-    public static func parse(data: Data) throws -> (manifest: ExtensionTOMLManifest, diagnostics: [ExtensionPackageDiagnostic]) {
+    public static func parse(
+        data: Data
+    ) throws -> (manifest: ExtensionTOMLManifest, diagnostics: [ExtensionPackageDiagnostic]) {
         guard let string = String(data: data, encoding: .utf8) else {
             throw ExtensionError.dataLoad("manifest is not UTF-8")
         }
@@ -521,7 +535,10 @@ public enum ExtensionTOMLParser {
         for ch in inner {
             if let q = quote {
                 current.append(ch)
-                if ch == q { quote = nil; inString = false }
+                if ch == q {
+                    quote = nil
+                    inString = false
+                }
                 continue
             }
             if ch == "\"" || ch == "'" {

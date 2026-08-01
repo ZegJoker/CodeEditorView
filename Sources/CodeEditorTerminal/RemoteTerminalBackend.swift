@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Host/remote transport events beyond raw bytes.
 public enum RemoteTerminalEvent: Sendable, Hashable {

@@ -1,5 +1,5 @@
-import Testing
 import CodeEditorLanguageSupport
+import Testing
 
 @Suite("CodeEditorLanguageSupport")
 struct LanguageRegistryTests {
@@ -38,32 +38,37 @@ struct LanguageRegistryTests {
 
     @Test func detectionPrefersFilenameAndShebang() {
         let registry = LanguageRegistry()
-        _ = registry.register(LanguageDefinition(
-            id: "swift",
-            displayName: "Swift",
-            tsName: "swift",
-            fileExtensions: ["swift"],
-            filenames: ["package.swift"],
-            detectionPriority: 10
-        ))
-        _ = registry.register(LanguageDefinition(
-            id: "bash",
-            displayName: "Bash",
-            tsName: "bash",
-            fileExtensions: ["sh"],
-            firstLinePatterns: [#"^#!.*\bsh\b"#],
-            detectionPriority: 5
-        ))
-        _ = registry.register(LanguageDefinition(
-            id: "python",
-            displayName: "Python",
-            tsName: "python",
-            fileExtensions: ["py"],
-            firstLinePatterns: [#"^#!.*\bpython"#]
-        ))
+        _ = registry.register(
+            LanguageDefinition(
+                id: "swift",
+                displayName: "Swift",
+                tsName: "swift",
+                fileExtensions: ["swift"],
+                filenames: ["package.swift"],
+                detectionPriority: 10
+            ))
+        _ = registry.register(
+            LanguageDefinition(
+                id: "bash",
+                displayName: "Bash",
+                tsName: "bash",
+                fileExtensions: ["sh"],
+                firstLinePatterns: [#"^#!.*\bsh\b"#],
+                detectionPriority: 5
+            ))
+        _ = registry.register(
+            LanguageDefinition(
+                id: "python",
+                displayName: "Python",
+                tsName: "python",
+                fileExtensions: ["py"],
+                firstLinePatterns: [#"^#!.*\bpython"#]
+            ))
 
         #expect(LanguageDetector.detect(filename: "Package.swift", in: registry)?.rawValue == "swift")
-        #expect(LanguageDetector.detect(filename: "run.sh", contentPrefix: "#!/bin/sh\necho", in: registry)?.rawValue == "bash")
+        #expect(
+            LanguageDetector.detect(filename: "run.sh", contentPrefix: "#!/bin/sh\necho", in: registry)?.rawValue
+                == "bash")
         #expect(LanguageDetector.detect(filename: "x.py", in: registry)?.rawValue == "python")
     }
 

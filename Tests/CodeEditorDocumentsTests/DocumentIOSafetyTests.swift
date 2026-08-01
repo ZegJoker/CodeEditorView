@@ -1,6 +1,7 @@
+import CodeEditorCore
 import Foundation
 import Testing
-import CodeEditorCore
+
 @testable import CodeEditorDocuments
 
 @Suite("Document IO safety")

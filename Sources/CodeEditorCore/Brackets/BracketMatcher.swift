@@ -22,7 +22,8 @@ public enum BracketMatcher {
         let candidates = [offset - 1, offset].filter { $0 >= 0 && $0 < length }
         for location in candidates {
             guard let character = character(at: location, in: ns),
-                  let mate = BracketPairs.mate(for: character) else {
+                let mate = BracketPairs.mate(for: character)
+            else {
                 continue
             }
             if BracketPairs.isOpening(character) {

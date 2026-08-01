@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Host package lifecycle with **immutable version directories**, durable state, recovery, and user-data preservation.
 public actor ExtensionPackageManager {
@@ -62,7 +62,8 @@ public actor ExtensionPackageManager {
         self.continuation = cont
         Self.ensureLayout(at: installRoot)
         if telemetry == nil {
-            let tel = installRoot
+            let tel =
+                installRoot
                 .appendingPathComponent("telemetry", isDirectory: true)
                 .appendingPathComponent("migration-events.ndjson")
             self.telemetry = StoreTelemetrySink(fileURL: tel)
@@ -125,7 +126,8 @@ public actor ExtensionPackageManager {
         self.continuation = cont
         Self.ensureLayout(at: installRoot)
         if telemetry == nil {
-            let tel = installRoot
+            let tel =
+                installRoot
                 .appendingPathComponent("telemetry", isDirectory: true)
                 .appendingPathComponent("migration-events.ndjson")
             self.telemetry = StoreTelemetrySink(fileURL: tel)
@@ -186,7 +188,8 @@ public actor ExtensionPackageManager {
     public func install(from source: URL, asDev: Bool = false) throws -> ValidatedContributionPlan {
         let plan = try ExtensionPackageLoader.load(directory: source)
         if plan.hasErrors {
-            throw ExtensionError.dataLoad("package has errors: \(plan.diagnostics.map(\.message).joined(separator: "; "))")
+            throw ExtensionError.dataLoad(
+                "package has errors: \(plan.diagnostics.map(\.message).joined(separator: "; "))")
         }
         let version = plan.version.description
         try assertNotRevoked(packageID: plan.packageID.rawValue, version: version)
@@ -221,7 +224,10 @@ public actor ExtensionPackageManager {
             try ensureUserDataDir(id: plan.packageID)
             try persistDurableState()
             rebuildSnapshot()
-            record(.init(event: "package.install", packageID: plan.packageID.rawValue, toVersion: version, success: true, reason: "dev"))
+            record(
+                .init(
+                    event: "package.install", packageID: plan.packageID.rawValue, toVersion: version, success: true,
+                    reason: "dev"))
             return plan
         }
 
@@ -273,13 +279,14 @@ public actor ExtensionPackageManager {
         try ensureUserDataDir(id: plan.packageID)
         try persistDurableState()
         rebuildSnapshot()
-        record(.init(
-            event: previous == nil ? "package.install" : "package.update",
-            packageID: plan.packageID.rawValue,
-            fromVersion: previous?.currentVersion,
-            toVersion: version,
-            success: true
-        ))
+        record(
+            .init(
+                event: previous == nil ? "package.install" : "package.update",
+                packageID: plan.packageID.rawValue,
+                fromVersion: previous?.currentVersion,
+                toVersion: version,
+                success: true
+            ))
         return stored
     }
 
@@ -325,7 +332,10 @@ public actor ExtensionPackageManager {
             packages[id] = pkg
             try persistDurableState()
             rebuildSnapshot()
-            record(.init(event: "package.rollback", packageID: id.rawValue, toVersion: prevVer, success: true, reason: "dev"))
+            record(
+                .init(
+                    event: "package.rollback", packageID: id.rawValue, toVersion: prevVer, success: true, reason: "dev")
+            )
             return
         }
         let idRoot = packageDirectory(for: id)
@@ -349,13 +359,14 @@ public actor ExtensionPackageManager {
         packages[id] = pkg
         try persistDurableState()
         rebuildSnapshot()
-        record(.init(
-            event: "package.rollback",
-            packageID: id.rawValue,
-            fromVersion: oldCurrent,
-            toVersion: prevVer,
-            success: true
-        ))
+        record(
+            .init(
+                event: "package.rollback",
+                packageID: id.rawValue,
+                fromVersion: oldCurrent,
+                toVersion: prevVer,
+                success: true
+            ))
     }
 
     public func uninstall(id: ExtensionID, purgeData: Bool = false) throws {
@@ -376,7 +387,10 @@ public actor ExtensionPackageManager {
         }
         try persistDurableState()
         rebuildSnapshot()
-        record(.init(event: "package.uninstall", packageID: id.rawValue, success: true, reason: purgeData ? "purge" : "keep-data"))
+        record(
+            .init(
+                event: "package.uninstall", packageID: id.rawValue, success: true,
+                reason: purgeData ? "purge" : "keep-data"))
     }
 
     public func reloadDev(path: URL) throws -> ValidatedContributionPlan {
@@ -392,10 +406,12 @@ public actor ExtensionPackageManager {
             options: [.skipsHiddenFiles]
         ) {
             for idDir in idDirs {
-                guard let children = try? FileManager.default.contentsOfDirectory(
-                    at: idDir,
-                    includingPropertiesForKeys: nil
-                ) else { continue }
+                guard
+                    let children = try? FileManager.default.contentsOfDirectory(
+                        at: idDir,
+                        includingPropertiesForKeys: nil
+                    )
+                else { continue }
                 for child in children where child.lastPathComponent.hasPrefix(".staging-") {
                     try? FileManager.default.removeItem(at: child)
                 }
@@ -448,7 +464,7 @@ public actor ExtensionPackageManager {
         guard let current = try? readPointer(idRoot: idRoot, name: "current") else { return nil }
         let dir = idRoot.appendingPathComponent(current, isDirectory: true)
         guard FileManager.default.fileExists(atPath: dir.path),
-              var plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
+            var plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
         else { return nil }
         // Reject directory/identity mismatch (EXT-001).
         guard plan.packageID == id || idRoot.lastPathComponent == id.directoryKey else { return nil }
@@ -487,7 +503,7 @@ public actor ExtensionPackageManager {
         guard let current = try? readPointer(idRoot: idRoot, name: "current") else { return nil }
         let dir = idRoot.appendingPathComponent(current, isDirectory: true)
         guard FileManager.default.fileExists(atPath: dir.path),
-              let plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
+            let plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
         else { return nil }
         // Directory must match the canonical directoryKey of the package ID.
         guard idRoot.lastPathComponent == plan.packageID.directoryKey else { return nil }
@@ -540,12 +556,13 @@ public actor ExtensionPackageManager {
     }
 
     private func recordDenied(id: ExtensionID, reason: String) {
-        record(.init(
-            event: "activation.denied",
-            packageID: id.rawValue,
-            success: false,
-            reason: reason
-        ))
+        record(
+            .init(
+                event: "activation.denied",
+                packageID: id.rawValue,
+                success: false,
+                reason: reason
+            ))
     }
 
     public func installedPackages() -> [InstalledPackage] {
@@ -652,12 +669,13 @@ public actor ExtensionPackageManager {
             throw ExtensionError.dataLoad("extension install policy is required (fail-closed)")
         }
         if policy.dynamicInstallation == .disabled {
-            record(.init(
-                event: "install.denied",
-                packageID: plan.packageID.rawValue,
-                success: false,
-                reason: "dynamicInstallation=disabled"
-            ))
+            record(
+                .init(
+                    event: "install.denied",
+                    packageID: plan.packageID.rawValue,
+                    success: false,
+                    reason: "dynamicInstallation=disabled"
+                ))
             throw ExtensionError.dataLoad(
                 "install disabled on shipping profile \(policy.shippingProfileID.rawValue)"
             )
@@ -677,12 +695,13 @@ public actor ExtensionPackageManager {
 
         if forceNative || hasNativeHelperBinary {
             if !policy.allowNativeHelpers {
-                record(.init(
-                    event: "install.denied",
-                    packageID: plan.packageID.rawValue,
-                    success: false,
-                    reason: "native_helpers"
-                ))
+                record(
+                    .init(
+                        event: "install.denied",
+                        packageID: plan.packageID.rawValue,
+                        success: false,
+                        reason: "native_helpers"
+                    ))
                 throw ExtensionError.dataLoad(
                     "native helper install denied on \(policy.shippingProfileID.rawValue)"
                 )
@@ -690,24 +709,26 @@ public actor ExtensionPackageManager {
         }
         if forceDownloadWasm || hasWasm {
             if !policy.allowDownloadableWasm && !asDev {
-                record(.init(
-                    event: "install.denied",
-                    packageID: plan.packageID.rawValue,
-                    success: false,
-                    reason: "downloadable_wasm"
-                ))
+                record(
+                    .init(
+                        event: "install.denied",
+                        packageID: plan.packageID.rawValue,
+                        success: false,
+                        reason: "downloadable_wasm"
+                    ))
                 throw ExtensionError.dataLoad(
                     "downloadable Wasm install denied on \(policy.shippingProfileID.rawValue)"
                 )
             }
         }
         if policy.dataOnlyOnly && (forceNative || forceDownloadWasm || hasNativeHelperBinary) {
-            record(.init(
-                event: "install.denied",
-                packageID: plan.packageID.rawValue,
-                success: false,
-                reason: "data_only_policy"
-            ))
+            record(
+                .init(
+                    event: "install.denied",
+                    packageID: plan.packageID.rawValue,
+                    success: false,
+                    reason: "data_only_policy"
+                ))
             throw ExtensionError.dataLoad(
                 "executable package install denied (data-only policy) on \(policy.shippingProfileID.rawValue)"
             )
@@ -729,7 +750,7 @@ public actor ExtensionPackageManager {
     private func publisherKeyID(for pkg: InstalledPackage) -> String? {
         let pub = pkg.installPath.appendingPathComponent("publisher.json")
         guard let data = try? Data(contentsOf: pub),
-              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String]
+            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else { return nil }
         return obj["key_id"]
     }
@@ -798,7 +819,7 @@ public actor ExtensionPackageManager {
             guard let id = ExtensionID(rawValue: rec.id) else { continue }
             let path = URL(fileURLWithPath: rec.path)
             guard FileManager.default.fileExists(atPath: path.path),
-                  var plan = try? ExtensionPackageLoader.load(directory: path, options: .init(computeDigest: false))
+                var plan = try? ExtensionPackageLoader.load(directory: path, options: .init(computeDigest: false))
             else { continue }
             plan.packageRoot = path
             var previousPlan: ValidatedContributionPlan?
@@ -881,7 +902,7 @@ public final class StoreTelemetrySink: @unchecked Sendable {
         let enc = JSONEncoder()
         enc.dateEncodingStrategy = .iso8601
         guard let data = try? enc.encode(event),
-              var line = String(data: data, encoding: .utf8)
+            var line = String(data: data, encoding: .utf8)
         else { return }
         line.append("\n")
         if let handle = try? FileHandle(forWritingTo: fileURL) {

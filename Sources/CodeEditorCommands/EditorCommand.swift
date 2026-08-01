@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Restricted editor surface for command handlers (no view controller types).
 @MainActor

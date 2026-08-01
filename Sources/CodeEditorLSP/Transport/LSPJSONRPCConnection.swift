@@ -175,14 +175,15 @@ public actor LSPJSONRPCConnection {
     }
 
     public func respondError(id: RequestID, code: Int, message: String) async throws {
-        let body = try JSONSerialization.data(withJSONObject: [
-            "jsonrpc": "2.0",
-            "id": id.jsonValue,
-            "error": [
-                "code": code,
-                "message": message,
-            ],
-        ] as [String: Any])
+        let body = try JSONSerialization.data(
+            withJSONObject: [
+                "jsonrpc": "2.0",
+                "id": id.jsonValue,
+                "error": [
+                    "code": code,
+                    "message": message,
+                ],
+            ] as [String: Any])
         try await transport.send(LSPMessageFraming.encode(body))
     }
 

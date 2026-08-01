@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorWorkspace
 
 @Suite("WorkspaceEdit transactions")
@@ -30,7 +31,7 @@ struct WorkspaceEditTransactionTests {
                 documentID: doc.id,
                 expectedVersion: DocumentVersion(rawValue: 99),
                 transaction: .single(range: NSRange(location: 0, length: 0), replacement: "x")
-            ),
+            )
         ])
         let service = WorkspaceEditService(workspace: ws)
         do {
@@ -85,7 +86,7 @@ struct WorkspaceEditTransactionTests {
         let fileURL = root.appendingPathComponent("n.txt")
         let uri = DocumentURI(fileURL: fileURL)
         let edit = WorkspaceEdit(fileOperations: [
-            .createFile(uri: uri, contents: "hi"),
+            .createFile(uri: uri, contents: "hi")
         ])
         let service = WorkspaceEditService(workspace: ws)
         let result = try await service.apply(edit)

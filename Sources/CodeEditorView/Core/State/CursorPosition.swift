@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// A caret or selection expressed as line/column plus UTF-16 range.
 public struct CursorPosition: Equatable, Hashable, Sendable, Codable {

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 /// Bridges ``DefinitionProvider`` / host definitions into ``JumpToDefinitionDelegate``.
 @MainActor
@@ -67,7 +67,8 @@ public final class DefinitionProviderJumpAdapter: JumpToDefinitionDelegate {
         } else {
             url = URL(string: link.targetURI.rawValue)
         }
-        let label = url?.lastPathComponent
+        let label =
+            url?.lastPathComponent
             ?? "L\(cursor.line + 1):\(cursor.column + 1)"
         return JumpToDefinitionLink(
             url: url,
@@ -89,10 +90,10 @@ public enum LanguageServiceTextGeometry {
         while i < loc {
             let ch = ns.character(at: i)
             i += 1
-            if ch == 0x0A { // \n
+            if ch == 0x0A {  // \n
                 line += 1
                 lineStart = i
-            } else if ch == 0x0D { // \r
+            } else if ch == 0x0D {  // \r
                 if i < ns.length, ns.character(at: i) == 0x0A {
                     i += 1
                 }

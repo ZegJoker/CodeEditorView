@@ -1,8 +1,9 @@
+import CodeEditorCore
+import CodeEditorDocuments
 import Foundation
 import Testing
+
 @testable import CodeEditorLSP
-import CodeEditorDocuments
-import CodeEditorCore
 
 @Suite("LSP cross-file snapshots (LSP-003)")
 struct CrossFileSnapshotTests {

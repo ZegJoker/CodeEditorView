@@ -1,9 +1,10 @@
-import Foundation
-import Testing
-@testable import CodeEditorView
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageSupport
+import Foundation
+import Testing
+
+@testable import CodeEditorView
 
 @Suite("Reference workflows", .serialized)
 @MainActor

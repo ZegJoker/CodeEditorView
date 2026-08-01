@@ -1,6 +1,6 @@
-import Foundation
-import Darwin
 import CodeEditorCore
+import Darwin
+import Foundation
 
 /// Duplex raw-byte transport; framing is applied by ``LSPJSONRPCConnection``.
 public protocol LSPTransport: Sendable {

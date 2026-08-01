@@ -104,15 +104,17 @@ public final class KeybindingRegistry {
         var result: [KeybindingConflict] = []
         for (chord, entries) in byChord where entries.count > 1 {
             guard let winner = pickWinner(entries) else { continue }
-            let shadowed = entries
+            let shadowed =
+                entries
                 .map(\.commandID)
                 .filter { $0 != winner.commandID }
                 .sorted { $0.rawValue < $1.rawValue }
-            result.append(KeybindingConflict(
-                chord: chord,
-                winnerCommandID: winner.commandID,
-                shadowedCommandIDs: shadowed
-            ))
+            result.append(
+                KeybindingConflict(
+                    chord: chord,
+                    winnerCommandID: winner.commandID,
+                    shadowedCommandIDs: shadowed
+                ))
         }
         return result.sorted { a, b in
             let aKey = a.chord.map(\.description).joined()

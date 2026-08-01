@@ -1,9 +1,10 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorExtensions
 import CodeEditorLanguageServices
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 struct DummyRemoteExtension: CodeEditorExtension {

@@ -1,5 +1,5 @@
-import Foundation
 import CryptoKit
+import Foundation
 
 /// Stable extension identifier (e.g. `com.example.hello`).
 ///

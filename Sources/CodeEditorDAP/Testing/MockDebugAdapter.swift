@@ -48,12 +48,13 @@ public actor MockDebugAdapter {
 
     private func handleMessage(_ body: Data) async {
         guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
-              let type = obj["type"] as? String
+            let type = obj["type"] as? String
         else { return }
 
         // Host → adapter reverse-request responses
         if type == "response" {
-            let requestSeq = (obj["request_seq"] as? Int)
+            let requestSeq =
+                (obj["request_seq"] as? Int)
                 ?? (obj["request_seq"] as? NSNumber)?.intValue
             if let requestSeq {
                 let bodyDict = obj["body"] as? [String: Any] ?? [:]
@@ -63,7 +64,7 @@ public actor MockDebugAdapter {
         }
 
         guard type == "request",
-              let command = obj["command"] as? String
+            let command = obj["command"] as? String
         else { return }
         let requestSeq = (obj["seq"] as? Int) ?? (obj["seq"] as? NSNumber)?.intValue ?? 0
         guard requestSeq != 0 || obj["seq"] != nil else { return }
@@ -79,19 +80,23 @@ public actor MockDebugAdapter {
             // Respond to launch first so the host is not blocked while we reverse-request.
             try? await respond(requestSeq: requestSeq, command: command, body: [:])
             stopped = true
-            try? await sendEvent("stopped", body: [
-                "reason": "entry",
-                "threadId": 1,
-                "allThreadsStopped": true,
-            ])
+            try? await sendEvent(
+                "stopped",
+                body: [
+                    "reason": "entry",
+                    "threadId": 1,
+                    "allThreadsStopped": true,
+                ])
             if issueRunInTerminalOnLaunch {
                 do {
-                    let result = try await reverseRequest("runInTerminal", arguments: [
-                        "kind": "integrated",
-                        "title": "Debug Console",
-                        "args": ["echo", "debug"],
-                        "cwd": args["cwd"] as? String ?? "/tmp",
-                    ])
+                    let result = try await reverseRequest(
+                        "runInTerminal",
+                        arguments: [
+                            "kind": "integrated",
+                            "title": "Debug Console",
+                            "args": ["echo", "debug"],
+                            "cwd": args["cwd"] as? String ?? "/tmp",
+                        ])
                     reverseRunInTerminalResult = DAPJSONObject(result)
                 } catch {
                     reverseRunInTerminalResult = DAPJSONObject(["error": String(describing: error)])
@@ -132,50 +137,68 @@ public actor MockDebugAdapter {
             let out = bps.enumerated().map { i, _ in ["id": 300 + i, "verified": true] as [String: Any] }
             try? await respond(requestSeq: requestSeq, command: command, body: ["breakpoints": out])
         case "threads":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "threads": [["id": 1, "name": "main"]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "threads": [["id": 1, "name": "main"]]
+                ])
         case "stackTrace":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "stackFrames": [[
-                    "id": 1,
-                    "name": "main",
-                    "line": 10,
-                    "column": 1,
-                    "source": ["path": "/tmp/main.swift", "name": "main.swift"],
-                ]],
-                "totalFrames": 1,
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "stackFrames": [
+                        [
+                            "id": 1,
+                            "name": "main",
+                            "line": 10,
+                            "column": 1,
+                            "source": ["path": "/tmp/main.swift", "name": "main.swift"],
+                        ]
+                    ],
+                    "totalFrames": 1,
+                ])
         case "scopes":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "scopes": [[
-                    "name": "Locals",
-                    "variablesReference": 1000,
-                    "expensive": false,
-                ]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "scopes": [
+                        [
+                            "name": "Locals",
+                            "variablesReference": 1000,
+                            "expensive": false,
+                        ]
+                    ]
+                ])
         case "variables":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "variables": [[
-                    "name": "x",
-                    "value": "42",
-                    "type": "Int",
-                    "variablesReference": 0,
-                ]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "variables": [
+                        [
+                            "name": "x",
+                            "value": "42",
+                            "type": "Int",
+                            "variablesReference": 0,
+                        ]
+                    ]
+                ])
         case "evaluate":
             let expr = args["expression"] as? String ?? ""
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "result": "eval(\(expr))",
-                "type": "String",
-                "variablesReference": 0,
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "result": "eval(\(expr))",
+                    "type": "String",
+                    "variablesReference": 0,
+                ])
         case "setVariable":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "value": args["value"] as? String ?? "",
-                "type": "String",
-                "variablesReference": 0,
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "value": args["value"] as? String ?? "",
+                    "type": "String",
+                    "variablesReference": 0,
+                ])
         case "continue":
             stopped = false
             try? await respond(requestSeq: requestSeq, command: command, body: ["allThreadsContinued": true])
@@ -187,35 +210,49 @@ public actor MockDebugAdapter {
             try? await respond(requestSeq: requestSeq, command: command, body: [:])
             try? await sendEvent("stopped", body: ["reason": "pause", "threadId": args["threadId"] as? Int ?? 1])
         case "source":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "content": "func main() {}",
-                "mimeType": "text/x-swift",
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "content": "func main() {}",
+                    "mimeType": "text/x-swift",
+                ])
         case "modules":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "modules": [["id": "1", "name": "App"]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "modules": [["id": "1", "name": "App"]]
+                ])
         case "loadedSources":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "sources": [["path": "/tmp/main.swift", "name": "main.swift"]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "sources": [["path": "/tmp/main.swift", "name": "main.swift"]]
+                ])
         case "disassemble":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "instructions": [["address": "0x1000", "instruction": "nop"]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "instructions": [["address": "0x1000", "instruction": "nop"]]
+                ])
         case "readMemory":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "address": args["memoryReference"] as? String ?? "0x0",
-                "data": "AAEC",
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "address": args["memoryReference"] as? String ?? "0x0",
+                    "data": "AAEC",
+                ])
         case "writeMemory":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "bytesWritten": 2,
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "bytesWritten": 2
+                ])
         case "completions":
-            try? await respond(requestSeq: requestSeq, command: command, body: [
-                "targets": [["label": "print", "text": "print", "type": "function"]],
-            ])
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "targets": [["label": "print", "text": "print", "type": "function"]]
+                ])
         default:
             try? await respond(requestSeq: requestSeq, command: command, success: false, message: "unknown \(command)")
         }

@@ -1,6 +1,7 @@
-import Testing
-import Foundation
 import CoreText
+import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Typeset attributes")

@@ -7,11 +7,18 @@ public actor DAPJSONRPCConnection {
         case string(String)
 
         init?(json: Any) {
-            if let i = json as? Int { self = .int(i); return }
-            if let n = json as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() {
-                self = .int(n.intValue); return
+            if let i = json as? Int {
+                self = .int(i)
+                return
             }
-            if let s = json as? String { self = .string(s); return }
+            if let n = json as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() {
+                self = .int(n.intValue)
+                return
+            }
+            if let s = json as? String {
+                self = .string(s)
+                return
+            }
             return nil
         }
 
@@ -190,12 +197,13 @@ public actor DAPJSONRPCConnection {
 
     private func dispatchMessage(_ body: Data) async {
         guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
-              let type = obj["type"] as? String
+            let type = obj["type"] as? String
         else { return }
 
         switch type {
         case "response":
-            let reqSeq = (obj["request_seq"] as? Int)
+            let reqSeq =
+                (obj["request_seq"] as? Int)
                 ?? (obj["request_seq"] as? NSNumber)?.intValue
             guard let reqSeq else { return }
             let id = RequestID.int(reqSeq)

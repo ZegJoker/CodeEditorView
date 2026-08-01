@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("RangeStore")
@@ -51,12 +52,12 @@ struct RangeStoreTests {
     }
 }
 
-    @Test func setValueClampsPastEndWithoutTrap() {
-        var store = RangeStore<CaptureName>(documentLength: 10)
-        // Range extends past EOF — must not precondition-fail.
-        store.set(value: .keyword, for: NSRange(location: 5, length: 100))
-        #expect(store.length == 10)
-        let runs = store.runs(in: NSRange(location: 0, length: 10))
-        let total = runs.reduce(0) { $0 + $1.length }
-        #expect(total == 10)
-    }
+@Test func setValueClampsPastEndWithoutTrap() {
+    var store = RangeStore<CaptureName>(documentLength: 10)
+    // Range extends past EOF — must not precondition-fail.
+    store.set(value: .keyword, for: NSRange(location: 5, length: 100))
+    #expect(store.length == 10)
+    let runs = store.runs(in: NSRange(location: 0, length: 10))
+    let total = runs.reduce(0) { $0 + $1.length }
+    #expect(total == 10)
+}

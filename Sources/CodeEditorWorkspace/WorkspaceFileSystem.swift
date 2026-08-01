@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 public enum WorkspaceFileEvent: Sendable, Hashable {
     case added(WorkspaceItem)

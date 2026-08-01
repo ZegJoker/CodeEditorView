@@ -52,7 +52,8 @@ public final class DAPLog: @unchecked Sendable {
     }
 
     public var events: [DAPLogEvent] {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _events
     }
 

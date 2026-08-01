@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorLanguageSupport
 import CodeEditorLanguageServices
+import CodeEditorLanguageSupport
+import Foundation
 
 /// Caches semantic token spans from a language-service host and exposes them as ``HighlightProviding``.
 @MainActor

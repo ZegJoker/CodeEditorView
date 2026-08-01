@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import Foundation
 
 /// Stdio-backed guest runtime: handshake then serve requests for a ``CodeEditorExtension``.
 public actor ExtensionGuestRuntime {
@@ -122,18 +122,20 @@ public actor ExtensionGuestRuntime {
     ) async {
         guard let connection else { return }
         if generation != 0 && gen != 0 && gen != generation {
-            try? await connection.send(.response(
-                id: id,
-                result: nil,
-                error: ExtensionWireError(code: -32009, message: "stale generation"),
-                generation: generation
-            ))
+            try? await connection.send(
+                .response(
+                    id: id,
+                    result: nil,
+                    error: ExtensionWireError(code: -32009, message: "stale generation"),
+                    generation: generation
+                ))
             return
         }
         if await connection.isCancelled(id) {
-            try? await connection.send(.response(
-                id: id, result: nil, error: .cancelled, generation: generation
-            ))
+            try? await connection.send(
+                .response(
+                    id: id, result: nil, error: .cancelled, generation: generation
+                ))
             return
         }
 
@@ -142,25 +144,29 @@ public actor ExtensionGuestRuntime {
             do {
                 let data = try await self.dispatch(method: method, payload: payload, requestID: id)
                 if await connection.isCancelled(id) {
-                    try await connection.send(.response(
-                        id: id, result: nil, error: .cancelled, generation: await self.generation
-                    ))
+                    try await connection.send(
+                        .response(
+                            id: id, result: nil, error: .cancelled, generation: await self.generation
+                        ))
                 } else {
-                    try await connection.send(.response(
-                        id: id, result: data, error: nil, generation: await self.generation
-                    ))
+                    try await connection.send(
+                        .response(
+                            id: id, result: data, error: nil, generation: await self.generation
+                        ))
                 }
             } catch let err as ExtensionWireError {
-                try? await connection.send(.response(
-                    id: id, result: nil, error: err, generation: await self.generation
-                ))
+                try? await connection.send(
+                    .response(
+                        id: id, result: nil, error: err, generation: await self.generation
+                    ))
             } catch {
-                try? await connection.send(.response(
-                    id: id,
-                    result: nil,
-                    error: ExtensionWireError(code: -32000, message: String(describing: error)),
-                    generation: await self.generation
-                ))
+                try? await connection.send(
+                    .response(
+                        id: id,
+                        result: nil,
+                        error: ExtensionWireError(code: -32000, message: String(describing: error)),
+                        generation: await self.generation
+                    ))
             }
             await connection.clearInFlight(id: id)
         }
@@ -220,11 +226,11 @@ public actor ExtensionGuestRuntime {
             withUnsafeBytes(of: &pid) { info.append(contentsOf: $0) }
             return info
         case .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
-             .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
+            .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
             return try await dispatchLanguageServer(method: method, payload: payload)
         case .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart,
-             .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
-             .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate:
+            .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
+            .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate:
             return try await dispatchPhase13(method: method, payload: payload)
         default:
             // Broker methods: guest forwards are host-handled; guest should not receive them
@@ -315,16 +321,18 @@ public actor ExtensionGuestRuntime {
                     throw ExtensionWireError.methodNotFound
                 }
                 let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any] ?? [:]
-                let matches = try await locator.locate(context: DebugLocatorContext(
-                    extensionID: extensionID,
-                    uri: obj["uri"] as? String,
-                    languageID: obj["languageID"] as? String,
-                    workspaceRootPaths: obj["workspaceRootPaths"] as? [String] ?? []
-                ))
+                let matches = try await locator.locate(
+                    context: DebugLocatorContext(
+                        extensionID: extensionID,
+                        uri: obj["uri"] as? String,
+                        languageID: obj["languageID"] as? String,
+                        workspaceRootPaths: obj["workspaceRootPaths"] as? [String] ?? []
+                    ))
                 return try JSONEncoder().encode(matches)
             }
             if method == .dapResolveLaunchPlan {
-                let id = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["adapterID"] as? String ?? ""
+                let id =
+                    (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["adapterID"] as? String ?? ""
                 guard !id.isEmpty else {
                     throw ExtensionWireError(code: -32602, message: "adapterID required")
                 }
@@ -332,7 +340,8 @@ public actor ExtensionGuestRuntime {
                 return try JSONEncoder().encode(plan)
             }
             if method == .dapResolveConfigurations {
-                let id = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["adapterID"] as? String ?? ""
+                let id =
+                    (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["adapterID"] as? String ?? ""
                 guard !id.isEmpty else {
                     throw ExtensionWireError(code: -32602, message: "adapterID required")
                 }
@@ -369,10 +378,11 @@ public actor ExtensionGuestRuntime {
                 arguments: arguments,
                 context: SlashCommandExecuteContext(extensionID: extensionID)
             ) {
-                chunks.append(SlashCommandChunk(
-                    markdown: SlashCommandSanitize.sanitizeMarkdown(chunk.markdown),
-                    isFinal: chunk.isFinal
-                ))
+                chunks.append(
+                    SlashCommandChunk(
+                        markdown: SlashCommandSanitize.sanitizeMarkdown(chunk.markdown),
+                        isFinal: chunk.isFinal
+                    ))
             }
             return try JSONEncoder().encode(chunks)
         case .docsSuggest:
@@ -407,7 +417,8 @@ public actor ExtensionGuestRuntime {
             guard let provider = documentationIndexProvider else {
                 throw ExtensionWireError.methodNotFound
             }
-            let packageID = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["packageID"] as? String
+            let packageID =
+                (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["packageID"] as? String
             await provider.invalidate(packageID: packageID)
             return try JSONSerialization.data(withJSONObject: ["ok": true])
         default:

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensions
+import Foundation
 
 /// Multi-driver host orchestrator: selection, start/stop, restart, quarantine.
 ///
@@ -124,12 +124,13 @@ public actor ExtensionHostOrchestrator {
             } catch {
                 let reason = String(describing: error)
                 lastErrors[id] = reason
-                activationTelemetry?.append(StoreTelemetryEvent(
-                    event: "activation.denied",
-                    packageID: id.rawValue,
-                    success: false,
-                    reason: reason
-                ))
+                activationTelemetry?.append(
+                    StoreTelemetryEvent(
+                        event: "activation.denied",
+                        packageID: id.rawValue,
+                        success: false,
+                        reason: reason
+                    ))
                 states[id] = .quarantined
                 publish()
                 throw ExtensionWireError.quarantined
@@ -155,12 +156,13 @@ public actor ExtensionHostOrchestrator {
             } catch {
                 let reason = String(describing: error)
                 lastErrors[id] = reason
-                activationTelemetry?.append(StoreTelemetryEvent(
-                    event: "activation.denied",
-                    packageID: id.rawValue,
-                    success: false,
-                    reason: reason
-                ))
+                activationTelemetry?.append(
+                    StoreTelemetryEvent(
+                        event: "activation.denied",
+                        packageID: id.rawValue,
+                        success: false,
+                        reason: reason
+                    ))
                 await quarantine(id: id, reason: reason)
                 throw ExtensionWireError.quarantined
             }

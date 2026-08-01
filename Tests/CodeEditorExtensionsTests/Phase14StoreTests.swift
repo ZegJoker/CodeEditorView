@@ -1,6 +1,7 @@
+import CodeEditorExtensionAPI
 import Foundation
 import Testing
-import CodeEditorExtensionAPI
+
 @testable import CodeEditorExtensions
 
 private enum P14Fixtures {
@@ -8,15 +9,15 @@ private enum P14Fixtures {
         let dir = root.appendingPathComponent("\(id)-\(version)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let toml = """
-        id = "\(id)"
-        name = "\(name ?? id)"
-        version = "\(version)"
-        schema_version = 1
-        api_version = "1.0"
-        license = "MIT"
-        [activation]
-        events = ["startup"]
-        """
+            id = "\(id)"
+            name = "\(name ?? id)"
+            version = "\(version)"
+            schema_version = 1
+            api_version = "1.0"
+            license = "MIT"
+            [activation]
+            events = ["startup"]
+            """
         try toml.write(to: dir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "MIT License".write(to: dir.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
         return dir
@@ -46,14 +47,19 @@ struct Phase14StoreAtomicityTests {
         #expect(pkg2?.previousVersion == "1.0.0")
         #expect(pkg2?.plan.displayName == "P14 v2")
         // Old version dir remains
-        let v1dir = root.appendingPathComponent("packages/fca4e3ef7cc930b51cc38ebcc80ec24a3775cb22e15c5e45daa153839005c54b/1.0.0")
+        let v1dir = root.appendingPathComponent(
+            "packages/fca4e3ef7cc930b51cc38ebcc80ec24a3775cb22e15c5e45daa153839005c54b/1.0.0")
         #expect(FileManager.default.fileExists(atPath: v1dir.path))
 
         try await manager.rollback(id: plan1.packageID)
         let rolled = await manager.package(id: plan1.packageID)
         #expect(rolled?.currentVersion == "1.0.0")
         #expect(rolled?.installPath.lastPathComponent == "1.0.0")
-        #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("packages/fca4e3ef7cc930b51cc38ebcc80ec24a3775cb22e15c5e45daa153839005c54b/1.1.0").path))
+        #expect(
+            FileManager.default.fileExists(
+                atPath: root.appendingPathComponent(
+                    "packages/fca4e3ef7cc930b51cc38ebcc80ec24a3775cb22e15c5e45daa153839005c54b/1.1.0"
+                ).path))
     }
 
     @Test func recoverRemovesStaging() async throws {
@@ -65,7 +71,8 @@ struct Phase14StoreAtomicityTests {
         await manager.bootstrap()
         let v1 = try P14Fixtures.makePackage(id: "com.example.rec", version: "1.0.0", root: root)
         _ = try await manager.install(from: v1)
-        let staging = root.appendingPathComponent("packages/b4974b0aeaa994102152fa3de8a64c3bbee6237f08fd1bed9e0c09019a280e65/.staging-dead")
+        let staging = root.appendingPathComponent(
+            "packages/b4974b0aeaa994102152fa3de8a64c3bbee6237f08fd1bed9e0c09019a280e65/.staging-dead")
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
         try "x".write(to: staging.appendingPathComponent("junk"), atomically: true, encoding: .utf8)
         await manager.recoverCorruptedState()
@@ -105,9 +112,9 @@ struct Phase14RegistryClientTests {
                 id: "com.example.idx",
                 name: "Idx",
                 versions: [
-                    ExtensionIndexVersion(version: "2.0.0", artifactPath: pkg.path, channel: "stable"),
+                    ExtensionIndexVersion(version: "2.0.0", artifactPath: pkg.path, channel: "stable")
                 ]
-            ),
+            )
         ])
         let indexURL = root.appendingPathComponent("index.json")
         try JSONEncoder().encode(index).write(to: indexURL)
@@ -169,9 +176,10 @@ struct Phase14RevocationTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
-        try await manager.setRevocationList(RevocationListDocument(entries: [
-            RevocationEntry(packageID: "com.example.bad", version: "*", reason: "malware"),
-        ]))
+        try await manager.setRevocationList(
+            RevocationListDocument(entries: [
+                RevocationEntry(packageID: "com.example.bad", version: "*", reason: "malware")
+            ]))
         let pkg = try P14Fixtures.makePackage(id: "com.example.bad", version: "1.0.0", root: root)
         do {
             _ = try await manager.install(from: pkg)
@@ -192,9 +200,10 @@ struct Phase14RevocationTests {
         let pkg = try P14Fixtures.makePackage(id: "com.example.later", version: "1.0.0", root: root)
         let plan = try await manager.install(from: pkg)
         try await manager.assertCanActivate(id: plan.packageID)
-        try await manager.setRevocationList(RevocationListDocument(entries: [
-            RevocationEntry(packageID: "com.example.later", version: "1.0.0", reason: "post-install revoke"),
-        ]))
+        try await manager.setRevocationList(
+            RevocationListDocument(entries: [
+                RevocationEntry(packageID: "com.example.later", version: "1.0.0", reason: "post-install revoke")
+            ]))
         do {
             try await manager.assertCanActivate(id: plan.packageID)
             Issue.record("expected post-install revoke deny")
@@ -245,7 +254,8 @@ struct Phase14InterruptedInstallTests {
         await manager.bootstrap()
         let v1 = try P14Fixtures.makePackage(id: "com.example.int", version: "1.0.0", root: root)
         _ = try await manager.install(from: v1)
-        let idRoot = root.appendingPathComponent("packages/b6ead2069a52141168427c6ce579ca75e4b67524ecd46b634a87641d0bc86f81", isDirectory: true)
+        let idRoot = root.appendingPathComponent(
+            "packages/b6ead2069a52141168427c6ce579ca75e4b67524ecd46b634a87641d0bc86f81", isDirectory: true)
         let staging = idRoot.appendingPathComponent(".staging-killed", isDirectory: true)
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
         try "partial".write(to: staging.appendingPathComponent("x"), atomically: true, encoding: .utf8)

@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Markdown switch")
 @MainActor
@@ -11,19 +11,22 @@ struct MarkdownSwitchTests {
 
     @Test func switchToMarkdownDoesNotHang() async throws {
         let controller = EditorController(text: "func x() {}\n", language: .swift)
-        for _ in 0..<20 { await Task.yield(); try? await Task.sleep(for: .milliseconds(20)) }
+        for _ in 0..<20 {
+            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(20))
+        }
 
         let sample = """
-        # Title
-        Hello **world**
+            # Title
+            Hello **world**
 
-        - item
-        - item2
+            - item
+            - item2
 
-        ```swift
-        print("hi")
-        ```
-        """
+            ```swift
+            print("hi")
+            ```
+            """
         let t0 = ContinuousClock.now
         controller.language = .markdown
         controller.text = sample
@@ -35,14 +38,19 @@ struct MarkdownSwitchTests {
             if iterations > 15 { break }
         }
         let elapsed = ContinuousClock.now - t0
-        print("markdown switch elapsed=\(elapsed) lang=\(controller.languageID ?? "nil") providers=\(controller.highlightProviders.count)")
+        print(
+            "markdown switch elapsed=\(elapsed) lang=\(controller.languageID ?? "nil") providers=\(controller.highlightProviders.count)"
+        )
         #expect(elapsed < .seconds(5))
         _ = controller.layoutViewport(visibleRect: CGRect(x: 0, y: 0, width: 800, height: 600), containerWidth: 800)
     }
 
     @Test func switchToMarkdownInlineDoesNotHang() async throws {
         let controller = EditorController(text: "hello", language: .swift)
-        for _ in 0..<20 { await Task.yield(); try? await Task.sleep(for: .milliseconds(20)) }
+        for _ in 0..<20 {
+            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(20))
+        }
         let t0 = ContinuousClock.now
         controller.language = .markdownInline
         controller.text = "hello **bold** and `code`"
@@ -60,13 +68,13 @@ struct MarkdownSwitchTests {
 
     @Test func typescriptHighlightsKeywordsWithParent() async throws {
         let source = """
-        function greet(name: string): void {
-          console.log(`Hello, ${name}!`);
-          if (!name) {
-            return;
-          }
-        }
-        """
+            function greet(name: string): void {
+              console.log(`Hello, ${name}!`);
+              if (!name) {
+                return;
+              }
+            }
+            """
         let controller = EditorController(text: source, language: .typescript)
         for _ in 0..<80 {
             await Task.yield()

@@ -70,11 +70,13 @@ public enum TextOffsetSemantics: Sendable {
         if utf16Offset == 0 { return 0 }
         if utf16Offset == utf16Len { return text.utf8.count }
 
-        guard let idx = text.utf16.index(
-            text.utf16.startIndex,
-            offsetBy: utf16Offset,
-            limitedBy: text.utf16.endIndex
-        ) else {
+        guard
+            let idx = text.utf16.index(
+                text.utf16.startIndex,
+                offsetBy: utf16Offset,
+                limitedBy: text.utf16.endIndex
+            )
+        else {
             throw DocumentStoreError.invalidOffset(utf16Offset)
         }
         guard let stringIndex = String.Index(idx, within: text) else {
@@ -111,11 +113,13 @@ public enum TextOffsetSemantics: Sendable {
         if utf8Offset == 0 { return 0 }
         if utf8Offset == utf8Count { return (text as NSString).length }
 
-        guard let utf8Index = text.utf8.index(
-            text.utf8.startIndex,
-            offsetBy: utf8Offset,
-            limitedBy: text.utf8.endIndex
-        ) else {
+        guard
+            let utf8Index = text.utf8.index(
+                text.utf8.startIndex,
+                offsetBy: utf8Offset,
+                limitedBy: text.utf8.endIndex
+            )
+        else {
             throw DocumentStoreError.invalidOffset(utf8Offset)
         }
         guard let stringIndex = String.Index(utf8Index, within: text) else {
@@ -203,7 +207,8 @@ public enum TextOffsetSemantics: Sendable {
     private static func stringIndex(atUTF16Offset offset: Int, in text: String) -> String.Index {
         if offset <= 0 { return text.startIndex }
         let utf16 = text.utf16
-        let i = utf16.index(utf16.startIndex, offsetBy: offset, limitedBy: utf16.endIndex)
+        let i =
+            utf16.index(utf16.startIndex, offsetBy: offset, limitedBy: utf16.endIndex)
             ?? utf16.endIndex
         return String.Index(i, within: text) ?? text.endIndex
     }
@@ -214,8 +219,8 @@ public enum TextOffsetSemantics: Sendable {
     }
 }
 
-private extension String {
-    func floorOfGrapheme(at index: String.Index) -> String.Index {
+extension String {
+    fileprivate func floorOfGrapheme(at index: String.Index) -> String.Index {
         if index == startIndex { return startIndex }
         if index == endIndex { return endIndex }
         // Move to start of grapheme containing index (or previous if mid-cluster).
@@ -237,7 +242,7 @@ private extension String {
         return startIndex
     }
 
-    func ceilingOfGrapheme(at index: String.Index) -> String.Index {
+    fileprivate func ceilingOfGrapheme(at index: String.Index) -> String.Index {
         if index >= endIndex { return endIndex }
         let range = rangeOfComposedCharacterSequence(at: index)
         if range.lowerBound == index { return index }

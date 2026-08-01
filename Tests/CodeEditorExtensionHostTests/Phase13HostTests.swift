@@ -1,22 +1,24 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDAP
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensions
 import CodeEditorTasks
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 private func makeBroker(tmp: URL) -> CapabilityBroker {
-    CapabilityBroker(config: .init(
-        worktreeRoots: [tmp],
-        storageRoot: tmp.appendingPathComponent("storage"),
-        toolCacheRoot: tmp.appendingPathComponent("cache"),
-        processAllowlist: [.init(command: "**")],
-        downloadAllowlist: [.init(host: "cdn.example", pathPrefix: [])],
-        npmAllowlist: [.init(package: "**")]
-    ))
+    CapabilityBroker(
+        config: .init(
+            worktreeRoots: [tmp],
+            storageRoot: tmp.appendingPathComponent("storage"),
+            toolCacheRoot: tmp.appendingPathComponent("cache"),
+            processAllowlist: [.init(command: "**")],
+            downloadAllowlist: [.init(host: "cdn.example", pathPrefix: [])],
+            npmAllowlist: [.init(package: "**")]
+        ))
 }
 
 @Suite("Phase 13 DAP host")
@@ -83,15 +85,16 @@ struct Phase13DAPHostTests {
                         adapterID: "mock-dap",
                         configuration: DebugConfiguration(name: "Run", type: "mock", request: .launch),
                         confidence: 0.9
-                    ),
+                    )
                 ]
             }
         }
-        let matches = try await Loc().locate(context: DebugLocatorContext(
-            extensionID: "test.ext",
-            languageID: "swift",
-            workspaceRootPaths: ["/tmp"]
-        ))
+        let matches = try await Loc().locate(
+            context: DebugLocatorContext(
+                extensionID: "test.ext",
+                languageID: "swift",
+                workspaceRootPaths: ["/tmp"]
+            ))
         #expect(matches.count == 1)
         #expect(matches[0].adapterID == "mock-dap")
     }
@@ -143,11 +146,12 @@ struct Phase13SlashCommandTests {
         }
         let svc = SlashCommandService()
         let ext: ExtensionID = "ext.slash"
-        await svc.registerContribution(SlashCommandContribution(
-            id: "explain",
-            name: "explain",
-            description: "d"
-        ))
+        await svc.registerContribution(
+            SlashCommandContribution(
+                id: "explain",
+                name: "explain",
+                description: "d"
+            ))
         await svc.registerProvider(Prov(), extensionID: ext)
         #expect(await svc.compatibilityStatus(for: "explain") == .stable)
         var chunks: [SlashCommandChunk] = []
@@ -198,11 +202,12 @@ struct Phase13DocumentationTests {
         let file = docsRoot.appendingPathComponent("swift.md")
         try "# Swift\nHello docs body".write(to: file, atomically: true, encoding: .utf8)
 
-        let svc = DocumentationIndexService(config: .init(
-            storageRoot: tmp.appendingPathComponent("idx"),
-            maxBytes: 1024,
-            maxEntries: 100
-        ))
+        let svc = DocumentationIndexService(
+            config: .init(
+                storageRoot: tmp.appendingPathComponent("idx"),
+                maxBytes: 1024,
+                maxEntries: 100
+            ))
         let entries = try await svc.buildIndex(
             package: DocumentationPackageSuggestion(
                 id: "swift-std",
@@ -233,11 +238,12 @@ struct Phase13DocumentationTests {
         }
 
         // Quota
-        let tiny = DocumentationIndexService(config: .init(
-            storageRoot: tmp.appendingPathComponent("tiny"),
-            maxBytes: 4,
-            maxEntries: 100
-        ))
+        let tiny = DocumentationIndexService(
+            config: .init(
+                storageRoot: tmp.appendingPathComponent("tiny"),
+                maxBytes: 4,
+                maxEntries: 100
+            ))
         do {
             _ = try await tiny.buildIndex(
                 package: DocumentationPackageSuggestion(id: "big", title: "Big", sourcePath: "docs/swift.md"),
@@ -253,7 +259,8 @@ struct Phase13DocumentationTests {
 
     @Test func providerMustEmitEntries() async throws {
         struct EmptyProv: DocumentationIndexProvider {
-            func suggestPackages(context: LanguageServerResolveContext) async throws -> [DocumentationPackageSuggestion] {
+            func suggestPackages(context: LanguageServerResolveContext) async throws -> [DocumentationPackageSuggestion]
+            {
                 []
             }
             func buildIndex(

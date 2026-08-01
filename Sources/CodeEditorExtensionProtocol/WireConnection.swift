@@ -21,7 +21,7 @@ public actor ExtensionWireConnection {
     public var generation: UInt64
     public var streamWindow: Int
     private var envelopeHandler: (@Sendable (ExtensionEnvelope) async -> Void)?
-    private var openStreams: [String: Int] = [:] // streamID → remaining credits
+    private var openStreams: [String: Int] = [:]  // streamID → remaining credits
 
     public init(
         transport: any ExtensionWireTransport,
@@ -71,7 +71,8 @@ public actor ExtensionWireConnection {
         timeout: Duration? = nil
     ) async throws -> Data {
         let id = ExtensionRequestID()
-        let timeoutMS = Int((timeout ?? defaultTimeout).components.seconds * 1000)
+        let timeoutMS =
+            Int((timeout ?? defaultTimeout).components.seconds * 1000)
             + Int((timeout ?? defaultTimeout).components.attoseconds / 1_000_000_000_000_000)
         let effectiveTimeout = timeout ?? defaultTimeout
         let req: ExtensionEnvelope = .request(

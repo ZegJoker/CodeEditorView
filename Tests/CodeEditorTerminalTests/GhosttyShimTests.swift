@@ -1,7 +1,8 @@
 import Foundation
 import Testing
-@testable import CodeEditorTerminalGhostty
+
 @testable import CodeEditorTerminal
+@testable import CodeEditorTerminalGhostty
 
 @Suite("Ghostty shim (TER-001)")
 struct GhosttyShimTests {

@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Encode/decode document text with encoding, BOM, and line-ending policies.
 public enum DocumentCodec: Sendable {
@@ -26,7 +26,8 @@ public enum DocumentCodec: Sendable {
         case .utf16, .other:
             break
         }
-        guard let text = String(data: slice, encoding: encoding.stringEncoding)
+        guard
+            let text = String(data: slice, encoding: encoding.stringEncoding)
                 ?? String(data: slice, encoding: .utf8)
         else {
             throw DocumentIOError.encodingFailed

@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
 
 /// Cancellable workspace file index for Open Quickly / project views.
 public protocol WorkspaceIndexService: AnyObject, Sendable {

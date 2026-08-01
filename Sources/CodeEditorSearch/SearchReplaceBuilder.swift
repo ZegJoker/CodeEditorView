@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
 
 public struct SearchReplacePlan: Sendable {
     public var query: SearchQuery
@@ -82,7 +82,8 @@ public enum SearchReplaceBuilder {
                 matched = match.preview
             }
         } else {
-            matched = matchedSlice(inPreview: match.preview, pattern: query.pattern, query: query)
+            matched =
+                matchedSlice(inPreview: match.preview, pattern: query.pattern, query: query)
                 ?? match.preview
         }
 

@@ -35,8 +35,8 @@ public protocol CodeSuggestionDelegate: AnyObject {
 }
 
 @MainActor
-public extension CodeSuggestionDelegate {
-    func completionTriggerCharacters() -> Set<String> { [] }
-    func completionWindowDidClose() {}
-    func completionWindowDidSelect(item: any CodeSuggestionEntry) {}
+extension CodeSuggestionDelegate {
+    public func completionTriggerCharacters() -> Set<String> { [] }
+    public func completionWindowDidClose() {}
+    public func completionWindowDidSelect(item: any CodeSuggestionEntry) {}
 }

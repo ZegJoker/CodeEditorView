@@ -1,8 +1,9 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 @Suite("Phase 16 security")
@@ -86,11 +87,12 @@ struct Phase16ConformanceTests {
             .appendingPathComponent("p16conf-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = CapabilityBroker(config: .init(
-            worktreeRoots: [tmp],
-            storageRoot: tmp.appendingPathComponent("s"),
-            toolCacheRoot: tmp.appendingPathComponent("c")
-        ))
+        let broker = CapabilityBroker(
+            config: .init(
+                worktreeRoots: [tmp],
+                storageRoot: tmp.appendingPathComponent("s"),
+                toolCacheRoot: tmp.appendingPathComponent("c")
+            ))
         let orch = ExtensionHostOrchestrator(
             services: services,
             broker: broker,
@@ -133,11 +135,12 @@ struct Phase16OrchestratorSoakTests {
             .appendingPathComponent("p16os-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = CapabilityBroker(config: .init(
-            worktreeRoots: [tmp],
-            storageRoot: tmp.appendingPathComponent("s"),
-            toolCacheRoot: tmp.appendingPathComponent("c")
-        ))
+        let broker = CapabilityBroker(
+            config: .init(
+                worktreeRoots: [tmp],
+                storageRoot: tmp.appendingPathComponent("s"),
+                toolCacheRoot: tmp.appendingPathComponent("c")
+            ))
         let orch = ExtensionHostOrchestrator(services: services, broker: broker, policy: .testing)
         let pkg = PreparedExtensionPackage(
             packageID: "com.example.soak.data",

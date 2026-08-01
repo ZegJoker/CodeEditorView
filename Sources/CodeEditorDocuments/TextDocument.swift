@@ -1,6 +1,6 @@
+import CodeEditorCore
 import Foundation
 import TextStory
-import CodeEditorCore
 
 /// Shared text content with document-scoped undo, dirty state, and versioned events.
 ///

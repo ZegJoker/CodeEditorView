@@ -1,9 +1,9 @@
-import Testing
+import CodeEditorLanguages
 import Foundation
 import SwiftTreeSitter
-@testable import CodeEditorView
-import CodeEditorLanguages
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Markdown parse")
 @MainActor
@@ -16,15 +16,15 @@ struct MarkdownParseTests {
         await provider.loadAsync(language: .markdown)
         print("load elapsed=\(ContinuousClock.now - t0)")
         let sample = """
-        # Title
-        Hello **world**
+            # Title
+            Hello **world**
 
-        - item
+            - item
 
-        ```swift
-        print("hi")
-        ```
-        """
+            ```swift
+            print("hi")
+            ```
+            """
         let t1 = ContinuousClock.now
         await provider.setDocumentText(sample)
         print("parse elapsed=\(ContinuousClock.now - t1)")

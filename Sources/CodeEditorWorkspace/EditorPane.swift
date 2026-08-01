@@ -1,6 +1,6 @@
+import CodeEditorDocuments
 import Foundation
 import Observation
-import CodeEditorDocuments
 
 public struct EditorTab: Hashable, Codable, Sendable {
     public let id: EditorTabID
@@ -83,8 +83,9 @@ public final class EditorPane {
         var replaced: EditorTab?
         if preview {
             if let previewID = previewTabID,
-               let idx = tabs.firstIndex(where: { $0.id == previewID }),
-               !tabs[idx].isPinned {
+                let idx = tabs.firstIndex(where: { $0.id == previewID }),
+                !tabs[idx].isPinned
+            {
                 replaced = tabs.remove(at: idx)
                 if selectedTabID == previewID {
                     selectedTabID = tabs.last?.id
@@ -119,7 +120,8 @@ public final class EditorPane {
         let removed = tabs.remove(at: idx)
         if previewTabID == id { previewTabID = nil }
         if selectedTabID == id {
-            selectedTabID = tabs.indices.contains(idx)
+            selectedTabID =
+                tabs.indices.contains(idx)
                 ? tabs[idx].id
                 : tabs.last?.id
         }

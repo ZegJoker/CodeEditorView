@@ -1,6 +1,6 @@
+import CodeEditorDocuments
 import Foundation
 import Observation
-import CodeEditorDocuments
 
 /// Lazy in-memory cache of expanded workspace directories.
 @MainActor

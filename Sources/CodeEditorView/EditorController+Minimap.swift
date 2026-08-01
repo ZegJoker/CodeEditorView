@@ -1,7 +1,7 @@
+import CodeEditorCore
+import CodeEditorLanguageSupport
 import CoreGraphics
 import Foundation
-import CodeEditorLanguageSupport
-import CodeEditorCore
 
 // MARK: - Minimap (Phase 9)
 
@@ -86,9 +86,9 @@ extension EditorController {
         var selectionRects: [CGRect] = []
         for sel in selectedRanges where sel.length > 0 {
             guard let startLine = layout.lineIndex.line(atUTF16Offset: sel.location),
-                  let endLine = layout.lineIndex.line(
+                let endLine = layout.lineIndex.line(
                     atUTF16Offset: max(sel.location, sel.location + sel.length - 1)
-                  )
+                )
             else { continue }
             let y0 = startLine.yOffset * scale
             let y1 = (endLine.yOffset + endLine.metrics.height) * scale
@@ -110,11 +110,13 @@ extension EditorController {
     /// UTF-16 range to paint for a minimap row (indent only on collapsed bubble rows).
     private func minimapPaintRange(for line: LinePosition<TextLine>) -> NSRange {
         let full = line.utf16Range
-        guard layout.collapsedFolds.contains(where: { fold in
-            fold.isCollapsed
-                && fold.range.lowerBound >= full.location
-                && fold.range.lowerBound < full.location + max(full.length, 1)
-        }) else {
+        guard
+            layout.collapsedFolds.contains(where: { fold in
+                fold.isCollapsed
+                    && fold.range.lowerBound >= full.location
+                    && fold.range.lowerBound < full.location + max(full.length, 1)
+            })
+        else {
             return full
         }
         // Bubble row: don't paint body glyphs (indent only).
@@ -132,8 +134,10 @@ extension EditorController {
         let model = makeGutterModel()
         let gutter = configuration.peripherals.showGutter ? model.width : 0
         // Keep public gutterWidth property in sync when possible (same module file owns the setter).
-        applyHorizontalInsets(gutterWidth: gutter, minimapWidth: configuration.peripherals.showMinimap
-            ? MinimapGeometry.width(hostWidth: hostWidth)
-            : 0)
+        applyHorizontalInsets(
+            gutterWidth: gutter,
+            minimapWidth: configuration.peripherals.showMinimap
+                ? MinimapGeometry.width(hostWidth: hostWidth)
+                : 0)
     }
 }

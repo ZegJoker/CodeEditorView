@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public struct DebugAdapterID: Hashable, Codable, Sendable, RawRepresentable, ExpressibleByStringLiteral {
     public let rawValue: String
@@ -181,7 +181,9 @@ public struct DAPSourceBreakpoint: Sendable, Hashable, Codable {
     public var hitCondition: String?
     public var logMessage: String?
 
-    public init(line: Int, column: Int? = nil, condition: String? = nil, hitCondition: String? = nil, logMessage: String? = nil) {
+    public init(
+        line: Int, column: Int? = nil, condition: String? = nil, hitCondition: String? = nil, logMessage: String? = nil
+    ) {
         self.line = line
         self.column = column
         self.condition = condition
@@ -278,7 +280,9 @@ public struct DAPRunInTerminalArgs: Sendable {
     public var args: [String]
     public var env: [String: String]?
 
-    public init(kind: String? = nil, title: String? = nil, cwd: String? = nil, args: [String], env: [String: String]? = nil) {
+    public init(
+        kind: String? = nil, title: String? = nil, cwd: String? = nil, args: [String], env: [String: String]? = nil
+    ) {
         self.kind = kind
         self.title = title
         self.cwd = cwd

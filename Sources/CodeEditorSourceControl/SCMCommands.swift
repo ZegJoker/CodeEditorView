@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCommands
+import Foundation
 
 public enum SCMCommands {
     public static let refresh = CommandID(stringLiteral: "codeeditor.scm.refresh")
@@ -15,12 +15,15 @@ public enum SCMCommands {
         onCommit: @escaping @MainActor () -> Void = {}
     ) -> any CommandDisposable {
         let tokens = [
-            registry.register(EditorCommand(id: refresh, title: "SCM: Refresh", category: .general) { _ in onRefresh() }),
+            registry.register(
+                EditorCommand(id: refresh, title: "SCM: Refresh", category: .general) { _ in onRefresh() }),
             registry.register(EditorCommand(id: stage, title: "SCM: Stage", category: .general) { _ in onStage() }),
             registry.register(EditorCommand(id: commit, title: "SCM: Commit", category: .general) { _ in onCommit() }),
         ]
         return RegistrationToken {
-            tokens.forEach { $0.dispose() }
+            for token in tokens {
+                token.dispose()
+            }
         }
     }
 }

@@ -1,18 +1,20 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
+import Testing
+
 @testable import CodeEditorSearch
 
 @Suite("GitIgnore")
 struct GitIgnoreTests {
     @Test func negationAndDirectoryRules() {
-        let rules = GitIgnoreRules.parse(fileContents: """
-        *.log
-        !keep.log
-        build/
-        """)
+        let rules = GitIgnoreRules.parse(
+            fileContents: """
+                *.log
+                !keep.log
+                build/
+                """)
         #expect(rules.isIgnored(relativePath: "a.log", isDirectory: false))
         #expect(!rules.isIgnored(relativePath: "keep.log", isDirectory: false))
         #expect(rules.isIgnored(relativePath: "build", isDirectory: true))
@@ -65,7 +67,7 @@ struct SearchReplaceStaleTests {
                 column: 1,
                 preview: "hello hello",
                 fromOpenDocument: true
-            ),
+            )
         ]
         let plan = SearchReplacePlan(query: SearchQuery(pattern: "hello"), replacement: "hi", matches: matches)
 

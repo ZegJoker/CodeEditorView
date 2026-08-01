@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public struct RestoredTab: Codable, Sendable, Hashable {
     public var id: EditorTabID

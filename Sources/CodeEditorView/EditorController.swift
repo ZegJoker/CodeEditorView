@@ -1,12 +1,12 @@
+import CodeEditorCommands
+import CodeEditorCore
+import CodeEditorDocuments
+import CodeEditorLanguageSupport
+import CodeEditorTreeSitter
 import CoreGraphics
 import Foundation
 import Observation
 import TextStory
-import CodeEditorLanguageSupport
-import CodeEditorTreeSitter
-import CodeEditorCore
-import CodeEditorDocuments
-import CodeEditorCommands
 
 /// Central editor model: document, layout, multi-range selection, undo, emphasis, and event streams.
 @MainActor
@@ -52,7 +52,9 @@ public final class EditorController {
     }
 
     public var invisibleCharactersDelegate: InvisibleCharactersDelegate? {
-        didSet { /* hosts redraw */ }
+        didSet {
+            // hosts redraw
+        }
     }
 
     /// Two-way UI state (cursors, scroll, find panel fields).
@@ -719,11 +721,13 @@ public final class EditorController {
 
     public func moveSelectedLines(up: Bool) {
         guard configuration.isEditable else { return }
-        guard let plan = StructureCommands.moveLines(
-            selections: selection.selectedRanges,
-            document: document.fullString,
-            up: up
-        ) else { return }
+        guard
+            let plan = StructureCommands.moveLines(
+                selections: selection.selectedRanges,
+                document: document.fullString,
+                up: up
+            )
+        else { return }
         applyStructureReplacements(plan.replacements, forceSelection: plan.newSelection)
     }
 
@@ -746,12 +750,12 @@ public final class EditorController {
         guard !open.isEmpty, !close.isEmpty else { return }
         let primary = selection.selectedRange
         guard primary.length > 0,
-              let rep = StructureCommands.toggleBlockComment(
-                  selection: primary,
-                  document: document.fullString,
-                  open: open,
-                  close: close
-              )
+            let rep = StructureCommands.toggleBlockComment(
+                selection: primary,
+                document: document.fullString,
+                open: open,
+                close: close
+            )
         else { return }
         applyStructureReplacements([rep])
     }
@@ -817,7 +821,9 @@ public final class EditorController {
         let ns = document.fullString as NSString
         let length = ns.length
         let loc = min(max(0, utf16Offset), length)
-        var lineStart = 0, lineEnd = 0, contentsEnd = 0
+        var lineStart = 0
+        var lineEnd = 0
+        var contentsEnd = 0
         ns.getLineStart(
             &lineStart,
             end: &lineEnd,
@@ -826,7 +832,8 @@ public final class EditorController {
         )
         // Text on this line before the caret (ignore selection body).
         let prefixLen = max(0, min(loc, contentsEnd) - lineStart)
-        let beforeCaret = prefixLen > 0
+        let beforeCaret =
+            prefixLen > 0
             ? ns.substring(with: NSRange(location: lineStart, length: prefixLen))
             : ""
         // Character immediately after the selection/caret (drives brace-split Enter).
@@ -885,7 +892,8 @@ public final class EditorController {
             if range.length > 0 {
                 deleteRange = selectionExpandedForCollapsedFolds(range)
             } else if selectedFoldPlaceholderID != nil,
-                      let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID }) {
+                let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID })
+            {
                 deleteRange = fold.nsRange
                 selectedFoldPlaceholderID = nil
             } else if let planned = TextFilters.deleteBackwardRange(
@@ -931,7 +939,8 @@ public final class EditorController {
             if range.length > 0 {
                 deleteRange = selectionExpandedForCollapsedFolds(range)
             } else if selectedFoldPlaceholderID != nil,
-                      let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID }) {
+                let fold = foldModel.collapsedFolds.first(where: { $0.id == selectedFoldPlaceholderID })
+            {
                 deleteRange = fold.nsRange
                 selectedFoldPlaceholderID = nil
             } else if range.location < document.length {
@@ -1216,7 +1225,8 @@ public final class EditorController {
         let hostWidth = contentSize.width > 0 ? contentSize.width : 800
         let model = makeGutterModel()
         let gutter = configuration.peripherals.showGutter ? model.width : 0
-        let mini = configuration.peripherals.showMinimap
+        let mini =
+            configuration.peripherals.showMinimap
             ? MinimapGeometry.width(hostWidth: hostWidth)
             : 0
         applyHorizontalInsets(gutterWidth: gutter, minimapWidth: mini)
@@ -1274,7 +1284,8 @@ public final class EditorController {
         let newGutter = configuration.peripherals.showGutter ? model.width : 0
         if abs(newGutter - gutterWidth) > 0.5 {
             let hostWidth = contentSize.width > 0 ? contentSize.width : 800
-            let mini = configuration.peripherals.showMinimap
+            let mini =
+                configuration.peripherals.showMinimap
                 ? MinimapGeometry.width(hostWidth: hostWidth)
                 : 0
             applyHorizontalInsets(gutterWidth: newGutter, minimapWidth: mini)

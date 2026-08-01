@@ -1,7 +1,7 @@
-import Foundation
-import SwiftTreeSitter
 import CodeEditorLanguageSupport
 import CodeEditorTreeSitter
+import Foundation
+import SwiftTreeSitter
 
 /// Highlight configuration factory (umbrella bootstrap + shared registry factory).
 extension CodeLanguages {
