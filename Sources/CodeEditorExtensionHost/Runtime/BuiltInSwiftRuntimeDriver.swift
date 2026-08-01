@@ -59,23 +59,31 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
     private var _state: ExtensionInstanceState = .ready
     private var eventContinuation: AsyncStream<ExtensionInstanceEvent>.Continuation?
     public nonisolated let events: AsyncStream<ExtensionInstanceEvent>
+    /// Optional procedural language-server provider (Phase 12).
+    private var languageServerProvider: (any LanguageServerProvider)?
 
     public init(
         ext: any CodeEditorExtension,
         services: ExtensionHostServices,
         environment: HostEnvironment,
         generation: UInt64,
-        broker: CapabilityBroker
+        broker: CapabilityBroker,
+        languageServerProvider: (any LanguageServerProvider)? = nil
     ) {
         self.ext = ext
         self.identity = ext.manifest.id
         self.generation = generation
         self.broker = broker
         self.environment = environment
+        self.languageServerProvider = languageServerProvider
         self.runtime = ExtensionRuntime(environment: environment, services: services)
         var cont: AsyncStream<ExtensionInstanceEvent>.Continuation!
         self.events = AsyncStream { cont = $0 }
         self.eventContinuation = cont
+    }
+
+    public func setLanguageServerProvider(_ provider: (any LanguageServerProvider)?) {
+        languageServerProvider = provider
     }
 
     public var state: ExtensionInstanceState { _state }
@@ -136,6 +144,17 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
             var pid = process.processIdentifier
             withUnsafeBytes(of: &pid) { data.append(contentsOf: $0) }
             return data
+        case .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
+             .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
+            guard let provider = languageServerProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            return try await LanguageServerWireCodec.dispatch(
+                method: method,
+                payload: payload,
+                provider: provider,
+                extensionID: identity
+            )
         default:
             if method.rawValue.hasPrefix("broker.") {
                 return try await broker.dispatch(method: method, extensionID: identity, payload: payload)

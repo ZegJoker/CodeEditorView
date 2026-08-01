@@ -13,7 +13,13 @@ public actor ExtensionGuestRuntime {
     public var completionHandler: (@Sendable (Data) async throws -> Data)?
     public var hoverHandler: (@Sendable (Data) async throws -> Data)?
     public var definitionHandler: (@Sendable (Data) async throws -> Data)?
+    /// Procedural language-server provider (Phase 12).
+    public var languageServerProvider: (any LanguageServerProvider)?
     public var childPID: Int32?
+
+    public func setLanguageServerProvider(_ provider: (any LanguageServerProvider)?) {
+        languageServerProvider = provider
+    }
     private let log: ExtensionLog
     private var context: GuestExtensionContext?
 
@@ -187,12 +193,77 @@ public actor ExtensionGuestRuntime {
             var pid = process.processIdentifier
             withUnsafeBytes(of: &pid) { info.append(contentsOf: $0) }
             return info
+        case .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
+             .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
+            return try await dispatchLanguageServer(method: method, payload: payload)
         default:
             // Broker methods: guest forwards are host-handled; guest should not receive them
             // unless acting as host proxy. Return method not found for unhandled.
             if method.rawValue.hasPrefix("broker.") {
                 throw ExtensionWireError.methodNotFound
             }
+            throw ExtensionWireError.methodNotFound
+        }
+    }
+
+    private func dispatchLanguageServer(method: ExtensionMethodID, payload: Data) async throws -> Data {
+        guard let provider = languageServerProvider else {
+            throw ExtensionWireError.methodNotFound
+        }
+        let extensionID = ext.manifest.id
+        switch method {
+        case .lsResolveLaunchPlan:
+            let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
+            let serverID = obj?["serverID"] as? String ?? ""
+            let ctx = LanguageServerResolveContext(extensionID: extensionID)
+            let plan = try await provider.resolveLaunchPlan(serverID: serverID, context: ctx)
+            return try JSONEncoder().encode(plan)
+        case .lsInitializationOptions:
+            let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
+            let serverID = obj?["serverID"] as? String ?? ""
+            let ctx = LanguageServerResolveContext(extensionID: extensionID)
+            return try await provider.initializationOptions(serverID: serverID, context: ctx) ?? Data("{}".utf8)
+        case .lsWorkspaceConfiguration:
+            let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
+            let serverID = obj?["serverID"] as? String ?? ""
+            let rawItems = obj?["items"] as? [[String: Any]] ?? []
+            let items = rawItems.map {
+                WorkspaceConfigurationItem(
+                    section: $0["section"] as? String,
+                    scopeURI: $0["scopeURI"] as? String ?? $0["scopeUri"] as? String
+                )
+            }
+            let results = try await provider.workspaceConfiguration(serverID: serverID, items: items)
+            let objs: [Any] = results.map { data -> Any in
+                if let data, let o = try? JSONSerialization.jsonObject(with: data) { return o }
+                return NSNull()
+            }
+            return try JSONSerialization.data(withJSONObject: objs)
+        case .lsTransformCompletionLabel:
+            let item: CompletionLabelTransform
+            if let decoded = try? JSONDecoder().decode(CompletionLabelTransform.self, from: payload) {
+                item = decoded
+            } else {
+                let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
+                item = CompletionLabelTransform(label: obj?["label"] as? String ?? "")
+            }
+            let out = await provider.transformCompletionLabel(item)
+            return try JSONEncoder().encode(out)
+        case .lsTransformSymbolLabel:
+            let item: SymbolLabelTransform
+            if let decoded = try? JSONDecoder().decode(SymbolLabelTransform.self, from: payload) {
+                item = decoded
+            } else {
+                let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
+                item = SymbolLabelTransform(name: obj?["name"] as? String ?? "")
+            }
+            let out = await provider.transformSymbolLabel(item)
+            return try JSONEncoder().encode(out)
+        case .lsStatus:
+            return Data(#"{"state":"running"}"#.utf8)
+        case .lsRestart:
+            return Data(#"{"ok":true}"#.utf8)
+        default:
             throw ExtensionWireError.methodNotFound
         }
     }

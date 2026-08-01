@@ -639,6 +639,7 @@ let package = Package(
                 "CodeEditorCommands",
                 "CodeEditorLanguageSupport",
                 "CodeEditorLanguageServices",
+                "CodeEditorLSP",
             ]
         ),
         .target(
@@ -893,6 +894,7 @@ let package = Package(
                 "CodeEditorLanguageServices",
                 "CodeEditorCore",
                 "CodeEditorDocuments",
+                "CodeEditorLSP",
             ],
             resources: [.copy("../Fixtures/Wasm")]
         ),

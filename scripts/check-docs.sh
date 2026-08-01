@@ -41,6 +41,7 @@ require Docs/Architecture/PHASE8-NOTES.md
 require Docs/Architecture/PHASE9-NOTES.md
 require Docs/Architecture/PHASE10-NOTES.md
 require Docs/Architecture/PHASE11-NOTES.md
+require Docs/Architecture/PHASE12-NOTES.md
 require Docs/Architecture/ADR-017-core-wasm-abi-v1.md
 require Docs/Architecture/VIEW-PUBLIC-API.md
 require Docs/Architecture/TOOLCHAIN.md

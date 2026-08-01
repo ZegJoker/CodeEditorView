@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 12: language-server launch plans, `LanguageServerProvider`, TOML `[language_servers.*]`, `LanguageServerLanguageMap`
+- Phase 12: host executor + coordinator (broker materialize, pool, settings invalidation, process allowlist)
+- Phase 12: worktree `which` / filtered environment, resolve context builder, wire codec for `ls.*`
+- Phase 12: completion **and** symbol label hooks on LSP adapters; status/diagnostics store
+- Phase 12: built-in / native guest / Wasm `ls.*` dispatch; download digest enforcement; `PHASE12-NOTES.md` S2 matrix
 - Phase 11: `CodeEditorWasmEngine` + `CodeEditorWasmEngineWasmKit` (WasmKit) + `CodeEditorExtensionWasmGuest`
 - Phase 11: core-Wasm ABI session, SwiftWasm runtime driver, resource limits, malicious fixtures
 - Phase 11: `scripts/build-wasm-extension.sh` / `check-wasm-fixture.sh`; ADR-017 ABI go/no-go (experimental)

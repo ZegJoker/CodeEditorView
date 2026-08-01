@@ -136,6 +136,74 @@ Rules:
 
 Request only what you need. The host grants the intersection of requests and policy. Panel registration requires `presentUI`. Storage paths cannot escape the extension sandbox.
 
+## Language-server extensions (Phase 12)
+
+Extensions return a **launch plan**; the host starts LSP and owns the connection. You never touch the socket.
+
+```swift
+import CodeEditorExtensionAPI
+
+struct SwiftToolsLS: LanguageServerProvider {
+    var serverIDs: [String] { ["sourcekit-lsp"] }
+
+    func resolveLaunchPlan(
+        serverID: String,
+        context: LanguageServerResolveContext
+    ) async throws -> LanguageServerLaunchPlan {
+        // Prefer host-resolved worktree which / settings
+        if let path = context.which("sourcekit-lsp") {
+            return LanguageServerLaunchPlan(
+                serverID: serverID,
+                displayName: "SourceKit-LSP",
+                languages: ["Swift"],
+                command: path,
+                environment: context.environmentValues,
+                binarySource: .absolute(path: path),
+                extensionID: context.extensionID
+            )
+        }
+        return LanguageServerLaunchPlan(
+            serverID: serverID,
+            displayName: "SourceKit-LSP",
+            languages: ["Swift"],
+            command: "sourcekit-lsp",
+            binarySource: .systemPath(name: "sourcekit-lsp"),
+            extensionID: context.extensionID
+        )
+    }
+
+    func transformCompletionLabel(_ item: CompletionLabelTransform) async -> CompletionLabelTransform {
+        var item = item
+        item.label = "sk:" + item.label
+        return item
+    }
+
+    func transformSymbolLabel(_ item: SymbolLabelTransform) async -> SymbolLabelTransform {
+        var item = item
+        item.name = "sk:" + item.name
+        return item
+    }
+}
+```
+
+Binary sources: `.systemPath`, `.worktreeRelative`, `.downloaded(url:digest:cacheKey:)`, `.npm(package:version:bin:)`, `.absolute` (elevated/tests), `.testFactory` (tests).
+
+TOML seed:
+
+```toml
+[language_servers.sourcekit-lsp]
+languages = ["Swift"]
+command = "sourcekit-lsp"
+# optional: download_url, download_digest, npm_package, npm_version, npm_bin, args
+```
+
+Host (`CodeEditorExtensionHost`):
+
+- `LanguageServerResolveContextBuilder` fills platform, worktree which/env, settings, project metadata
+- `LanguageServerLaunchPlanExecutor` validates, materializes via capability broker (process allowlist, download digest, npm), starts `LanguageServerPool`
+- `LanguageServerCoordinator` maps languages → servers, restarts on settings/toolchain change
+- Label hooks apply to completions **and** document/workspace symbols
+
 ## Native-process helper (Phase 10)
 
 Authors link `CodeEditorExtensionGuest` + `CodeEditorExtensionAPI` (+ protocol transitively):

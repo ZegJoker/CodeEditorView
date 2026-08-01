@@ -311,9 +311,23 @@ public enum ExtensionPackageLoader {
             }
         }
 
+        var languageServers = toml.languageServers.map { contrib -> LanguageServerContribution in
+            var c = contrib
+            c.extensionID = manifest.id
+            return c
+        }
+
         let hasData = !themes.isEmpty || !snippets.isEmpty || !icons.isEmpty
             || !languages.isEmpty || !grammars.isEmpty || !queries.isEmpty
-        let parity = hasData ? "codeeditor-data-s1" : "codeeditor-data-s0"
+            || !languageServers.isEmpty
+        let parity: String
+        if !languageServers.isEmpty {
+            parity = "codeeditor-ls-s2"
+        } else if hasData {
+            parity = "codeeditor-data-s1"
+        } else {
+            parity = "codeeditor-data-s0"
+        }
 
         return ValidatedContributionPlan(
             packageID: manifest.id,
@@ -328,6 +342,7 @@ public enum ExtensionPackageLoader {
             languages: languages,
             grammars: grammars,
             queries: queries,
+            languageServers: languageServers,
             assets: assets.sorted { $0.relativePath < $1.relativePath },
             diagnostics: diagnostics,
             unsupportedFields: toml.unsupportedFields,

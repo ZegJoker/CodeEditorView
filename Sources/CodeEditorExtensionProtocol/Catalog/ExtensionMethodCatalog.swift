@@ -21,9 +21,20 @@ public struct ExtensionMethodID: RawRepresentable, Hashable, Codable, Sendable, 
     public static let definition: ExtensionMethodID = "ls.definition"
     public static let diagnostics: ExtensionMethodID = "ls.diagnostics"
 
+    // Language-server procedural (Phase 12)
+    public static let lsResolveLaunchPlan: ExtensionMethodID = "ls.resolveLaunchPlan"
+    public static let lsInitializationOptions: ExtensionMethodID = "ls.initializationOptions"
+    public static let lsWorkspaceConfiguration: ExtensionMethodID = "ls.workspaceConfiguration"
+    public static let lsTransformCompletionLabel: ExtensionMethodID = "ls.transformCompletionLabel"
+    public static let lsTransformSymbolLabel: ExtensionMethodID = "ls.transformSymbolLabel"
+    public static let lsStatus: ExtensionMethodID = "ls.status"
+    public static let lsRestart: ExtensionMethodID = "ls.restart"
+
     // Broker
     public static let worktreeList: ExtensionMethodID = "broker.worktree.list"
     public static let worktreeRead: ExtensionMethodID = "broker.worktree.read"
+    public static let worktreeWhich: ExtensionMethodID = "broker.worktree.which"
+    public static let worktreeEnvironment: ExtensionMethodID = "broker.worktree.environment"
     public static let projectInfo: ExtensionMethodID = "broker.project.info"
     public static let settingsGet: ExtensionMethodID = "broker.settings.get"
     public static let settingsSet: ExtensionMethodID = "broker.settings.set"
@@ -48,7 +59,9 @@ public enum ExtensionMethodCatalog {
     public static let entries: [ExtensionMethodID] = [
         .activate, .deactivate, .ping,
         .completion, .hover, .definition, .diagnostics,
-        .worktreeList, .worktreeRead, .projectInfo,
+        .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
+        .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart,
+        .worktreeList, .worktreeRead, .worktreeWhich, .worktreeEnvironment, .projectInfo,
         .settingsGet, .settingsSet,
         .storageGet, .storageSet,
         .processSpawn, .processKill,

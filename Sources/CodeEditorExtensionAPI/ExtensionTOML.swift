@@ -37,6 +37,7 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
     public var runtimeEntrypoint: String?
     public var capabilities: [String]
     public var permissions: [String]
+    public var languageServers: [LanguageServerContribution]
     public var unsupportedFields: [String]
 
     public init(
@@ -54,6 +55,7 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
         runtimeEntrypoint: String? = nil,
         capabilities: [String] = [],
         permissions: [String] = [],
+        languageServers: [LanguageServerContribution] = [],
         unsupportedFields: [String] = []
     ) {
         self.id = id
@@ -70,6 +72,7 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
         self.runtimeEntrypoint = runtimeEntrypoint
         self.capabilities = capabilities
         self.permissions = permissions
+        self.languageServers = languageServers
         self.unsupportedFields = unsupportedFields
     }
 
@@ -185,7 +188,12 @@ public enum ExtensionTOMLParser {
             "id", "name", "description", "version", "schema_version", "api_version",
             "authors", "repository", "license",
         ])
-        let unsupported = root.keys.filter { !knownRoot.contains($0) && $0 != "activation" && $0 != "runtime" && $0 != "capabilities" && $0 != "permissions" && $0 != "contributions" }
+        let unsupported = root.keys.filter {
+            !knownRoot.contains($0)
+                && $0 != "activation" && $0 != "runtime" && $0 != "capabilities"
+                && $0 != "permissions" && $0 != "contributions"
+                && !$0.hasPrefix("language_servers")
+        }
         for u in unsupported {
             diagnostics.append(.init(
                 code: "toml.unsupported_field",
@@ -259,6 +267,51 @@ public enum ExtensionTOMLParser {
             authors = []
         }
 
+        // [language_servers.<id>] tables (dotted section keys)
+        var languageServers: [LanguageServerContribution] = []
+        for (key, value) in root {
+            guard key.hasPrefix("language_servers."), case .table(let table) = value else { continue }
+            let serverID = String(key.dropFirst("language_servers.".count))
+            guard !serverID.isEmpty else { continue }
+            let langs: [String]
+            if case .array(let arr) = table["languages"] {
+                langs = arr.compactMap(\.string)
+            } else {
+                langs = []
+            }
+            let args: [String]
+            if case .array(let arr) = table["args"] ?? table["arguments"] {
+                args = arr.compactMap(\.string)
+            } else {
+                args = []
+            }
+            // Note unknown keys
+            let knownLS = Set([
+                "languages", "command", "args", "arguments", "name", "display_name",
+                "download_url", "download_digest", "npm_package", "npm_version", "npm_bin",
+            ])
+            for k in table.keys where !knownLS.contains(k) {
+                diagnostics.append(.init(
+                    code: "language_server.unsupported",
+                    severity: .note,
+                    message: "unsupported language_server field \(k) on \(serverID)"
+                ))
+            }
+            languageServers.append(LanguageServerContribution(
+                serverID: serverID,
+                displayName: table["name"]?.string ?? table["display_name"]?.string ?? serverID,
+                languages: langs,
+                command: table["command"]?.string,
+                arguments: args,
+                downloadURL: table["download_url"]?.string,
+                downloadDigest: table["download_digest"]?.string,
+                npmPackage: table["npm_package"]?.string,
+                npmVersion: table["npm_version"]?.string,
+                npmBin: table["npm_bin"]?.string
+            ))
+        }
+        languageServers.sort { $0.serverID < $1.serverID }
+
         let manifest = ExtensionTOMLManifest(
             id: id,
             name: name,
@@ -274,6 +327,7 @@ public enum ExtensionTOMLParser {
             runtimeEntrypoint: runtimeEntrypoint,
             capabilities: capabilities,
             permissions: permissions,
+            languageServers: languageServers,
             unsupportedFields: Array(unsupported).sorted()
         )
         return (manifest, diagnostics)

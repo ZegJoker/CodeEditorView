@@ -173,6 +173,76 @@ public final class WasmGuestRuntime: @unchecked Sendable {
             return Data(#"{"sections":[{"content":{"markdown":"**conformance** hover"}}]}"#.utf8)
         case .definition:
             return Data("[]".utf8)
+        case .lsResolveLaunchPlan:
+            // Codable LanguageServerLaunchPlan shape (matches host JSONDecoder).
+            let plan: [String: Any] = [
+                "serverID": "mock-ls",
+                "displayName": "Mock LS",
+                "languages": ["swift"],
+                "command": "mock-ls",
+                "arguments": [] as [String],
+                "environment": [:] as [String: String],
+                "transport": "stdio",
+                "binarySource": [
+                    "testFactory": ["id": "mock-ls-factory"],
+                ],
+            ]
+            // Prefer Swift Codable encode when available via JSON that decoder accepts.
+            // LanguageServerBinarySource uses auto-synthesized keyed enum encoding.
+            struct WirePlan: Encodable {
+                var serverID: String
+                var displayName: String
+                var languages: [String]
+                var command: String
+                var arguments: [String]
+                var environment: [String: String]
+                var transport: String
+                var binarySource: WireSource
+                enum WireSource: Encodable {
+                    case testFactory(id: String)
+                }
+            }
+            let wp = WirePlan(
+                serverID: "mock-ls",
+                displayName: "Mock LS",
+                languages: ["swift"],
+                command: "mock-ls",
+                arguments: [],
+                environment: [:],
+                transport: "stdio",
+                binarySource: .testFactory(id: "mock-ls-factory")
+            )
+            if let data = try? JSONEncoder().encode(wp) {
+                return data
+            }
+            return (try? JSONSerialization.data(withJSONObject: plan)) ?? Data()
+        case .lsInitializationOptions:
+            return Data(#"{"fixture":true}"#.utf8)
+        case .lsWorkspaceConfiguration:
+            return Data(#"[{"section":"mock","value":"from-extension"}]"#.utf8)
+        case .lsTransformCompletionLabel:
+            // Expect JSON {"label":"..."}; prefix with ext:
+            if let obj = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
+               let label = obj["label"] as? String
+            {
+                var out = obj
+                out["label"] = label.hasPrefix("ext:") ? label : "ext:" + label
+                return (try? JSONSerialization.data(withJSONObject: out)) ?? payload
+            }
+            return payload
+        case .lsTransformSymbolLabel:
+            if let obj = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
+               let name = obj["name"] as? String
+            {
+                var out = obj
+                out["name"] = name.hasPrefix("ext:") ? name : "ext:" + name
+                return (try? JSONSerialization.data(withJSONObject: out)) ?? payload
+            }
+            return payload
+        case .lsStatus:
+            return Data(#"{"state":"running","serverID":"mock-ls"}"#.utf8)
+        case .lsRestart:
+            return Data(#"{"ok":true}"#.utf8)
         default:
             return Data()
         }

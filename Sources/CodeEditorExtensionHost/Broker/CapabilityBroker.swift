@@ -156,9 +156,17 @@ public actor CapabilityBroker {
 
     // MARK: - Worktree
 
+    /// Environment variable names extensions may read via worktree handles (fail-closed).
+    public static let defaultAllowedEnvironmentNames: Set<String> = [
+        "PATH", "HOME", "USER", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE",
+        "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME",
+        "DEVELOPER_DIR", "SDKROOT", "TOOLCHAIN_DIR", "SWIFT_EXEC",
+        "CARGO_HOME", "RUSTUP_HOME", "GOPATH", "GOROOT", "JAVA_HOME", "NODE_PATH",
+    ]
+
     public func worktreeHandle(extensionID: ExtensionID) throws -> BrokerHandle {
         try require(extensionID, .readWorkspace)
-        return issue(extensionID, kind: "worktree", ops: ["list", "read"])
+        return issue(extensionID, kind: "worktree", ops: ["list", "read", "which", "environment"])
     }
 
     public func worktreeList(handle: BrokerHandleID, relative: String = "") throws -> [String] {
@@ -172,6 +180,54 @@ public actor CapabilityBroker {
         let h = try resolve(handle, kind: "worktree", op: "read")
         let url = try resolveWorktreePath(h.extensionID, relative: relative)
         return try Data(contentsOf: url)
+    }
+
+    /// Find an executable under worktree roots first, then the process PATH (scoped).
+    public func worktreeWhich(handle: BrokerHandleID, name: String) throws -> String? {
+        _ = try resolve(handle, kind: "worktree", op: "which")
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty, !cleaned.contains("/"), !cleaned.contains("..") else {
+            throw BrokerError.invalidRequest("executable name")
+        }
+        // Prefer worktree-local bin directories.
+        for root in config.worktreeRoots {
+            for sub in ["bin", "tools", ".bin", "node_modules/.bin"] {
+                let candidate = root.appendingPathComponent(sub).appendingPathComponent(cleaned)
+                if FileManager.default.isExecutableFile(atPath: candidate.path) {
+                    return candidate.path
+                }
+            }
+            let direct = root.appendingPathComponent(cleaned)
+            if FileManager.default.isExecutableFile(atPath: direct.path) {
+                return direct.path
+            }
+        }
+        let path = ProcessInfo.processInfo.environment["PATH"] ?? "/usr/bin:/bin"
+        for dir in path.split(separator: ":") {
+            let candidate = URL(fileURLWithPath: String(dir)).appendingPathComponent(cleaned).path
+            if FileManager.default.isExecutableFile(atPath: candidate) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    /// Read allowed environment variables only (never arbitrary process env dump).
+    public func worktreeEnvironment(
+        handle: BrokerHandleID,
+        names: Set<String>,
+        allowed: Set<String> = CapabilityBroker.defaultAllowedEnvironmentNames
+    ) throws -> [String: String] {
+        _ = try resolve(handle, kind: "worktree", op: "environment")
+        let env = ProcessInfo.processInfo.environment
+        var out: [String: String] = [:]
+        for name in names {
+            guard allowed.contains(name) else { continue }
+            if let value = env[name] {
+                out[name] = value
+            }
+        }
+        return out
     }
 
     // MARK: - Project
@@ -318,18 +374,35 @@ public actor CapabilityBroker {
     }
 
     /// Test-only local fetch that still enforces allowlist host parsing for https test URLs.
-    public func downloadWriteFixture(handle: BrokerHandleID, host: String, path: String, data: Data) throws -> URL {
+    public func downloadWriteFixture(
+        handle: BrokerHandleID,
+        host: String,
+        path: String,
+        data: Data,
+        expectedDigest: String? = nil
+    ) throws -> URL {
         let h = try resolve(handle, kind: "download", op: "fetch")
         guard isDownloadAllowed(host: host, path: path) else {
             throw BrokerError.downloadDenied(host)
         }
         if data.count > config.maxDownloadBytes { throw BrokerError.quotaExceeded }
+        if let expectedDigest {
+            let actual = sha256Hex(data)
+            if actual != expectedDigest {
+                throw BrokerError.invalidRequest("digest mismatch")
+            }
+        }
         let dest = config.toolCacheRoot
             .appendingPathComponent(h.extensionID.rawValue, isDirectory: true)
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: dest, options: .atomic)
         return dest
+    }
+
+    /// Public allowlist check for host-side process materialization.
+    public func processAllowed(executable: String, arguments: [String] = []) -> Bool {
+        isProcessAllowed(executable: executable, arguments: arguments)
     }
 
     // MARK: - npm
@@ -372,6 +445,16 @@ public actor CapabilityBroker {
             let rel = obj["path"] as? String ?? ""
             let data = try worktreeRead(handle: hid, relative: rel)
             return try JSONSerialization.data(withJSONObject: ["data_b64": data.base64EncodedString()])
+        case .worktreeWhich:
+            let hid = BrokerHandleID(rawValue: obj["handle"] as? String ?? "")
+            let name = obj["name"] as? String ?? ""
+            let path = try worktreeWhich(handle: hid, name: name)
+            return try JSONSerialization.data(withJSONObject: ["path": path as Any])
+        case .worktreeEnvironment:
+            let hid = BrokerHandleID(rawValue: obj["handle"] as? String ?? "")
+            let names = Set(obj["names"] as? [String] ?? [])
+            let values = try worktreeEnvironment(handle: hid, names: names)
+            return try JSONSerialization.data(withJSONObject: ["environment": values])
         case .projectInfo:
             let hid = BrokerHandleID(rawValue: obj["handle"] as? String ?? "")
             let info = try projectInfo(handle: hid)

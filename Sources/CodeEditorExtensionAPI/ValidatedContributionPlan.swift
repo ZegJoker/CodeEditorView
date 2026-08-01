@@ -16,6 +16,7 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
     public var keybindings: [KeybindingOverrideDTO]
     public var grammars: [GrammarContribution]
     public var queries: [QueryContribution]
+    public var languageServers: [LanguageServerContribution]
     public var assets: [AssetContribution]
     public var diagnostics: [ExtensionPackageDiagnostic]
     public var unsupportedFields: [String]
@@ -37,6 +38,7 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
         keybindings: [KeybindingOverrideDTO] = [],
         grammars: [GrammarContribution] = [],
         queries: [QueryContribution] = [],
+        languageServers: [LanguageServerContribution] = [],
         assets: [AssetContribution] = [],
         diagnostics: [ExtensionPackageDiagnostic] = [],
         unsupportedFields: [String] = [],
@@ -57,6 +59,7 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
         self.keybindings = keybindings
         self.grammars = grammars
         self.queries = queries
+        self.languageServers = languageServers
         self.assets = assets
         self.diagnostics = diagnostics
         self.unsupportedFields = unsupportedFields

@@ -115,9 +115,10 @@ check_no_imports "Sources/CodeEditorExtensions" \
   "Extensions has no UI / View / Workbench / Tree-sitter / LSP / ExtensionKit imports"
 
 echo "== CodeEditorExtensionHost import allowlist =="
+# Phase 12: ExtensionHost may import CodeEditorLSP to execute language-server launch plans.
 check_no_imports "Sources/CodeEditorExtensionHost" \
-  'import (SwiftUI|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl)' \
-  "ExtensionHost has no View / Workbench / LSP / tooling / Tree-sitter imports"
+  'import (SwiftUI|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorWorkspace|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorSearch|CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl)' \
+  "ExtensionHost has no View / Workbench / tooling / Tree-sitter imports (LSP allowed for Phase 12)"
 # Forbid private LaunchServices mutation APIs
 if rg -n --glob '*.swift' 'LSSetDefault|LSRegisterURL|_LS|kLS' Sources/CodeEditorExtensionHost >/tmp/cev-ls-hits.txt 2>/dev/null; then
   echo "FAIL: ExtensionHost must not use private LaunchServices APIs:"

@@ -36,6 +36,12 @@ public final class LSPProviderRegistration: @unchecked Sendable {
     deinit { dispose() }
 }
 
+/// Optional post-decode completion label transform (Phase 12 extension hooks).
+public typealias LSPCompletionLabelHook = @Sendable (CompletionItem) async -> CompletionItem
+
+/// Optional symbol label transform: (name, detail, container) → transformed triple.
+public typealias LSPSymbolLabelHook = @Sendable (String, String?, String?) async -> (String, String?, String?)
+
 /// Registers LanguageServices providers that forward to an LSP session.
 /// Only capabilities advertised by the server are registered — never silently unsupported.
 public enum LSPClientProviders {
@@ -43,7 +49,9 @@ public enum LSPClientProviders {
         session: LanguageServerSession,
         into registry: LanguageServiceRegistry,
         selector: DocumentSelector = .any,
-        priority: Int = 100
+        priority: Int = 100,
+        completionLabelHook: LSPCompletionLabelHook? = nil,
+        symbolLabelHook: LSPSymbolLabelHook? = nil
     ) async -> LSPProviderRegistration {
         let baseID = await session.id.rawValue
         let caps = await session.capabilities
@@ -57,7 +65,13 @@ public enum LSPClientProviders {
 
         if caps.completion {
             await add("completion") { id in
-                await registry.register(LSPCompletionAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(LSPCompletionAdapter(
+                    session: session,
+                    id: id,
+                    selector: selector,
+                    priority: priority,
+                    labelHook: completionLabelHook
+                ))
             }
         }
         if caps.hover {
@@ -114,12 +128,24 @@ public enum LSPClientProviders {
         }
         if caps.documentSymbol {
             await add("symbols") { id in
-                await registry.register(LSPDocumentSymbolAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(LSPDocumentSymbolAdapter(
+                    session: session,
+                    id: id,
+                    selector: selector,
+                    priority: priority,
+                    labelHook: symbolLabelHook
+                ))
             }
         }
         if caps.workspaceSymbol {
             await add("workspaceSymbols") { id in
-                await registry.register(LSPWorkspaceSymbolAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(LSPWorkspaceSymbolAdapter(
+                    session: session,
+                    id: id,
+                    selector: selector,
+                    priority: priority,
+                    labelHook: symbolLabelHook
+                ))
             }
         }
         if caps.semanticTokens {
@@ -324,6 +350,7 @@ struct LSPCompletionAdapter: CompletionProvider {
     let id: ProviderID
     let selector: DocumentSelector
     let priority: Int
+    let labelHook: LSPCompletionLabelHook?
 
     func completions(for request: CompletionRequest) async throws -> CompletionList {
         let map = await session.positionMap(uri: request.context.uri ?? DocumentURI(rawValue: ""))
@@ -339,21 +366,29 @@ struct LSPCompletionAdapter: CompletionProvider {
             params: LSPJSONObject(params)
         )
         let text = request.document.text
-        if let items = result["_value"] as? [[String: Any]] {
-            let data = try JSONSerialization.data(withJSONObject: items)
+        var items: [CompletionItem] = []
+        var incomplete = false
+        if let raw = result["_value"] as? [[String: Any]] {
+            let data = try JSONSerialization.data(withJSONObject: raw)
             let decoded = try JSONDecoder().decode([LSPCompletionItem].self, from: data)
-            return CompletionList(items: decoded.map { LSPConvert.completionItem($0, in: text) })
-        }
-        if let itemDicts = result["items"] as? [[String: Any]] {
+            items = decoded.map { LSPConvert.completionItem($0, in: text) }
+        } else if let itemDicts = result["items"] as? [[String: Any]] {
             let data = try JSONSerialization.data(withJSONObject: itemDicts)
             let decoded = try JSONDecoder().decode([LSPCompletionItem].self, from: data)
-            let incomplete = result["isIncomplete"] as? Bool ?? false
-            return CompletionList(
-                isIncomplete: incomplete,
-                items: decoded.map { LSPConvert.completionItem($0, in: text) }
-            )
+            incomplete = result["isIncomplete"] as? Bool ?? false
+            items = decoded.map { LSPConvert.completionItem($0, in: text) }
+        } else {
+            return .empty
         }
-        return .empty
+        if let labelHook {
+            var transformed: [CompletionItem] = []
+            transformed.reserveCapacity(items.count)
+            for item in items {
+                transformed.append(await labelHook(item))
+            }
+            items = transformed
+        }
+        return CompletionList(isIncomplete: incomplete, items: items)
     }
 }
 
@@ -643,6 +678,7 @@ struct LSPDocumentSymbolAdapter: DocumentSymbolProvider {
     let id: ProviderID
     let selector: DocumentSelector
     let priority: Int
+    let labelHook: LSPSymbolLabelHook?
 
     func documentSymbols(for request: DocumentRequest) async throws -> [DocumentSymbol] {
         let params: [String: Any] = [
@@ -654,22 +690,33 @@ struct LSPDocumentSymbolAdapter: DocumentSymbolProvider {
         )
         guard let arr = result.dictionary["_value"] as? [[String: Any]] else { return [] }
         let text = request.document.text
-        return arr.compactMap { dict -> DocumentSymbol? in
-            guard let name = dict["name"] as? String else { return nil }
+        var symbols: [DocumentSymbol] = []
+        for dict in arr {
+            guard let name = dict["name"] as? String else { continue }
             guard let rangeDict = dict["range"] as? [String: Any],
                   let selDict = dict["selectionRange"] as? [String: Any],
                   let rangeData = try? JSONSerialization.data(withJSONObject: rangeDict),
                   let selData = try? JSONSerialization.data(withJSONObject: selDict),
                   let range = try? JSONDecoder().decode(LSPRange.self, from: rangeData),
                   let sel = try? JSONDecoder().decode(LSPRange.self, from: selData)
-            else { return nil }
-            return DocumentSymbol(
-                name: name,
+            else { continue }
+            let detail = dict["detail"] as? String
+            var finalName = name
+            var finalDetail = detail
+            if let labelHook {
+                let t = await labelHook(name, detail, nil)
+                finalName = t.0
+                finalDetail = t.1
+            }
+            symbols.append(DocumentSymbol(
+                name: finalName,
+                detail: finalDetail,
                 kind: .function,
                 range: LSPConvert.textRange(range, in: text),
                 selectionRange: LSPConvert.textRange(sel, in: text)
-            )
+            ))
         }
+        return symbols
     }
 }
 
@@ -678,6 +725,7 @@ struct LSPWorkspaceSymbolAdapter: WorkspaceSymbolProvider {
     let id: ProviderID
     let selector: DocumentSelector
     let priority: Int
+    let labelHook: LSPSymbolLabelHook?
 
     func workspaceSymbols(
         query: String,
@@ -689,22 +737,32 @@ struct LSPWorkspaceSymbolAdapter: WorkspaceSymbolProvider {
             params: LSPJSONObject(["query": query])
         )
         guard let arr = result["_value"] as? [[String: Any]] else { return [] }
-        return arr.compactMap { dict -> WorkspaceSymbol? in
+        var symbols: [WorkspaceSymbol] = []
+        for dict in arr {
             guard let name = dict["name"] as? String,
                   let loc = dict["location"] as? [String: Any],
                   let uri = loc["uri"] as? String,
                   let range = LSPRequestHelpers.parseLSPRange(loc["range"])
-            else { return nil }
-            return WorkspaceSymbol(
-                name: name,
+            else { continue }
+            let container = dict["containerName"] as? String
+            var finalName = name
+            var finalContainer = container
+            if let labelHook {
+                let t = await labelHook(name, nil, container)
+                finalName = t.0
+                finalContainer = t.2
+            }
+            symbols.append(WorkspaceSymbol(
+                name: finalName,
                 kind: .function,
                 location: Location(
                     uri: DocumentURI(rawValue: uri),
                     range: LSPConvert.textRange(range, in: "")
                 ),
-                containerName: dict["containerName"] as? String
-            )
+                containerName: finalContainer
+            ))
         }
+        return symbols
     }
 }
 

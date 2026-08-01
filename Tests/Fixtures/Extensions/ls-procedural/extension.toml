@@ -1,0 +1,21 @@
+id = "com.codeeditor.fixtures.ls-procedural"
+name = "LS Procedural Fixture"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+authors = ["CodeEditorView Fixtures"]
+
+[activation]
+events = ["startup", "language:swift"]
+
+[runtime]
+kind = "builtin"
+
+capabilities = ["languageServices"]
+permissions = ["startProcesses", "network", "readWorkspace"]
+
+[language_servers.mock-ls]
+name = "Mock LS"
+languages = ["Swift", "swift"]
+command = "mock-ls"
+# Resolved via test factory in tests; static seed uses systemPath.
