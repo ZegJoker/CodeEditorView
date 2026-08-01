@@ -119,7 +119,12 @@ public final class SelectionEngine {
 
         let changes = working.map { TextChange(range: $0, replacement: string) }
         let transaction = EditTransaction(changes: changes, origin: .typing)
-        guard let applied = try? document.apply(transaction) else { return [] }
+        let applied: AppliedEditTransaction
+        do {
+            applied = try document.apply(transaction)
+        } catch {
+            return []
+        }
 
         var carets: [Int] = []
         carets.reserveCapacity(applied.textEdits.count)

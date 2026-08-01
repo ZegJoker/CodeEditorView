@@ -66,7 +66,15 @@ enum LSPConvert {
 
     static func lineCharacter(utf16Offset: Int, in text: String) -> LSPPosition {
         let ns = text as NSString
-        let loc = min(max(0, utf16Offset), ns.length)
+        // DOC-003: clamp only out-of-bounds carets; never invent mid-document EOF redirects.
+        let loc: Int
+        if TextOffsetSemantics.isValidUTF16Offset(utf16Offset, documentUTF16Length: ns.length) {
+            loc = utf16Offset
+        } else if utf16Offset < 0 {
+            loc = 0
+        } else {
+            loc = ns.length
+        }
         var line = 0
         var lineStart = 0
         var i = 0
@@ -110,6 +118,7 @@ enum LSPConvert {
             col += 1
         }
         _ = lineStart
+        // Result is always a valid caret offset in [0, length].
         return i
     }
 

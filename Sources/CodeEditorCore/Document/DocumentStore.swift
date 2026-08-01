@@ -9,13 +9,15 @@ import TextStory
 /// Content mutations advance ``version`` monotonically. Attribute-only updates
 /// (syntax highlighting) do **not** change the version.
 ///
-/// ## Concurrency
+/// ## Concurrency (DOC-010 / §7.12)
 /// Not `@MainActor` so it can satisfy TextStory's nonisolated `TextStoring`.
 /// **Invariant:** treat as main-actor-affine mutable state. Cross-isolation
 /// sharing must use ``snapshot()`` (`DocumentSnapshot` is `Sendable`).
-/// Marked `@unchecked Sendable` only for TextStory protocol conformance —
-/// concurrent mutation is undefined.
-public final class DocumentStore: @unchecked Sendable, TextStoring {
+///
+/// Concurrent mutation is **undefined**. The type is intentionally **not**
+/// `Sendable`. Callers that need cross-actor access must hop to the owning
+/// isolation or use ``snapshot()`` only.
+public final class DocumentStore: TextStoring {
     /// Attributed storage for paint paths. Package-visible so View can paint without
     /// making the buffer a long-lived public API surface.
     package private(set) var storage: NSMutableAttributedString
