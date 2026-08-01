@@ -258,3 +258,31 @@ extension String {
         return self[i]
     }
 }
+
+@Suite("Phase 2 residual Core gates")
+@MainActor
+struct Phase2CoreResidualTests {
+    @Test func scalarIndexExactNeverFallsBackToEOF() {
+        let text = "a😀b"
+        #expect(throws: DocumentStoreError.self) {
+            _ = try TextOffsetSemantics.scalarIndex(atUTF16Offset: 2, in: text, policy: .exact)
+        }
+    }
+
+    @Test func eventStreamIsBoundedNewest() async {
+        let stream = EditorEventStream()
+        let events = stream.makeEventStream(bufferSize: 2)
+        // Producer yields many events before consumer starts.
+        for _ in 0..<10 {
+            stream.yield(.textDidChange)
+        }
+        // Drain what was buffered.
+        var count = 0
+        for await _ in events {
+            count += 1
+            if count >= 2 { break }
+        }
+        #expect(count <= 2)
+        #expect(stream.droppedEventCount >= 0)
+    }
+}

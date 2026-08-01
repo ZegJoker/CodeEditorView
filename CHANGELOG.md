@@ -10,6 +10,13 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 2 complete (DOC-001…DOC-010 / §7.1–7.12):**
+  - Atomic multi-edit staging + overlap reject + property/fault tests
+  - Exact offset conversion (no EOF fallback); boundary policies
+  - Throwing undo/redo; dirty from `savedVersion`
+  - Conflict-safe save; streaming `readContentAndIdentity` (no full-file identity re-read)
+  - Encoding fidelity (reject `.other`); versioned recovery journal; bounded streams
+  - `DocumentStore` no longer `@unchecked Sendable`
 - **Withdrawn** Stable/1.0-Ready claims pending open P0/P1 closure (`Docs/Architecture/DEFECTS.md`)
 - DOC-001: atomic multi-edit with full prevalidation and staging buffer
 - DOC-002: throwing undo/redo; stack ownership only after successful apply; savedVersion tracking

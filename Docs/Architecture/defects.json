@@ -51,28 +51,28 @@
       "severity": "P0",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "Atomic multi-edit"
+      "summary": "Atomic multi-edit with staging buffer, overlap reject, equal-offset order, fault/property tests"
     },
     {
       "id": "DOC-002",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "Transactional undo/redo"
+      "summary": "Throwing undo/redo; stacks move only after success; dirty from savedVersion; no try? apply"
     },
     {
       "id": "DOC-003",
       "severity": "P0",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "Exact offsets"
+      "summary": "Exact offsets; private scalarIndex throws; never EOF fallback"
     },
     {
       "id": "DOC-004",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "Conflict-safe save"
+      "summary": "CAS save with expectedIdentity + revalidate; conflict SaveResult"
     },
     {
       "id": "WSP-001",
@@ -234,6 +234,48 @@
       "product": "CodeEditorWorkbench",
       "status": "fixed",
       "summary": "Real utility panels"
+    },
+    {
+      "id": "DOC-005",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Streaming readContentAndIdentity; no Data(contentsOf) identity path"
+    },
+    {
+      "id": "DOC-006",
+      "severity": "P1",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "CoordinatedFileIO once-resume box; test-proven"
+    },
+    {
+      "id": "DOC-007",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "DocumentCodec rejects .other; no UTF-8 mojibake fallback; BOM preserve policy"
+    },
+    {
+      "id": "DOC-008",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Versioned recovery journal with SHA-256 checksum, quotas, 0600, quarantine"
+    },
+    {
+      "id": "DOC-009",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "Bounded EditorEventStream/TextDocument streams (bufferingNewest)"
+    },
+    {
+      "id": "DOC-010",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "DocumentStore no longer @unchecked Sendable; main-actor-affine documented"
     }
   ]
 }

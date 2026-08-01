@@ -12,10 +12,10 @@ Updated: 2026-08-01
 | CI-009 | P1 | CI | fixed | Docs/Architecture/XCODE.pin + check-xcode-pin.sh |
 | CI-010 | P1 | CI | fixed | export-source-archive-rehearsal.sh + CI source-archive-rehearsal |
 | CI-011 | P1 | Examples | fixed | macOS/iOS example packages with xcodebuild test jobs |
-| DOC-001 | P0 | CodeEditorCore | fixed | Atomic multi-edit |
-| DOC-002 | P0 | CodeEditorDocuments | fixed | Transactional undo/redo |
-| DOC-003 | P0 | CodeEditorCore | fixed | Exact offsets |
-| DOC-004 | P0 | CodeEditorDocuments | fixed | Conflict-safe save |
+| DOC-001 | P0 | CodeEditorCore | fixed | Atomic multi-edit with staging buffer, overlap reject, equal-offset order, fault/property tests |
+| DOC-002 | P0 | CodeEditorDocuments | fixed | Throwing undo/redo; stacks move only after success; dirty from savedVersion; no try? apply |
+| DOC-003 | P0 | CodeEditorCore | fixed | Exact offsets; private scalarIndex throws; never EOF fallback |
+| DOC-004 | P0 | CodeEditorDocuments | fixed | CAS save with expectedIdentity + revalidate; conflict SaveResult |
 | WSP-001 | P0 | CodeEditorWorkspace | fixed | Dirty-close coordinator |
 | WSP-002 | P0 | CodeEditorWorkspace | fixed | Durable workspace edit journal |
 | EXT-001 | P0 | CodeEditorExtensionAPI | fixed | Validated ExtensionID |
@@ -39,4 +39,9 @@ Updated: 2026-08-01
 | SCM-001 | P1 | CodeEditorSourceControl | fixed | Rename + path containment |
 | TS-001 | P1 | CodeEditorTreeSitter | fixed | TreeSitterLanguageRuntime actor; off-main load |
 | WB-001 | P1 | CodeEditorWorkbench | fixed | Real utility panels |
-
+| DOC-005 | P0 | CodeEditorDocuments | fixed | Streaming readContentAndIdentity; no Data(contentsOf) identity path |
+| DOC-006 | P1 | CodeEditorDocuments | fixed | CoordinatedFileIO once-resume box; test-proven |
+| DOC-007 | P0 | CodeEditorDocuments | fixed | DocumentCodec rejects .other; no UTF-8 mojibake fallback; BOM preserve policy |
+| DOC-008 | P0 | CodeEditorDocuments | fixed | Versioned recovery journal with SHA-256 checksum, quotas, 0600, quarantine |
+| DOC-009 | P1 | CodeEditorCore | fixed | Bounded EditorEventStream/TextDocument streams (bufferingNewest) |
+| DOC-010 | P1 | CodeEditorCore | fixed | DocumentStore no longer @unchecked Sendable; main-actor-affine documented |
