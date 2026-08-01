@@ -4,9 +4,10 @@ import CodeEditorLanguageSupport
 
 /// Tree-sitter based ``HighlightProviding`` implementation with **incremental** edits.
 ///
-/// Language / query loading is performed off the main actor so switching languages does not ANR.
-/// Configurations are loaded only via ``TreeSitterLanguageEnvironment/configurationProvider`` —
-/// this type never imports grammar C targets.
+/// ## TS-001
+/// Parse/query work runs off the main actor (`Task.detached` / language actor). Only
+/// generation-tagged highlight results are applied for presentation.
+/// Configurations load via ``TreeSitterLanguageRuntime`` / environment provider.
 ///
 /// Edit pipeline (SwiftTreeSitter):
 /// 1. Build ``InputEdit`` from the UTF-16 mutation
@@ -33,6 +34,8 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
     private var loadDepth: Int = 0
     /// Waiters for “no load in flight” (avoids nested MainActor Task self-await freezes).
     private var loadWaiters: [CheckedContinuation<Void, Never>] = []
+    /// Generation of last published highlight result (stale discards).
+    public private(set) var highlightGeneration: UInt64 = 0
 
     public init() {}
 
@@ -100,6 +103,10 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         do {
             // Compile queries off the main actor — this is the expensive part.
             config = try await Task.detached(priority: .userInitiated) {
+                // Prefer actor-isolated runtime; fall back to legacy environment for tests.
+                if let provider = await TreeSitterLanguageRuntime.shared.resolveProvider() {
+                    return try provider.languageConfiguration(for: languageIDCopy)
+                }
                 guard let provider = TreeSitterLanguageEnvironment.resolveProvider() else {
                     return nil
                 }

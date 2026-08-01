@@ -82,9 +82,24 @@ public actor TaskService {
             let handle = try await startSingle(id: taskID)
             lastHandle = handle
             if definitions[taskID]?.isBackground == true {
+                // TASK-002: only "ready" unblocks dependents. Failed/completed-before-ready
+                // is a typed dependency failure — never silently continue the graph.
+                var sawReady = false
+                var completedWithoutReady = false
                 for await event in handle.events {
-                    if case .ready = event { break }
-                    if case .completed = event { break }
+                    switch event {
+                    case .ready:
+                        sawReady = true
+                    case .completed:
+                        completedWithoutReady = !sawReady
+                    default:
+                        break
+                    }
+                    if sawReady { break }
+                    if completedWithoutReady { break }
+                }
+                if !sawReady {
+                    throw TaskError.dependencyFailed(taskID.rawValue)
                 }
                 continue
             }
@@ -114,9 +129,19 @@ public actor TaskService {
         for taskID in order {
             let handle = try await startSingle(id: taskID)
             if definitions[taskID]?.isBackground == true {
+                var sawReady = false
+                var completedWithoutReady = false
                 for await event in handle.events {
-                    if case .ready = event { break }
-                    if case .completed = event { break }
+                    switch event {
+                    case .ready: sawReady = true
+                    case .completed: completedWithoutReady = !sawReady
+                    default: break
+                    }
+                    if sawReady { break }
+                    if completedWithoutReady { break }
+                }
+                if !sawReady {
+                    throw TaskError.dependencyFailed(taskID.rawValue)
                 }
                 last = handle.run
                 continue

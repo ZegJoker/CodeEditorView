@@ -210,8 +210,8 @@ final class SessionCommandClient: EditorCommandClient {
 
     func perform(_ action: EditorCommandAction) throws {
         switch action {
-        case .undo: document.performUndo()
-        case .redo: document.performRedo()
+        case .undo: try document.performUndo()
+        case .redo: try document.performRedo()
         case .selectAll:
             let len = document.length
             session.selections = [CodeEditorCore.TextRange(location: 0, length: len)]

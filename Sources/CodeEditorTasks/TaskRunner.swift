@@ -30,6 +30,10 @@ public final class TaskExecutionHandle: @unchecked Sendable {
     private var waiters: [CheckedContinuation<TaskRunResult, Error>] = []
     private var readiness: NSRegularExpression?
     private var becameReady = false
+    /// Rolling UTF-8 decode window so readiness regex can match across chunk boundaries (TASK-002).
+    private var readinessWindow = ""
+    private let readinessWindowMaxChars = 16_384
+    private var utf8Carry = Data()
 
     public init(
         run: TaskRun,
@@ -51,6 +55,12 @@ public final class TaskExecutionHandle: @unchecked Sendable {
                 await self?.pump(processHandle)
             }
         }
+    }
+
+    /// Whether readiness was observed (background deps).
+    public var isReady: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return becameReady
     }
 
     /// Host/fake runner completion without a process.
@@ -245,11 +255,35 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         guard !becameReady, let readiness else { return }
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        if readiness.firstMatch(in: text, options: [], range: range) != nil {
+        // Append to rolling window (may include previous incomplete chunk tail).
+        readinessWindow += text
+        if readinessWindow.count > readinessWindowMaxChars {
+            readinessWindow = String(readinessWindow.suffix(readinessWindowMaxChars))
+        }
+        let range = NSRange(readinessWindow.startIndex..<readinessWindow.endIndex, in: readinessWindow)
+        if readiness.firstMatch(in: readinessWindow, options: [], range: range) != nil {
             becameReady = true
             continuation?.yield(.ready)
         }
+    }
+
+    /// Feed raw process bytes through a streaming UTF-8 decoder before readiness matching.
+    nonisolated func emitDecodedStdout(_ data: Data) {
+        lock.lock()
+        utf8Carry.append(data)
+        // Decode complete prefix
+        var end = utf8Carry.count
+        while end > 0 {
+            if let s = String(data: utf8Carry.prefix(end), encoding: .utf8) {
+                let remainder = Data(utf8Carry.suffix(from: end))
+                utf8Carry = remainder
+                lock.unlock()
+                emit(stdout: s)
+                return
+            }
+            end -= 1
+        }
+        lock.unlock()
     }
 }
 

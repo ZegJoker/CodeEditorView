@@ -963,7 +963,13 @@ public final class EditorController {
         // Document-scoped undo emits didApply; this controller applies locally via funnel
         // only when it owns the undo call — TextDocument.undo applies content; we mirror.
         let before = textDocument.version
-        textDocument.performUndo()
+        do {
+            try textDocument.performUndo()
+        } catch {
+            // Failed undo leaves stacks unchanged; surface nothing at the UI binding layer.
+            publishSelectionChange()
+            return
+        }
         if textDocument.version > before {
             if let id = textDocument.lastAppliedTransactionID {
                 lastLocalTransactionID = id
@@ -982,7 +988,12 @@ public final class EditorController {
 
     public func redo() {
         let before = textDocument.version
-        textDocument.performRedo()
+        do {
+            try textDocument.performRedo()
+        } catch {
+            publishSelectionChange()
+            return
+        }
         if textDocument.version > before {
             if usesPresentationMirror {
                 document.setFullText(textDocument.text)

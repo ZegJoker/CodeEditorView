@@ -92,10 +92,10 @@ struct WorkbenchFocusCommandTests {
         let workspace = try await Workspace.local(rootDirectories: [root])
         let model = WorkbenchModel(workspace: workspace)
         model.focus(.navigator)
-        #expect(!model.isCommandEnabled(CommandID(rawValue: "codeeditor.edit.undo")))
+        #expect(!model.isCommandEnabled(CommandID(stringLiteral: "codeeditor.edit.undo")))
         model.focus(.editor)
         // Still no client without open file
-        #expect(!model.isCommandEnabled(CommandID(rawValue: "codeeditor.edit.undo")))
+        #expect(!model.isCommandEnabled(CommandID(stringLiteral: "codeeditor.edit.undo")))
     }
 }
 

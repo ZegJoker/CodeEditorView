@@ -88,6 +88,14 @@ public final class WorkbenchModel {
     /// Serializes async opens so the latest request wins (avoids selection lag races).
     private var openGeneration: UInt64 = 0
 
+    /// Registers a contribution and retains its token for the workbench lifetime (CMD-001).
+    @discardableResult
+    public func retainContribution(_ contribution: any WorkbenchContribution) -> any CommandDisposable {
+        let token = contributionRegistry.register(contribution)
+        contributionTokens.append(token)
+        return token
+    }
+
     public init(
         workspace: Workspace,
         configuration: WorkbenchConfiguration = .default,
@@ -120,29 +128,16 @@ public final class WorkbenchModel {
         contributionTokens.append(
             contributionRegistry.register(StatusBarContribution())
         )
-        // Breadcrumbs are rendered per-pane in WorkbenchPaneView (not a global accessory).
-        // Placeholder utility panes so the debug area looks Xcode-like before hosts wire real UI.
-        contributionTokens.append(contributionRegistry.register(UtilityPlaceholderContribution(
-            id: "workbench.utility.output",
-            title: "Output",
-            systemImage: "list.bullet.rectangle",
-            priority: 10,
-            emptyDescription: "Task and build output appears here."
-        )))
-        contributionTokens.append(contributionRegistry.register(UtilityPlaceholderContribution(
-            id: "workbench.utility.problems",
-            title: "Problems",
-            systemImage: "exclamationmark.triangle",
-            priority: 20,
-            emptyDescription: "Diagnostics and problem matchers appear here."
-        )))
-        contributionTokens.append(contributionRegistry.register(UtilityPlaceholderContribution(
-            id: "workbench.utility.terminal",
-            title: "Terminal",
-            systemImage: "terminal",
-            priority: 30,
-            emptyDescription: "Host-owned terminal sessions appear here."
-        )))
+        // Real utility panels (WB-001) — not ContentUnavailable placeholders.
+        contributionTokens.append(
+            contributionRegistry.register(WorkbenchOutputPanelContribution())
+        )
+        contributionTokens.append(
+            contributionRegistry.register(WorkbenchProblemsPanelContribution())
+        )
+        contributionTokens.append(
+            contributionRegistry.register(WorkbenchTerminalPanelContribution())
+        )
 
         activeNavigatorID = "workbench.navigator.files"
         activeUtilityID = "workbench.utility.problems"

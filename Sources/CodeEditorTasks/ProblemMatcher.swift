@@ -60,10 +60,66 @@ public struct ProblemMatcher: Sendable {
     }
 }
 
+/// Protocol-level source position (line/column) before snapshot resolution.
+///
+/// Task/compiler diagnostics must **not** invent UTF-16 offsets (TASK-001).
+public struct TaskSourcePosition: Sendable, Hashable, Codable {
+    /// Zero-based line index.
+    public var line: Int
+    /// Zero-based column in the matcher's column encoding (typically 1-based tools → 0-based here).
+    public var column: Int
+    /// How `column` was counted by the problem matcher / compiler.
+    public var encoding: ColumnEncoding
+
+    public enum ColumnEncoding: String, Sendable, Hashable, Codable {
+        case utf16
+        case utf8
+        case scalar
+        case display
+    }
+
+    public init(line: Int, column: Int, encoding: ColumnEncoding = .utf16) {
+        self.line = max(0, line)
+        self.column = max(0, column)
+        self.encoding = encoding
+    }
+}
+
 public struct MatchedProblem: Sendable, Hashable {
     public var uri: DocumentURI?
     public var path: String
     public var diagnostic: LanguageDiagnostic
+    /// Exact line/column from the matcher; resolve to UTF-16 only against a document snapshot.
+    public var position: TaskSourcePosition
+
+    public init(
+        uri: DocumentURI?,
+        path: String,
+        diagnostic: LanguageDiagnostic,
+        position: TaskSourcePosition
+    ) {
+        self.uri = uri
+        self.path = path
+        self.diagnostic = diagnostic
+        self.position = position
+    }
+
+    /// Resolve `position` against `text` into a UTF-16 range for navigation.
+    public func resolvedRange(in text: String) throws -> CodeEditorCore.TextRange {
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        guard position.line < lines.count else {
+            throw DocumentStoreError.invalidOffset(position.line)
+        }
+        var utf16Offset = 0
+        for i in 0..<position.line {
+            utf16Offset += (String(lines[i]) as NSString).length + 1 // +1 for '\n'
+        }
+        let lineText = String(lines[position.line])
+        let lineUTF16 = (lineText as NSString).length
+        let col = min(position.column, lineUTF16)
+        let location = utf16Offset + col
+        return CodeEditorCore.TextRange(location: location, length: max(0, min(1, lineUTF16 - col)))
+    }
 }
 
 public enum ProblemMatcherEngine {
@@ -97,10 +153,11 @@ public enum ProblemMatcherEngine {
         case "hint": severity = .hint
         default: severity = .error
         }
-        // Approximate UTF-16 location using line/col as offsets into a synthetic range.
-        let location = lineNum * 200 + col
+        // TASK-001: never invent UTF-16 offsets from line*N+col. Keep protocol coordinates;
+        // hosts resolve against a document snapshot via MatchedProblem.resolvedRange(in:).
+        let position = TaskSourcePosition(line: lineNum, column: col, encoding: .utf16)
         let diagnostic = LanguageDiagnostic(
-            range: CodeEditorCore.TextRange(location: location, length: 1),
+            range: CodeEditorCore.TextRange(location: 0, length: 0),
             severity: severity,
             message: message,
             source: matcher.owner
@@ -113,7 +170,7 @@ public enum ProblemMatcherEngine {
         } else {
             uri = DocumentURI(rawValue: path)
         }
-        return MatchedProblem(uri: uri, path: path, diagnostic: diagnostic)
+        return MatchedProblem(uri: uri, path: path, diagnostic: diagnostic, position: position)
     }
 
     public static func matchAll(
@@ -146,7 +203,12 @@ public enum ProblemMatcherEngine {
                     }
                     var diag = problem.diagnostic
                     diag.message = message
-                    results.append(MatchedProblem(uri: problem.uri, path: problem.path, diagnostic: diag))
+                    results.append(MatchedProblem(
+                        uri: problem.uri,
+                        path: problem.path,
+                        diagnostic: diag,
+                        position: problem.position
+                    ))
                     if results.count >= matcher.maxProblems { return results }
                     matched = true
                     break

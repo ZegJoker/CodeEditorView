@@ -18,6 +18,8 @@ public final class VTParser: @unchecked Sendable {
         case csiParam
         case csiIntermediate
         case oscString
+        /// Seen ESC inside OSC; next byte must be `\\` (ST) to terminate.
+        case oscStringMaybeST
         case ignore
     }
 
@@ -66,17 +68,11 @@ public final class VTParser: @unchecked Sendable {
             if byte < 0x20 {
                 return [.execute(byte)]
             }
-            // UTF-8
+            // UTF-8 multi-byte start (TER-001 fix: never double-append leading byte).
             if byte < 0x80 {
                 return [.print(Character(UnicodeScalar(byte)))]
             }
-            utf8Buffer = [byte]
-            let need = utf8Needed(byte)
-            if need == 0 {
-                return [.print("\u{FFFD}")]
-            }
-            // Collect in buffer via execute path using ignore intermediate — store in utf8Buffer
-            // Simple approach: accumulate in utf8Buffer using a local multi-byte collector on ground
+            // collectUTF8 owns buffer initialization when empty.
             return collectUTF8(byte)
         case .escape:
             if byte == 0x5B { // [
@@ -163,12 +159,10 @@ public final class VTParser: @unchecked Sendable {
                 return [.osc(s)]
             }
             if byte == 0x1B {
-                // may be ST ESC \
-                state = .escape
-                // stash — if next not \, treat as new escape; for simplicity close osc
-                let s = oscBuffer
-                oscBuffer = ""
-                return [.osc(s)]
+                // OSC string terminator is ESC \ (ST). Do not close on bare ESC —
+                // wait for the following byte in a dedicated transition.
+                state = .oscStringMaybeST
+                return []
             }
             if oscBuffer.count < maxOSCLength {
                 if let scalar = UnicodeScalar(UInt32(byte)), byte < 0x80 {
@@ -176,6 +170,16 @@ public final class VTParser: @unchecked Sendable {
                 }
             }
             return []
+        case .oscStringMaybeST:
+            if byte == 0x5C { // ST = ESC \
+                let s = oscBuffer
+                state = .ground
+                oscBuffer = ""
+                return [.osc(s)]
+            }
+            // Not ST — ESC was data/noise; re-process as escape from ground semantics.
+            state = .escape
+            return consume(byte)
         case .ignore:
             if byte >= 0x40 && byte <= 0x7E {
                 state = .ground

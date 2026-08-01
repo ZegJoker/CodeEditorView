@@ -383,8 +383,11 @@ struct WorkbenchTabBar: View {
                     .transition(.scale.combined(with: .opacity))
             }
             Button {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeTab(tab.id, in: pane.id)
+                Task { @MainActor in
+                    let result = await model.workspace.requestCloseTab(tab.id, in: pane.id)
+                    if result == .closed {
+                        withAnimation(WorkbenchMotion.tab) { }
+                    }
                 }
             } label: {
                 Image(systemName: "xmark")
@@ -455,18 +458,27 @@ struct WorkbenchTabBar: View {
                 }
             }
             Button("Close") {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeTab(tab.id, in: pane.id)
+                Task { @MainActor in
+                    let _: CloseTransactionResult = await model.workspace.requestCloseTab(
+                        tab.id,
+                        in: pane.id
+                    )
                 }
             }
             Button("Close Others") {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeOtherTabs(keeping: tab.id, in: pane.id)
+                Task { @MainActor in
+                    let _: CloseTransactionResult = await model.workspace.requestCloseOtherTabs(
+                        keeping: tab.id,
+                        in: pane.id
+                    )
                 }
             }
             Button("Close to the Right") {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeTabsToTheRight(of: tab.id, in: pane.id)
+                Task { @MainActor in
+                    let _: CloseTransactionResult = await model.workspace.requestCloseTabsToTheRight(
+                        of: tab.id,
+                        in: pane.id
+                    )
                 }
             }
         }

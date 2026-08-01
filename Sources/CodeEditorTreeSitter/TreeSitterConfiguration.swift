@@ -11,21 +11,52 @@ public protocol TreeSitterConfigurationProviding: Sendable {
     func languageConfiguration(for languageID: String) throws -> LanguageConfiguration?
 }
 
+/// Process-wide language configuration registry isolated behind an actor (TS-001).
+public actor TreeSitterLanguageRuntime {
+    public static let shared = TreeSitterLanguageRuntime()
+
+    private var configurationProvider: (any TreeSitterConfigurationProviding)?
+    private var onDemandBootstrap: (@Sendable () -> Void)?
+
+    public func install(_ provider: any TreeSitterConfigurationProviding) {
+        configurationProvider = provider
+    }
+
+    public func setBootstrap(_ bootstrap: (@Sendable () -> Void)?) {
+        onDemandBootstrap = bootstrap
+    }
+
+    public func resolveProvider() -> (any TreeSitterConfigurationProviding)? {
+        if let configurationProvider { return configurationProvider }
+        onDemandBootstrap?()
+        return configurationProvider
+    }
+
+    public func reset() {
+        configurationProvider = nil
+        onDemandBootstrap = nil
+    }
+}
+
 /// Process-wide installation point for the active Tree-sitter configuration provider.
+///
+/// Stored properties remain for ABI compatibility with language packs/tests.
+/// ``TreeSitterLanguageRuntime`` mirrors installs for actor-safe resolution.
 public enum TreeSitterLanguageEnvironment {
     nonisolated(unsafe) public static var configurationProvider: (any TreeSitterConfigurationProviding)?
 
     /// Optional hook invoked when a configuration is needed but no provider is installed yet.
-    /// Language pack modules set this so the first highlight load can auto-bootstrap.
     nonisolated(unsafe) public static var onDemandBootstrap: (@Sendable () -> Void)?
 
     public static func install(_ provider: any TreeSitterConfigurationProviding) {
         configurationProvider = provider
+        Task { await TreeSitterLanguageRuntime.shared.install(provider) }
     }
 
     public static func reset() {
         configurationProvider = nil
         onDemandBootstrap = nil
+        Task { await TreeSitterLanguageRuntime.shared.reset() }
     }
 
     /// Returns the installed provider, running ``onDemandBootstrap`` once if needed.

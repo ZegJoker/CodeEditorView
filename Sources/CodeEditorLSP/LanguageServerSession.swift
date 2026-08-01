@@ -25,6 +25,8 @@ public actor LanguageServerSession {
 
     public let budgets: LSPServerBudgets
     public let positionMaps = LSPPositionMapCache()
+    /// Cross-file URI → text resolver (LSP-003).
+    public let snapshotResolver: LSPSnapshotResolverBox
     public private(set) var restartAttempts: Int = 0
     private var dynamicRegistrations: [String: LSPJSONObject] = [:]
     /// Host-facing applyEdit handler.
@@ -38,12 +40,16 @@ public actor LanguageServerSession {
         definition: LanguageServerDefinition,
         log: LSPLog = LSPLog(),
         budgets: LSPServerBudgets = .default,
-        transportFactory: (@Sendable () async throws -> any LSPTransport)? = nil
+        transportFactory: (@Sendable () async throws -> any LSPTransport)? = nil,
+        snapshotResolver: LSPSnapshotResolverBox? = nil
     ) {
         self.definition = definition
         self.log = log
         self.budgets = budgets
         self.makeTransport = transportFactory
+        self.snapshotResolver = snapshotResolver ?? LSPSnapshotResolverBox(
+            DefaultWorkspaceSnapshotResolver(openDocumentText: { _ in nil })
+        )
         var cont: AsyncStream<LSPDiagnosticsEvent>.Continuation!
         self.diagnosticsStream = AsyncStream { cont = $0 }
         self.diagnosticsContinuation = cont
@@ -483,7 +489,7 @@ public actor LanguageServerSession {
         switch method {
         case "workspace/applyEdit":
             let editDict = params["edit"] as? [String: Any] ?? [:]
-            let plan = parseWorkspaceEdit(editDict)
+            let plan = await parseWorkspaceEdit(editDict)
             if let handler = applyEditHandler {
                 let applied = await handler(plan)
                 return LSPAnyJSON(["applied": applied])
@@ -548,16 +554,32 @@ public actor LanguageServerSession {
         return await positionMaps.map(for: uri, version: doc.version, text: doc.text)
     }
 
-    private func parseWorkspaceEdit(_ dict: [String: Any]) -> WorkspaceEditPlan {
+    /// Text for URI: open document first, else snapshot resolver (disk).
+    public func text(for uri: DocumentURI) async -> String {
+        if let doc = openDocuments[uri] { return doc.text }
+        if let snap = try? await snapshotResolver.snapshot(for: uri) {
+            return snap.text
+        }
+        return ""
+    }
+
+    /// Wire snapshot resolver to live open documents (call after open/close of buffers).
+    public func refreshSnapshotResolver() async {
+        // Re-bind so disk fallback still works while open docs win via text(for:).
+        await snapshotResolver.set(DefaultWorkspaceSnapshotResolver())
+    }
+
+    private func parseWorkspaceEdit(_ dict: [String: Any]) async -> WorkspaceEditPlan {
         var docs: [DocumentEditPlan] = []
         if let changes = dict["changes"] as? [String: [[String: Any]]] {
             for (uri, edits) in changes {
-                let text = openDocuments[DocumentURI(rawValue: uri)]?.text ?? ""
+                let documentURI = DocumentURI(rawValue: uri)
+                let text = await text(for: documentURI)
                 if let data = try? JSONSerialization.data(withJSONObject: edits),
                    let decoded = try? JSONDecoder().decode([LSPTextEdit].self, from: data)
                 {
                     docs.append(DocumentEditPlan(
-                        uri: DocumentURI(rawValue: uri),
+                        uri: documentURI,
                         edits: decoded.map { LSPConvert.textEditPlan($0, in: text) }
                     ))
                 }

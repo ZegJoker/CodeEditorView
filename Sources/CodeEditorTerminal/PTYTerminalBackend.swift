@@ -20,7 +20,11 @@ public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
     public init(platformProfile: PlatformCapabilityProfile = .default()) {
         self.platformProfile = platformProfile
         var cont: AsyncStream<TerminalOutputEvent>.Continuation!
-        self.output = AsyncStream(bufferingPolicy: .bufferingNewest(512)) { cont = $0 }
+        // TER-001: never use lossy buffering for terminal bytes. Unbounded buffer with
+        // backpressure at the PTY read side — dropping chunks corrupts VT state permanently.
+        // `.unbounded` is the honest interim until Ghostty-owned transport; producers must
+        // not silently discard. A full Ghostty migration replaces this path.
+        self.output = AsyncStream(bufferingPolicy: .unbounded) { cont = $0 }
         self.continuation = cont
     }
 

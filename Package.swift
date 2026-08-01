@@ -1,5 +1,12 @@
 // swift-tools-version: 6.0
+// PKG-001: Every custom target path declared below MUST exist at package evaluation time.
+// Grammar C sources live under Grammars/src/<lang> (generate via ./scripts/update-grammars.sh
+// or consume a release archive that includes them). Do not declare missing paths.
 import PackageDescription
+import Foundation
+
+// Optional Ghostty link: export CODEEDITOR_GHOSTTY_LINKED=1 after ./scripts/build-ghostty.sh
+let ghosttyLinked = ProcessInfo.processInfo.environment["CODEEDITOR_GHOSTTY_LINKED"] == "1"
 
 let package = Package(
     name: "CodeEditorView",
@@ -31,6 +38,7 @@ let package = Package(
         .library(name: "CodeEditorSearch", targets: ["CodeEditorSearch"]),
         .library(name: "CodeEditorTasks", targets: ["CodeEditorTasks"]),
         .library(name: "CodeEditorTerminal", targets: ["CodeEditorTerminal"]),
+        .library(name: "CodeEditorTerminalGhostty", targets: ["CodeEditorTerminalGhostty"]),
         .library(name: "CodeEditorSourceControl", targets: ["CodeEditorSourceControl"]),
         .library(name: "CodeEditorTreeSitter", targets: ["CodeEditorTreeSitter"]),
         .library(name: "CodeEditorLanguageSwift", targets: ["CodeEditorLanguageSwift"]),
@@ -542,6 +550,8 @@ let package = Package(
                 "CodeEditorWorkspace",
                 "CodeEditorView",
                 "CodeEditorLanguageSupport",
+                "CodeEditorTerminal",
+                "CodeEditorTerminalGhostty",
             ]
         ),
         .target(
@@ -688,6 +698,29 @@ let package = Package(
             dependencies: [
                 "CodeEditorCore",
                 "CodeEditorDocuments",
+            ]
+        ),
+        .target(
+            name: "CGhosttyShim",
+            path: "Sources/CGhosttyShim",
+            publicHeadersPath: "include",
+            cSettings: ghosttyLinked ? [
+                .headerSearchPath("include"),
+                .define("CODEEDITOR_GHOSTTY_LINKED", to: "1"),
+                .headerSearchPath("../../Vendor/ghostty/include"),
+            ] : [
+                .headerSearchPath("include"),
+            ],
+            linkerSettings: ghosttyLinked ? [
+                .linkedLibrary("ghostty-vt", .when(platforms: [.macOS])),
+                .unsafeFlags(["-LVendor/ghostty/zig-out/lib"], .when(platforms: [.macOS])),
+            ] : []
+        ),
+        .target(
+            name: "CodeEditorTerminalGhostty",
+            dependencies: [
+                "CodeEditorTerminal",
+                "CGhosttyShim",
             ]
         ),
         .target(
@@ -881,7 +914,7 @@ let package = Package(
         ),
         .testTarget(
             name: "CodeEditorTerminalTests",
-            dependencies: ["CodeEditorTerminal"]
+            dependencies: ["CodeEditorTerminal", "CodeEditorTerminalGhostty"]
         ),
         .testTarget(
             name: "CodeEditorSourceControlTests",
