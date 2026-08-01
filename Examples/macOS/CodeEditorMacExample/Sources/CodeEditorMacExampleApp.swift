@@ -2,11 +2,15 @@ import SwiftUI
 import CodeEditorView
 import CodeEditorLanguageSwift
 
-/// Small composition: editor UI + single language pack (no workspace/workbench).
+/// Phase 1 macOS example host — real AppKit/SwiftUI editor surface under Xcode 26.
 @main
-struct SmallEditorApp: App {
+struct CodeEditorMacExampleApp: App {
     init() {
-        try? CodeEditorLanguageSwift.register()
+        do {
+            _ = try CodeEditorLanguageSwift.register()
+        } catch {
+            assertionFailure("Language pack registration failed: \(error)")
+        }
     }
 
     var body: some Scene {
@@ -18,8 +22,10 @@ struct SmallEditorApp: App {
 
 struct ContentView: View {
     @State private var text = """
+    import Foundation
+
     func hello() {
-        print("small editor")
+        print("CodeEditorMacExample")
     }
     """
     @State private var selection = NSRange(location: 0, length: 0)
@@ -37,6 +43,6 @@ struct ContentView: View {
             ),
             language: .swift
         )
-        .frame(minWidth: 480, minHeight: 320)
+        .frame(minWidth: 640, minHeight: 420)
     }
 }

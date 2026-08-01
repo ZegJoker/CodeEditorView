@@ -30,7 +30,13 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 - WB-001: real Output / Problems / Terminal utility panels (PTY-backed terminal UI)
 - TER-001 partial: non-lossy terminal stream; VT UTF-8 double-append fixed; OSC ST handling
 - CommandID validation + typed notFound/disabled results; chord ambiguity state machine
-- PKG-001: Package.swift grammar path policy + `scripts/filter-package-grammars.py`
+- **Phase 1 complete (PKG-001 / CI-004 / CI-008 / CI-009 / CI-010 / CI-011):**
+  - Grammars committed in `Packages/CodeEditorGrammars` (deterministic path package); root has zero `Grammars/` targets
+  - Retired `filter-package-grammars.py` (fails if invoked)
+  - Hard `swift-format` + WASI SDK gates; `XCODE.pin` (26.4)
+  - Source-archive rehearsal script + CI job
+  - Real macOS/iOS example hosts with `xcodebuild test`
+  - Typed `LanguagePackError` for missing query resources
 - WASM-002: real WasmKit `parseWasm` / instantiate / export call path + RealWasmExecutionTests
 - TER-001: `CGhosttyShim` C ABI, `CodeEditorTerminalGhostty`, GHOSTTY.pin, workbench PTY terminal
 - LSP-003: `WorkspaceSnapshotResolver` for cross-file location text

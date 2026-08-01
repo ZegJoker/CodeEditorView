@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
-# Formatting gate. Uses swift-format when available; otherwise records skip with non-fail.
-# Set REQUIRE_SWIFT_FORMAT=1 to fail if the tool is missing.
+# Formatting gate (hard). Missing tool or lint findings fail the job.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if ! command -v swift-format >/dev/null 2>&1; then
-  if [[ "${REQUIRE_SWIFT_FORMAT:-0}" == "1" ]]; then
-    echo "FAIL: swift-format not installed (REQUIRE_SWIFT_FORMAT=1)" >&2
-    exit 1
-  fi
-  echo "SKIP: swift-format not installed (install via Homebrew or Swift toolchain)"
-  echo "      Configuration: .swift-format (when present)"
-  exit 0
+  echo "FAIL: swift-format not installed" >&2
+  echo "      Install: brew install swift-format" >&2
+  echo "      Or use a Swift toolchain that provides swift-format on PATH." >&2
+  exit 1
 fi
 
 CONFIG=()
@@ -20,17 +16,24 @@ if [[ -f .swift-format ]]; then
   CONFIG=(--configuration .swift-format)
 fi
 
-echo "== swift-format lint =="
-# Lint Sources and Tests only
-swift-format lint --recursive "${CONFIG[@]}" Sources Tests 2>&1 | tee /tmp/codeeditor-format.log || true
-# swift-format lint exits non-zero on findings
-if grep -q . /tmp/codeeditor-format.log 2>/dev/null; then
-  # Count only error-like lines if tool printed paths
-  if [[ "${STRICT_FORMAT:-0}" == "1" ]]; then
-    echo "FAIL: formatting issues (STRICT_FORMAT=1)"
+echo "== swift-format lint (Sources Tests) =="
+set +e
+swift-format lint --recursive "${CONFIG[@]}" Sources Tests 2>&1 | tee /tmp/codeeditor-format.log
+lint_ec=${PIPESTATUS[0]}
+set -e
+
+if [[ "$lint_ec" -ne 0 ]]; then
+  echo "FAIL: swift-format lint exit $lint_ec" >&2
+  exit 1
+fi
+
+# Some swift-format versions print findings but still exit 0; treat any output as failure.
+if [[ -s /tmp/codeeditor-format.log ]]; then
+  # Ignore pure info lines if any; fail on any path-like or error content.
+  if grep -E '\.swift:[0-9]+:|error:|warning:' /tmp/codeeditor-format.log >/dev/null 2>&1; then
+    echo "FAIL: formatting issues reported" >&2
     exit 1
   fi
-  echo "WARN: swift-format reported findings (set STRICT_FORMAT=1 to fail)"
-else
-  echo "OK:   no format findings"
 fi
+
+echo "OK:   swift-format clean"

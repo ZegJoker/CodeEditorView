@@ -1,0 +1,13 @@
+# Exact supported Xcode / Swift pin (Phase 1 / CI-009).
+# CI must select this toolchain and record versions in every evidence artifact.
+# Fail jobs when the marketing version does not match XCODE_VERSION.
+
+XCODE_VERSION=26.4
+XCODE_BUILD=17E192
+SWIFT_TOOLS_VERSION=6.0
+SWIFT_COMPILER_MAJOR=6.3
+DEPLOYMENT_MACOS=15.0
+DEPLOYMENT_IOS=18.0
+RUNNER_IMAGE=macos-15
+# Preferred app path on runners / developer machines:
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer

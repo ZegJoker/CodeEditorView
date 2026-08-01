@@ -21,44 +21,29 @@ Use it from SwiftUI, or drive the same engine through `EditorController` on AppK
 
 | | |
 |---|---|
-| Swift | 6 |
+| Swift | 6.0 tools / 6.3 compiler (see `Docs/Architecture/TOOLCHAIN.md`) |
 | Platforms | macOS 15+, iOS 18+ |
-| Xcode | 16+ |
-| Git + network | Required once to fetch Tree-sitter grammars (see below) |
+| Xcode | **26.4** (exact pin: `Docs/Architecture/XCODE.pin`) |
+| Network | Only for SwiftPM remote dependencies on first resolve |
 
-## Developer setup (Tree-sitter grammars)
-
-Vendored Tree-sitter **C sources are not checked into git** (they are large third-party generated code). They live under `Grammars/` after you generate them locally.
-
-**Prerequisites:** `git`, network access to GitHub (and any grammar remotes listed in `scripts/grammars.tsv`).
+## Developer setup
 
 ```bash
-# From the repository root:
-./scripts/update-grammars.sh
+git clone <repo>
+cd CodeEditorView
+swift package resolve
+swift build --product CodeEditorCore
+swift build --product CodeEditorLanguageSwift   # grammars are committed
+swift test
 ```
 
-This clones (or reuses a cache under `$TMPDIR/codeeditorview-grammars`) each grammar from `scripts/grammars.tsv` and materializes:
+Tree-sitter **C sources are committed** under `Packages/CodeEditorGrammars` (PKG-001). A clean clone does **not** require `./scripts/update-grammars.sh`. That script is a **maintainer** tool to refresh pins from upstream; after running it, commit the package sources and checksums.
 
-- `Grammars/src/<lang>/parser.c` (+ `scanner.c` / `scanner.cc` when present)
-- `Grammars/src/<lang>/tree_sitter/*.h`
-- `Grammars/src/<lang>/include/<lang>.h` (public `tree_sitter_*()` entry points)
-- Shared `common/` bits for TypeScript / TSX / PHP / OCaml when upstream provides them (includes rewritten to local paths after flatten)
+Highlight query files (`.scm`) live under `Sources/CodeEditorLanguages/Resources/` and language-pack `Resources/`. Missing required queries surface as `LanguagePackError`.
 
-`Grammars/` is listed in `.gitignore`. Re-run the script after cloning the repo, when adding a language to `grammars.tsv`, or when you intentionally want newer upstream parsers.
+**Stabilization program:** see `Docs/Architecture/PHASE0-NOTES.md`, `PHASE1-NOTES.md`, and ADRs 013–016.
 
-**Stabilization program:** see `Docs/Architecture/PHASE0-NOTES.md`, `PHASE1-NOTES.md`, and ADRs 013–016 for the evidence-based Stable gate, platform capability profiles, and Swift-first extension platform direction.
-
-**CI:** `.github/workflows/ci.yml` (macOS tests, iOS Simulator build, empty-cache resolve, product smoke, coverage, API baselines, WASI pin, isolation/docs). Local mirror: `./scripts/verify-local.sh`.
-
-**When you need it**
-
-| Goal | Need `./scripts/update-grammars.sh`? |
-|---|---|
-| Build/test **CodeEditorView** / Core / Workbench only | No |
-| Build/test **CodeEditorLanguageSwift**, **JSON**, **CodeEditorLanguages**, language tests | **Yes** |
-| Examples that call `CodeEditorLanguageSwift.register()` | **Yes** |
-
-Highlight **query** files (`.scm`) remain in-repo under `Sources/CodeEditorLanguages/Resources/` and `Sources/CodeEditorLanguage*/` — only the C parser sources are generated.
+**CI:** `.github/workflows/ci.yml` — hard format/WASI/Xcode pin, source-archive rehearsal, macOS/iOS example `xcodebuild test`, empty-cache resolve, product smoke, coverage, API baselines. Local: `./scripts/verify-local.sh`.
 
 ## Installation
 
@@ -98,7 +83,7 @@ dependencies: [
 | **CodeEditorSourceControl** | Experimental | SCM providers / Git CLI |
 | **CodeEditorDAP** | Experimental | Debug Adapter Protocol client |
 
-\* Language pack APIs are pre-alpha; grammar C sources are generated/local (`Grammars/`). See `Docs/Guides/API-STABILITY.md`.
+\* Language pack APIs are pre-alpha; grammar C sources are committed in `Packages/CodeEditorGrammars`. See `Docs/Guides/API-STABILITY.md`.
 
 ## Compositions
 
@@ -117,6 +102,8 @@ dependencies: [
 
 Examples:
 
+- `Examples/macOS/CodeEditorMacExample` — Xcode 26 macOS host (`xcodebuild test`)
+- `Examples/iOS/CodeEditoriOSExample` — Xcode 26 iOS host (`xcodebuild test`)
 - `Examples/SmallEditor` — View + Swift pack  
 - `Examples/CodeEditorViewDemo` — interactive demo  
 - `Examples/FullWorkbench` — workbench + tooling linkage  

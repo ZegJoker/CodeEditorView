@@ -4,33 +4,236 @@
   "source": "CodeEditorView_Deep_Audit_Xcode26_Ghostty.md",
   "updated": "2026-08-01",
   "defects": [
-    {"id": "PKG-001", "severity": "P0", "product": "Package", "status": "fixed", "summary": "Grammar path policy + filter script"},
-    {"id": "DOC-001", "severity": "P0", "product": "CodeEditorCore", "status": "fixed", "summary": "Atomic multi-edit"},
-    {"id": "DOC-002", "severity": "P0", "product": "CodeEditorDocuments", "status": "fixed", "summary": "Transactional undo/redo"},
-    {"id": "DOC-003", "severity": "P0", "product": "CodeEditorCore", "status": "fixed", "summary": "Exact offsets"},
-    {"id": "DOC-004", "severity": "P0", "product": "CodeEditorDocuments", "status": "fixed", "summary": "Conflict-safe save"},
-    {"id": "WSP-001", "severity": "P0", "product": "CodeEditorWorkspace", "status": "fixed", "summary": "Dirty-close coordinator"},
-    {"id": "WSP-002", "severity": "P0", "product": "CodeEditorWorkspace", "status": "fixed", "summary": "Durable workspace edit journal"},
-    {"id": "EXT-001", "severity": "P0", "product": "CodeEditorExtensionAPI", "status": "fixed", "summary": "Validated ExtensionID"},
-    {"id": "EXT-002", "severity": "P0", "product": "CodeEditorExtensionHost", "status": "fixed", "summary": "File-set signature equality"},
-    {"id": "EXT-003", "severity": "P0", "product": "CodeEditorExtensionHost", "status": "fixed", "summary": "Publisher binding"},
-    {"id": "EXT-004", "severity": "P0", "product": "CodeEditorExtensions", "status": "fixed", "summary": "Fail-closed install"},
-    {"id": "WASM-001", "severity": "P0", "product": "CodeEditorWasmEngineWasmKit", "status": "fixed", "summary": "Real WasmKit parse/instantiate/call"},
-    {"id": "WASM-002", "severity": "P0", "product": "CodeEditorWasmEngine", "status": "fixed", "summary": "Real module execution tests pass"},
-    {"id": "IOS-001", "severity": "P0", "product": "CodeEditorView", "status": "fixed", "summary": "Duplicate a11y removed"},
-    {"id": "LSP-001", "severity": "P0", "product": "CodeEditorLSP", "status": "fixed", "summary": "Full-text debounce resync"},
-    {"id": "TER-001", "severity": "P0", "product": "CodeEditorTerminal", "status": "fixed", "summary": "CGhosttyShim + GhosttySessionController + non-lossy PTY; pin file; workbench terminal"},
-    {"id": "CI-001", "severity": "P1", "product": "scripts", "status": "fixed", "summary": "generate-release-evidence.sh produces artifacts from tests"},
-    {"id": "CMD-001", "severity": "P1", "product": "CodeEditorWorkbench", "status": "fixed", "summary": "Registration tokens retained"},
-    {"id": "CMD-002", "severity": "P1", "product": "CodeEditorCommands", "status": "fixed", "summary": "Chord state machine"},
-    {"id": "LSP-002", "severity": "P1", "product": "CodeEditorLSP", "status": "fixed", "summary": "Register-before-send"},
-    {"id": "LSP-003", "severity": "P1", "product": "CodeEditorLSP", "status": "fixed", "summary": "WorkspaceSnapshotResolver cross-file"},
-    {"id": "DAP-001", "severity": "P1", "product": "CodeEditorDAP", "status": "fixed", "summary": "Register-before-send"},
-    {"id": "TASK-001", "severity": "P1", "product": "CodeEditorTasks", "status": "fixed", "summary": "No fabricated offsets"},
-    {"id": "TASK-002", "severity": "P1", "product": "CodeEditorTasks", "status": "fixed", "summary": "Rolling readiness window; dep requires ready"},
-    {"id": "UI-001", "severity": "P1", "product": "CodeEditorView", "status": "fixed", "summary": "Grapheme UITextInput, selection rects, BiDi, marked subrange"},
-    {"id": "SCM-001", "severity": "P1", "product": "CodeEditorSourceControl", "status": "fixed", "summary": "Rename + path containment"},
-    {"id": "TS-001", "severity": "P1", "product": "CodeEditorTreeSitter", "status": "fixed", "summary": "TreeSitterLanguageRuntime actor; off-main load"},
-    {"id": "WB-001", "severity": "P1", "product": "CodeEditorWorkbench", "status": "fixed", "summary": "Real utility panels"}
+    {
+      "id": "PKG-001",
+      "severity": "P0",
+      "product": "Package",
+      "status": "fixed",
+      "summary": "Committed Packages/CodeEditorGrammars; root Package.swift has zero Grammars/ paths; archive rehearsal script"
+    },
+    {
+      "id": "CI-004",
+      "severity": "P1",
+      "product": "scripts",
+      "status": "fixed",
+      "summary": "check-format.sh and check-wasi-sdk.sh are hard gates; CI installs tools"
+    },
+    {
+      "id": "CI-008",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Examples/iOS/CodeEditoriOSExample + xcodebuild test job"
+    },
+    {
+      "id": "CI-009",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Docs/Architecture/XCODE.pin + check-xcode-pin.sh"
+    },
+    {
+      "id": "CI-010",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "export-source-archive-rehearsal.sh + CI source-archive-rehearsal"
+    },
+    {
+      "id": "CI-011",
+      "severity": "P1",
+      "product": "Examples",
+      "status": "fixed",
+      "summary": "macOS/iOS example packages with xcodebuild test jobs"
+    },
+    {
+      "id": "DOC-001",
+      "severity": "P0",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "Atomic multi-edit"
+    },
+    {
+      "id": "DOC-002",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Transactional undo/redo"
+    },
+    {
+      "id": "DOC-003",
+      "severity": "P0",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "Exact offsets"
+    },
+    {
+      "id": "DOC-004",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Conflict-safe save"
+    },
+    {
+      "id": "WSP-001",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "Dirty-close coordinator"
+    },
+    {
+      "id": "WSP-002",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "Durable workspace edit journal"
+    },
+    {
+      "id": "EXT-001",
+      "severity": "P0",
+      "product": "CodeEditorExtensionAPI",
+      "status": "fixed",
+      "summary": "Validated ExtensionID"
+    },
+    {
+      "id": "EXT-002",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "File-set signature equality"
+    },
+    {
+      "id": "EXT-003",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Publisher binding"
+    },
+    {
+      "id": "EXT-004",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "Fail-closed install"
+    },
+    {
+      "id": "WASM-001",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineWasmKit",
+      "status": "fixed",
+      "summary": "Real WasmKit parse/instantiate/call"
+    },
+    {
+      "id": "WASM-002",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Real module execution tests pass"
+    },
+    {
+      "id": "IOS-001",
+      "severity": "P0",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Duplicate a11y removed"
+    },
+    {
+      "id": "LSP-001",
+      "severity": "P0",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Full-text debounce resync"
+    },
+    {
+      "id": "TER-001",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "CGhosttyShim + GhosttySessionController + non-lossy PTY; pin file; workbench terminal"
+    },
+    {
+      "id": "CI-001",
+      "severity": "P1",
+      "product": "scripts",
+      "status": "fixed",
+      "summary": "generate-release-evidence.sh produces artifacts from tests"
+    },
+    {
+      "id": "CMD-001",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Registration tokens retained"
+    },
+    {
+      "id": "CMD-002",
+      "severity": "P1",
+      "product": "CodeEditorCommands",
+      "status": "fixed",
+      "summary": "Chord state machine"
+    },
+    {
+      "id": "LSP-002",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Register-before-send"
+    },
+    {
+      "id": "LSP-003",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "WorkspaceSnapshotResolver cross-file"
+    },
+    {
+      "id": "DAP-001",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "Register-before-send"
+    },
+    {
+      "id": "TASK-001",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "No fabricated offsets"
+    },
+    {
+      "id": "TASK-002",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Rolling readiness window; dep requires ready"
+    },
+    {
+      "id": "UI-001",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Grapheme UITextInput, selection rects, BiDi, marked subrange"
+    },
+    {
+      "id": "SCM-001",
+      "severity": "P1",
+      "product": "CodeEditorSourceControl",
+      "status": "fixed",
+      "summary": "Rename + path containment"
+    },
+    {
+      "id": "TS-001",
+      "severity": "P1",
+      "product": "CodeEditorTreeSitter",
+      "status": "fixed",
+      "summary": "TreeSitterLanguageRuntime actor; off-main load"
+    },
+    {
+      "id": "WB-001",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Real utility panels"
+    }
   ]
 }

@@ -2,30 +2,27 @@ import SwiftUI
 import CodeEditorView
 import CodeEditorLanguageSwift
 
-/// Small composition: editor UI + single language pack (no workspace/workbench).
-@main
-struct SmallEditorApp: App {
-    init() {
-        try? CodeEditorLanguageSwift.register()
-    }
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-    }
-}
-
-struct ContentView: View {
+/// Phase 1 iOS example host — SwiftUI + UIKitEditorView path under Xcode 26.
+public struct CodeEditoriOSExampleRoot: View {
     @State private var text = """
+    import Foundation
+
     func hello() {
-        print("small editor")
+        print("CodeEditoriOSExample")
     }
     """
     @State private var selection = NSRange(location: 0, length: 0)
     @State private var editorState = EditorState()
 
-    var body: some View {
+    public init() {
+        do {
+            _ = try CodeEditorLanguageSwift.register()
+        } catch {
+            assertionFailure("Language pack registration failed: \(error)")
+        }
+    }
+
+    public var body: some View {
         CodeEditor(
             text: $text,
             selection: $selection,
@@ -37,6 +34,13 @@ struct ContentView: View {
             ),
             language: .swift
         )
-        .frame(minWidth: 480, minHeight: 320)
+    }
+}
+
+/// App entry for Xcode app target / future @main wrapper.
+public enum CodeEditoriOSExampleBootstrap {
+    @MainActor
+    public static func makeRootView() -> some View {
+        CodeEditoriOSExampleRoot()
     }
 }

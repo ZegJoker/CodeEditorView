@@ -1,6 +1,6 @@
 # Toolchain and WASI pins
 
-## Swift toolchain
+## Swift / Xcode (hard pin)
 
 | Item | Pin |
 |---|---|
@@ -8,35 +8,60 @@
 | Language mode | Swift 6 (`.v6`) |
 | Platforms | macOS 15+, iOS 18+ |
 | `.swift-version` | `6.0` (local `swiftenv` / tooling hint) |
-| CI Xcode image | `macos-15` (or `macos-latest` with Xcode 16+) |
+| **Xcode marketing version** | **26.4** (`Docs/Architecture/XCODE.pin`) |
+| Xcode build (reference) | `17E192` |
+| Swift compiler (reference) | 6.3.x on Xcode 26.4 |
+| CI runner image | `macos-15` |
+| `DEVELOPER_DIR` | `/Applications/Xcode.app/Contents/Developer` |
 
-Phase 0 local baseline also validated on Apple Swift 6.3 developer toolchain; the package remains compatible with Swift 6.0 tools version.
+CI selects and verifies the pin via `./scripts/check-xcode-pin.sh` (hard fail on marketing version mismatch). Every evidence artifact records `xcodebuild -version` and `swift --version`.
 
-## Swift WASI SDK (extension Swift-Wasm path)
+## Format (hard gate)
 
-Pinned for CI presence validation (Phase 1). Phase 11 adds **build/repro scripts**; ABI freeze blocked until CI emits real `.wasm` (ADR-017).
+| Item | Value |
+|---|---|
+| Tool | `swift-format` on `PATH` |
+| Config | `.swift-format` |
+| Script | `./scripts/check-format.sh` |
+| Policy | Missing tool **or** any lint finding → **exit 1** (no soft skip) |
+
+Install: `brew install swift-format`
+
+## Swift WASI SDK (hard gate)
+
+Pinned for CI presence validation (Phase 1). Full Wasm guest builds are Phase 11.
 
 | Item | Value |
 |---|---|
 | Pin file | `Docs/Architecture/WASI-SDK.pin` |
-| Env override | `CODEEDITOR_WASI_SDK_ID` |
+| Install URL / checksum | in pin file (`INSTALL_URL`, `INSTALL_CHECKSUM`) |
+| Env overrides | `CODEEDITOR_WASI_SDK_ID`, `CODEEDITOR_WASI_SDK_URL`, `CODEEDITOR_WASI_SDK_CHECKSUM` |
 | CI job | `wasi-sdk` in `.github/workflows/ci.yml` |
-| Build script | `scripts/build-wasm-extension.sh` |
-| Fixture check | `scripts/check-wasm-fixture.sh` |
-
-Install (example; adjust to the pin file):
+| Script | `./scripts/check-wasi-sdk.sh` (installs if missing; **fails** if pin absent) |
 
 ```bash
-swift sdk install "$CODEEDITOR_WASI_SDK_URL"
-swift sdk list | grep -F "$(grep -v '^#' Docs/Architecture/WASI-SDK.pin | head -1)"
-./scripts/build-wasm-extension.sh ConformanceExtensionGuest
-./scripts/check-wasm-fixture.sh
+./scripts/check-wasi-sdk.sh
+swift sdk list | grep -F swift-6.3.3-RELEASE_wasm
 ```
 
-## Grammar pins
+## Grammar pins (committed package)
 
-Immutable Tree-sitter grammar commits live in `scripts/grammars.tsv` (SHA-40 + parser.c checksum).  
-Validate with `./scripts/check-grammar-pins.sh`. Refresh with `./scripts/record-grammar-pins.sh` only as an intentional upgrade.
+| Item | Value |
+|---|---|
+| Committed sources | `Packages/CodeEditorGrammars/Sources/<lang>/` |
+| Package | `Packages/CodeEditorGrammars` (path dependency) |
+| Pin catalog | `scripts/grammars.tsv` (SHA-40 + parser.c checksum) |
+| Verify | `./scripts/verify-grammars.sh` (hard; no network) |
+| Maintainer regen | `./scripts/update-grammars.sh` then commit package sources |
+
+A clean clone resolves **without** running `update-grammars.sh`. That script is only for intentional upstream pin upgrades.
+
+## Ghostty
+
+| Item | Value |
+|---|---|
+| Pin file | `Docs/Architecture/GHOSTTY.pin` |
+| Checkout/build | `./scripts/build-ghostty.sh` (optional link via `CODEEDITOR_GHOSTTY_LINKED=1`) |
 
 ## Native extension helper trust (Phase 1 policy record)
 
