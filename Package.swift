@@ -579,6 +579,8 @@ let package = Package(
             name: "CodeEditorExtensionCLI",
             dependencies: [
                 "CodeEditorExtensionAPI",
+                "CodeEditorExtensions",
+                "CodeEditorExtensionHost",
             ],
             path: "Sources/CodeEditorExtensionCLI"
         ),
@@ -848,6 +850,9 @@ let package = Package(
                 "CodeEditorCommands",
                 "CodeEditorLanguageServices",
                 "CodeEditorLanguageSupport",
+            ],
+            resources: [
+                .copy("../Fixtures/Store"),
             ]
         ),
         .testTarget(

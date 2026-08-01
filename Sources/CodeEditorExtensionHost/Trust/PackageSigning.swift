@@ -1,5 +1,6 @@
 import Foundation
 import CodeEditorExtensionAPI
+import CodeEditorExtensions
 #if canImport(CryptoKit)
 import CryptoKit
 #endif
@@ -8,9 +9,17 @@ public enum ExtensionTrustClass: String, Sendable, Hashable, Codable {
     case trustedSigned
     case workspaceDev
     case untrusted
+
+    public var dto: ExtensionTrustClassDTO {
+        switch self {
+        case .trustedSigned: return .trustedSigned
+        case .workspaceDev: return .workspaceDev
+        case .untrusted: return .untrusted
+        }
+    }
 }
 
-public struct ExtensionPublisherKey: Sendable, Hashable {
+public struct ExtensionPublisherKey: Sendable, Hashable, Codable {
     public var keyID: String
     public var publicKeyRaw: Data
     public var subject: String
@@ -22,23 +31,89 @@ public struct ExtensionPublisherKey: Sendable, Hashable {
     }
 }
 
+public struct PublisherKeyring: Sendable, Hashable, Codable {
+    public var keys: [ExtensionPublisherKey]
+    public var revokedKeyIDs: Set<String>
+
+    public init(keys: [ExtensionPublisherKey] = [], revokedKeyIDs: Set<String> = []) {
+        self.keys = keys
+        self.revokedKeyIDs = revokedKeyIDs
+    }
+
+    public static func load(from url: URL) throws -> PublisherKeyring {
+        let data = try Data(contentsOf: url)
+        // Support simplified JSON: { "keys": [ {key_id, public_key_b64, subject} ], "revoked_key_ids": [] }
+        guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw PackageSignatureError.missingPublisher
+        }
+        var keys: [ExtensionPublisherKey] = []
+        if let arr = obj["keys"] as? [[String: String]] {
+            for item in arr {
+                guard let id = item["key_id"] ?? item["keyID"],
+                      let b64 = item["public_key_b64"] ?? item["publicKeyB64"],
+                      let raw = Data(base64Encoded: b64),
+                      let subject = item["subject"]
+                else { continue }
+                keys.append(ExtensionPublisherKey(keyID: id, publicKeyRaw: raw, subject: subject))
+            }
+        }
+        let revoked = Set((obj["revoked_key_ids"] as? [String]) ?? (obj["revokedKeyIDs"] as? [String]) ?? [])
+        return PublisherKeyring(keys: keys, revokedKeyIDs: revoked)
+    }
+
+    public func save(to url: URL) throws {
+        let keysJSON: [[String: String]] = keys.map {
+            [
+                "key_id": $0.keyID,
+                "public_key_b64": $0.publicKeyRaw.base64EncodedString(),
+                "subject": $0.subject,
+            ]
+        }
+        let obj: [String: Any] = [
+            "keys": keysJSON,
+            "revoked_key_ids": Array(revokedKeyIDs).sorted(),
+        ]
+        let data = try JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: url, options: .atomic)
+    }
+}
+
 public struct ExtensionTrustPolicy: Sendable {
     public var allowWorkspaceDevNative: Bool
     public var allowUntrustedNative: Bool
+    /// When false (default), empty keyring rejects signed packages as unknownPublisher.
+    public var allowUnknownSelfSigned: Bool
     public var trustedKeys: [ExtensionPublisherKey]
+    public var revokedKeyIDs: Set<String>
+    public var licensePolicy: PackageSBOM.LicensePolicy
 
     public init(
         allowWorkspaceDevNative: Bool = false,
         allowUntrustedNative: Bool = false,
-        trustedKeys: [ExtensionPublisherKey] = []
+        allowUnknownSelfSigned: Bool = false,
+        trustedKeys: [ExtensionPublisherKey] = [],
+        revokedKeyIDs: Set<String> = [],
+        licensePolicy: PackageSBOM.LicensePolicy = .permissive
     ) {
         self.allowWorkspaceDevNative = allowWorkspaceDevNative
         self.allowUntrustedNative = allowUntrustedNative
+        self.allowUnknownSelfSigned = allowUnknownSelfSigned
         self.trustedKeys = trustedKeys
+        self.revokedKeyIDs = revokedKeyIDs
+        self.licensePolicy = licensePolicy
     }
 
     public static let strict = ExtensionTrustPolicy()
-    public static let testing = ExtensionTrustPolicy(allowWorkspaceDevNative: true, allowUntrustedNative: false)
+    public static let testing = ExtensionTrustPolicy(
+        allowWorkspaceDevNative: true,
+        allowUntrustedNative: false,
+        allowUnknownSelfSigned: true
+    )
+
+    public mutating func apply(keyring: PublisherKeyring) {
+        trustedKeys = keyring.keys
+        revokedKeyIDs.formUnion(keyring.revokedKeyIDs)
+    }
 }
 
 public enum PackageSignatureError: Error, Sendable, Equatable {
@@ -48,8 +123,11 @@ public enum PackageSignatureError: Error, Sendable, Equatable {
     case checksumMismatch(String)
     case invalidSignature
     case unknownPublisher
+    case revokedKey(String)
     case cryptoUnavailable
     case untrusted(ExtensionTrustClass)
+    case license(String)
+    case sbom(String)
 }
 
 /// Ed25519 package signing over canonical checksums.json.
@@ -71,6 +149,16 @@ public enum ExtensionPackageSigner {
         #else
         throw PackageSignatureError.cryptoUnavailable
         #endif
+    }
+
+    public static func writeKeyPair(_ pair: KeyPair, to directory: URL) throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try pair.privateKeyRaw.write(to: directory.appendingPathComponent("ed25519.private"), options: .atomic)
+        try pair.publicKeyRaw.write(to: directory.appendingPathComponent("ed25519.public"), options: .atomic)
+        let meta = """
+        {"key_id":"\(pair.keyID)","public_key_b64":"\(pair.publicKeyRaw.base64EncodedString())"}
+        """
+        try meta.write(to: directory.appendingPathComponent("key.json"), atomically: true, encoding: .utf8)
     }
 
     public static func writeChecksums(packageRoot: URL) throws -> Data {
@@ -99,25 +187,32 @@ public enum ExtensionPackageSigner {
     }
 
     public static func fileDigests(packageRoot: URL) throws -> [String: String] {
-        let digest = try ExtensionPackageDigest.compute(packageRoot: packageRoot)
-        // Per-file digests
+        let root = packageRoot.resolvingSymlinksInPath()
+        let digest = try ExtensionPackageDigest.compute(packageRoot: root)
         let fm = FileManager.default
         guard let enumerator = fm.enumerator(
-            at: packageRoot,
+            at: root,
             includingPropertiesForKeys: [.isRegularFileKey],
             options: [.skipsHiddenFiles]
         ) else {
             throw PackageSignatureError.missingChecksums
         }
         var map: [String: String] = [:]
+        let rootPath = root.path
         for case let url as URL in enumerator {
             let values = try url.resourceValues(forKeys: [.isRegularFileKey])
             guard values.isRegularFile == true else { continue }
-            let rel = url.path.replacingOccurrences(of: packageRoot.path, with: "")
-                .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let file = url.resolvingSymlinksInPath()
+            var rel = file.path
+            if rel.hasPrefix(rootPath) {
+                rel = String(rel.dropFirst(rootPath.count))
+            }
+            rel = rel.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             if rel == "checksums.json" || rel == "signature.ed25519" || rel == "publisher.json" { continue }
             if rel.hasPrefix(".codeeditor/") { continue }
-            let data = try Data(contentsOf: url)
+            // Ignore authoring key material accidentally left under the package tree.
+            if rel.hasPrefix("keys/") || rel == "ed25519.private" || rel == "ed25519.public" { continue }
+            let data = try Data(contentsOf: file)
             map[rel] = sha256Hex(data)
         }
         map["__package__"] = digest
@@ -133,11 +228,25 @@ public enum ExtensionPackageSigner {
     }
 }
 
+public struct PackageVerifyReport: Sendable {
+    public var trustClass: ExtensionTrustClass
+    public var publisher: String?
+    public var keyID: String?
+    public var errors: [String]
+}
+
 public enum ExtensionPackageVerifier {
     public static func verify(
         packageRoot: URL,
         policy: ExtensionTrustPolicy
     ) throws -> ExtensionTrustClass {
+        try verifyDetailed(packageRoot: packageRoot, policy: policy).trustClass
+    }
+
+    public static func verifyDetailed(
+        packageRoot: URL,
+        policy: ExtensionTrustPolicy
+    ) throws -> PackageVerifyReport {
         let checksumsURL = packageRoot.appendingPathComponent("checksums.json")
         let sigURL = packageRoot.appendingPathComponent("signature.ed25519")
         let pubURL = packageRoot.appendingPathComponent("publisher.json")
@@ -146,10 +255,22 @@ public enum ExtensionPackageVerifier {
         let hasSig = FileManager.default.fileExists(atPath: sigURL.path)
         let hasPub = FileManager.default.fileExists(atPath: pubURL.path)
 
+        // License / SBOM policy (when plan can load)
+        if let plan = try? ExtensionPackageLoader.load(directory: packageRoot, options: .init(computeDigest: false)) {
+            do {
+                try PackageSBOM.enforce(packageRoot: packageRoot, plan: plan, policy: policy.licensePolicy)
+            } catch let e as PackageSBOM.SBOMError {
+                throw PackageSignatureError.license(String(describing: e))
+            }
+        }
+
         if !hasChecksums && !hasSig {
-            // Unsigned workspace-dev candidate
-            if policy.allowWorkspaceDevNative { return .workspaceDev }
-            if policy.allowUntrustedNative { return .untrusted }
+            if policy.allowWorkspaceDevNative {
+                return PackageVerifyReport(trustClass: .workspaceDev, publisher: nil, keyID: nil, errors: [])
+            }
+            if policy.allowUntrustedNative {
+                return PackageVerifyReport(trustClass: .untrusted, publisher: nil, keyID: nil, errors: [])
+            }
             throw PackageSignatureError.untrusted(.untrusted)
         }
 
@@ -159,7 +280,6 @@ public enum ExtensionPackageVerifier {
             throw PackageSignatureError.missingChecksums
         }
 
-        // Verify each file
         let current = try ExtensionPackageSigner.fileDigests(packageRoot: packageRoot)
         for (path, expected) in map where path != "__package__" {
             guard let actual = current[path], actual == expected else {
@@ -172,13 +292,21 @@ public enum ExtensionPackageVerifier {
             let pubObj = try JSONSerialization.jsonObject(with: Data(contentsOf: pubURL)) as? [String: String]
             guard let b64 = pubObj?["public_key_b64"],
                   let keyData = Data(base64Encoded: b64),
-                  let keyID = pubObj?["key_id"]
+                  let keyID = pubObj?["key_id"],
+                  let subject = pubObj?["subject"]
             else { throw PackageSignatureError.missingPublisher }
 
+            if policy.revokedKeyIDs.contains(keyID) {
+                throw PackageSignatureError.revokedKey(keyID)
+            }
+
             let known = policy.trustedKeys.contains { $0.keyID == keyID && $0.publicKeyRaw == keyData }
-                || policy.trustedKeys.isEmpty // empty keyring: accept any valid self-signature as trusted for local
-            // If keyring non-empty, require match; if empty, still verify crypto and treat as trustedSigned for tests
-            if !policy.trustedKeys.isEmpty && !known {
+            if policy.trustedKeys.isEmpty {
+                // Fail closed unless explicit test escape hatch
+                if !policy.allowUnknownSelfSigned {
+                    throw PackageSignatureError.unknownPublisher
+                }
+            } else if !known {
                 throw PackageSignatureError.unknownPublisher
             }
 
@@ -187,13 +315,20 @@ public enum ExtensionPackageVerifier {
             guard publicKey.isValidSignature(signature, for: checksumsData) else {
                 throw PackageSignatureError.invalidSignature
             }
-            return .trustedSigned
+            return PackageVerifyReport(
+                trustClass: .trustedSigned,
+                publisher: subject,
+                keyID: keyID,
+                errors: []
+            )
             #else
             throw PackageSignatureError.cryptoUnavailable
             #endif
         }
 
-        if policy.allowWorkspaceDevNative { return .workspaceDev }
+        if policy.allowWorkspaceDevNative {
+            return PackageVerifyReport(trustClass: .workspaceDev, publisher: nil, keyID: nil, errors: [])
+        }
         throw PackageSignatureError.untrusted(.untrusted)
     }
 
@@ -208,6 +343,34 @@ public enum ExtensionPackageVerifier {
             guard policy.allowWorkspaceDevNative else { throw PackageSignatureError.untrusted(trust) }
         case .untrusted:
             guard policy.allowUntrustedNative else { throw PackageSignatureError.untrusted(trust) }
+        }
+    }
+}
+
+/// Adapter for `ExtensionPackageManager` injection.
+public struct HostPackageVerifier: PackageVerifying {
+    public var policy: ExtensionTrustPolicy
+
+    public init(policy: ExtensionTrustPolicy = .strict) {
+        self.policy = policy
+    }
+
+    public func verify(packageRoot: URL) throws -> PackageVerifyResult {
+        do {
+            let report = try ExtensionPackageVerifier.verifyDetailed(packageRoot: packageRoot, policy: policy)
+            return PackageVerifyResult(
+                trustClass: report.trustClass.dto,
+                publisher: report.publisher,
+                quarantined: false,
+                error: nil
+            )
+        } catch {
+            return PackageVerifyResult(
+                trustClass: .untrusted,
+                publisher: nil,
+                quarantined: true,
+                error: String(describing: error)
+            )
         }
     }
 }

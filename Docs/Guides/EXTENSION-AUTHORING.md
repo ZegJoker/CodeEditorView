@@ -238,6 +238,34 @@ Slash commands are labelled **`compatibility`** in `CompatibilityProfile`. Use `
 
 See `Docs/Architecture/CompatibilityProfile.toml` and `CompatibilityProfileLoader`. Do not document experimental or unsupported surfaces as stable.
 
+## Publishing packages (Phase 14)
+
+```bash
+# Generate publisher key
+codeeditor-extension gen-key --out ./keys --key-id my-pub
+
+# Package evidence (checksums + SPDX SBOM)
+codeeditor-extension package --dir ./my-extension
+codeeditor-extension sbom --dir ./my-extension
+codeeditor-extension sign --dir ./my-extension \
+  --private-key ./keys/ed25519.private --key-id my-pub --subject "Example Org"
+codeeditor-extension verify --dir ./my-extension --keyring ./keyring.json
+
+# Local store install / update / rollback / recover
+codeeditor-extension install --dir ./my-extension --install-root ~/Library/Application\ Support/CodeEditor/extensions
+codeeditor-extension update --id com.example.my-extension --dir ./my-extension --install-root ...
+codeeditor-extension rollback --id com.example.my-extension --install-root ...
+codeeditor-extension recover --install-root ...
+codeeditor-extension revoke-check --dir ./my-extension --revocation ./revocation.json
+```
+
+- Installs use **immutable version directories**; updates never overwrite an existing version tree.
+- User data lives under `data/{extension-id}/` and survives update/uninstall unless purge is requested.
+- Empty keyrings **reject** signed packages (fail-closed) unless an explicit authoring escape hatch is set.
+- Revoked package IDs or key IDs cannot install or activate (host store + orchestrator gate).
+- Prefer `LICENSE` (or `license =` in `extension.toml`) and generated `sbom.spdx.json` for strict license policy.
+- Migration JSON→TOML records structured telemetry under `.codeeditor/telemetry.ndjson` (no PII / no source bodies).
+
 ## Native-process helper (Phase 10)
 
 Authors link `CodeEditorExtensionGuest` + `CodeEditorExtensionAPI` (+ protocol transitively):

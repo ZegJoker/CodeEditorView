@@ -1,0 +1,10 @@
+id = "com.example.revoked"
+name = "Revoked Fixture"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+license = "MIT"
+[activation]
+events = ["startup"]
+[runtime]
+kind = "data-only"

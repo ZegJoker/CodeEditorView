@@ -2,10 +2,10 @@
 # Status values: stable | compatibility | experimental | deprecated | unsupported | registry-replacement
 
 profile = "zed-style-2026-07"
-upstream_commit = "phase-13"
+upstream_commit = "phase-14"
 manifest_schema = 1
 swift_extension_api = "1.0"
-status = "phase-13"
+status = "phase-14"
 
 [features]
 languages = "stable"
@@ -42,5 +42,5 @@ S0_package = "passing"
 S1_data = "passing"
 S2_swift_api_parity = "in-progress"
 S3_behavioral = "in-progress"
-S4_operational = "pending"
+S4_operational = "in-progress"
 ZB_zed_binary_bridge = "not-claimed"

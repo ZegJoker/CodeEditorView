@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "updatedAt": 0,
+  "entries": [
+    {
+      "packageID": "com.example.revoked",
+      "version": "*",
+      "keyID": null,
+      "reason": "malware fixture"
+    }
+  ]
+}

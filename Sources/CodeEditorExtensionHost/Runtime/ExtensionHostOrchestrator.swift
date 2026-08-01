@@ -4,6 +4,9 @@ import CodeEditorExtensionProtocol
 import CodeEditorExtensions
 
 /// Multi-driver host orchestrator: selection, start/stop, restart, quarantine.
+///
+/// When a store `ExtensionPackageManager` is attached, activation is **fail-closed**:
+/// revoked / quarantined / verify-failed packages never start a driver.
 public actor ExtensionHostOrchestrator {
     public let policy: ExtensionExecutionPolicy
     public let environment: HostEnvironment
@@ -16,6 +19,9 @@ public actor ExtensionHostOrchestrator {
     private var crashCounts: [ExtensionID: Int] = [:]
     private var restartCounts: [ExtensionID: Int] = [:]
     private var generationCounter: UInt64 = 0
+    private var storeManager: ExtensionPackageManager?
+    private var activationTelemetry: StoreTelemetrySink?
+    private var lastErrors: [ExtensionID: String] = [:]
 
     private var statusContinuation: AsyncStream<[OrchestratorStatus]>.Continuation?
     public let statusStream: AsyncStream<[OrchestratorStatus]>
@@ -42,6 +48,12 @@ public actor ExtensionHostOrchestrator {
         self.statusContinuation = cont
     }
 
+    /// Attach the versioned store manager for install/revocation/quarantine activation gates.
+    public func attachPackageManager(_ manager: ExtensionPackageManager, telemetry: StoreTelemetrySink? = nil) {
+        storeManager = manager
+        activationTelemetry = telemetry
+    }
+
     public func register(package: PreparedExtensionPackage) {
         packages[package.packageID] = package
         if states[package.packageID] == nil {
@@ -61,6 +73,10 @@ public actor ExtensionHostOrchestrator {
         guard let package = packages[id] else {
             throw ExtensionHostError.notFound(id.rawValue)
         }
+
+        // Phase 14 activation gate — no soft path that skips store/verify when attached/strict.
+        try await enforceActivationGate(package: package)
+
         let kind = try RuntimeSelector.select(package: package, policy: policy)
         generationCounter &+= 1
         let handshake = ExtensionHostHandshake(
@@ -81,6 +97,7 @@ public actor ExtensionHostOrchestrator {
             instance = try await driver.start(prepared: prepared, handshake: handshake, broker: broker)
         case .dataOnly:
             states[id] = .active
+            lastErrors[id] = nil
             publish()
             return
         case .swiftWasm:
@@ -93,7 +110,61 @@ public actor ExtensionHostOrchestrator {
         instances[id] = instance
         states[id] = .active
         crashCounts[id] = 0
+        lastErrors[id] = nil
         publish()
+    }
+
+    /// Fail-closed activation: store assert + package-root verify under current trust policy.
+    private func enforceActivationGate(package: PreparedExtensionPackage) async throws {
+        let id = package.packageID
+
+        if let manager = storeManager {
+            do {
+                try await manager.assertCanActivate(id: id)
+            } catch {
+                let reason = String(describing: error)
+                lastErrors[id] = reason
+                activationTelemetry?.append(StoreTelemetryEvent(
+                    event: "activation.denied",
+                    packageID: id.rawValue,
+                    success: false,
+                    reason: reason
+                ))
+                states[id] = .quarantined
+                publish()
+                throw ExtensionWireError.quarantined
+            }
+        }
+
+        // Always re-verify on-disk packages when a package root is present (built-in pure in-memory may omit root).
+        if let root = package.packageRoot, package.builtInExtension == nil {
+            do {
+                let report = try ExtensionPackageVerifier.verifyDetailed(
+                    packageRoot: root,
+                    policy: policy.trust
+                )
+                try ExtensionPackageVerifier.assertNativeLaunchAllowed(
+                    trust: report.trustClass,
+                    policy: policy.trust
+                )
+                // Sync trust class from live verify
+                if var updated = packages[id] {
+                    updated.trustClass = report.trustClass
+                    packages[id] = updated
+                }
+            } catch {
+                let reason = String(describing: error)
+                lastErrors[id] = reason
+                activationTelemetry?.append(StoreTelemetryEvent(
+                    event: "activation.denied",
+                    packageID: id.rawValue,
+                    success: false,
+                    reason: reason
+                ))
+                await quarantine(id: id, reason: reason)
+                throw ExtensionWireError.quarantined
+            }
+        }
     }
 
     /// Test helper: start native path over mock transport with guest already running.
@@ -181,9 +252,20 @@ public actor ExtensionHostOrchestrator {
                 id: id,
                 state: states[id] ?? .discovered,
                 runtime: nil,
-                lastError: nil
+                lastError: lastErrors[id]
             )
         }
+    }
+
+    /// Host-facing trust status items from the attached store (empty if none).
+    public func trustStatusItems() async -> [ExtensionTrustStatusItem] {
+        guard let manager = storeManager else { return [] }
+        return await manager.trustStatusItems()
+    }
+
+    public func trustPromptIfNeeded(for id: ExtensionID) async -> TrustPromptDescriptor? {
+        guard let manager = storeManager else { return nil }
+        return await manager.trustPromptIfNeeded(for: id)
     }
 
     private func publish() {

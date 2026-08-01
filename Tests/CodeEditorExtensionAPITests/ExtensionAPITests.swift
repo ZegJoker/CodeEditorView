@@ -292,6 +292,7 @@ struct PackageManagerTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let manager = ExtensionPackageManager(installRoot: root)
+        await manager.bootstrap()
         let s0 = try await manager.install(from: Fixtures.package("s0-basic"))
         #expect(s0.packageID.rawValue == "com.codeeditor.fixtures.s0-basic")
         #expect(await manager.snapshot.packages.count == 1)
@@ -310,9 +311,31 @@ struct PackageManagerTests {
         snap = await manager.snapshot
         #expect(snap.themes.count == 2)
 
-        // Update s0 with s1 content under same id is wrong — update s1 from itself is fine
-        try await manager.update(id: s1.packageID, from: Fixtures.package("s1-data"))
+        // Update to a new immutable version, then roll back to previous version tree.
+        // Fixture s1-data ships as 1.2.0 — bump to a distinct version for real previous pointer.
+        let baselineVersion = s1.version.description
+        let updateDir = root.appendingPathComponent("s1-update", isDirectory: true)
+        try FileManager.default.copyItem(at: Fixtures.package("s1-data"), to: updateDir)
+        var toml = try String(contentsOf: updateDir.appendingPathComponent("extension.toml"), encoding: .utf8)
+        let nextVersion = "1.2.1"
+        toml = toml.replacingOccurrences(of: "version = \"\(baselineVersion)\"", with: "version = \"\(nextVersion)\"")
+        if !toml.contains("version = \"\(nextVersion)\"") {
+            toml = """
+            id = "com.codeeditor.fixtures.s1-data"
+            name = "S1 Data Updated"
+            version = "\(nextVersion)"
+            schema_version = 1
+            api_version = "1.0"
+            [activation]
+            events = ["startup"]
+            """
+        }
+        try toml.write(to: updateDir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
+        try await manager.update(id: s1.packageID, from: updateDir)
+        #expect(await manager.package(id: s1.packageID)?.currentVersion == nextVersion)
+        #expect(await manager.package(id: s1.packageID)?.previousVersion == baselineVersion)
         try await manager.rollback(id: s1.packageID)
+        #expect(await manager.package(id: s1.packageID)?.currentVersion == baselineVersion)
 
         try await manager.uninstall(id: s0.packageID)
         #expect(await manager.package(id: s0.packageID) == nil)
@@ -326,6 +349,7 @@ struct PackageManagerTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let manager = ExtensionPackageManager(installRoot: root)
+        await manager.bootstrap()
         _ = try await manager.install(from: Fixtures.package("s0-basic"))
 
         // Create a "dev" copy of s0 with different version string by rewriting toml
@@ -356,6 +380,7 @@ struct PackageManagerTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let manager = ExtensionPackageManager(installRoot: root)
+        await manager.bootstrap()
         let plan = try await manager.install(from: Fixtures.package("s0-basic"))
         // Wipe install path
         if let path = await manager.package(id: plan.packageID)?.installPath {
@@ -372,6 +397,7 @@ struct PackageManagerTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let manager = ExtensionPackageManager(installRoot: root, maxEventBuffer: 8)
+        await manager.bootstrap()
         let stream = await manager.snapshots
         async let first: ExtensionContributionSnapshot? = {
             for await snap in stream {

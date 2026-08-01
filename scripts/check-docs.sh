@@ -29,6 +29,7 @@ require Docs/Architecture/CompatibilityProfile.toml
 require Docs/Architecture/PRODUCT-OWNERS.md
 require Docs/Architecture/EXTENSION-API-INVENTORY.md
 require Docs/Architecture/PHASE13-NOTES.md
+require Docs/Architecture/PHASE14-NOTES.md
 require Docs/Architecture/PHASE0-NOTES.md
 require Docs/Architecture/PHASE1-NOTES.md
 require Docs/Architecture/PHASE2-NOTES.md

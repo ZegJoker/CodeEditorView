@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "id": "com.example.signed",
+      "name": "Signed Fixture",
+      "publisher": "Example Org",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "artifactPath": "packages/com.example.signed/1.0.0",
+          "channel": "stable"
+        }
+      ],
+      "channels": [
+        "stable"
+      ]
+    },
+    {
+      "id": "com.example.revoked",
+      "name": "Revoked Fixture",
+      "publisher": "Bad Actor",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "artifactPath": "packages/com.example.revoked/1.0.0",
+          "channel": "stable"
+        }
+      ],
+      "channels": [
+        "stable"
+      ]
+    }
+  ]
+}

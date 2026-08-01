@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 14: versioned extension store (immutable versions, atomic current/previous, recover, user-data preserve)
+- Phase 14: fail-closed publisher keyring policy, SBOM/license enforcement, revocation list, registry client
+- Phase 14: store telemetry NDJSON, trust UI descriptors, CLI sign/verify/sbom/install/update/rollback/recover
 - Phase 13: `CodeEditorDAP` client (framing, session/pool, mock adapter matrix, reverse `runInTerminal`)
 - Phase 13: debug adapter + MCP server launch plans/providers, TOML tables, host executors
 - Phase 13: slash commands (compatibility) with stream/cancel/sanitize; documentation index service with quotas
