@@ -1,7 +1,10 @@
 .DS_Store
 /.build
 **/.build/
-/Packages
+# SPM checkout cache (do not ignore Packages/CodeEditorGrammars — committed PKG-001 artifacts)
+/Packages/*
+!/Packages/CodeEditorGrammars/
+!/Packages/CodeEditorGrammars/**
 xcuserdata/
 DerivedData/
 Examples/.build
@@ -10,8 +13,9 @@ Examples/.build
 .netrc
 *.xcodeproj
 !.github/**/*.xcodeproj
+!Examples/**/*.xcodeproj
 
-# Tree-sitter C grammars (generated — see scripts/update-grammars.sh)
+# Legacy generated grammar path (source of truth is Packages/CodeEditorGrammars)
 /Grammars/
 
 # Ghostty source checkout + build artifacts (pin is tracked; see scripts/build-ghostty.sh)

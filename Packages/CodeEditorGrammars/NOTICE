@@ -1,0 +1,13 @@
+CodeEditorGrammars — Tree-sitter generated C parsers
+====================================================
+
+This package contains deterministic copies of upstream Tree-sitter grammar
+parser/scanner C sources, pinned by commit SHA and parser.c checksums in
+../../scripts/grammars.tsv.
+
+Each grammar retains the license of its upstream repository (typically MIT
+or similar). See individual upstream URLs in grammars.tsv. Do not treat this
+tree as original work of the CodeEditorView authors.
+
+Regenerate with: ../../scripts/update-grammars.sh
+Verify with:     ../../scripts/verify-grammars.sh

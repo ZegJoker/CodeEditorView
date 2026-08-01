@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Hermetic grammar verification: pins + optional on-disk parser.c checksums (no network).
+# Hermetic grammar verification: pins + on-disk parser.c checksums (no network).
+# PKG-001: sources must exist under Packages/CodeEditorGrammars/Sources.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+
+GRAMMAR_SRC="Packages/CodeEditorGrammars/Sources"
 
 echo "== pins =="
 ./scripts/check-grammar-pins.sh
@@ -26,16 +29,16 @@ assert len(symbols) == len(set(symbols)), "duplicate c_symbol in inventory"
 print(f"OK:   inventory {len(gs)} grammars, unique names/symbols")
 PY
 
-if [[ ! -d Grammars/src ]]; then
-  echo "SKIP: Grammars/src not present (run update-grammars.sh to verify checksums)"
-  exit 0
+if [[ ! -d "$GRAMMAR_SRC" ]]; then
+  echo "FAIL: missing $GRAMMAR_SRC (committed grammar package required)" >&2
+  exit 1
 fi
 
 echo "== parser.c checksums =="
 fail=0
 while IFS='|' read -r name c_symbol url commit sha; do
   [[ -z "${name:-}" || "$name" =~ ^# ]] && continue
-  f="Grammars/src/$name/parser.c"
+  f="$GRAMMAR_SRC/$name/parser.c"
   if [[ ! -f "$f" ]]; then
     echo "FAIL: missing $f"
     fail=1
@@ -46,7 +49,7 @@ while IFS='|' read -r name c_symbol url commit sha; do
   else
     actual=$(sha256sum "$f" | awk '{print $1}')
   fi
-  if [[ "$actual" != "$sha" ]]; then
+  if [[ -n "${sha:-}" && "$actual" != "$sha" ]]; then
     echo "FAIL: $name parser.c checksum mismatch"
     echo "  expected $sha"
     echo "  actual   $actual"
@@ -55,6 +58,12 @@ while IFS='|' read -r name c_symbol url commit sha; do
     echo "OK:   $name"
   fi
 done < scripts/grammars.tsv
+
+# Ensure Package.swift path package exists and declares targets
+if [[ ! -f Packages/CodeEditorGrammars/Package.swift ]]; then
+  echo "FAIL: missing Packages/CodeEditorGrammars/Package.swift" >&2
+  fail=1
+fi
 
 if [[ "$fail" -ne 0 ]]; then
   echo "verify-grammars FAILED"

@@ -1,7 +1,7 @@
 // swift-tools-version: 6.0
-// PKG-001: Every custom target path declared below MUST exist at package evaluation time.
-// Grammar C sources live under Grammars/src/<lang> (generate via ./scripts/update-grammars.sh
-// or consume a release archive that includes them). Do not declare missing paths.
+// PKG-001: Grammar C sources live in Packages/CodeEditorGrammars (committed, deterministic).
+// Root package declares zero Grammars/ paths so Core/View/Workbench resolve without generation.
+// Language products depend on .product(..., package: "CodeEditorGrammars").
 import PackageDescription
 import Foundation
 
@@ -50,470 +50,9 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-collections.git", .upToNextMajor(from: "1.1.0")),
         .package(url: "https://github.com/tree-sitter/swift-tree-sitter", from: "0.25.0"),
         .package(url: "https://github.com/swiftwasm/WasmKit.git", from: "0.1.5"),
+        .package(path: "Packages/CodeEditorGrammars"),
     ],
     targets: [
-        .target(
-            name: "TreeSitterAgdaGrammar",
-            path: "Grammars/src/agda",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterBashGrammar",
-            path: "Grammars/src/bash",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterCGrammar",
-            path: "Grammars/src/c",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterCSharpGrammar",
-            path: "Grammars/src/c-sharp",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterCppGrammar",
-            path: "Grammars/src/cpp",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterCssGrammar",
-            path: "Grammars/src/css",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterDartGrammar",
-            path: "Grammars/src/dart",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterDockerfileGrammar",
-            path: "Grammars/src/dockerfile",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterElixirGrammar",
-            path: "Grammars/src/elixir",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterGoGrammar",
-            path: "Grammars/src/go",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterGoModGrammar",
-            path: "Grammars/src/go-mod",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterHaskellGrammar",
-            path: "Grammars/src/haskell",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterHtmlGrammar",
-            path: "Grammars/src/html",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterJavaGrammar",
-            path: "Grammars/src/java",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterJavascriptGrammar",
-            path: "Grammars/src/javascript",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterJsdocGrammar",
-            path: "Grammars/src/jsdoc",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterJsonGrammar",
-            path: "Grammars/src/json",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterJuliaGrammar",
-            path: "Grammars/src/julia",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterKotlinGrammar",
-            path: "Grammars/src/kotlin",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterLuaGrammar",
-            path: "Grammars/src/lua",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterMarkdownGrammar",
-            path: "Grammars/src/markdown",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterMarkdownInlineGrammar",
-            path: "Grammars/src/markdown-inline",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterObjcGrammar",
-            path: "Grammars/src/objc",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterOcamlGrammar",
-            path: "Grammars/src/ocaml",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterPerlGrammar",
-            path: "Grammars/src/perl",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterPhpGrammar",
-            path: "Grammars/src/php",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterPythonGrammar",
-            path: "Grammars/src/python",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterRegexGrammar",
-            path: "Grammars/src/regex",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterRubyGrammar",
-            path: "Grammars/src/ruby",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterRustGrammar",
-            path: "Grammars/src/rust",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterScalaGrammar",
-            path: "Grammars/src/scala",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterSqlGrammar",
-            path: "Grammars/src/sql",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterSwiftGrammar",
-            path: "Grammars/src/swift",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterTomlGrammar",
-            path: "Grammars/src/toml",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterTsxGrammar",
-            path: "Grammars/src/tsx",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterTypescriptGrammar",
-            path: "Grammars/src/typescript",
-            sources: [
-                "parser.c",
-                "scanner.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterVerilogGrammar",
-            path: "Grammars/src/verilog",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterYamlGrammar",
-            path: "Grammars/src/yaml",
-            sources: [
-                "parser.c",
-                "scanner.c",
-                "schema.core.c",
-                "schema.json.c",
-                "schema.legacy.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
-        .target(
-            name: "TreeSitterZigGrammar",
-            path: "Grammars/src/zig",
-            sources: [
-                "parser.c"
-            ],
-            publicHeadersPath: "include",
-            cSettings: [
-                .headerSearchPath("."),
-            ]
-        ),
         .target(
             name: "CodeEditorCore",
             dependencies: [
@@ -744,7 +283,7 @@ let package = Package(
             dependencies: [
                 "CodeEditorLanguageSupport",
                 "CodeEditorTreeSitter",
-                "TreeSitterSwiftGrammar",
+                .product(name: "TreeSitterSwiftGrammar", package: "CodeEditorGrammars"),
             ],
             resources: [
                 .copy("Resources"),
@@ -755,7 +294,7 @@ let package = Package(
             dependencies: [
                 "CodeEditorLanguageSupport",
                 "CodeEditorTreeSitter",
-                "TreeSitterJsonGrammar",
+                .product(name: "TreeSitterJsonGrammar", package: "CodeEditorGrammars"),
             ],
             resources: [
                 .copy("Resources"),
@@ -767,45 +306,45 @@ let package = Package(
                 "CodeEditorLanguageSupport",
                 "CodeEditorTreeSitter",
                 .product(name: "SwiftTreeSitter", package: "swift-tree-sitter"),
-                "TreeSitterAgdaGrammar",
-                "TreeSitterBashGrammar",
-                "TreeSitterCGrammar",
-                "TreeSitterCSharpGrammar",
-                "TreeSitterCppGrammar",
-                "TreeSitterCssGrammar",
-                "TreeSitterDartGrammar",
-                "TreeSitterDockerfileGrammar",
-                "TreeSitterElixirGrammar",
-                "TreeSitterGoGrammar",
-                "TreeSitterGoModGrammar",
-                "TreeSitterHaskellGrammar",
-                "TreeSitterHtmlGrammar",
-                "TreeSitterJavaGrammar",
-                "TreeSitterJavascriptGrammar",
-                "TreeSitterJsdocGrammar",
-                "TreeSitterJsonGrammar",
-                "TreeSitterJuliaGrammar",
-                "TreeSitterKotlinGrammar",
-                "TreeSitterLuaGrammar",
-                "TreeSitterMarkdownGrammar",
-                "TreeSitterMarkdownInlineGrammar",
-                "TreeSitterObjcGrammar",
-                "TreeSitterOcamlGrammar",
-                "TreeSitterPerlGrammar",
-                "TreeSitterPhpGrammar",
-                "TreeSitterPythonGrammar",
-                "TreeSitterRegexGrammar",
-                "TreeSitterRubyGrammar",
-                "TreeSitterRustGrammar",
-                "TreeSitterScalaGrammar",
-                "TreeSitterSqlGrammar",
-                "TreeSitterSwiftGrammar",
-                "TreeSitterTomlGrammar",
-                "TreeSitterTsxGrammar",
-                "TreeSitterTypescriptGrammar",
-                "TreeSitterVerilogGrammar",
-                "TreeSitterYamlGrammar",
-                "TreeSitterZigGrammar"
+                .product(name: "TreeSitterAgdaGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterBashGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterCGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterCSharpGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterCppGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterCssGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterDartGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterDockerfileGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterElixirGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterGoGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterGoModGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterHaskellGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterHtmlGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterJavaGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterJavascriptGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterJsdocGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterJsonGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterJuliaGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterKotlinGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterLuaGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterMarkdownGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterMarkdownInlineGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterObjcGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterOcamlGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterPerlGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterPhpGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterPythonGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterRegexGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterRubyGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterRustGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterScalaGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterSqlGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterSwiftGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterTomlGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterTsxGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterTypescriptGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterVerilogGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterYamlGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterZigGrammar", package: "CodeEditorGrammars"),
             ],
             resources: [
                 .copy("Resources"),
@@ -826,7 +365,10 @@ let package = Package(
         ),
         .testTarget(
             name: "CodeEditorCoreTests",
-            dependencies: ["CodeEditorCore"]
+            dependencies: ["CodeEditorCore"],
+            resources: [
+                .copy("../Fixtures/Profiles"),
+            ]
         ),
         .testTarget(
             name: "CodeEditorDocumentsTests",

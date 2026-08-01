@@ -158,6 +158,22 @@ check_no_imports "Sources/CodeEditorSourceControl" \
   'import (SwiftUI|AppKit|UIKit|SwiftTreeSitter|TreeSitter|CodeEditorView|CodeEditorWorkbench|CodeEditorLanguages|CodeEditorTreeSitter|CodeEditorLSP|CodeEditorExtensions)' \
   "SourceControl has no UI / View / Workbench / LSP / Tree-sitter imports"
 
+
+echo "== PKG-001 no Grammars paths in root Package.swift =="
+if rg -n 'path: "Grammars/' Package.swift >/tmp/cev-grammar-paths.txt 2>/dev/null; then
+  echo "FAIL: root Package.swift still declares Grammars/ paths:"
+  cat /tmp/cev-grammar-paths.txt
+  fail=1
+else
+  echo "OK:   root Package.swift has no Grammars/ target paths"
+fi
+if [[ ! -f Packages/CodeEditorGrammars/Package.swift ]]; then
+  echo "FAIL: missing Packages/CodeEditorGrammars/Package.swift"
+  fail=1
+else
+  echo "OK:   Packages/CodeEditorGrammars present"
+fi
+
 echo "== CodeEditorTreeSitter grammar isolation =="
 check_no_imports "Sources/CodeEditorTreeSitter" \
   'import TreeSitter\w+Grammar' \
@@ -306,12 +322,13 @@ if not m:
     print("FAIL: CodeEditorWorkbench target not found")
     sys.exit(1)
 deps = m.group(1)
-forbidden = ["CodeEditorLSP", "CodeEditorSearch", "CodeEditorTerminal", "CodeEditorSourceControl", "CodeEditorLanguages", "TreeSitter"]
+# Terminal/Ghostty allowed for workbench terminal panel (TER-001); not LSP/Search/SCM/all-grammars.
+forbidden = ["CodeEditorLSP", "CodeEditorSearch", "CodeEditorSourceControl", "CodeEditorLanguages", "TreeSitter"]
 bad = [f for f in forbidden if f in deps]
 if bad:
     print("FAIL: Workbench dependencies include forbidden:", ", ".join(bad))
     sys.exit(1)
-print("OK:   Workbench Package.swift deps exclude LSP/search/terminal/SCM/all-grammars")
+print("OK:   Workbench Package.swift deps exclude LSP/search/SCM/all-grammars")
 PY
 
 if [[ "$fail" -ne 0 ]]; then
