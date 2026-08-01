@@ -34,6 +34,8 @@ public final class TextDocument {
     public var isReadOnly: Bool { lifecyclePolicy.isReadOnly }
 
     private var continuations: [UUID: AsyncStream<TextDocumentEvent>.Continuation] = [:]
+    /// Drops from bounded document event streams (DOC-009).
+    public private(set) var droppedEventCount: Int = 0
     /// Generation of the last apply started by this process path (for self-filtering hosts).
     public private(set) var lastAppliedTransactionID: UUID?
 
@@ -66,9 +68,12 @@ public final class TextDocument {
         store.snapshot()
     }
 
-    public func makeEventStream() -> AsyncStream<TextDocumentEvent> {
+    /// Document event stream with bounded buffer (DOC-009). Default keeps newest 32 events.
+    public func makeEventStream(bufferSize: Int = 32) -> AsyncStream<TextDocumentEvent> {
         let id = UUID()
-        return AsyncStream { continuation in
+        let policy: AsyncStream<TextDocumentEvent>.Continuation.BufferingPolicy =
+            bufferSize <= 0 ? .unbounded : .bufferingNewest(bufferSize)
+        return AsyncStream(bufferingPolicy: policy) { continuation in
             self.continuations[id] = continuation
             continuation.onTermination = { @Sendable [weak self] _ in
                 Task { @MainActor in
@@ -80,7 +85,9 @@ public final class TextDocument {
 
     private func yield(_ event: TextDocumentEvent) {
         for continuation in continuations.values {
-            continuation.yield(event)
+            if case .dropped = continuation.yield(event) {
+                droppedEventCount += 1
+            }
         }
     }
 
@@ -119,7 +126,7 @@ public final class TextDocument {
             }
         }
 
-        setDirty(true)
+        recomputeDirtyFromSavedVersion()
         yield(.didApply(applied))
         return applied
     }
@@ -213,6 +220,15 @@ public final class TextDocument {
 
     public func markDirty() {
         setDirty(true)
+    }
+
+    /// Dirty iff content generation differs from last clean/save (DOC-002).
+    public func recomputeDirtyFromSavedVersion() {
+        if let saved = savedVersion {
+            setDirty(store.version != saved)
+        } else {
+            setDirty(true)
+        }
     }
 
     public func setURI(_ newURI: DocumentURI) {

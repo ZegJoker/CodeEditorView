@@ -9,58 +9,70 @@ public struct CoordinatedDocumentIO: DocumentIO {
     }
 
     public func read(url: URL) async throws -> Data {
-        try await read(url: url, maxBytes: UInt64.max)
+        try await readContentAndIdentity(url: url, maxBytes: UInt64.max).0
     }
 
     public func read(url: URL, maxBytes: UInt64) async throws -> Data {
+        try await readContentAndIdentity(url: url, maxBytes: maxBytes).0
+    }
+
+    public func readContentAndIdentity(
+        url: URL,
+        maxBytes: UInt64
+    ) async throws -> (Data, DocumentFileIdentity) {
         try await withCheckedThrowingContinuation { cont in
-            var result: Result<Data, Error>?
+            // Exactly-once resume (DOC-006 / §7.8): single mutable box closed after first use.
+            final class Box: @unchecked Sendable {
+                var done = false
+                let lock = NSLock()
+                func resume(_ body: () -> Void) {
+                    lock.lock()
+                    defer { lock.unlock() }
+                    guard !done else { return }
+                    done = true
+                    body()
+                }
+            }
+            let box = Box()
             var coordinatorError: NSError?
             let coordinator = NSFileCoordinator(filePresenter: nil)
             coordinator.coordinate(readingItemAt: url, options: [], error: &coordinatorError) { newURL in
                 do {
-                    // Delegate bounded read to LocalDocumentIO semantics.
-                    if maxBytes < UInt64.max,
-                        let values = try? newURL.resourceValues(forKeys: [.fileSizeKey]),
-                        let size = values.fileSize,
-                        UInt64(size) > maxBytes
-                    {
-                        result = .failure(DocumentIOError.tooLarge(UInt64(size)))
-                        return
-                    }
-                    let handle = try FileHandle(forReadingFrom: newURL)
-                    defer { try? handle.close() }
-                    let data: Data
-                    if maxBytes == UInt64.max {
-                        data = try handle.readToEnd() ?? Data()
-                    } else {
-                        let limit = Int(min(maxBytes + 1, UInt64(Int.max)))
-                        data = try handle.read(upToCount: limit) ?? Data()
-                        if UInt64(data.count) > maxBytes {
-                            result = .failure(DocumentIOError.tooLarge(UInt64(data.count)))
-                            return
-                        }
-                    }
-                    result = .success(data)
+                    let value = try LocalDocumentIO.readContentAndIdentitySync(
+                        url: newURL,
+                        maxBytes: maxBytes
+                    )
+                    box.resume { cont.resume(returning: value) }
                 } catch {
-                    result = .failure(DocumentIOError.ioFailure(error.localizedDescription))
+                    box.resume { cont.resume(throwing: error) }
                 }
             }
-            // Exactly-once resume: prefer coordination result; only use coordinatorError if
-            // the block never ran / did not produce a result.
-            if let result {
-                cont.resume(with: result)
-            } else if let coordinatorError {
-                cont.resume(throwing: DocumentIOError.ioFailure(coordinatorError.localizedDescription))
+            if let coordinatorError {
+                box.resume {
+                    cont.resume(throwing: DocumentIOError.ioFailure(coordinatorError.localizedDescription))
+                }
             } else {
-                cont.resume(throwing: DocumentIOError.ioFailure("file coordination produced no result"))
+                box.resume {
+                    cont.resume(throwing: DocumentIOError.ioFailure("file coordination produced no result"))
+                }
             }
         }
     }
 
     public func writeAtomically(data: Data, to url: URL) async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            var result: Result<Void, Error>?
+            final class Box: @unchecked Sendable {
+                var done = false
+                let lock = NSLock()
+                func resume(_ body: () -> Void) {
+                    lock.lock()
+                    defer { lock.unlock() }
+                    guard !done else { return }
+                    done = true
+                    body()
+                }
+            }
+            let box = Box()
             var coordinatorError: NSError?
             let coordinator = NSFileCoordinator(filePresenter: nil)
             coordinator.coordinate(
@@ -70,17 +82,19 @@ public struct CoordinatedDocumentIO: DocumentIO {
             ) { newURL in
                 do {
                     try LocalDocumentIO.writeAtomicallySync(data: data, to: newURL)
-                    result = .success(())
+                    box.resume { cont.resume(returning: ()) }
                 } catch {
-                    result = .failure(error)
+                    box.resume { cont.resume(throwing: error) }
                 }
             }
-            if let result {
-                cont.resume(with: result)
-            } else if let coordinatorError {
-                cont.resume(throwing: DocumentIOError.ioFailure(coordinatorError.localizedDescription))
+            if let coordinatorError {
+                box.resume {
+                    cont.resume(throwing: DocumentIOError.ioFailure(coordinatorError.localizedDescription))
+                }
             } else {
-                cont.resume(throwing: DocumentIOError.ioFailure("file coordination produced no result"))
+                box.resume {
+                    cont.resume(throwing: DocumentIOError.ioFailure("file coordination produced no result"))
+                }
             }
         }
     }
@@ -90,7 +104,9 @@ public struct CoordinatedDocumentIO: DocumentIO {
     }
 
     public func resourceIdentity(at url: URL) async throws -> DocumentFileIdentity? {
-        try await base.resourceIdentity(at: url)
+        guard await fileExists(at: url) else { return nil }
+        let (_, identity) = try await readContentAndIdentity(url: url, maxBytes: UInt64.max)
+        return identity
     }
 
     public func removeItem(at url: URL) async throws {

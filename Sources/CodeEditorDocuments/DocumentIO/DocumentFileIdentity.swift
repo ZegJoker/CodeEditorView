@@ -47,6 +47,8 @@ public enum BOMPolicy: Sendable, Hashable, Codable {
     case none
     /// Emit BOM when encoding is UTF-8 / UTF-16 family.
     case whenEncodingSupports
+    /// Preserve whether the last load observed a BOM.
+    case preserve(hadBOM: Bool)
 }
 
 /// Host policies for document lifecycle (defaults are conservative).
@@ -56,19 +58,32 @@ public struct DocumentLifecyclePolicy: Sendable, Hashable, Codable {
     public var maxLoadBytes: UInt64
     public var writeRecoveryJournal: Bool
     public var isReadOnly: Bool
+    /// When true, ``LocalFileDocumentProvider/save`` without expected identity requires
+    /// explicit ``SaveConflictPolicy/overwrite`` (fail closed by default for CAS).
+    public var requireIdentityForSave: Bool
+    /// Max recovery journal payload bytes per document.
+    public var recoveryMaxBytesPerDocument: UInt64
+    /// Max total recovery journal bytes under a directory.
+    public var recoveryMaxBytesGlobal: UInt64
 
     public init(
         lineEndingOnSave: LineEndingSavePolicy = .preserve,
         bomPolicy: BOMPolicy = .none,
         maxLoadBytes: UInt64 = 64 * 1024 * 1024,
         writeRecoveryJournal: Bool = true,
-        isReadOnly: Bool = false
+        isReadOnly: Bool = false,
+        requireIdentityForSave: Bool = false,
+        recoveryMaxBytesPerDocument: UInt64 = 8 * 1024 * 1024,
+        recoveryMaxBytesGlobal: UInt64 = 64 * 1024 * 1024
     ) {
         self.lineEndingOnSave = lineEndingOnSave
         self.bomPolicy = bomPolicy
         self.maxLoadBytes = maxLoadBytes
         self.writeRecoveryJournal = writeRecoveryJournal
         self.isReadOnly = isReadOnly
+        self.requireIdentityForSave = requireIdentityForSave
+        self.recoveryMaxBytesPerDocument = recoveryMaxBytesPerDocument
+        self.recoveryMaxBytesGlobal = recoveryMaxBytesGlobal
     }
 
     public static let `default` = DocumentLifecyclePolicy()

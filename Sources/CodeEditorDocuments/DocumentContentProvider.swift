@@ -113,47 +113,34 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         guard let url = uri.fileURL else {
             throw DocumentProviderError.unsupportedURI(uri.rawValue)
         }
-        // DOC: enforce size from metadata before full allocation when possible.
-        if let identity = try? await io.resourceIdentity(at: url),
-            identity.size > policy.maxLoadBytes
-        {
-            throw DocumentProviderError.tooLarge(identity.size)
-        }
+        // DOC-005 / §7.5–7.6: single-pass stream + identity (no double full-file read).
         let data: Data
+        let resolvedIdentity: DocumentFileIdentity
         do {
-            data = try await io.read(url: url, maxBytes: policy.maxLoadBytes)
+            (data, resolvedIdentity) = try await io.readContentAndIdentity(
+                url: url,
+                maxBytes: policy.maxLoadBytes
+            )
         } catch let error as DocumentIOError {
             throw mapIO(error)
         } catch {
             throw DocumentProviderError.ioFailure(error.localizedDescription)
         }
-        if UInt64(data.count) > policy.maxLoadBytes {
-            throw DocumentProviderError.tooLarge(UInt64(data.count))
-        }
-        let decoded: (text: String, encoding: DocumentEncoding, bom: Bool)
+        let decoded: DocumentDecodeResult
         do {
             decoded = try DocumentCodec.decode(data)
+        } catch let error as DocumentIOError {
+            throw mapIO(error)
         } catch {
             throw DocumentProviderError.encodingFailed
         }
-        // Single-pass identity from the bytes we already read.
-        let values = try? url.resourceValues(forKeys: [
-            .contentModificationDateKey,
-            .fileResourceIdentifierKey,
-        ])
-        let resolvedIdentity = DocumentFileIdentity(
-            contentHash: DocumentFileIdentity.hash(of: data),
-            size: UInt64(data.count),
-            modificationTime: values?.contentModificationDate?.timeIntervalSince1970,
-            fileResourceIdentifier: values?.fileResourceIdentifier as? Data
-        )
 
         return LoadedDocument(
             text: decoded.text,
             encoding: decoded.encoding,
             lineEnding: LineEnding.detect(in: decoded.text),
             fileIdentity: resolvedIdentity,
-            hadBOM: decoded.bom
+            hadBOM: decoded.hadBOM
         )
     }
 
@@ -185,6 +172,13 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
             throw DocumentProviderError.unsupportedURI(uri.rawValue)
         }
 
+        // DOC-004: when requireIdentityForSave, nil identity is fail-closed unless overwrite.
+        if expectedIdentity == nil, policy.requireIdentityForSave, conflictPolicy != .overwrite {
+            throw DocumentProviderError.ioFailure(
+                "save requires expectedIdentity (set SaveConflictPolicy.overwrite to bypass)"
+            )
+        }
+
         // DOC-004: compare-and-swap against expected identity before replacement.
         if let expectedIdentity {
             let change = try await detectChange(at: uri, known: expectedIdentity)
@@ -211,14 +205,24 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
             }
         }
 
+        let bomPolicy: BOMPolicy = {
+            switch self.policy.bomPolicy {
+            case .preserve:
+                return self.policy.bomPolicy
+            case .none, .whenEncodingSupports:
+                return self.policy.bomPolicy
+            }
+        }()
         let data: Data
         do {
             data = try DocumentCodec.encode(
                 text: snapshot.text,
                 encoding: encoding,
                 lineEndingPolicy: self.policy.lineEndingOnSave,
-                bomPolicy: self.policy.bomPolicy
+                bomPolicy: bomPolicy
             )
+        } catch let error as DocumentIOError {
+            throw mapIO(error)
         } catch {
             throw DocumentProviderError.encodingFailed
         }
@@ -265,6 +269,9 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         case .injectedFault(let p): return .ioFailure("injected fault: \(p.rawValue)")
         case .readOnly: return .readOnly
         case .encodingFailed: return .encodingFailed
+        case .unsupportedEncoding: return .encodingFailed
+        case .corruptRecoveryJournal(let s): return .ioFailure(s)
+        case .recoveryQuotaExceeded: return .ioFailure("recovery journal quota exceeded")
         }
     }
 }
@@ -313,8 +320,12 @@ extension TextDocument {
             local.policy.writeRecoveryJournal,
             isDirty
         {
-            let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
-            try await journal.write(text: text, forPrimary: fileURL, io: io)
+            let journal = RecoveryJournal(
+                directory: fileURL.deletingLastPathComponent(),
+                maxBytesPerDocument: local.policy.recoveryMaxBytesPerDocument,
+                maxBytesGlobal: local.policy.recoveryMaxBytesGlobal
+            )
+            try await journal.write(text: text, forPrimary: fileURL, io: io, documentURI: target.rawValue)
         }
 
         try await provider.save(snapshot(), to: target, encoding: encoding)
@@ -325,7 +336,11 @@ extension TextDocument {
         if let fileURL = target.fileURL, let io {
             setFileIdentity(try await io.resourceIdentity(at: fileURL))
             if let local = provider as? LocalFileDocumentProvider, local.policy.writeRecoveryJournal {
-                let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
+                let journal = RecoveryJournal(
+                    directory: fileURL.deletingLastPathComponent(),
+                    maxBytesPerDocument: local.policy.recoveryMaxBytesPerDocument,
+                    maxBytesGlobal: local.policy.recoveryMaxBytesGlobal
+                )
                 try await journal.clear(forPrimary: fileURL, io: io)
             }
         }
