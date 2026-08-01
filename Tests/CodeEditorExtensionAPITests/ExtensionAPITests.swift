@@ -291,7 +291,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let s0 = try await manager.install(from: Fixtures.package("s0-basic"))
         #expect(s0.packageID.rawValue == "com.codeeditor.fixtures.s0-basic")
@@ -348,7 +348,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         _ = try await manager.install(from: Fixtures.package("s0-basic"))
 
@@ -379,7 +379,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let plan = try await manager.install(from: Fixtures.package("s0-basic"))
         // Wipe install path
@@ -396,7 +396,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root, maxEventBuffer: 8)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root, maxEventBuffer: 8)
         await manager.bootstrap()
         let stream = await manager.snapshots
         async let first: ExtensionContributionSnapshot? = {
@@ -430,13 +430,13 @@ struct AuthorAPISmokeTests {
 
     @Test func editorExtensionAlias() async throws {
         struct Mini: EditorExtension {
-            let manifest = ExtensionManifest(id: "mini", displayName: "Mini")
+            let manifest = ExtensionManifest(id: "test.mini", displayName: "Mini")
             func activate(in context: any ExtensionAuthorContext) async throws {
                 context.info("hi")
             }
         }
         let log = ExtensionLog()
-        let ctx = ExtensionContext(extensionID: "mini", grantedPermissions: [], log: log)
+        let ctx = ExtensionContext(extensionID: "test.mini", grantedPermissions: [], log: log)
         try await Mini().activate(in: ctx)
         #expect(log.events.contains { $0.message == "hi" })
     }

@@ -82,21 +82,30 @@ public struct WorkspaceRestorationState: Codable, Sendable {
     }
 }
 
+public enum WorkspaceRestorationError: Error, Sendable, Equatable {
+    /// Unknown newer schema must not be clamped — that reinterprets fields incorrectly.
+    case unsupportedSchemaVersion(found: Int, supported: Int)
+    case corruptPayload(String)
+}
+
 public enum WorkspaceRestoration {
-    /// Forward-migrate older schemas; preserve unknown future schema by clamping to current.
-    public static func migrate(_ state: WorkspaceRestorationState) -> WorkspaceRestorationState {
+    /// Migrate known older schemas. **Rejects** unknown future schemas (audit §8.9).
+    public static func migrate(_ state: WorkspaceRestorationState) throws -> WorkspaceRestorationState {
         var state = state
         if state.schemaVersion > WorkspaceRestorationState.currentSchemaVersion {
-            // Forward-compatible: keep payload, pin schema to current for writers.
-            state.schemaVersion = WorkspaceRestorationState.currentSchemaVersion
+            throw WorkspaceRestorationError.unsupportedSchemaVersion(
+                found: state.schemaVersion,
+                supported: WorkspaceRestorationState.currentSchemaVersion
+            )
         }
         if state.schemaVersion < 1 {
-            state.schemaVersion = 1
+            // Oldest known baseline is v1; anything older is corrupt/unsupported.
+            throw WorkspaceRestorationError.unsupportedSchemaVersion(
+                found: state.schemaVersion,
+                supported: WorkspaceRestorationState.currentSchemaVersion
+            )
         }
         // v1 is baseline; future versions migrate stepwise here.
-        if state.schemaVersion < 1 {
-            state.schemaVersion = 1
-        }
         return state
     }
 
@@ -111,6 +120,6 @@ public enum WorkspaceRestoration {
     public static func decode(_ data: Data) throws -> WorkspaceRestorationState {
         let decoder = JSONDecoder()
         let state = try decoder.decode(WorkspaceRestorationState.self, from: data)
-        return migrate(state)
+        return try migrate(state)
     }
 }

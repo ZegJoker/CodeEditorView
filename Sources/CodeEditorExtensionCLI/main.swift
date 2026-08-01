@@ -250,7 +250,7 @@ struct CodeEditorExtensionCLI {
     static func install(args: [String]) async throws {
         guard let dir = flag(args, "--dir") else { fail("install requires --dir") }
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             verifier: HostPackageVerifier(policy: .testing)
         )
@@ -264,27 +264,27 @@ struct CodeEditorExtensionCLI {
             fail("update requires --id --dir")
         }
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             verifier: HostPackageVerifier(policy: .testing)
         )
         await manager.bootstrap()
-        try await manager.update(id: ExtensionID(rawValue: id), from: URL(fileURLWithPath: dir, isDirectory: true))
+        try await manager.update(id: ExtensionID(rawValue: id)!, from: URL(fileURLWithPath: dir, isDirectory: true))
         print("updated \(id)")
     }
 
     static func rollback(args: [String]) async throws {
         guard let id = flag(args, "--id") else { fail("rollback requires --id") }
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
-        try await manager.rollback(id: ExtensionID(rawValue: id))
+        try await manager.rollback(id: ExtensionID(rawValue: id)!)
         print("rolled back \(id)")
     }
 
     static func list(args: [String]) async throws {
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         for pkg in await manager.installedPackages() {
             let q = pkg.quarantined ? " quarantined" : ""
@@ -294,7 +294,7 @@ struct CodeEditorExtensionCLI {
 
     static func recover(args: [String]) async throws {
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         await manager.recoverCorruptedState()
         print("recovered \(root.path)")

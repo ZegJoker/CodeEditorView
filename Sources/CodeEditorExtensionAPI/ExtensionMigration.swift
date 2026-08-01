@@ -229,7 +229,7 @@ public enum ExtensionMigration {
             public var manifest: ExtensionManifest {
                 // Prefer loading from extension.toml at package root in production hosts.
                 ExtensionManifest(
-                    id: ExtensionID(rawValue: "\(packageID.rawValue)"),
+                    id: try! ExtensionID(validating: "\(packageID.rawValue)"),
                     displayName: "\(escapeSwiftString(displayName))",
                     activationEvents: [.startup]
                 )

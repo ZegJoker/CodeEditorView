@@ -1,30 +1,49 @@
 import Foundation
 import CodeEditorDocuments
 
-/// Path canonicalization and root-containment checks for workspace FS.
+/// Typed relative-path security for workspace FS (audit §8.3).
+///
+/// Rejects absolute paths, empty segments, `.` / `..`, NUL, platform separators,
+/// and string-prefix false friends. Prefer descriptor-relative resolution under an
+/// opened root — never implement security with unvalidated substring checks alone.
 public enum WorkspacePathSecurity: Sendable {
-    /// Returns true if `url` is strictly under or equal to `root` after resolving symlinks.
+    /// Returns true if `url` is strictly under or equal to `root` after resolving symlinks
+    /// using **path-component** comparison (not string prefix alone).
     public static func isContained(url: URL, inRoot root: URL) -> Bool {
         let resolvedURL = url.resolvingSymlinksInPath().standardizedFileURL
         let resolvedRoot = root.resolvingSymlinksInPath().standardizedFileURL
-        let urlPath = resolvedURL.path
-        let rootPath = resolvedRoot.path
-        if urlPath == rootPath { return true }
-        let prefix = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
-        return urlPath.hasPrefix(prefix)
+        let urlComponents = resolvedURL.pathComponents
+        let rootComponents = resolvedRoot.pathComponents
+        guard urlComponents.count >= rootComponents.count else { return false }
+        return Array(urlComponents.prefix(rootComponents.count)) == rootComponents
     }
 
-    /// Validates a relative workspace path segment list (no absolute, no `..`).
+    /// Validates a relative workspace path (no absolute, no empty segments, no `.`/`..`, no NUL).
     public static func validateRelativePath(_ path: String) throws {
         if path.isEmpty { return }
-        let parts = path.split(separator: "/").map(String.init)
+        // Absolute paths are never relative workspace paths.
+        if path.hasPrefix("/") || path.hasPrefix("\\") {
+            throw WorkspaceFileSystemError.pathEscapesRoot(path)
+        }
+        if path.contains("\0") {
+            throw WorkspaceFileSystemError.invalidName
+        }
+        // Keep empty segments from duplicate/trailing separators — they are invalid.
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        if parts.contains(where: { $0.isEmpty }) {
+            throw WorkspaceFileSystemError.invalidName
+        }
         for part in parts {
-            if part.isEmpty || part == "." || part == ".." {
+            if part == "." || part == ".." {
                 throw WorkspaceFileSystemError.invalidName
             }
-            if part.contains("\0") {
+            if part.contains("\\") || part.contains(":") {
                 throw WorkspaceFileSystemError.invalidName
             }
+        }
+        // Reject Windows-style drive or UNC.
+        if path.contains("://") {
+            throw WorkspaceFileSystemError.pathEscapesRoot(path)
         }
     }
 
@@ -36,13 +55,19 @@ public enum WorkspacePathSecurity: Sendable {
         if relativePath.isEmpty {
             url = base
         } else {
-            url = base.appendingPathComponent(relativePath)
+            // Append component-by-component to avoid `//` normalization surprises.
+            var current = base
+            for part in relativePath.split(separator: "/", omittingEmptySubsequences: true) {
+                current = current.appendingPathComponent(String(part), isDirectory: false)
+            }
+            url = current
         }
         guard isContained(url: url, inRoot: base) else {
             throw WorkspaceFileSystemError.pathEscapesRoot(relativePath)
         }
         // After symlink resolution still contained.
-        guard isContained(url: url.resolvingSymlinksInPath(), inRoot: base) else {
+        let resolved = url.resolvingSymlinksInPath()
+        guard isContained(url: resolved, inRoot: base) else {
             throw WorkspaceFileSystemError.pathEscapesRoot(relativePath)
         }
         return url.standardizedFileURL

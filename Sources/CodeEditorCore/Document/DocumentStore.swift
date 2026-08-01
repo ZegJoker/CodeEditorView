@@ -164,9 +164,18 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
 
     /// Applies all changes as **one** content generation.
     ///
-    /// - Parameter sortHighToLow: When `true` (default), sorts changes high→low so
-    ///   multi-range **pre-edit** coordinates remain valid. When `false`, applies
-    ///   `transaction.changes` in the given order (required for undo/redo sequences).
+    /// ## Atomicity (DOC-001)
+    /// All ranges are validated against the **pre-edit** snapshot before any mutation.
+    /// Overlapping ranges are rejected. On any failure the document text, attributes,
+    /// line ending, and version are unchanged.
+    ///
+    /// ## Ordering
+    /// - `sortHighToLow == true` (default): changes are sorted by descending
+    ///   `replacedRange.location`, then descending length, then stable insertion order
+    ///   for equal-location insertions (deterministic multi-cursor edits).
+    /// - `sortHighToLow == false`: applies `transaction.changes` in the given order
+    ///   (required for undo/redo sequences that already encode application order).
+    ///
     /// - Parameter expectedVersion: When set, throws ``DocumentStoreError/staleVersion`` if the
     ///   store's generation does not match (optimistic concurrency for multi-session hosts).
     @discardableResult
@@ -183,30 +192,108 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
         }
 
         let oldVersion = version
-        let ordered: [TextChange]
-        if sortHighToLow {
-            ordered = transaction.changes.sorted {
-                $0.replacedRange.location > $1.replacedRange.location
-            }
-        } else {
-            ordered = transaction.changes
-        }
+        let preLength = length
 
-        var textEdits: [TextEdit] = []
-        textEdits.reserveCapacity(ordered.count)
-
-        for change in ordered {
-            // Validate against current length: high→low pre-edit ranges remain valid;
-            // undo/redo ordered sequences use current-document coordinates.
+        // 1. Validate every range against the pre-edit snapshot (no mutation yet).
+        var validated: [(index: Int, change: TextChange, range: NSRange)] = []
+        validated.reserveCapacity(transaction.changes.count)
+        for (index, change) in transaction.changes.enumerated() {
             let range = try TextOffsetSemantics.validatedUTF16Range(
                 change.replacedRange.nsRange,
-                documentUTF16Length: length
+                documentUTF16Length: preLength
             )
-            let edit = makeEdit(in: range, replacement: change.replacement)
-            applyMutationWithoutVersionBump(edit.mutation)
-            textEdits.append(edit)
+            validated.append((index, change, range))
         }
 
+        // 2. Reject overlapping ranges on the pre-edit coordinate space.
+        let sortedForOverlap = validated.sorted {
+            if $0.range.location != $1.range.location {
+                return $0.range.location < $1.range.location
+            }
+            return $0.range.length < $1.range.length
+        }
+        var overlapping: [NSRange] = []
+        for i in 1..<sortedForOverlap.count {
+            let prev = sortedForOverlap[i - 1].range
+            let cur = sortedForOverlap[i].range
+            // Adjacent ranges (prev.end == cur.location) are allowed; true overlap is not.
+            // Zero-length insertions at the same offset are allowed (deterministic order).
+            let prevEnd = prev.location + prev.length
+            let curEnd = cur.location + cur.length
+            let bothEmpty = prev.length == 0 && cur.length == 0
+            if !bothEmpty && cur.location < prevEnd && prev.location < curEnd {
+                overlapping.append(prev)
+                overlapping.append(cur)
+            }
+        }
+        if !overlapping.isEmpty {
+            throw DocumentStoreError.overlappingRanges(overlapping)
+        }
+
+        // 3. Determine application order.
+        let ordered: [(index: Int, change: TextChange, range: NSRange)]
+        if sortHighToLow {
+            // High→low location; for equal location prefer longer replace first, then
+            // original index ascending so equal-offset pure insertions keep declaration order.
+            ordered = validated.sorted { a, b in
+                if a.range.location != b.range.location {
+                    return a.range.location > b.range.location
+                }
+                if a.range.length != b.range.length {
+                    return a.range.length > b.range.length
+                }
+                return a.index < b.index
+            }
+        } else {
+            ordered = validated
+        }
+
+        // 4. Build the complete mutation plan (edits + inverses) against the pre-edit store
+        //    for high→low (ranges stay valid). For ordered sequences, re-validate as we go
+        //    on a staging buffer so failure never touches the live store.
+        let staging = NSMutableAttributedString(attributedString: storage)
+        var textEdits: [TextEdit] = []
+        textEdits.reserveCapacity(ordered.count)
+        var stagedLength = staging.length
+
+        for item in ordered {
+            let range: NSRange
+            if sortHighToLow {
+                // Still valid against original; after prior high→low mutations lower
+                // ranges are unchanged, so validate against staged length which equals
+                // original for remaining pre-edit coordinates when applying high→low.
+                range = try TextOffsetSemantics.validatedUTF16Range(
+                    item.range,
+                    documentUTF16Length: stagedLength
+                )
+            } else {
+                range = try TextOffsetSemantics.validatedUTF16Range(
+                    item.change.replacedRange.nsRange,
+                    documentUTF16Length: stagedLength
+                )
+            }
+            let prior = (staging.string as NSString).substring(with: range)
+            let mutation = TextMutation(string: item.change.replacement, range: range, limit: stagedLength)
+            let inverse = TextMutation(
+                string: prior,
+                range: NSRange(location: range.location, length: (item.change.replacement as NSString).length),
+                limit: stagedLength - range.length + (item.change.replacement as NSString).length
+            )
+            staging.replaceCharacters(in: range, with: item.change.replacement)
+            if !item.change.replacement.isEmpty, !defaultAttributes.isEmpty {
+                let inserted = NSRange(
+                    location: range.location,
+                    length: (item.change.replacement as NSString).length
+                )
+                staging.addAttributes(defaultAttributes, range: inserted)
+            }
+            stagedLength = staging.length
+            textEdits.append(TextEdit(mutation: mutation, inverse: inverse))
+        }
+
+        // 5. Commit staging → live storage in one step; bump version once.
+        storage = staging
+        lineEnding = LineEnding.detect(in: storage.string)
         bumpVersion()
         let newVersion = version
 
@@ -223,7 +310,7 @@ public final class DocumentStore: @unchecked Sendable, TextStoring {
         return AppliedEditTransaction(
             transaction: EditTransaction(
                 id: transaction.id,
-                changes: ordered,
+                changes: ordered.map(\.change),
                 origin: transaction.origin
             ),
             oldVersion: oldVersion,

@@ -395,8 +395,14 @@ public enum ExtensionPackageLoader {
         let events = eventsRaw.compactMap(ExtensionTOMLManifest.parseActivationEvent)
         let caps = Set((obj["requiredHostCapabilities"] as? [String] ?? []).compactMap { HostCapability(rawValue: $0) })
         let perms = Set((obj["requestedPermissions"] as? [String] ?? []).compactMap { ExtensionPermission(rawValue: $0) })
+        let extensionID: ExtensionID
+        do {
+            extensionID = try ExtensionID(validating: id)
+        } catch {
+            throw ExtensionError.dataLoad("invalid extension id: \(id)")
+        }
         let manifest = ExtensionManifest(
-            id: ExtensionID(rawValue: id),
+            id: extensionID,
             displayName: displayName,
             version: version,
             requiredAPIVersion: .from(apiMin),

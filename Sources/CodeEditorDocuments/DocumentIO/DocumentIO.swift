@@ -5,11 +5,24 @@ import CodeEditorCore
 /// after a failed save (temp + replace, or no change).
 public protocol DocumentIO: Sendable {
     func read(url: URL) async throws -> Data
+    /// Read at most `maxBytes` (+1 to detect overflow). Rejects oversized files without
+    /// allocating the full content when the platform allows (DOC size gate).
+    func read(url: URL, maxBytes: UInt64) async throws -> Data
     /// Atomically replace `url` with `data`. On failure, original content (if any) remains intact.
     func writeAtomically(data: Data, to url: URL) async throws
     func fileExists(at url: URL) async -> Bool
     func resourceIdentity(at url: URL) async throws -> DocumentFileIdentity?
     func removeItem(at url: URL) async throws
+}
+
+public extension DocumentIO {
+    func read(url: URL, maxBytes: UInt64) async throws -> Data {
+        let data = try await read(url: url)
+        if UInt64(data.count) > maxBytes {
+            throw DocumentIOError.tooLarge(UInt64(data.count))
+        }
+        return data
+    }
 }
 
 /// Ordered failure points for fault-injection tests.
@@ -35,9 +48,34 @@ public struct LocalDocumentIO: DocumentIO {
     public init() {}
 
     public func read(url: URL) async throws -> Data {
+        try await read(url: url, maxBytes: UInt64.max)
+    }
+
+    public func read(url: URL, maxBytes: UInt64) async throws -> Data {
         try await Task.detached(priority: .userInitiated) {
+            // Metadata-first size check before full allocation.
+            if maxBytes < UInt64.max,
+               let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
+               let size = values.fileSize,
+               UInt64(size) > maxBytes
+            {
+                throw DocumentIOError.tooLarge(UInt64(size))
+            }
             do {
-                return try Data(contentsOf: url)
+                // Stream into memory with a hard cap: maxBytes + 1 to detect oversize.
+                let handle = try FileHandle(forReadingFrom: url)
+                defer { try? handle.close() }
+                if maxBytes == UInt64.max {
+                    return try handle.readToEnd() ?? Data()
+                }
+                let limit = Int(min(maxBytes + 1, UInt64(Int.max)))
+                let data = try handle.read(upToCount: limit) ?? Data()
+                if UInt64(data.count) > maxBytes {
+                    throw DocumentIOError.tooLarge(UInt64(data.count))
+                }
+                return data
+            } catch let error as DocumentIOError {
+                throw error
             } catch {
                 throw DocumentIOError.ioFailure(error.localizedDescription)
             }

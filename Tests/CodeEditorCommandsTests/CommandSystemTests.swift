@@ -111,7 +111,7 @@ struct CommandRegistryTests {
         _ = registry.register(EditorCommand.action(id: "codeeditor.edit.indent", title: "Indent", action: .indent))
         _ = registry.register(
             EditorCommand.action(
-                id: "hidden",
+                id: "test.hidden",
                 title: "Secret",
                 placement: .hiddenInPalette,
                 action: .undo

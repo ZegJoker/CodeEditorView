@@ -9,10 +9,26 @@ import Foundation
 ///   split user-perceived characters.
 ///
 /// Invalid inputs throw ``DocumentStoreError`` rather than silently producing wrong edits.
+/// **Never** maps an invalid interior offset to end-of-document.
 public enum TextOffsetSemantics: Sendable {
+    /// How to resolve an offset that is not on the requested boundary.
+    public enum BoundaryPolicy: Sendable, Equatable {
+        /// Require an exact boundary; throw ``DocumentStoreError/notScalarBoundary`` or
+        /// ``DocumentStoreError/notGraphemeBoundary`` otherwise.
+        case exact
+        /// Snap toward the start of the document.
+        case roundDownToScalar
+        /// Snap toward the end of the document.
+        case roundUpToScalar
+        /// Snap to the nearest extended grapheme cluster boundary (prefer left on ties).
+        case roundToGrapheme
+    }
+
     // MARK: - Validation
 
-    /// Returns a clamped half-open UTF-16 range, or throws if the location is unusable.
+    /// Returns a half-open UTF-16 range, or throws if the range is unusable.
+    ///
+    /// Overlong ranges and negative lengths are **rejected** (not truncated).
     public static func validatedUTF16Range(
         _ range: NSRange,
         documentUTF16Length length: Int
@@ -21,9 +37,13 @@ public enum TextOffsetSemantics: Sendable {
         guard range.location >= 0, range.location <= length else {
             throw DocumentStoreError.invalidRange(range)
         }
-        let rawLen = range.length
-        let len = rawLen < 0 ? 0 : min(rawLen, length - range.location)
-        return NSRange(location: range.location, length: len)
+        guard range.length >= 0 else {
+            throw DocumentStoreError.invalidRange(range)
+        }
+        guard range.location + range.length <= length else {
+            throw DocumentStoreError.invalidRange(range)
+        }
+        return range
     }
 
     /// True when `offset` is a valid caret position in `[0, length]`.
@@ -34,9 +54,13 @@ public enum TextOffsetSemantics: Sendable {
     // MARK: - UTF-16 ↔ UTF-8
 
     /// Converts a UTF-16 offset to a UTF-8 byte offset in `text`.
+    ///
+    /// Uses ``BoundaryPolicy/exact``: offsets inside a surrogate pair throw
+    /// ``DocumentStoreError/notScalarBoundary``.
     public static func utf8Offset(
         fromUTF16Offset utf16Offset: Int,
-        in text: String
+        in text: String,
+        policy: BoundaryPolicy = .exact
     ) throws -> Int {
         let ns = text as NSString
         let utf16Len = ns.length
@@ -46,7 +70,6 @@ public enum TextOffsetSemantics: Sendable {
         if utf16Offset == 0 { return 0 }
         if utf16Offset == utf16Len { return text.utf8.count }
 
-        // Map via String.Index bridges.
         guard let idx = text.utf16.index(
             text.utf16.startIndex,
             offsetBy: utf16Offset,
@@ -54,14 +77,32 @@ public enum TextOffsetSemantics: Sendable {
         ) else {
             throw DocumentStoreError.invalidOffset(utf16Offset)
         }
-        let stringIndex = String.Index(idx, within: text) ?? text.endIndex
-        return text.utf8.distance(from: text.utf8.startIndex, to: stringIndex.samePosition(in: text.utf8) ?? text.utf8.endIndex)
+        guard let stringIndex = String.Index(idx, within: text) else {
+            switch policy {
+            case .exact:
+                throw DocumentStoreError.notScalarBoundary(utf16Offset)
+            case .roundDownToScalar:
+                let rounded = try graphemeBoundaryBefore(utf16Offset: utf16Offset, in: text)
+                return try utf8Offset(fromUTF16Offset: rounded, in: text, policy: .exact)
+            case .roundUpToScalar, .roundToGrapheme:
+                let rounded = try graphemeBoundaryAfter(utf16Offset: utf16Offset, in: text)
+                return try utf8Offset(fromUTF16Offset: rounded, in: text, policy: .exact)
+            }
+        }
+        guard let utf8Index = stringIndex.samePosition(in: text.utf8) else {
+            throw DocumentStoreError.notScalarBoundary(utf16Offset)
+        }
+        return text.utf8.distance(from: text.utf8.startIndex, to: utf8Index)
     }
 
     /// Converts a UTF-8 byte offset to a UTF-16 offset in `text`.
+    ///
+    /// Uses ``BoundaryPolicy/exact``: offsets inside a multi-byte scalar throw
+    /// ``DocumentStoreError/notScalarBoundary``.
     public static func utf16Offset(
         fromUTF8Offset utf8Offset: Int,
-        in text: String
+        in text: String,
+        policy: BoundaryPolicy = .exact
     ) throws -> Int {
         let utf8Count = text.utf8.count
         guard utf8Offset >= 0, utf8Offset <= utf8Count else {
@@ -70,12 +111,48 @@ public enum TextOffsetSemantics: Sendable {
         if utf8Offset == 0 { return 0 }
         if utf8Offset == utf8Count { return (text as NSString).length }
 
-        var i = text.utf8.startIndex
-        let end = text.utf8.index(i, offsetBy: utf8Offset, limitedBy: text.utf8.endIndex)
-            ?? text.utf8.endIndex
-        i = end
-        let stringIndex = String.Index(i, within: text) ?? text.endIndex
-        return text.utf16.distance(from: text.utf16.startIndex, to: stringIndex.samePosition(in: text.utf16) ?? text.utf16.endIndex)
+        guard let utf8Index = text.utf8.index(
+            text.utf8.startIndex,
+            offsetBy: utf8Offset,
+            limitedBy: text.utf8.endIndex
+        ) else {
+            throw DocumentStoreError.invalidOffset(utf8Offset)
+        }
+        guard let stringIndex = String.Index(utf8Index, within: text) else {
+            switch policy {
+            case .exact:
+                throw DocumentStoreError.notScalarBoundary(utf8Offset)
+            case .roundDownToScalar:
+                // Walk back to the previous scalar boundary.
+                var i = utf8Index
+                while i > text.utf8.startIndex {
+                    text.utf8.formIndex(before: &i)
+                    if let s = String.Index(i, within: text) {
+                        return text.utf16.distance(
+                            from: text.utf16.startIndex,
+                            to: s.samePosition(in: text.utf16) ?? text.utf16.endIndex
+                        )
+                    }
+                }
+                return 0
+            case .roundUpToScalar, .roundToGrapheme:
+                var i = utf8Index
+                while i < text.utf8.endIndex {
+                    text.utf8.formIndex(after: &i)
+                    if let s = String.Index(i, within: text) {
+                        return text.utf16.distance(
+                            from: text.utf16.startIndex,
+                            to: s.samePosition(in: text.utf16) ?? text.utf16.endIndex
+                        )
+                    }
+                }
+                return (text as NSString).length
+            }
+        }
+        guard let utf16Index = stringIndex.samePosition(in: text.utf16) else {
+            throw DocumentStoreError.notScalarBoundary(utf8Offset)
+        }
+        return text.utf16.distance(from: text.utf16.startIndex, to: utf16Index)
     }
 
     // MARK: - Grapheme boundaries

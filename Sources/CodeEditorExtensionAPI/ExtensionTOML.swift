@@ -96,8 +96,14 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
         let events = activationEvents.compactMap(Self.parseActivationEvent)
         let caps = Set(capabilities.compactMap { HostCapability(rawValue: $0) })
         let perms = Set(permissions.compactMap { ExtensionPermission(rawValue: $0) })
+        let extensionID: ExtensionID
+        do {
+            extensionID = try ExtensionID(validating: id)
+        } catch {
+            throw ExtensionError.dataLoad("invalid extension id: \(id)")
+        }
         return ExtensionManifest(
-            id: ExtensionID(rawValue: id),
+            id: extensionID,
             displayName: name,
             version: semver,
             requiredAPIVersion: .from(apiMin),

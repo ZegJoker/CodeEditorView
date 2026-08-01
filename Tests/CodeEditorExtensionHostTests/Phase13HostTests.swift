@@ -88,7 +88,7 @@ struct Phase13DAPHostTests {
             }
         }
         let matches = try await Loc().locate(context: DebugLocatorContext(
-            extensionID: "ext",
+            extensionID: "test.ext",
             languageID: "swift",
             workspaceRootPaths: ["/tmp"]
         ))
@@ -170,7 +170,7 @@ struct Phase13SlashCommandTests {
             }
         }
         let svc = SlashCommandService()
-        let ext: ExtensionID = "ext"
+        let ext: ExtensionID = "test.ext"
         await svc.registerContribution(SlashCommandContribution(id: "x", name: "x", maxArgumentLength: 5))
         await svc.registerProvider(Prov(), extensionID: ext)
         do {
@@ -210,8 +210,8 @@ struct Phase13DocumentationTests {
                 languages: ["Swift"],
                 sourcePath: "docs/swift.md"
             ),
-            extensionID: "ext",
-            context: LanguageServerResolveContext(extensionID: "ext"),
+            extensionID: "test.ext",
+            context: LanguageServerResolveContext(extensionID: "test.ext"),
             worktreeRoot: tmp
         )
         #expect(entries.count >= 1)
@@ -223,8 +223,8 @@ struct Phase13DocumentationTests {
         do {
             _ = try await svc.buildIndex(
                 package: DocumentationPackageSuggestion(id: "missing", title: "M", sourcePath: "docs/nope.md"),
-                extensionID: "ext",
-                context: LanguageServerResolveContext(extensionID: "ext"),
+                extensionID: "test.ext",
+                context: LanguageServerResolveContext(extensionID: "test.ext"),
                 worktreeRoot: tmp
             )
             Issue.record("expected not found")
@@ -241,8 +241,8 @@ struct Phase13DocumentationTests {
         do {
             _ = try await tiny.buildIndex(
                 package: DocumentationPackageSuggestion(id: "big", title: "Big", sourcePath: "docs/swift.md"),
-                extensionID: "ext",
-                context: LanguageServerResolveContext(extensionID: "ext"),
+                extensionID: "test.ext",
+                context: LanguageServerResolveContext(extensionID: "test.ext"),
                 worktreeRoot: tmp
             )
             Issue.record("expected quota")
@@ -272,12 +272,12 @@ struct Phase13DocumentationTests {
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
         let svc = DocumentationIndexService(config: .init(storageRoot: tmp))
-        await svc.registerProvider(EmptyProv(), extensionID: "ext")
+        await svc.registerProvider(EmptyProv(), extensionID: "test.ext")
         do {
             _ = try await svc.buildIndex(
                 package: DocumentationPackageSuggestion(id: "empty", title: "Empty"),
-                extensionID: "ext",
-                context: LanguageServerResolveContext(extensionID: "ext"),
+                extensionID: "test.ext",
+                context: LanguageServerResolveContext(extensionID: "test.ext"),
                 worktreeRoot: nil
             )
             Issue.record("expected not found for empty provider")

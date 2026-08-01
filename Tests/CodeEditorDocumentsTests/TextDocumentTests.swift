@@ -27,10 +27,10 @@ struct TextDocumentTests {
         )
         #expect(doc.text == "ab")
         let afterInsert = doc.version
-        doc.performUndo()
+        try doc.performUndo()
         #expect(doc.text == "a")
         #expect(doc.version > afterInsert)
-        doc.performRedo()
+        try doc.performRedo()
         #expect(doc.text == "ab")
     }
 

@@ -22,6 +22,8 @@ public final class Workspace {
     public let navigationHistory: NavigationHistory
     public let settings: WorkspaceSettings
     public var trust: WorkspaceTrustState
+    /// Dirty-close policy and host delegate (WSP-001).
+    public let closeCoordinator: WorkspaceCloseCoordinator
     /// Bumped on structural UI-affecting changes so SwiftUI hosts can depend on a single token.
     public private(set) var revision: UInt64 = 0
 
@@ -31,7 +33,8 @@ public final class Workspace {
         documentProvider: any DocumentContentProvider = LocalFileDocumentProvider(),
         documents: DocumentRegistry = DocumentRegistry(),
         settings: WorkspaceSettings = .default,
-        trust: WorkspaceTrustState = .default
+        trust: WorkspaceTrustState = .default,
+        dirtyTabClosePolicy: DirtyTabClosePolicy = .prompt
     ) {
         self.id = id
         self.fileSystem = fileSystem
@@ -40,6 +43,7 @@ public final class Workspace {
         self.documents = documents
         self.settings = settings
         self.trust = trust
+        self.closeCoordinator = WorkspaceCloseCoordinator(defaultPolicy: dirtyTabClosePolicy)
         self.sessions = [:]
         self.navigationHistory = NavigationHistory()
         self.focusHistory = []
@@ -163,10 +167,92 @@ public final class Workspace {
         return (doc, session, opened.tab)
     }
 
+    /// Synchronous close used only when the tab's document is clean or still has other tabs.
+    /// Prefer ``requestCloseTab(_:in:)`` for UI and commands (WSP-001).
     public func closeTab(_ tabID: EditorTabID, in paneID: EditorPaneID) {
+        guard let pane = panes[paneID],
+              let tab = pane.tabs.first(where: { $0.id == tabID })
+        else { return }
+        if let doc = documents.document(id: tab.documentID), doc.isDirty {
+            let remaining = tabCount(for: tab.documentID) - 1
+            if remaining <= 0 {
+                // Fail closed: never drop the last dirty tab without an async decision.
+                return
+            }
+        }
+        forceCloseTab(tabID, in: paneID)
+    }
+
+    /// Asynchronous close with save/discard/cancel for dirty documents (WSP-001).
+    @discardableResult
+    public func requestCloseTab(
+        _ tabID: EditorTabID,
+        in paneID: EditorPaneID,
+        policy: DirtyTabClosePolicy? = nil
+    ) async -> CloseTransactionResult {
+        guard let pane = panes[paneID],
+              let tab = pane.tabs.first(where: { $0.id == tabID })
+        else { return .closed }
+
+        let remainingAfter = tabCount(for: tab.documentID) - 1
+        guard remainingAfter <= 0 else {
+            // Other tabs still lease the document — close view only.
+            forceCloseTab(tabID, in: paneID)
+            return .closed
+        }
+
+        guard let doc = documents.document(id: tab.documentID), doc.isDirty else {
+            forceCloseTab(tabID, in: paneID)
+            if remainingAfter <= 0 {
+                documents.remove(id: tab.documentID)
+            }
+            return .closed
+        }
+
+        let candidate = CloseCandidate(
+            documentID: doc.id,
+            uri: doc.uri,
+            isDirty: true,
+            remainingTabCount: remainingAfter
+        )
+        let decisions = await closeCoordinator.resolveDecisions(
+            candidates: [candidate],
+            policy: policy
+        )
+        let decision = decisions[doc.id] ?? .cancel
+        switch decision {
+        case .cancel:
+            return .cancelled
+        case .discard:
+            forceCloseTab(tabID, in: paneID)
+            documents.remove(id: doc.id)
+            return .closed
+        case .save:
+            do {
+                try await documentProvider.save(
+                    doc.snapshot(),
+                    to: doc.uri,
+                    encoding: doc.encoding
+                )
+                doc.markClean()
+                forceCloseTab(tabID, in: paneID)
+                documents.remove(id: doc.id)
+                return .closed
+            } catch {
+                return .saveFailed(doc.id, String(describing: error))
+            }
+        }
+    }
+
+    private func tabCount(for documentID: DocumentID) -> Int {
+        panes.values.reduce(0) { partial, pane in
+            partial + pane.tabs.filter { $0.documentID == documentID }.count
+        }
+    }
+
+    private func forceCloseTab(_ tabID: EditorTabID, in paneID: EditorPaneID) {
         guard let pane = panes[paneID] else { return }
         if let removed = pane.close(tab: tabID) {
-            // Drop session if unused by other panes.
             let stillUsed = panes.values.contains { p in
                 p.tabs.contains { $0.sessionID == removed.sessionID }
             }
@@ -202,6 +288,19 @@ public final class Workspace {
         }
     }
 
+    public func requestCloseOtherTabs(keeping tabID: EditorTabID, in paneID: EditorPaneID) async -> CloseTransactionResult {
+        guard let pane = panes[paneID] else { return .closed }
+        let toClose = pane.tabs.map(\.id).filter { $0 != tabID }
+        for id in toClose {
+            let result = await requestCloseTab(id, in: paneID)
+            if result == .cancelled || result != .closed {
+                if case .saveFailed = result { return result }
+                if result == .cancelled { return .cancelled }
+            }
+        }
+        return .closed
+    }
+
     public func closeTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID) {
         guard let pane = panes[paneID],
               let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
@@ -210,6 +309,19 @@ public final class Workspace {
         for id in toClose {
             closeTab(id, in: paneID)
         }
+    }
+
+    public func requestCloseTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID) async -> CloseTransactionResult {
+        guard let pane = panes[paneID],
+              let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
+        else { return .closed }
+        let toClose = pane.tabs.suffix(from: idx + 1).map(\.id)
+        for id in toClose {
+            let result = await requestCloseTab(id, in: paneID)
+            if result == .cancelled { return .cancelled }
+            if case .saveFailed = result { return result }
+        }
+        return .closed
     }
 
     public func promotePreviewTabs(for documentID: DocumentID) {
@@ -428,7 +540,7 @@ public final class Workspace {
         fileSystem: any WorkspaceFileSystem,
         documentProvider: any DocumentContentProvider = LocalFileDocumentProvider()
     ) async throws -> Workspace {
-        let migrated = WorkspaceRestoration.migrate(state)
+        let migrated = try WorkspaceRestoration.migrate(state)
         let workspace = Workspace(
             id: migrated.workspaceID,
             fileSystem: fileSystem,

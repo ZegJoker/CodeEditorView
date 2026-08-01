@@ -43,7 +43,7 @@ public struct DataExtensionBundle: Sendable {
 }
 
 public extension KeybindingOverrideDTO {
-    func makeOverride() -> KeybindingOverride {
+    func makeOverride() -> KeybindingOverride? {
         var mods: KeyModifier = []
         for m in modifiers {
             switch m.lowercased() {
@@ -54,8 +54,11 @@ public extension KeybindingOverrideDTO {
             default: break
             }
         }
+        guard let id = CommandID(rawValue: commandID) else {
+            return nil
+        }
         return KeybindingOverride(
-            commandID: CommandID(rawValue: commandID),
+            commandID: id,
             keybinding: Keybinding(key: key, modifiers: mods),
             source: .extensionModule,
             priority: priority
@@ -125,7 +128,7 @@ struct DataOnlyExtension: CodeEditorExtension {
             }
         }
         if !bundle.keybindingOverrides.isEmpty, let kb = ctx.keybindings {
-            let overrides = bundle.keybindingOverrides.map { $0.makeOverride() }
+            let overrides = bundle.keybindingOverrides.compactMap { $0.makeOverride() }
             let token = await MainActor.run {
                 kb.applyOverrides(overrides)
             }

@@ -16,6 +16,8 @@ public final class TextDocument {
     public private(set) var fileIdentity: DocumentFileIdentity?
     /// Whether the last load observed a BOM.
     public private(set) var hadBOM: Bool = false
+    /// Content generation at last clean/save. Used so undo/redo can restore clean state.
+    public private(set) var savedVersion: DocumentVersion?
     public var lifecyclePolicy: DocumentLifecyclePolicy
 
     /// Content buffer (plain text + optional attributes for standalone paint).
@@ -50,6 +52,8 @@ public final class TextDocument {
         self.lifecyclePolicy = lifecyclePolicy
         self.store = DocumentStore(string: text)
         self.undo = UndoCoordinator()
+        // Clean documents start at version zero with savedVersion matching.
+        self.savedVersion = isDirty ? nil : self.store.version
     }
 
     public convenience init(string: String) {
@@ -164,32 +168,46 @@ public final class TextDocument {
     }
 
     /// Undoes the last document-scoped group (emits ``TextDocumentEvent/didApply``).
-    public func performUndo() {
-        undo.undoGroup { [weak self] edits in
-            guard let self, !edits.isEmpty else { return }
+    ///
+    /// Throws if the undo application fails; the undo stack is left unchanged (DOC-002).
+    public func performUndo() throws {
+        try undo.undoGroup { [weak self] edits in
+            guard let self else { return }
+            guard !edits.isEmpty else { return }
             let changes = edits.map {
                 TextChange(range: $0.inverse.range, replacement: $0.inverse.string)
             }
             let transaction = EditTransaction(changes: changes, origin: .undo)
-            _ = try? self.apply(transaction, sortHighToLow: false, registerUndo: false)
+            _ = try self.apply(transaction, sortHighToLow: false, registerUndo: false)
+            // Restore clean state when undoing back to the last saved generation.
+            if let saved = self.savedVersion, self.store.version == saved {
+                self.setDirty(false)
+            }
         }
     }
 
     /// Redoes the last undone group (emits ``TextDocumentEvent/didApply``).
-    public func performRedo() {
-        undo.redoGroup { [weak self] edits in
-            guard let self, !edits.isEmpty else { return }
+    ///
+    /// Throws if the redo application fails; the redo stack is left unchanged (DOC-002).
+    public func performRedo() throws {
+        try undo.redoGroup { [weak self] edits in
+            guard let self else { return }
+            guard !edits.isEmpty else { return }
             let changes = edits.map {
                 TextChange(range: $0.mutation.range, replacement: $0.mutation.string)
             }
             let transaction = EditTransaction(changes: changes, origin: .redo)
-            _ = try? self.apply(transaction, sortHighToLow: false, registerUndo: false)
+            _ = try self.apply(transaction, sortHighToLow: false, registerUndo: false)
+            if let saved = self.savedVersion, self.store.version == saved {
+                self.setDirty(false)
+            }
         }
     }
 
     // MARK: - Dirty / URI / external
 
     public func markClean() {
+        savedVersion = store.version
         setDirty(false)
     }
 
@@ -234,6 +252,7 @@ public final class TextDocument {
             self.encoding = encoding
         }
         _ = try replaceFullContent(text, origin: .programmatic, clearUndo: true, markDirty: false)
+        savedVersion = store.version
         setDirty(false)
         yield(.externalContentReplace(snapshot()))
         return true

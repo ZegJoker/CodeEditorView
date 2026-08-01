@@ -36,12 +36,16 @@ public struct WorkspaceTrustState: Sendable, Hashable, Codable {
     public var level: WorkspaceTrust
     public var trustedRootIDs: Set<WorkspaceRootID>
 
-    public init(level: WorkspaceTrust = .trusted, trustedRootIDs: Set<WorkspaceRootID> = []) {
+    /// Defaults to **restricted** — never assume a newly opened workspace is trusted (audit §8.7).
+    public init(level: WorkspaceTrust = .restricted, trustedRootIDs: Set<WorkspaceRootID> = []) {
         self.level = level
         self.trustedRootIDs = trustedRootIDs
     }
 
-    public static let `default` = WorkspaceTrustState()
+    /// Fail-closed default: restricted until the host promotes trust.
+    public static let `default` = WorkspaceTrustState(level: .restricted)
+    /// Explicit fully trusted state for known-safe host workflows.
+    public static let trusted = WorkspaceTrustState(level: .trusted)
 }
 
 /// Abstract multi-root workspace file system with lazy children and event stream.

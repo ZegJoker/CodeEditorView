@@ -31,9 +31,8 @@ public final class DocumentRegistry {
     @discardableResult
     public func remove(id: DocumentID) -> TextDocument? {
         guard let doc = byID.removeValue(forKey: id) else { return nil }
-        if byURI[doc.uri] == id {
-            byURI.removeValue(forKey: doc.uri)
-        }
+        // Remove every URI alias that points at this document (raw + canonical).
+        byURI = byURI.filter { $0.value != id }
         return doc
     }
 

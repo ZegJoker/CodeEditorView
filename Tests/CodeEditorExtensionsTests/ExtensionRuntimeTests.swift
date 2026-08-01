@@ -27,7 +27,7 @@ struct CommandSampleExtension: CodeEditorExtension {
         }
         let command = await MainActor.run {
             EditorCommand(
-                id: CommandID(rawValue: "test.command.hello"),
+                id: CommandID(stringLiteral: "test.command.hello"),
                 title: "Hello Extension"
             ) { _ in }
         }
@@ -54,7 +54,7 @@ struct CompletionSampleExtension: CodeEditorExtension {
             throw ExtensionError.missingCapabilities([.languageServices])
         }
         let provider = MockLanguageSuite(
-            id: "cmp",
+            id: "test.cmp",
             selector: .languages("swift"),
             priority: 10,
             completionItems: [CompletionItem(label: "extHello", kind: .function)]
@@ -103,7 +103,7 @@ struct PanelSampleExtension: CodeEditorExtension {
         }
         try context.requirePermission(.presentUI)
         let token = try context.panels?.register(
-            id: "panel",
+            id: "test.panel",
             slot: "utility",
             title: "Sample Panel",
             priority: 5
@@ -222,10 +222,10 @@ struct LifecycleTests {
         let runtime = ExtensionRuntime(environment: env, services: services)
         await runtime.register(CommandSampleExtension())
         try await runtime.activate(id: "test.command")
-        #expect(commands.command(id: CommandID(rawValue: "test.command.hello")) != nil)
+        #expect(commands.command(id: CommandID(stringLiteral: "test.command.hello")) != nil)
 
         await runtime.deactivate(id: "test.command")
-        #expect(commands.command(id: CommandID(rawValue: "test.command.hello")) == nil)
+        #expect(commands.command(id: CommandID(stringLiteral: "test.command.hello")) == nil)
         let status = await runtime.status(id: "test.command")
         if case .inactive(.deactivated) = status?.state {
             // ok
@@ -441,11 +441,11 @@ struct MultiExtensionTests {
         await runtime.register(CommandSampleExtension())
         await runtime.register(PanelSampleExtension())
         await runtime.fire(.startup)
-        #expect(commands.command(id: CommandID(rawValue: "test.command.hello")) != nil)
+        #expect(commands.command(id: CommandID(stringLiteral: "test.command.hello")) != nil)
         #expect(services.panelStore.all().count == 1)
 
         await runtime.deactivate(id: "test.command")
-        #expect(commands.command(id: CommandID(rawValue: "test.command.hello")) == nil)
+        #expect(commands.command(id: CommandID(stringLiteral: "test.command.hello")) == nil)
         #expect(services.panelStore.all().count == 1)
 
         await runtime.deactivate(id: "test.panel")

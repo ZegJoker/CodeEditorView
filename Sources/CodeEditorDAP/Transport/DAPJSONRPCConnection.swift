@@ -102,30 +102,63 @@ public actor DAPJSONRPCConnection {
             message["arguments"] = arguments.dictionary
         }
         let body = try JSONSerialization.data(withJSONObject: message)
-        try await transport.send(DAPMessageFraming.encode(body))
 
+        // DAP-001: register pending continuation **before** transport write so a fast
+        // in-memory adapter cannot race past registration (no earlyResponses path needed
+        // on the happy path).
         return try await withThrowingTaskGroup(of: Data.self) { group in
             group.addTask {
                 try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-                    Task { await self.registerPending(id: id, cont: cont) }
+                    Task {
+                        await self.registerPendingThenSend(id: id, body: body, cont: cont)
+                    }
                 }
             }
             group.addTask {
                 try await Task.sleep(for: self.requestTimeout)
+                await self.failPending(id: id, error: DAPError.timeout(method: command))
                 throw DAPError.timeout(method: command)
             }
-            let result = try await group.next()!
-            group.cancelAll()
-            return result
+            do {
+                let result = try await group.next()!
+                group.cancelAll()
+                return result
+            } catch {
+                group.cancelAll()
+                await self.removePending(id: id)
+                throw error
+            }
         }
     }
 
-    private func registerPending(id: RequestID, cont: CheckedContinuation<Data, Error>) {
+    private func registerPendingThenSend(
+        id: RequestID,
+        body: Data,
+        cont: CheckedContinuation<Data, Error>
+    ) async {
         if let early = earlyResponses.removeValue(forKey: id) {
             cont.resume(returning: early)
             return
         }
         pending[id] = cont
+        do {
+            try await transport.send(DAPMessageFraming.encode(body))
+        } catch {
+            pending.removeValue(forKey: id)
+            cont.resume(throwing: error)
+        }
+    }
+
+    private func failPending(id: RequestID, error: Error) {
+        if let cont = pending.removeValue(forKey: id) {
+            cont.resume(throwing: error)
+        }
+        earlyResponses.removeValue(forKey: id)
+    }
+
+    private func removePending(id: RequestID) {
+        pending.removeValue(forKey: id)
+        earlyResponses.removeValue(forKey: id)
     }
 
     public func close() async {

@@ -3,6 +3,22 @@ import Foundation
 public enum CommandError: Error, Sendable, Equatable {
     case unknownCommand(String)
     case disabled(String)
+    case unsupported(String)
+    case notFound(String)
+}
+
+public extension CommandResult {
+    /// Map errors to structured results for palette/menus (audit §9.6 — no silent success).
+    static func from(error: CommandError) -> CommandResult {
+        switch error {
+        case .unknownCommand(let s), .notFound(let s):
+            return .failed("notFound:\(s)")
+        case .disabled(let s):
+            return .failed("disabled:\(s)")
+        case .unsupported(let s):
+            return .failed("unsupported:\(s)")
+        }
+    }
 }
 
 /// Executes commands and resolves key presses (including multi-step chords).
@@ -27,7 +43,7 @@ public final class CommandDispatcher {
 
     public func execute(_ id: CommandID, context: CommandContext) throws {
         guard let command = commands.command(id: id) else {
-            throw CommandError.unknownCommand(id.rawValue)
+            throw CommandError.notFound(id.rawValue)
         }
         let input = context.evaluationInput
         guard ContextExpressionEvaluator.evaluate(command.enablement, in: input) else {
@@ -40,29 +56,56 @@ public final class CommandDispatcher {
     @discardableResult
     public func executeAsync(_ id: CommandID, context: CommandContext) async throws -> CommandResult {
         guard let command = commands.command(id: id) else {
-            throw CommandError.unknownCommand(id.rawValue)
+            return .from(error: .notFound(id.rawValue))
         }
         let input = context.evaluationInput
         guard ContextExpressionEvaluator.evaluate(command.enablement, in: input) else {
-            throw CommandError.disabled(id.rawValue)
+            return .from(error: .disabled(id.rawValue))
         }
         try Task.checkCancellation()
         if let asyncHandler = command.asyncHandler {
             return try await asyncHandler(context)
         }
-        try command.handler(context)
-        return .success
+        do {
+            try command.handler(context)
+            return .success
+        } catch let error as CommandError {
+            return .from(error: error)
+        } catch {
+            return .failed(String(describing: error))
+        }
     }
 
     /// Handles a single key press. Returns `true` if a command consumed the event.
+    ///
+    /// ## Chord state machine (CMD-002)
+    /// When the current sequence is both an exact binding **and** a strict prefix of a longer
+    /// chord (e.g. ⌘K vs ⌘K,⌘C), the dispatcher enters a pending-chord state instead of
+    /// executing immediately. Resolution occurs on the next keystroke or after
+    /// ``chordTimeoutNanoseconds``. Escape clears the buffer without executing.
     @discardableResult
     public func handleKeyPress(_ press: KeyPress, context: CommandContext) throws -> Bool {
         let input = context.evaluationInput
-        scheduleChordReset()
 
+        // Escape cancels a pending chord.
+        if press.key == "escape", !chordBuffer.isEmpty {
+            chordBuffer.removeAll()
+            chordResetTask?.cancel()
+            return true
+        }
+
+        scheduleChordReset()
         chordBuffer.append(press)
 
-        if let id = keybindings.resolve(presses: chordBuffer, input: input) {
+        let exactID = keybindings.resolve(presses: chordBuffer, input: input)
+        let longerExists = keybindings.hasLongerPrefix(presses: chordBuffer, input: input)
+
+        if let id = exactID, longerExists {
+            // Ambiguous: exact match is a prefix of a longer chord — wait.
+            return true
+        }
+
+        if let id = exactID {
             chordBuffer.removeAll()
             chordResetTask?.cancel()
             try execute(id, context: context)
@@ -74,10 +117,23 @@ public final class CommandDispatcher {
             return true
         }
 
-        // No match — if buffer length > 1, try current press alone.
+        // No match — if buffer length > 1, try current press alone (after failing longer chord).
         if chordBuffer.count > 1 {
+            // If we had a pending exact match for the prefix, execute it first.
+            let prefix = Array(chordBuffer.dropLast())
+            if let prefixID = keybindings.resolve(presses: prefix, input: input) {
+                chordBuffer = [press]
+                chordResetTask?.cancel()
+                try execute(prefixID, context: context)
+                // Then re-process the current press as a fresh sequence.
+                return try handleKeyPressAfterPrefixCommit(press, context: context)
+            }
             chordBuffer = [press]
             if let id = keybindings.resolve(presses: chordBuffer, input: input) {
+                let longer = keybindings.hasLongerPrefix(presses: chordBuffer, input: input)
+                if longer {
+                    return true
+                }
                 chordBuffer.removeAll()
                 chordResetTask?.cancel()
                 try execute(id, context: context)
@@ -88,6 +144,28 @@ public final class CommandDispatcher {
             }
         }
 
+        chordBuffer.removeAll()
+        chordResetTask?.cancel()
+        return false
+    }
+
+    /// After committing a prefix binding, re-evaluate the latest press alone.
+    private func handleKeyPressAfterPrefixCommit(_ press: KeyPress, context: CommandContext) throws -> Bool {
+        let input = context.evaluationInput
+        scheduleChordReset()
+        chordBuffer = [press]
+        if let id = keybindings.resolve(presses: chordBuffer, input: input) {
+            if keybindings.hasLongerPrefix(presses: chordBuffer, input: input) {
+                return true
+            }
+            chordBuffer.removeAll()
+            chordResetTask?.cancel()
+            try execute(id, context: context)
+            return true
+        }
+        if keybindings.hasPrefix(presses: chordBuffer, input: input) {
+            return true
+        }
         chordBuffer.removeAll()
         chordResetTask?.cancel()
         return false

@@ -8,14 +8,14 @@ import CodeEditorLanguageSupport
 @Suite("Reference workflows", .serialized)
 @MainActor
 struct ReferenceWorkflowTests {
-    @Test func typeSelectAndEdit() {
+    @Test func typeSelectAndEdit() throws {
         let c = EditorController(text: "")
         c.insertText("hello")
         #expect(c.text == "hello")
         c.setSelectedRange(NSRange(location: 0, length: 5))
         c.insertText("hi")
         #expect(c.text == "hi")
-        c.textDocument.performUndo()
+        try c.textDocument.performUndo()
         #expect(c.text == "hello")
     }
 

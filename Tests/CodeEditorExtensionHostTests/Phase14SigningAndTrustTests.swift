@@ -102,7 +102,7 @@ struct Phase14SigningTests {
         [activation]
         events = ["startup"]
         """.write(to: pkg.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             verifier: HostPackageVerifier(policy: .testing)
         )
@@ -153,7 +153,7 @@ struct Phase14ActivationGateTests {
         """.write(to: pkgDir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "MIT".write(to: pkgDir.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
 
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             verifier: HostPackageVerifier(policy: .testing)
         )
@@ -210,7 +210,7 @@ struct Phase14ActivationGateTests {
             policy: ExtensionExecutionPolicy(trust: .strict)
         )
         let prepared = PreparedExtensionPackage(
-            packageID: ExtensionID(rawValue: "com.example.strict"),
+            packageID: ExtensionID(rawValue: "com.example.strict")!,
             displayName: "Strict",
             version: SemanticVersion(major: 1),
             manifest: ExtensionManifest(id: "com.example.strict", displayName: "Strict"),

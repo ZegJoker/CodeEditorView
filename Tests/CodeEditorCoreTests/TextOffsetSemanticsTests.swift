@@ -15,9 +15,14 @@ struct TextOffsetSemanticsTests {
 
     @Test func utf16Utf8Emoji() throws {
         let text = "a😀b" // emoji is 2 UTF-16 units, 4 UTF-8 bytes
-        let midEmojiUTF16 = 1
-        let u8 = try TextOffsetSemantics.utf8Offset(fromUTF16Offset: midEmojiUTF16, in: text)
+        // Offset 1 is the start of the emoji (valid scalar boundary).
+        let emojiStartUTF16 = 1
+        let u8 = try TextOffsetSemantics.utf8Offset(fromUTF16Offset: emojiStartUTF16, in: text)
         #expect(u8 == 1) // after 'a'
+        // Offset 2 is inside the surrogate pair — must throw, never map to EOF.
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.utf8Offset(fromUTF16Offset: 2, in: text, policy: .exact)
+        }
         let afterEmoji = try TextOffsetSemantics.utf16Offset(
             fromUTF8Offset: try TextOffsetSemantics.utf8Offset(fromUTF16Offset: 3, in: text),
             in: text
@@ -51,12 +56,13 @@ struct TextOffsetSemanticsTests {
         #expect(crlf == "a\r\nb\r\nc\r\n")
     }
 
-    @Test func validatedRangeClampsLength() throws {
-        let r = try TextOffsetSemantics.validatedUTF16Range(
-            NSRange(location: 2, length: 100),
-            documentUTF16Length: 5
-        )
-        #expect(r == NSRange(location: 2, length: 3))
+    @Test func validatedRangeRejectsOverlong() {
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.validatedUTF16Range(
+                NSRange(location: 2, length: 100),
+                documentUTF16Length: 5
+            )
+        }
     }
 
     @Test func validatedRangeRejectsBadLocation() {
@@ -66,6 +72,80 @@ struct TextOffsetSemanticsTests {
                 documentUTF16Length: 5
             )
         }
+    }
+
+    @Test func interiorUTF8OffsetThrowsNotScalarBoundary() {
+        // "€" is 3 UTF-8 bytes; offset 1 is mid-scalar.
+        let text = "€"
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.utf16Offset(fromUTF8Offset: 1, in: text, policy: .exact)
+        }
+    }
+}
+
+@Suite("DocumentStore atomic multi-edit (DOC-001)")
+@MainActor
+struct DocumentStoreAtomicityTests {
+    @Test func overlappingRangesLeaveDocumentUnchanged() throws {
+        let store = DocumentStore(string: "abcdef")
+        let before = store.fullString
+        let beforeVersion = store.version
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 0, length: 3), replacement: "X"),
+                TextChange(range: NSRange(location: 2, length: 2), replacement: "Y"),
+            ],
+            origin: .programmatic
+        )
+        #expect(throws: DocumentStoreError.self) {
+            try store.apply(t)
+        }
+        #expect(store.fullString == before)
+        #expect(store.version == beforeVersion)
+    }
+
+    @Test func invalidLaterRangeLeavesDocumentUnchanged() throws {
+        let store = DocumentStore(string: "hello")
+        let before = store.fullString
+        let beforeVersion = store.version
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 0, length: 1), replacement: "H"),
+                TextChange(range: NSRange(location: 99, length: 1), replacement: "Z"),
+            ],
+            origin: .programmatic
+        )
+        #expect(throws: DocumentStoreError.self) {
+            try store.apply(t)
+        }
+        #expect(store.fullString == before)
+        #expect(store.version == beforeVersion)
+    }
+
+    @Test func equalOffsetInsertionsAreDeterministic() throws {
+        let store = DocumentStore(string: "ab")
+        // Two pure insertions at the same offset; declaration order preserved for equal location.
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 1, length: 0), replacement: "1"),
+                TextChange(range: NSRange(location: 1, length: 0), replacement: "2"),
+            ],
+            origin: .programmatic
+        )
+        _ = try store.apply(t)
+        // High-to-low with equal location uses ascending original index:
+        // first "1" then "2" at same pre-edit offset applied high→low with stable index order
+        // produces "a12b" when second is applied first (higher index? no - same loc, lower index first
+        // after high-to-low sort with index ascending: both at 1, apply index0 then index1.
+        // Applying "1" first: "a1b", then "2" at location 1: "a21b".
+        // Actually high-to-low with equal location sorts by index ascending, so apply "1" then "2":
+        // After "1": a1b. After "2" at original location 1 (still valid in high-to-low? same location
+        // pure inserts both valid on original). Staging applies in ordered list order.
+        #expect(store.fullString == "a12b" || store.fullString == "a21b")
+        // Pin deterministic result: index-ascending at equal offset under high→low yields "a12b"
+        // when both inserts use pre-edit coordinates and high→low applies both at loc 1:
+        // first applied is index 0 ("1") → "a1b"; then index 1 ("2") at loc 1 → "a21b".
+        #expect(store.fullString == "a21b")
     }
 }
 

@@ -73,6 +73,16 @@ public final class KeybindingRegistry {
         }
     }
 
+    /// Whether any **longer** binding has `presses` as a strict prefix (chord ambiguity).
+    public func hasLongerPrefix(presses: [KeyPress], input: ContextEvaluationInput) -> Bool {
+        guard !presses.isEmpty else { return false }
+        return bindings.contains { entry in
+            guard entry.keybinding.chord.count > presses.count else { return false }
+            guard Array(entry.keybinding.chord.prefix(presses.count)) == presses else { return false }
+            return ContextExpressionEvaluator.evaluate(entry.keybinding.when, in: input)
+        }
+    }
+
     public func allBindings() -> [(commandID: CommandID, keybinding: Keybinding, source: KeybindingSource)] {
         bindings.map { ($0.commandID, $0.keybinding, $0.source) }
     }

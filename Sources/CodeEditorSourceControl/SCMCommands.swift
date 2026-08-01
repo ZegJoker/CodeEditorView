@@ -2,9 +2,9 @@ import Foundation
 import CodeEditorCommands
 
 public enum SCMCommands {
-    public static let refresh = CommandID(rawValue: "codeeditor.scm.refresh")
-    public static let stage = CommandID(rawValue: "codeeditor.scm.stage")
-    public static let commit = CommandID(rawValue: "codeeditor.scm.commit")
+    public static let refresh = CommandID(stringLiteral: "codeeditor.scm.refresh")
+    public static let stage = CommandID(stringLiteral: "codeeditor.scm.stage")
+    public static let commit = CommandID(stringLiteral: "codeeditor.scm.commit")
 
     @MainActor
     @discardableResult

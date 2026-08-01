@@ -44,6 +44,51 @@ public actor ExtensionPackageManager {
         }
     }
 
+    /// Production initializer — **requires** verifier and install policy (EXT-004 fail-closed).
+    public init(
+        installRoot: URL,
+        policy: ShippingInstallPolicy,
+        verifier: any PackageVerifying,
+        maxEventBuffer: Int = 32,
+        telemetry: StoreTelemetrySink? = nil
+    ) {
+        self.installRoot = installRoot
+        self.maxEventBuffer = max(4, maxEventBuffer)
+        self.verifier = verifier
+        self.telemetry = telemetry
+        self.installPolicy = policy
+        var cont: AsyncStream<ExtensionContributionSnapshot>.Continuation!
+        self.snapshots = AsyncStream(bufferingPolicy: .bufferingNewest(maxEventBuffer)) { cont = $0 }
+        self.continuation = cont
+        Self.ensureLayout(at: installRoot)
+        if telemetry == nil {
+            let tel = installRoot
+                .appendingPathComponent("telemetry", isDirectory: true)
+                .appendingPathComponent("migration-events.ndjson")
+            self.telemetry = StoreTelemetrySink(fileURL: tel)
+        }
+    }
+
+    /// Test-only initializer with optional verifier/policy. **Do not use in production hosts.**
+    public static func insecureForTests(
+        installRoot: URL,
+        maxEventBuffer: Int = 32,
+        verifier: (any PackageVerifying)? = nil,
+        telemetry: StoreTelemetrySink? = nil,
+        installPolicy: ShippingInstallPolicy? = nil
+    ) -> ExtensionPackageManager {
+        ExtensionPackageManager(
+            installRoot: installRoot,
+            maxEventBuffer: maxEventBuffer,
+            verifier: verifier,
+            telemetry: telemetry,
+            installPolicy: installPolicy,
+            allowMissingSecurity: true
+        )
+    }
+
+    /// Legacy convenience retained for migration — prefer production `init(installRoot:policy:verifier:)`
+    /// or ``insecureForTests``. Missing verifier/policy **fail closed** on install (EXT-004).
     public init(
         installRoot: URL,
         maxEventBuffer: Int = 32,
@@ -51,15 +96,45 @@ public actor ExtensionPackageManager {
         telemetry: StoreTelemetrySink? = nil,
         installPolicy: ShippingInstallPolicy? = nil
     ) {
+        self.init(
+            installRoot: installRoot,
+            maxEventBuffer: maxEventBuffer,
+            verifier: verifier,
+            telemetry: telemetry,
+            installPolicy: installPolicy,
+            allowMissingSecurity: false
+        )
+    }
+
+    private init(
+        installRoot: URL,
+        maxEventBuffer: Int,
+        verifier: (any PackageVerifying)?,
+        telemetry: StoreTelemetrySink?,
+        installPolicy: ShippingInstallPolicy?,
+        allowMissingSecurity: Bool
+    ) {
         self.installRoot = installRoot
         self.maxEventBuffer = max(4, maxEventBuffer)
         self.verifier = verifier
         self.telemetry = telemetry
         self.installPolicy = installPolicy
+        self.allowMissingSecurity = allowMissingSecurity
         var cont: AsyncStream<ExtensionContributionSnapshot>.Continuation!
         self.snapshots = AsyncStream(bufferingPolicy: .bufferingNewest(maxEventBuffer)) { cont = $0 }
         self.continuation = cont
-        // Layout sync is safe; durable load is async-only — call `bootstrap()` after init.
+        Self.ensureLayout(at: installRoot)
+        if telemetry == nil {
+            let tel = installRoot
+                .appendingPathComponent("telemetry", isDirectory: true)
+                .appendingPathComponent("migration-events.ndjson")
+            self.telemetry = StoreTelemetrySink(fileURL: tel)
+        }
+    }
+
+    private var allowMissingSecurity: Bool = false
+
+    private static func ensureLayout(at installRoot: URL) {
         for dir in [
             installRoot.appendingPathComponent("packages", isDirectory: true),
             installRoot.appendingPathComponent("state", isDirectory: true),
@@ -70,12 +145,11 @@ public actor ExtensionPackageManager {
         ] {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
-        if telemetry == nil {
-            let tel = installRoot
-                .appendingPathComponent("telemetry", isDirectory: true)
-                .appendingPathComponent("migration-events.ndjson")
-            self.telemetry = StoreTelemetrySink(fileURL: tel)
-        }
+    }
+
+    /// Filesystem directory for an extension — hash key, never the raw ID (EXT-001).
+    public func packageDirectory(for id: ExtensionID) -> URL {
+        packagesRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
     }
 
     /// Load durable state and revocation list (call once after init).
@@ -151,7 +225,7 @@ public actor ExtensionPackageManager {
             return plan
         }
 
-        let idRoot = packagesRoot.appendingPathComponent(plan.packageID.rawValue, isDirectory: true)
+        let idRoot = packageDirectory(for: plan.packageID)
         let versionDir = idRoot.appendingPathComponent(version, isDirectory: true)
         let staging = idRoot.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: idRoot, withIntermediateDirectories: true)
@@ -254,7 +328,7 @@ public actor ExtensionPackageManager {
             record(.init(event: "package.rollback", packageID: id.rawValue, toVersion: prevVer, success: true, reason: "dev"))
             return
         }
-        let idRoot = packagesRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+        let idRoot = packageDirectory(for: id)
         let prevDir = idRoot.appendingPathComponent(prevVer, isDirectory: true)
         guard FileManager.default.fileExists(atPath: prevDir.path) else {
             throw ExtensionError.dataLoad("previous version directory missing: \(prevVer)")
@@ -289,7 +363,7 @@ public actor ExtensionPackageManager {
             throw ExtensionError.notRegistered
         }
         if !pkg.isDev {
-            let idRoot = packagesRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+            let idRoot = packageDirectory(for: id)
             if FileManager.default.fileExists(atPath: idRoot.path) {
                 try FileManager.default.removeItem(at: idRoot)
             }
@@ -332,7 +406,7 @@ public actor ExtensionPackageManager {
         for (id, pkg) in packages {
             if pkg.quarantined { continue }
             if !pkg.isDev {
-                let idRoot = packagesRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+                let idRoot = packageDirectory(for: id)
                 if let rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: pkg) {
                     packages[id] = rebuilt
                     continue
@@ -352,11 +426,12 @@ public actor ExtensionPackageManager {
             options: [.skipsHiddenFiles]
         ) {
             for idDir in idDirs {
-                let id = ExtensionID(rawValue: idDir.lastPathComponent)
+                // Directory names are directoryKey hashes; only rebuild when durable state
+                // already mapped them, or when extension.toml is present and validates.
+                guard let rebuilt = loadInstalledFromPointersByRoot(idRoot: idDir) else { continue }
+                let id = rebuilt.plan.packageID
                 if packages[id] != nil { continue }
-                if let rebuilt = loadInstalledFromPointers(id: id, idRoot: idDir, base: nil) {
-                    packages[id] = rebuilt
-                }
+                packages[id] = rebuilt
             }
         }
 
@@ -375,6 +450,8 @@ public actor ExtensionPackageManager {
         guard FileManager.default.fileExists(atPath: dir.path),
               var plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
         else { return nil }
+        // Reject directory/identity mismatch (EXT-001).
+        guard plan.packageID == id || idRoot.lastPathComponent == id.directoryKey else { return nil }
         plan.packageRoot = dir
         var previousPlan: ValidatedContributionPlan?
         var previousVersion: String?
@@ -403,6 +480,18 @@ public actor ExtensionPackageManager {
             quarantineReason: base?.quarantineReason,
             publisher: base?.publisher
         )
+    }
+
+    /// Discover a package from a filesystem root by reading pointers and validating the manifest ID.
+    private func loadInstalledFromPointersByRoot(idRoot: URL) -> InstalledPackage? {
+        guard let current = try? readPointer(idRoot: idRoot, name: "current") else { return nil }
+        let dir = idRoot.appendingPathComponent(current, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: dir.path),
+              let plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
+        else { return nil }
+        // Directory must match the canonical directoryKey of the package ID.
+        guard idRoot.lastPathComponent == plan.packageID.directoryKey else { return nil }
+        return loadInstalledFromPointers(id: plan.packageID, idRoot: idRoot, base: nil)
     }
 
     public func quarantine(id: ExtensionID, reason: String) throws {
@@ -468,7 +557,7 @@ public actor ExtensionPackageManager {
     }
 
     public func userDataDir(id: ExtensionID) -> URL {
-        dataRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+        dataRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
     }
 
     public func trustStatusItems() -> [ExtensionTrustStatusItem] {
@@ -549,12 +638,19 @@ public actor ExtensionPackageManager {
         if let verifier {
             return try verifier.verify(packageRoot: packageRoot)
         }
-        // No verifier: treat as workspaceDev (tests that only care about FS layout)
-        return PackageVerifyResult(trustClass: .workspaceDev, publisher: nil, quarantined: false, error: nil)
+        if allowMissingSecurity {
+            return PackageVerifyResult(trustClass: .workspaceDev, publisher: nil, quarantined: false, error: nil)
+        }
+        // EXT-004: fail closed — production installs require an explicit verifier.
+        throw ExtensionError.dataLoad("extension package verifier is required (fail-closed)")
     }
 
     private func assertInstallPolicy(plan: ValidatedContributionPlan, source: URL, asDev: Bool) throws {
-        guard let policy = installPolicy else { return }
+        guard let policy = installPolicy else {
+            if allowMissingSecurity { return }
+            // EXT-004: fail closed — production installs require an explicit policy.
+            throw ExtensionError.dataLoad("extension install policy is required (fail-closed)")
+        }
         if policy.dynamicInstallation == .disabled {
             record(.init(
                 event: "install.denied",
@@ -699,7 +795,7 @@ public actor ExtensionPackageManager {
         let data = try Data(contentsOf: url)
         let state = try JSONDecoder().decode(DurableState.self, from: data)
         for rec in state.packages {
-            let id = ExtensionID(rawValue: rec.id)
+            guard let id = ExtensionID(rawValue: rec.id) else { continue }
             let path = URL(fileURLWithPath: rec.path)
             guard FileManager.default.fileExists(atPath: path.path),
                   var plan = try? ExtensionPackageLoader.load(directory: path, options: .init(computeDigest: false))
@@ -707,8 +803,7 @@ public actor ExtensionPackageManager {
             plan.packageRoot = path
             var previousPlan: ValidatedContributionPlan?
             if let prev = rec.previousVersion, !rec.isDev {
-                let prevDir = packagesRoot
-                    .appendingPathComponent(rec.id, isDirectory: true)
+                let prevDir = packageDirectory(for: id)
                     .appendingPathComponent(prev, isDirectory: true)
                 if var pp = try? ExtensionPackageLoader.load(directory: prevDir, options: .init(computeDigest: false)) {
                     pp.packageRoot = prevDir
