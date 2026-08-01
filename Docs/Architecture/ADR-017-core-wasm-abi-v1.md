@@ -25,13 +25,12 @@ Phase 11 proved Swift-Wasm extension execution behind `CodeEditorWasmEngine` wit
 
 **Go/no-go:** **GO for host ABI v1 Stable**.
 
-Author WASI SDK builds of custom guests are supported when the pinned SDK is installed; CI may use committed fixture modules as the hermetic gate. This does **not** claim ZB (unmodified Zed Rust/WIT binaries).
+Author WASI SDK builds of custom guests are supported when the pinned SDK is installed; CI may use committed fixture modules as the hermetic gate. The stable claim is CodeEditor’s **core-Wasm host ABI and engine limits**, not any third-party guest image format.
 
 ## Consequences
 
 - `CompatibilityProfile` runtime `swift_wasm = stable`.
 - Runtime selector may choose `.swiftWasm` under shipping profiles that allow bundled/downloadable Wasm.
-- Authors must not treat ZB as supported.
 - Residual defects P16-001 / P16-002 closed.
 
 ## References

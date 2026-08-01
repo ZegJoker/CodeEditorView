@@ -43,6 +43,10 @@ struct CodeEditorExtensionCLI {
                 try await recover(args: Array(args.dropFirst()))
             case "revoke-check":
                 try revokeCheck(args: Array(args.dropFirst()))
+            case "init":
+                try initPackage(args: Array(args.dropFirst()))
+            case "test":
+                try testPackage(args: Array(args.dropFirst()))
             case "help", "-h", "--help":
                 printUsage()
             default:
@@ -74,6 +78,8 @@ struct CodeEditorExtensionCLI {
               codeeditor-extension list --install-root <root>
               codeeditor-extension recover --install-root <root>
               codeeditor-extension revoke-check --dir <package-dir> --revocation PATH
+              codeeditor-extension init <name> --dir <package-dir> [--swift-template]
+              codeeditor-extension test --dir <package-dir> --runtime in-process|native-process|swift-wasm
             """
         )
     }
@@ -311,5 +317,86 @@ struct CodeEditorExtensionCLI {
             exit(1)
         }
         print("ok: not revoked")
+    }
+
+    static func initPackage(args: [String]) throws {
+        guard let name = args.first, !name.hasPrefix("-") else {
+            fail("init requires a package name")
+        }
+        guard let dir = flag(args, "--dir") else { fail("init requires --dir") }
+        let root = URL(fileURLWithPath: dir, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let id = name.contains(".") ? name : "com.example.\(name)"
+        let toml = """
+        id = "\(id)"
+        name = "\(name)"
+        version = "0.1.0"
+        schema_version = 1
+        api_version = "1.0"
+        license = "MIT"
+        [activation]
+        events = ["startup"]
+        [runtime]
+        kind = "data-only"
+        """
+        try toml.write(to: root.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
+        try "MIT License\n".write(to: root.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
+        try FileManager.default.createDirectory(
+            at: root.appendingPathComponent("themes", isDirectory: true),
+            withIntermediateDirectories: true
+        )
+        if args.contains("--swift-template") {
+            let swift = """
+            // Scaffold only — link CodeEditorExtensionAPI / Guest for procedural extensions.
+            // import CodeEditorExtensionAPI
+            """
+            try swift.write(to: root.appendingPathComponent("Extension.swift"), atomically: true, encoding: .utf8)
+        }
+        let plan = try ExtensionPackageLoader.load(directory: root, options: .init(computeDigest: false))
+        print("initialized \(plan.packageID.rawValue) at \(root.path)")
+    }
+
+    static func testPackage(args: [String]) throws {
+        guard let dir = flag(args, "--dir") else { fail("test requires --dir") }
+        let runtime = flag(args, "--runtime") ?? "in-process"
+        let root = URL(fileURLWithPath: dir, isDirectory: true)
+        switch runtime {
+        case "in-process":
+            let plan = try ExtensionPackageLoader.load(directory: root)
+            if plan.hasErrors {
+                fputs("error: package has errors\n", stderr)
+                for d in plan.diagnostics where d.severity == .error {
+                    fputs("  \(d.code): \(d.message)\n", stderr)
+                }
+                exit(1)
+            }
+            print("ok: in-process load \(plan.packageID.rawValue)@\(plan.version)")
+            print("parity: \(plan.parityProfile)")
+            print("diagnostics: \(plan.diagnostics.count)")
+        case "native-process":
+            let helper = root.appendingPathComponent("native-helper")
+            guard FileManager.default.fileExists(atPath: helper.path) else {
+                fputs(
+                    "error: runtime native-process requires a native-helper binary at \(helper.path)\n",
+                    stderr
+                )
+                exit(2)
+            }
+            _ = try ExtensionPackageLoader.load(directory: root, options: .init(computeDigest: false))
+            print("ok: native-process artifact present; package load succeeded")
+        case "swift-wasm":
+            let wasm = root.appendingPathComponent("extension.wasm")
+            guard FileManager.default.fileExists(atPath: wasm.path) else {
+                fputs(
+                    "error: runtime swift-wasm requires extension.wasm at \(wasm.path)\n",
+                    stderr
+                )
+                exit(2)
+            }
+            _ = try ExtensionPackageLoader.load(directory: root, options: .init(computeDigest: false))
+            print("ok: swift-wasm artifact present; package load succeeded")
+        default:
+            fail("unknown --runtime \(runtime) (use in-process|native-process|swift-wasm)")
+        }
     }
 }

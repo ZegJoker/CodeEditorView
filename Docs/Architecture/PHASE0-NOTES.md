@@ -62,7 +62,7 @@ Compile warnings observed (non-blocking for Phase 0):
 | Artifact | Purpose |
 |---|---|
 | [ADR-013](ADR-013-stable-gate.md) | Evidence-based Stable gate |
-| [ADR-014](ADR-014-swift-first-extensions.md) | Swift-first Zed-style platform; no mandatory Rust/WIT |
+| [ADR-014](ADR-014-swift-first-extensions.md) | Swift-first extension platform; CodeEditor-owned package/runtime contracts |
 | [ADR-015](ADR-015-extension-threat-model.md) | Runtime trust + fail-closed authority model |
 | [ADR-016](ADR-016-platform-profiles.md) | Direct-macOS / MAS / iOS / enterprise / test profiles |
 | [CompatibilityProfile.toml](CompatibilityProfile.toml) | Scaffold profile (all features experimental/pending) |
@@ -74,7 +74,7 @@ Plan defaults applied without further debate:
 - Four runtimes: built-in, data-only, native-process (trusted-only), Swift-Wasm
 - Native helpers = reliability boundary, not sandbox
 - iOS: no downloadable native code; process-backed features must fail closed
-- S0–S4 first stable; ZB optional / not claimed
+- S0–S4 first stable (CodeEditor package/runtime levels)
 
 ## Program rules (gate)
 

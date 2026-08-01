@@ -31,12 +31,11 @@ swift test --filter Phase16
 | Forbidden | Actual |
 |---|---|
 | Scorecard pass without evidence | TOML evidence fields + checker |
-| Fake S3/ZB claims | Report + CompatibilityProfile |
+| Fake S-level claims without tests | Report + CompatibilityProfile |
 | Freeze without baseline | Diff against Baselines/api |
 | Soak N=1 | ≥20 iterations |
 | Perf always-true | Budget compare in tests |
 
 ## Residuals
 
-**None open.** All P16-001…006 closed (Wasm host ABI stable, slash/remote stable, LSP claimed matrix, docs).  
-ZB remains a permanent **non-claim**, not an open residual.
+**None open.** All P16-001…006 closed (Wasm host ABI stable, slash/remote stable, LSP claimed matrix, docs).

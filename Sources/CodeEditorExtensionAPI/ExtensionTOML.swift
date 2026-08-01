@@ -256,7 +256,7 @@ public enum ExtensionTOMLParser {
                 if let n = table["name"]?.string {
                     capabilities.append(n)
                 } else if let k = table["kind"]?.string {
-                    // Zed-style process:exec etc. — record raw for unsupported reporting
+                    // Host capability tokens (e.g. process:exec) — record raw for unsupported reporting
                     capabilities.append(k)
                     if HostCapability(rawValue: k) == nil {
                         diagnostics.append(.init(

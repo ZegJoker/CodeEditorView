@@ -1,7 +1,7 @@
 # Conformance report (Phase 16 RC)
 
 **Status:** residual-closed snapshot  
-**Profile:** zed-style Swift-first (ZB **not-claimed**)
+**Profile:** CodeEditor Swift-first extension platform (`CompatibilityProfile.toml`)
 
 ## Levels
 
@@ -12,14 +12,15 @@
 | **S2** | Swift API feature parity | passing | ExtensionAPI; Phase 12–13 matrices; slash **stable** |
 | **S3** | Behavioral parity | **passing** | Built-in/native Phase 10; Wasm host ABI Stable (ADR-017); dual-run + residual closure tests |
 | **S4** | Operational parity | passing | Phase 14 store/signing; Phase 15 profiles |
-| **ZB** | Zed binary bridge | **not-claimed** | Permanent non-claim for this RC line (not a residual) |
+
+Levels **S0–S4** describe CodeEditor’s own package/runtime contract. They are not a claim of third-party editor binary compatibility.
 
 ## Non-claims (not residuals)
 
-- ZB unmodified Zed Rust/Wasm binaries
 - Full LSP 3.17 beyond [LSP-CLAIMED-MATRIX.md](LSP-CLAIMED-MATRIX.md)
 - `language_model_provider_metadata` → **unsupported**
 - `legacy_agent_server_hosting` → **unsupported**
+- Loading or running unmodified third-party editor extension binaries (e.g. foreign Rust/WIT guest images)
 
 ## Runtimes
 

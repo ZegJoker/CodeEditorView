@@ -1,4 +1,4 @@
-# ADR-014: Swift-first Zed-style extension platform
+# ADR-014: Swift-first extension platform
 
 ## Status
 
@@ -6,7 +6,7 @@ Accepted (Phase 0)
 
 ## Context
 
-The repository has an in-process `CodeEditorExtension` protocol, JSON data extensions (`extension.json`), and a process-RPC extension host. Zed’s public model uses `extension.toml`, declarative contribution folders, and a Rust guest SDK compiled to Wasm. CodeEditorView should achieve functional parity without requiring extension authors to write Rust or load unmodified Zed Wasm binaries.
+The repository has an in-process `CodeEditorExtension` protocol, JSON data extensions (`extension.json`), and a process-RPC extension host. Industry editors often use declarative package roots, contribution folders, and sandboxed guests. CodeEditorView targets the same **classes of capability** with a **Swift-first** author SDK and CodeEditor-owned package/runtime contracts—without requiring authors to use another language or load foreign guest binaries.
 
 ## Decision
 
@@ -30,16 +30,14 @@ The repository has an in-process `CodeEditorExtension` protocol, JSON data exten
 5. **Compatibility levels** (see `CompatibilityProfile.toml`):
 
    - **S0–S4** are the first stable release targets (package, data, Swift API feature parity, behavioral parity, operational parity).
-   - **ZB** (unmodified Zed Rust/Wasm binary bridge) is optional and must not delay the Swift-first platform.
-
-6. **Wire formats:** Process and Wasm use a CodeEditor-owned versioned message ABI (CBOR envelopes). JSON may remain for diagnostics and legacy. Zed WIT/Component Model is a future adapter, not ABI v1.
+6. **Wire formats:** Process and Wasm use a CodeEditor-owned versioned message ABI (CBOR envelopes). JSON may remain for diagnostics and legacy.
 
 7. **Migration:** Keep source-compatible shims in `CodeEditorExtensions` for one major. Read `extension.json` only under a legacy flag; `extension.toml` wins on conflict. Evolve existing runtime/process RPC rather than rewrite from zero.
 
 ## Non-goals (first stable release)
 
-- Mandatory Rust/Cargo for authors
-- Source compatibility with `zed_extension_api`
+- Requiring a non-Swift language for authors
+- Drop-in compatibility with third-party editor guest ABIs or package binaries
 - Arbitrary native view construction
 - Runtime Swift compilation
 - Downloadable native Swift on iOS
@@ -49,4 +47,4 @@ The repository has an in-process `CodeEditorExtension` protocol, JSON data exten
 
 - Phase 9 extracts the author API and TOML path; Phases 10–11 add native and Wasm drivers.
 - Existing `CodeEditorExtension` remains the built-in adapter.
-- Documentation must never collapse S0–S4 and ZB into a generic “Zed compatible” badge.
+- Documentation must describe S0–S4 as CodeEditor contracts only—not third-party binary compatibility.

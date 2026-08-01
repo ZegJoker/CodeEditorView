@@ -42,7 +42,7 @@ public struct CompatibilityProfile: Sendable, Hashable, Codable {
     public var features: [String: CompatibilityFeatureStatus]
 
     public init(
-        profile: String = "zed-style-2026-07",
+        profile: String = "codeeditor-swift-first-2026",
         upstreamCommit: String = "unpinned",
         manifestSchema: Int = 1,
         swiftExtensionAPI: String = "1.0",
@@ -88,7 +88,7 @@ public struct CompatibilityProfile: Sendable, Hashable, Codable {
         features["language_model_provider_metadata"] = .unsupported
         features["legacy_agent_server_hosting"] = .unsupported
         return CompatibilityProfile(
-            profile: "zed-style-2026-07",
+            profile: "codeeditor-swift-first-2026",
             upstreamCommit: "phase-16",
             features: features
         )

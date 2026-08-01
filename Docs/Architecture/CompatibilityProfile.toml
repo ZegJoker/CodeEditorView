@@ -1,7 +1,7 @@
-# Zed-style compatibility profile for CodeEditorView extensions.
+# CodeEditor Swift-first extension compatibility profile.
 # Status values: stable | compatibility | experimental | deprecated | unsupported | registry-replacement
 
-profile = "zed-style-2026-07"
+profile = "codeeditor-swift-first-2026"
 upstream_commit = "phase-16"
 manifest_schema = 1
 swift_extension_api = "1.0"
@@ -43,4 +43,3 @@ S1_data = "passing"
 S2_swift_api_parity = "passing"
 S3_behavioral = "passing"
 S4_operational = "passing"
-ZB_zed_binary_bridge = "not-claimed"

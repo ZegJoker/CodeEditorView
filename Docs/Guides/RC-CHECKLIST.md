@@ -25,8 +25,8 @@ swift test
 - [ ] Wire `ExtensionExecutionPolicy.shipping` + install policy
 - [ ] VoiceOver / keyboard pass on host UI binding Workbench accessibility IDs
 - [ ] Notarization / sandbox entitlements (direct/MAS) as applicable
-- [ ] Confirm no ZB / “unmodified Zed binary” marketing claims
-- [ ] Review [DEFECTS.md](../Architecture/DEFECTS.md) residuals
+- [ ] Market only CodeEditor S0–S4 claims; do not imply third-party editor binary drop-in compatibility
+- [ ] Review [DEFECTS.md](../Architecture/DEFECTS.md) (must have no open rows)
 
 ## Artifacts to attach to RC notes
 
