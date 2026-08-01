@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Phase 0)
+Accepted (Phase 0); **implemented for shipping binaries in Phase 15** (`ShippingProfileID`, install/runtime gates, App Review guide)
 
 ## Context
 
@@ -42,7 +42,7 @@ Unsupported operations return `CodeEditorPlatformError.unsupportedCapability` (i
 
 - Types and fail-closed guards: **Phase 1**
 - Per-product adoption: phases that touch each product
-- Feature-flagged shipping binaries: **Phase 15**
+- Feature-flagged shipping binaries: **Phase 15** (complete — see `PHASE15-NOTES.md`, `Docs/Guides/APP-REVIEW.md`)
 
 ## Consequences
 

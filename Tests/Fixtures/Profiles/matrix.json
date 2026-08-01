@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "direct-macos": {
+      "localProcess": "local",
+      "localPTY": "local",
+      "localGitCLI": "local",
+      "localLanguageServerProcess": "local",
+      "nativeExtensionProcess": "local",
+      "networkClient": "local",
+      "workspaceFilesystem": "local",
+      "bundledWasm": "local",
+      "downloadableWasm": "local",
+      "dynamicExtensionInstall": "local",
+      "remoteTooling": "local",
+      "extensionRegistry": "local"
+    },
+    "mac-app-store": {
+      "localProcess": "local",
+      "localPTY": "unavailable",
+      "localGitCLI": "local",
+      "localLanguageServerProcess": "local",
+      "nativeExtensionProcess": "unavailable",
+      "networkClient": "local",
+      "workspaceFilesystem": "local",
+      "bundledWasm": "local",
+      "downloadableWasm": "unavailable",
+      "dynamicExtensionInstall": "dataOnly",
+      "remoteTooling": "local",
+      "extensionRegistry": "dataOnly"
+    },
+    "ios": {
+      "localProcess": "unavailable",
+      "localPTY": "unavailable",
+      "localGitCLI": "unavailable",
+      "localLanguageServerProcess": "remote",
+      "nativeExtensionProcess": "unavailable",
+      "networkClient": "local",
+      "workspaceFilesystem": "hostProvided",
+      "bundledWasm": "local",
+      "downloadableWasm": "unavailable",
+      "dynamicExtensionInstall": "dataOnly",
+      "remoteTooling": "local",
+      "extensionRegistry": "unavailable"
+    },
+    "enterprise": {
+      "localProcess": "local",
+      "localPTY": "local",
+      "localGitCLI": "local",
+      "localLanguageServerProcess": "local",
+      "nativeExtensionProcess": "local",
+      "networkClient": "local",
+      "workspaceFilesystem": "local",
+      "bundledWasm": "local",
+      "downloadableWasm": "local",
+      "dynamicExtensionInstall": "local",
+      "remoteTooling": "local",
+      "extensionRegistry": "local"
+    },
+    "test": {
+      "localProcess": "local",
+      "localPTY": "local",
+      "localGitCLI": "local",
+      "localLanguageServerProcess": "local",
+      "nativeExtensionProcess": "local",
+      "networkClient": "local",
+      "workspaceFilesystem": "local",
+      "bundledWasm": "local",
+      "downloadableWasm": "local",
+      "dynamicExtensionInstall": "local",
+      "remoteTooling": "local",
+      "extensionRegistry": "local"
+    }
+  }
+}

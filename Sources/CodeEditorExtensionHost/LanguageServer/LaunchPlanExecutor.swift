@@ -249,6 +249,26 @@ public actor LanguageServerLaunchPlanExecutor {
                 extensionID: extensionID
             ))
         }
+        // Phase 15: profile-driven gate (not OS compile flags alone).
+        let coordinator = RemoteToolingCoordinator(platformProfile: platformProfile)
+        switch coordinator.languageServerLaunchDecision() {
+        case .allowLocal:
+            break
+        case .useRemoteFallback(let reason):
+            throw LaunchPlanError.diagnostic(.init(
+                code: .platformDenied,
+                message: "use remote tooling fallback: \(reason)",
+                serverID: plan.serverID,
+                extensionID: extensionID
+            ))
+        case .deny(let reason):
+            throw LaunchPlanError.diagnostic(.init(
+                code: .platformDenied,
+                message: reason,
+                serverID: plan.serverID,
+                extensionID: extensionID
+            ))
+        }
         if !ExtensionPlatformInfo.current.processLaunchAllowed {
             throw LaunchPlanError.diagnostic(.init(
                 code: .platformDenied,

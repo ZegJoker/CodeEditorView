@@ -14,4 +14,14 @@ public enum PlatformCapabilityKind: String, Sendable, Hashable, Codable, CaseIte
     case networkClient
     /// Workspace filesystem access on the host.
     case workspaceFilesystem
+    /// App-bundled Swift-Wasm modules shipped inside the binary.
+    case bundledWasm
+    /// Marketplace / post-install downloadable Wasm artifacts.
+    case downloadableWasm
+    /// Install of new extension package trees at runtime.
+    case dynamicExtensionInstall
+    /// Remote LS / DAP / MCP / extension providers.
+    case remoteTooling
+    /// Fetch remote extension registry/index.
+    case extensionRegistry
 }

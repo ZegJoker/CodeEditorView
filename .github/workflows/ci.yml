@@ -23,6 +23,8 @@ jobs:
         run: ./scripts/check-product-isolation.sh
       - name: Docs inventory
         run: ./scripts/check-docs.sh
+      - name: Feature profiles (Phase 15)
+        run: ./scripts/check-feature-profiles.sh
       - name: Grammar pins
         run: ./scripts/check-grammar-pins.sh
       - name: Licenses

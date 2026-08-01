@@ -15,6 +15,7 @@ public actor ExtensionPackageManager {
     private var telemetry: StoreTelemetrySink?
     private var revocation: RevocationListDocument = .init()
     private var verifier: (any PackageVerifying)?
+    private var installPolicy: ShippingInstallPolicy?
 
     public var packagesRoot: URL { installRoot.appendingPathComponent("packages", isDirectory: true) }
     public var stateRoot: URL { installRoot.appendingPathComponent("state", isDirectory: true) }
@@ -47,12 +48,14 @@ public actor ExtensionPackageManager {
         installRoot: URL,
         maxEventBuffer: Int = 32,
         verifier: (any PackageVerifying)? = nil,
-        telemetry: StoreTelemetrySink? = nil
+        telemetry: StoreTelemetrySink? = nil,
+        installPolicy: ShippingInstallPolicy? = nil
     ) {
         self.installRoot = installRoot
         self.maxEventBuffer = max(4, maxEventBuffer)
         self.verifier = verifier
         self.telemetry = telemetry
+        self.installPolicy = installPolicy
         var cont: AsyncStream<ExtensionContributionSnapshot>.Continuation!
         self.snapshots = AsyncStream(bufferingPolicy: .bufferingNewest(maxEventBuffer)) { cont = $0 }
         self.continuation = cont
@@ -90,6 +93,12 @@ public actor ExtensionPackageManager {
         self.telemetry = sink
     }
 
+    public func setInstallPolicy(_ policy: ShippingInstallPolicy?) {
+        self.installPolicy = policy
+    }
+
+    public func currentInstallPolicy() -> ShippingInstallPolicy? { installPolicy }
+
     public func setRevocationList(_ list: RevocationListDocument) throws {
         self.revocation = list
         try persistRevocationList()
@@ -107,6 +116,7 @@ public actor ExtensionPackageManager {
         }
         let version = plan.version.description
         try assertNotRevoked(packageID: plan.packageID.rawValue, version: version)
+        try assertInstallPolicy(plan: plan, source: source, asDev: asDev)
 
         let verify = try runVerify(packageRoot: source)
         if verify.quarantined {
@@ -541,6 +551,71 @@ public actor ExtensionPackageManager {
         }
         // No verifier: treat as workspaceDev (tests that only care about FS layout)
         return PackageVerifyResult(trustClass: .workspaceDev, publisher: nil, quarantined: false, error: nil)
+    }
+
+    private func assertInstallPolicy(plan: ValidatedContributionPlan, source: URL, asDev: Bool) throws {
+        guard let policy = installPolicy else { return }
+        if policy.dynamicInstallation == .disabled {
+            record(.init(
+                event: "install.denied",
+                packageID: plan.packageID.rawValue,
+                success: false,
+                reason: "dynamicInstallation=disabled"
+            ))
+            throw ExtensionError.dataLoad(
+                "install disabled on shipping profile \(policy.shippingProfileID.rawValue)"
+            )
+        }
+        let entries = (try? FileManager.default.contentsOfDirectory(atPath: source.path)) ?? []
+        let hasWasm = entries.contains(where: { $0.hasSuffix(".wasm") })
+        // Explicit markers for tests/fixtures (host apps can place the same markers).
+        let forceNative = FileManager.default.fileExists(
+            atPath: source.appendingPathComponent(".codeeditor-native").path
+        )
+        let forceDownloadWasm = FileManager.default.fileExists(
+            atPath: source.appendingPathComponent(".codeeditor-wasm-download").path
+        )
+        let hasNativeHelperBinary = FileManager.default.fileExists(
+            atPath: source.appendingPathComponent("native-helper").path
+        )
+
+        if forceNative || hasNativeHelperBinary {
+            if !policy.allowNativeHelpers {
+                record(.init(
+                    event: "install.denied",
+                    packageID: plan.packageID.rawValue,
+                    success: false,
+                    reason: "native_helpers"
+                ))
+                throw ExtensionError.dataLoad(
+                    "native helper install denied on \(policy.shippingProfileID.rawValue)"
+                )
+            }
+        }
+        if forceDownloadWasm || hasWasm {
+            if !policy.allowDownloadableWasm && !asDev {
+                record(.init(
+                    event: "install.denied",
+                    packageID: plan.packageID.rawValue,
+                    success: false,
+                    reason: "downloadable_wasm"
+                ))
+                throw ExtensionError.dataLoad(
+                    "downloadable Wasm install denied on \(policy.shippingProfileID.rawValue)"
+                )
+            }
+        }
+        if policy.dataOnlyOnly && (forceNative || forceDownloadWasm || hasNativeHelperBinary) {
+            record(.init(
+                event: "install.denied",
+                packageID: plan.packageID.rawValue,
+                success: false,
+                reason: "data_only_policy"
+            ))
+            throw ExtensionError.dataLoad(
+                "executable package install denied (data-only policy) on \(policy.shippingProfileID.rawValue)"
+            )
+        }
     }
 
     private func assertNotRevoked(packageID: String, version: String) throws {

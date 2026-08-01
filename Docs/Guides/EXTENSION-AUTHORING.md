@@ -238,6 +238,20 @@ Slash commands are labelled **`compatibility`** in `CompatibilityProfile`. Use `
 
 See `Docs/Architecture/CompatibilityProfile.toml` and `CompatibilityProfileLoader`. Do not document experimental or unsupported surfaces as stable.
 
+## Shipping profiles (Phase 15)
+
+Host apps select a profile; library code fails closed outside that matrix:
+
+| Profile | Native helpers | Marketplace Wasm | Notes |
+|---|---|---|---|
+| direct-macos | Yes (trust-gated) | Yes | Broadest |
+| mac-app-store | No | No | Bundled Wasm OK; data install |
+| ios | No | No | LS via remote tooling |
+| enterprise | Org-signed | Policy | Managed registry flags |
+| test | Yes | Yes | CI / mocks |
+
+See [APP-REVIEW.md](APP-REVIEW.md) and [PHASE15-NOTES](../Architecture/PHASE15-NOTES.md).
+
 ## Publishing packages (Phase 14)
 
 ```bash

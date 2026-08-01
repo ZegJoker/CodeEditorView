@@ -10,6 +10,9 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 15: shipping profiles A–E (`ShippingProfileID`), expanded capability matrix (Wasm/install/registry/remote)
+- Phase 15: `ExtensionHostProfile`, install policy gates, RuntimeSelector profile gates, native helper policy
+- Phase 15: remote tooling coordinator (LS fallback), runnability descriptors, App Review guide
 - Phase 14: versioned extension store (immutable versions, atomic current/previous, recover, user-data preserve)
 - Phase 14: fail-closed publisher keyring policy, SBOM/license enforcement, revocation list, registry client
 - Phase 14: store telemetry NDJSON, trust UI descriptors, CLI sign/verify/sbom/install/update/rollback/recover

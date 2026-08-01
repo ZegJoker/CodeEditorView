@@ -16,6 +16,14 @@ public struct NativeProcessRuntimeDriver: ExtensionRuntimeDriver {
         package: PreparedExtensionPackage,
         policy: ExtensionExecutionPolicy
     ) async throws -> PreparedExtension {
+        let decision = NativeHelperLaunchPolicy.evaluate(
+            trustClass: package.trustClass,
+            origin: package.origin,
+            policy: policy
+        )
+        guard decision.allowed else {
+            throw RuntimeSelectionError.profileDenied(decision.reasons.joined(separator: "; "))
+        }
         try ExtensionPackageVerifier.assertNativeLaunchAllowed(
             trust: package.trustClass,
             policy: policy.trust
@@ -24,6 +32,10 @@ public struct NativeProcessRuntimeDriver: ExtensionRuntimeDriver {
             throw RuntimeSelectionError.missingArtifact
         }
         guard policy.platformAllowsNativeProcess else {
+            throw RuntimeSelectionError.nativeNotAllowed
+        }
+        // Align driver profile with shipping policy matrix.
+        if !policy.platformProfile.availability(for: .nativeExtensionProcess).isLocallyAvailable {
             throw RuntimeSelectionError.nativeNotAllowed
         }
         return PreparedExtension(package: package, kind: .nativeProcess)

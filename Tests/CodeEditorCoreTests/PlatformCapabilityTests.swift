@@ -88,5 +88,15 @@ struct PlatformCapabilityTests {
     @Test func enterprisePresetMirrorsDirectMacOSLocalSurface() throws {
         try PlatformCapabilityProfile.enterprise.requireLocal(.localProcess)
         try PlatformCapabilityProfile.test.requireLocal(.localGitCLI)
+        #expect(PlatformCapabilityProfile.enterprise.enterpriseOptions != nil)
+    }
+
+    @Test func phase15KindsPresentOnDirectMacOS() throws {
+        try PlatformCapabilityProfile.directMacOS.requireLocal(.bundledWasm)
+        try PlatformCapabilityProfile.directMacOS.requireLocal(.downloadableWasm)
+        try PlatformCapabilityProfile.directMacOS.requireLocal(.remoteTooling)
+        #expect(throws: CodeEditorPlatformError.self) {
+            try PlatformCapabilityProfile.macAppStore.requireLocal(.downloadableWasm)
+        }
     }
 }
