@@ -13,13 +13,39 @@ public actor ExtensionGuestRuntime {
     public var completionHandler: (@Sendable (Data) async throws -> Data)?
     public var hoverHandler: (@Sendable (Data) async throws -> Data)?
     public var definitionHandler: (@Sendable (Data) async throws -> Data)?
-    /// Procedural language-server provider (Phase 12).
+    /// Procedural providers (Phase 12–13). Unset → methodNotFound (no canned responses).
     public var languageServerProvider: (any LanguageServerProvider)?
+    public var debugAdapterProvider: (any DebugAdapterProvider)?
+    public var debugLocatorProvider: (any DebugLocatorProvider)?
+    public var mcpServerProvider: (any MCPServerProvider)?
+    public var slashCommandProvider: (any SlashCommandProvider)?
+    public var documentationIndexProvider: (any DocumentationIndexProvider)?
     public var childPID: Int32?
 
     public func setLanguageServerProvider(_ provider: (any LanguageServerProvider)?) {
         languageServerProvider = provider
     }
+
+    public func setDebugAdapterProvider(_ provider: (any DebugAdapterProvider)?) {
+        debugAdapterProvider = provider
+    }
+
+    public func setDebugLocatorProvider(_ provider: (any DebugLocatorProvider)?) {
+        debugLocatorProvider = provider
+    }
+
+    public func setMCPServerProvider(_ provider: (any MCPServerProvider)?) {
+        mcpServerProvider = provider
+    }
+
+    public func setSlashCommandProvider(_ provider: (any SlashCommandProvider)?) {
+        slashCommandProvider = provider
+    }
+
+    public func setDocumentationIndexProvider(_ provider: (any DocumentationIndexProvider)?) {
+        documentationIndexProvider = provider
+    }
+
     private let log: ExtensionLog
     private var context: GuestExtensionContext?
 
@@ -196,6 +222,10 @@ public actor ExtensionGuestRuntime {
         case .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
              .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
             return try await dispatchLanguageServer(method: method, payload: payload)
+        case .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart,
+             .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
+             .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate:
+            return try await dispatchPhase13(method: method, payload: payload)
         default:
             // Broker methods: guest forwards are host-handled; guest should not receive them
             // unless acting as host proxy. Return method not found for unhandled.
@@ -263,6 +293,123 @@ public actor ExtensionGuestRuntime {
             return Data(#"{"state":"running"}"#.utf8)
         case .lsRestart:
             return Data(#"{"ok":true}"#.utf8)
+        default:
+            throw ExtensionWireError.methodNotFound
+        }
+    }
+
+    private func dispatchPhase13(method: ExtensionMethodID, payload: Data) async throws -> Data {
+        let extensionID = ext.manifest.id
+        let ctx = LanguageServerResolveContext(extensionID: extensionID)
+        switch method {
+        case .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart:
+            guard let provider = debugAdapterProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            // Guest-side: no host status/restart executors; status/restart require host wiring.
+            if method == .dapStatus || method == .dapRestart {
+                throw ExtensionWireError(code: -32004, message: "dap status/restart are host-owned")
+            }
+            if method == .dapLocate {
+                guard let locator = debugLocatorProvider else {
+                    throw ExtensionWireError.methodNotFound
+                }
+                let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any] ?? [:]
+                let matches = try await locator.locate(context: DebugLocatorContext(
+                    extensionID: extensionID,
+                    uri: obj["uri"] as? String,
+                    languageID: obj["languageID"] as? String,
+                    workspaceRootPaths: obj["workspaceRootPaths"] as? [String] ?? []
+                ))
+                return try JSONEncoder().encode(matches)
+            }
+            if method == .dapResolveLaunchPlan {
+                let id = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["adapterID"] as? String ?? ""
+                guard !id.isEmpty else {
+                    throw ExtensionWireError(code: -32602, message: "adapterID required")
+                }
+                let plan = try await provider.resolveLaunchPlan(adapterID: id, context: ctx)
+                return try JSONEncoder().encode(plan)
+            }
+            if method == .dapResolveConfigurations {
+                let id = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["adapterID"] as? String ?? ""
+                guard !id.isEmpty else {
+                    throw ExtensionWireError(code: -32602, message: "adapterID required")
+                }
+                let configs = try await provider.resolveConfigurations(adapterID: id, context: ctx)
+                return try JSONEncoder().encode(configs)
+            }
+            throw ExtensionWireError.methodNotFound
+        case .mcpResolveLaunchPlan:
+            guard let provider = mcpServerProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let id = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["serverID"] as? String ?? ""
+            guard !id.isEmpty else {
+                throw ExtensionWireError(code: -32602, message: "serverID required")
+            }
+            let plan = try await provider.resolveLaunchPlan(serverID: id, context: ctx)
+            return try JSONEncoder().encode(plan)
+        case .mcpStatus, .mcpRestart:
+            throw ExtensionWireError(code: -32004, message: "mcp status/restart are host-owned")
+        case .slashExecute:
+            guard let provider = slashCommandProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any] ?? [:]
+            let commandID = obj["commandID"] as? String ?? obj["id"] as? String ?? ""
+            guard !commandID.isEmpty else {
+                throw ExtensionWireError(code: -32602, message: "commandID required")
+            }
+            let arguments = obj["arguments"] as? String ?? ""
+            try SlashCommandSanitize.validateArguments(arguments, maxLength: 4_096)
+            var chunks: [SlashCommandChunk] = []
+            for try await chunk in provider.execute(
+                commandID: commandID,
+                arguments: arguments,
+                context: SlashCommandExecuteContext(extensionID: extensionID)
+            ) {
+                chunks.append(SlashCommandChunk(
+                    markdown: SlashCommandSanitize.sanitizeMarkdown(chunk.markdown),
+                    isFinal: chunk.isFinal
+                ))
+            }
+            return try JSONEncoder().encode(chunks)
+        case .docsSuggest:
+            guard let provider = documentationIndexProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let suggestions = try await provider.suggestPackages(context: ctx)
+            return try JSONEncoder().encode(suggestions)
+        case .docsBuildIndex:
+            guard let provider = documentationIndexProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any] ?? [:]
+            let packageID = obj["packageID"] as? String ?? obj["id"] as? String ?? ""
+            guard !packageID.isEmpty else {
+                throw ExtensionWireError(code: -32602, message: "packageID required")
+            }
+            let suggestion = DocumentationPackageSuggestion(
+                id: packageID,
+                title: obj["title"] as? String ?? packageID,
+                sourcePath: obj["sourcePath"] as? String
+            )
+            var entries: [DocumentationIndexEntry] = []
+            for try await event in provider.buildIndex(package: suggestion, context: ctx) {
+                if case .entry(let e) = event { entries.append(e) }
+            }
+            if entries.isEmpty {
+                throw DocumentationIndexError.notFound(packageID)
+            }
+            return try JSONEncoder().encode(entries)
+        case .docsInvalidate:
+            guard let provider = documentationIndexProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let packageID = (try? JSONSerialization.jsonObject(with: payload) as? [String: Any])?["packageID"] as? String
+            await provider.invalidate(packageID: packageID)
+            return try JSONSerialization.data(withJSONObject: ["ok": true])
         default:
             throw ExtensionWireError.methodNotFound
         }

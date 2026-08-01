@@ -10,6 +10,10 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Added
 
+- Phase 13: `CodeEditorDAP` client (framing, session/pool, mock adapter matrix, reverse `runInTerminal`)
+- Phase 13: debug adapter + MCP server launch plans/providers, TOML tables, host executors
+- Phase 13: slash commands (compatibility) with stream/cancel/sanitize; documentation index service with quotas
+- Phase 13: `CompatibilityProfile` loader + feature labels; fixtures `dap-procedural` / `mcp-procedural`
 - Phase 12: language-server launch plans, `LanguageServerProvider`, TOML `[language_servers.*]`, `LanguageServerLanguageMap`
 - Phase 12: host executor + coordinator (broker materialize, pool, settings invalidation, process allowlist)
 - Phase 12: worktree `which` / filtered environment, resolve context builder, wire codec for `ls.*`

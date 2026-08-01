@@ -1,0 +1,21 @@
+id = "com.codeeditor.fixtures.mcp-procedural"
+name = "MCP Procedural Fixture"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+authors = ["CodeEditorView Fixtures"]
+
+[activation]
+events = ["startup"]
+
+[runtime]
+kind = "builtin"
+
+permissions = ["startProcesses", "network"]
+
+[mcp_servers.mock-mcp]
+name = "Mock MCP"
+command = "mock-mcp"
+args = ["serve"]
+transport = "stdio"
+startup_timeout_ms = 5000

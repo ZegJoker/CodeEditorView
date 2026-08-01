@@ -22,7 +22,14 @@ public final class WasmGuestRuntime: @unchecked Sendable {
     public private(set) var completedSlowWork: Int = 0
     public private(set) var cancelledSlowWork: Bool = false
 
+    /// Optional method handlers (Phase 13+). When unset, methods return method-not-found error JSON — never canned success.
+    public var methodHandlers: [ExtensionMethodID: @Sendable (Data) -> Data] = [:]
+
     public init() {}
+
+    public func setHandler(for method: ExtensionMethodID, handler: @escaping @Sendable (Data) -> Data) {
+        methodHandlers[method] = handler
+    }
 
     public func abiVersion() -> Int32 { 1 }
 
@@ -243,6 +250,14 @@ public final class WasmGuestRuntime: @unchecked Sendable {
             return Data(#"{"state":"running","serverID":"mock-ls"}"#.utf8)
         case .lsRestart:
             return Data(#"{"ok":true}"#.utf8)
+        case .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart,
+             .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
+             .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate:
+            if let handler = methodHandlers[method] {
+                return handler(payload)
+            }
+            // Honest failure — never canned success for Phase 13 surfaces.
+            return Data(#"{"error":{"code":-32601,"message":"Method not found: handler not registered"}}"#.utf8)
         default:
             return Data()
         }

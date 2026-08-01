@@ -204,6 +204,40 @@ Host (`CodeEditorExtensionHost`):
 - `LanguageServerCoordinator` maps languages → servers, restarts on settings/toolchain change
 - Label hooks apply to completions **and** document/workspace symbols
 
+## Debugger / DAP extensions (Phase 13)
+
+Extensions return a **debug adapter launch plan**; the host owns the DAP socket (`CodeEditorDAP`).
+
+```toml
+[debug_adapters.lldb]
+languages = ["Swift"]
+command = "lldb-dap"
+```
+
+Implement `DebugAdapterProvider` / `DebugLocatorProvider` in the author API. Pre/post debug tasks reference host `TaskService` IDs. Reverse `runInTerminal` is host-handled via Terminal backends.
+
+## MCP server extensions (Phase 13)
+
+```toml
+[mcp_servers.my-server]
+command = "my-mcp"
+transport = "stdio"
+```
+
+`MCPServerProvider` returns an `MCPServerLaunchPlan`. The host MCP client speaks initialize / tools / resources / prompts over stdio. Extensions do not get unbounded network access.
+
+## Slash commands (compatibility)
+
+Slash commands are labelled **`compatibility`** in `CompatibilityProfile`. Use `SlashCommandProvider` with streaming chunks; the host sanitizes markdown and enforces argument size limits.
+
+## Documentation indexing
+
+`DocumentationIndexProvider` suggests packages and builds indexes; storage and quotas are host-owned (`DocumentationIndexService`).
+
+## Compatibility labels
+
+See `Docs/Architecture/CompatibilityProfile.toml` and `CompatibilityProfileLoader`. Do not document experimental or unsupported surfaces as stable.
+
 ## Native-process helper (Phase 10)
 
 Authors link `CodeEditorExtensionGuest` + `CodeEditorExtensionAPI` (+ protocol transitively):

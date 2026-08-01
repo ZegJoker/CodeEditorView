@@ -5,6 +5,7 @@ import CodeEditorExtensions
 import CodeEditorLanguageServices
 import CodeEditorCore
 import CodeEditorDocuments
+import CodeEditorDAP
 
 public struct BuiltInSwiftRuntimeDriver: ExtensionRuntimeDriver {
     public let kind: ExtensionRuntimeKind = .builtIn
@@ -59,8 +60,17 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
     private var _state: ExtensionInstanceState = .ready
     private var eventContinuation: AsyncStream<ExtensionInstanceEvent>.Continuation?
     public nonisolated let events: AsyncStream<ExtensionInstanceEvent>
-    /// Optional procedural language-server provider (Phase 12).
+    /// Optional procedural providers (Phase 12–13). Methods fail with methodNotFound when unset.
     private var languageServerProvider: (any LanguageServerProvider)?
+    private var debugAdapterProvider: (any DebugAdapterProvider)?
+    private var debugLocatorProvider: (any DebugLocatorProvider)?
+    private var mcpServerProvider: (any MCPServerProvider)?
+    private var slashCommandProvider: (any SlashCommandProvider)?
+    private var documentationIndexProvider: (any DocumentationIndexProvider)?
+    private var debugAdapterExecutor: DebugAdapterLaunchPlanExecutor?
+    private var mcpLaunchExecutor: MCPLaunchPlanExecutor?
+    private var slashCommandService: SlashCommandService?
+    private var documentationIndexService: DocumentationIndexService?
 
     public init(
         ext: any CodeEditorExtension,
@@ -84,6 +94,42 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
 
     public func setLanguageServerProvider(_ provider: (any LanguageServerProvider)?) {
         languageServerProvider = provider
+    }
+
+    public func setDebugAdapterProvider(_ provider: (any DebugAdapterProvider)?) {
+        debugAdapterProvider = provider
+    }
+
+    public func setDebugLocatorProvider(_ provider: (any DebugLocatorProvider)?) {
+        debugLocatorProvider = provider
+    }
+
+    public func setMCPServerProvider(_ provider: (any MCPServerProvider)?) {
+        mcpServerProvider = provider
+    }
+
+    public func setSlashCommandProvider(_ provider: (any SlashCommandProvider)?) {
+        slashCommandProvider = provider
+    }
+
+    public func setDocumentationIndexProvider(_ provider: (any DocumentationIndexProvider)?) {
+        documentationIndexProvider = provider
+    }
+
+    public func setDebugAdapterExecutor(_ executor: DebugAdapterLaunchPlanExecutor?) {
+        debugAdapterExecutor = executor
+    }
+
+    public func setMCPLaunchExecutor(_ executor: MCPLaunchPlanExecutor?) {
+        mcpLaunchExecutor = executor
+    }
+
+    public func setSlashCommandService(_ service: SlashCommandService?) {
+        slashCommandService = service
+    }
+
+    public func setDocumentationIndexService(_ service: DocumentationIndexService?) {
+        documentationIndexService = service
     }
 
     public var state: ExtensionInstanceState { _state }
@@ -150,6 +196,126 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
                 throw ExtensionWireError.methodNotFound
             }
             return try await LanguageServerWireCodec.dispatch(
+                method: method,
+                payload: payload,
+                provider: provider,
+                extensionID: identity
+            )
+        case .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart:
+            guard let provider = debugAdapterProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let adapterID = Phase13WireCodec.parseID(payload, keys: ["adapterID", "id"])
+            let status: DebugAdapterStatus?
+            if let exec = debugAdapterExecutor, !adapterID.isEmpty {
+                status = await exec.statusStore.status(adapterID: adapterID, extensionID: identity)
+            } else {
+                status = nil
+            }
+            return try await Phase13WireCodec.dispatchDAP(
+                method: method,
+                payload: payload,
+                provider: provider,
+                locator: debugLocatorProvider,
+                extensionID: identity,
+                status: status,
+                onRestart: { [debugAdapterExecutor] id in
+                    guard let exec = debugAdapterExecutor else {
+                        throw ExtensionWireError(code: -32004, message: "DAP executor not wired")
+                    }
+                    try await exec.pool.restart(id: DebugAdapterID(rawValue: id))
+                }
+            )
+        case .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart:
+            guard let provider = mcpServerProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            let serverID = Phase13WireCodec.parseID(payload, keys: ["serverID", "id"])
+            let status: MCPServerStatus?
+            if let exec = mcpLaunchExecutor, !serverID.isEmpty {
+                status = await exec.status(serverID: serverID, extensionID: identity)
+            } else {
+                status = nil
+            }
+            let extID = identity
+            return try await Phase13WireCodec.dispatchMCP(
+                method: method,
+                payload: payload,
+                provider: provider,
+                extensionID: identity,
+                status: status,
+                onRestart: { [mcpLaunchExecutor] id in
+                    guard let exec = mcpLaunchExecutor else {
+                        throw ExtensionWireError(code: -32004, message: "MCP executor not wired")
+                    }
+                    _ = try await exec.restart(serverID: id, extensionID: extID)
+                }
+            )
+        case .slashExecute:
+            if let service = slashCommandService {
+                let commandID = Phase13WireCodec.parseID(payload, keys: ["commandID", "id"])
+                let arguments = Phase13WireCodec.parseArguments(payload)
+                var chunks: [SlashCommandChunk] = []
+                for try await chunk in await service.execute(
+                    commandID: commandID,
+                    arguments: arguments,
+                    extensionID: identity
+                ) {
+                    chunks.append(chunk)
+                }
+                return try JSONEncoder().encode(chunks)
+            }
+            guard let provider = slashCommandProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            return try await Phase13WireCodec.dispatchSlash(
+                method: method,
+                payload: payload,
+                provider: provider,
+                extensionID: identity
+            )
+        case .docsSuggest, .docsBuildIndex, .docsInvalidate:
+            if let service = documentationIndexService, method == .docsSuggest {
+                let suggestions = try await service.suggest(
+                    extensionID: identity,
+                    context: LanguageServerResolveContext(extensionID: identity)
+                )
+                return try JSONEncoder().encode(suggestions)
+            }
+            if let service = documentationIndexService, method == .docsInvalidate {
+                let packageID = Phase13WireCodec.parseID(payload, keys: ["packageID", "id"])
+                await service.invalidate(
+                    packageID: packageID.isEmpty ? nil : packageID,
+                    extensionID: identity
+                )
+                return try JSONSerialization.data(withJSONObject: ["ok": true])
+            }
+            if let service = documentationIndexService, method == .docsBuildIndex {
+                let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any] ?? [:]
+                let packageID = obj["packageID"] as? String ?? obj["id"] as? String ?? ""
+                guard !packageID.isEmpty else {
+                    throw ExtensionWireError(code: -32602, message: "packageID required")
+                }
+                let suggestion = DocumentationPackageSuggestion(
+                    id: packageID,
+                    title: obj["title"] as? String ?? packageID,
+                    languages: obj["languages"] as? [String] ?? [],
+                    sourcePath: obj["sourcePath"] as? String
+                )
+                let roots = obj["workspaceRoot"] as? String
+                let rootURL = roots.map { URL(fileURLWithPath: $0) }
+                let entries = try await service.buildIndex(
+                    package: suggestion,
+                    extensionID: identity,
+                    context: LanguageServerResolveContext(extensionID: identity),
+                    worktreeRoot: rootURL
+                )
+                return try JSONEncoder().encode(entries)
+            }
+            guard let provider = documentationIndexProvider else {
+                throw ExtensionWireError.methodNotFound
+            }
+            return try await Phase13WireCodec.dispatchDocs(
                 method: method,
                 payload: payload,
                 provider: provider,

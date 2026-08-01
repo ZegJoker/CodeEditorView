@@ -536,7 +536,7 @@ struct Phase12ExecutorE2ETests {
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses, .network])
         let exec = LanguageServerLaunchPlanExecutor(broker: broker)
 
-        // npm materialize creates package dir + bin placeholder, then process allowlist may pass with **
+        // npm without a real bin must fail honestly (no invented placeholder).
         let npmPlan = LanguageServerLaunchPlan(
             serverID: "npm-ls",
             displayName: "NPM",
@@ -544,8 +544,17 @@ struct Phase12ExecutorE2ETests {
             binarySource: .npm(package: "typescript-language-server", version: "1.0.0", bin: "tsserver"),
             extensionID: id
         )
-        // Will fail at LSP initialize (placeholder script), but materialize + process grant must succeed first.
-        // Use test factory instead after materialize verification via download:
+        do {
+            _ = try await exec.start(plan: npmPlan, extensionID: id, registry: LanguageServiceRegistry(), workspaceRoots: [tmp])
+            Issue.record("expected npm bin missing")
+        } catch let LaunchPlanError.diagnostic(d) {
+            #expect(d.code == .binaryNotFound)
+        } catch {
+            let st = await exec.statusStore.status(serverID: "npm-ls", extensionID: id)
+            #expect(st?.state == .failed)
+        }
+
+        // Download fixture materializes real bytes; process start may still fail LSP initialize.
         let payload = Data("#!/bin/sh\nexit 0\n".utf8)
         let b64 = payload.base64EncodedString()
         let dlPlan = LanguageServerLaunchPlan(
@@ -559,20 +568,12 @@ struct Phase12ExecutorE2ETests {
             ),
             extensionID: id
         )
-        // Without test factory, process start of shell stub will fail LSP — expect failed state not deny.
         do {
             _ = try await exec.start(plan: dlPlan, extensionID: id, registry: LanguageServiceRegistry(), workspaceRoots: [tmp])
         } catch {
             let st = await exec.statusStore.status(serverID: "dl-ls", extensionID: id)
             #expect(st?.state == .failed)
             #expect(st?.lastError != nil)
-        }
-        // npm similarly
-        do {
-            _ = try await exec.start(plan: npmPlan, extensionID: id, registry: LanguageServiceRegistry(), workspaceRoots: [tmp])
-        } catch {
-            let st = await exec.statusStore.status(serverID: "npm-ls", extensionID: id)
-            #expect(st?.state == .failed)
         }
     }
 }

@@ -38,6 +38,10 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
     public var capabilities: [String]
     public var permissions: [String]
     public var languageServers: [LanguageServerContribution]
+    public var debugAdapters: [DebugAdapterContribution]
+    public var mcpServers: [MCPServerContribution]
+    public var slashCommands: [SlashCommandContribution]
+    public var documentationPackages: [DocumentationPackageContribution]
     public var unsupportedFields: [String]
 
     public init(
@@ -56,6 +60,10 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
         capabilities: [String] = [],
         permissions: [String] = [],
         languageServers: [LanguageServerContribution] = [],
+        debugAdapters: [DebugAdapterContribution] = [],
+        mcpServers: [MCPServerContribution] = [],
+        slashCommands: [SlashCommandContribution] = [],
+        documentationPackages: [DocumentationPackageContribution] = [],
         unsupportedFields: [String] = []
     ) {
         self.id = id
@@ -73,6 +81,10 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
         self.capabilities = capabilities
         self.permissions = permissions
         self.languageServers = languageServers
+        self.debugAdapters = debugAdapters
+        self.mcpServers = mcpServers
+        self.slashCommands = slashCommands
+        self.documentationPackages = documentationPackages
         self.unsupportedFields = unsupportedFields
     }
 
@@ -193,6 +205,10 @@ public enum ExtensionTOMLParser {
                 && $0 != "activation" && $0 != "runtime" && $0 != "capabilities"
                 && $0 != "permissions" && $0 != "contributions"
                 && !$0.hasPrefix("language_servers")
+                && !$0.hasPrefix("debug_adapters")
+                && !$0.hasPrefix("mcp_servers")
+                && !$0.hasPrefix("slash_commands")
+                && !$0.hasPrefix("documentation_packages")
         }
         for u in unsupported {
             diagnostics.append(.init(
@@ -312,6 +328,100 @@ public enum ExtensionTOMLParser {
         }
         languageServers.sort { $0.serverID < $1.serverID }
 
+        // [debug_adapters.<id>]
+        var debugAdapters: [DebugAdapterContribution] = []
+        for (key, value) in root {
+            guard key.hasPrefix("debug_adapters."), case .table(let table) = value else { continue }
+            let adapterID = String(key.dropFirst("debug_adapters.".count))
+            guard !adapterID.isEmpty else { continue }
+            let langs: [String] = {
+                if case .array(let arr) = table["languages"] { return arr.compactMap(\.string) }
+                return []
+            }()
+            let args: [String] = {
+                if case .array(let arr) = table["args"] ?? table["arguments"] { return arr.compactMap(\.string) }
+                return []
+            }()
+            debugAdapters.append(DebugAdapterContribution(
+                adapterID: adapterID,
+                displayName: table["name"]?.string ?? table["display_name"]?.string ?? adapterID,
+                languages: langs,
+                command: table["command"]?.string,
+                arguments: args,
+                downloadURL: table["download_url"]?.string,
+                downloadDigest: table["download_digest"]?.string,
+                npmPackage: table["npm_package"]?.string,
+                npmVersion: table["npm_version"]?.string,
+                npmBin: table["npm_bin"]?.string
+            ))
+        }
+        debugAdapters.sort { $0.adapterID < $1.adapterID }
+
+        // [mcp_servers.<id>]
+        var mcpServers: [MCPServerContribution] = []
+        for (key, value) in root {
+            guard key.hasPrefix("mcp_servers."), case .table(let table) = value else { continue }
+            let serverID = String(key.dropFirst("mcp_servers.".count))
+            guard !serverID.isEmpty else { continue }
+            let args: [String] = {
+                if case .array(let arr) = table["args"] ?? table["arguments"] { return arr.compactMap(\.string) }
+                return []
+            }()
+            let transport = MCPTransportKind(rawValue: table["transport"]?.string ?? "stdio") ?? .stdio
+            mcpServers.append(MCPServerContribution(
+                serverID: serverID,
+                displayName: table["name"]?.string ?? table["display_name"]?.string ?? serverID,
+                command: table["command"]?.string,
+                arguments: args,
+                transport: transport,
+                startupTimeoutMS: table["startup_timeout_ms"]?.int ?? 10_000,
+                downloadURL: table["download_url"]?.string,
+                downloadDigest: table["download_digest"]?.string,
+                npmPackage: table["npm_package"]?.string,
+                npmVersion: table["npm_version"]?.string,
+                npmBin: table["npm_bin"]?.string
+            ))
+        }
+        mcpServers.sort { $0.serverID < $1.serverID }
+
+        // [slash_commands.<id>]
+        var slashCommands: [SlashCommandContribution] = []
+        for (key, value) in root {
+            guard key.hasPrefix("slash_commands."), case .table(let table) = value else { continue }
+            let cmdID = String(key.dropFirst("slash_commands.".count))
+            guard !cmdID.isEmpty else { continue }
+            slashCommands.append(SlashCommandContribution(
+                id: cmdID,
+                name: table["name"]?.string ?? cmdID,
+                description: table["description"]?.string ?? "",
+                requiresWorktree: table["requires_worktree"]?.bool ?? false,
+                maxArgumentLength: table["max_argument_length"]?.int ?? 4_096,
+                compatibility: .compatibility
+            ))
+        }
+        slashCommands.sort { $0.id < $1.id }
+
+        // [documentation_packages.<id>]
+        var documentationPackages: [DocumentationPackageContribution] = []
+        for (key, value) in root {
+            guard key.hasPrefix("documentation_packages."), case .table(let table) = value else { continue }
+            let pkgID = String(key.dropFirst("documentation_packages.".count))
+            guard !pkgID.isEmpty else { continue }
+            let langs: [String] = {
+                if case .array(let arr) = table["languages"] ?? table["suggest_for"] {
+                    return arr.compactMap(\.string)
+                }
+                return []
+            }()
+            documentationPackages.append(DocumentationPackageContribution(
+                id: pkgID,
+                title: table["title"]?.string ?? table["name"]?.string ?? pkgID,
+                languages: langs,
+                sourcePath: table["source_path"]?.string ?? table["path"]?.string
+            ))
+        }
+        documentationPackages.sort { $0.id < $1.id }
+
         let manifest = ExtensionTOMLManifest(
             id: id,
             name: name,
@@ -328,6 +438,10 @@ public enum ExtensionTOMLParser {
             capabilities: capabilities,
             permissions: permissions,
             languageServers: languageServers,
+            debugAdapters: debugAdapters,
+            mcpServers: mcpServers,
+            slashCommands: slashCommands,
+            documentationPackages: documentationPackages,
             unsupportedFields: Array(unsupported).sorted()
         )
         return (manifest, diagnostics)
@@ -358,6 +472,15 @@ public enum ExtensionTOMLParser {
         var int: Int? {
             if case .int(let i) = self { return i }
             if case .string(let s) = self { return Int(s) }
+            return nil
+        }
+
+        var bool: Bool? {
+            if case .bool(let b) = self { return b }
+            if case .string(let s) = self {
+                if s == "true" { return true }
+                if s == "false" { return false }
+            }
             return nil
         }
     }

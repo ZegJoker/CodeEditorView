@@ -17,6 +17,10 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
     public var grammars: [GrammarContribution]
     public var queries: [QueryContribution]
     public var languageServers: [LanguageServerContribution]
+    public var debugAdapters: [DebugAdapterContribution]
+    public var mcpServers: [MCPServerContribution]
+    public var slashCommands: [SlashCommandContribution]
+    public var documentationPackages: [DocumentationPackageContribution]
     public var assets: [AssetContribution]
     public var diagnostics: [ExtensionPackageDiagnostic]
     public var unsupportedFields: [String]
@@ -39,6 +43,10 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
         grammars: [GrammarContribution] = [],
         queries: [QueryContribution] = [],
         languageServers: [LanguageServerContribution] = [],
+        debugAdapters: [DebugAdapterContribution] = [],
+        mcpServers: [MCPServerContribution] = [],
+        slashCommands: [SlashCommandContribution] = [],
+        documentationPackages: [DocumentationPackageContribution] = [],
         assets: [AssetContribution] = [],
         diagnostics: [ExtensionPackageDiagnostic] = [],
         unsupportedFields: [String] = [],
@@ -60,6 +68,10 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
         self.grammars = grammars
         self.queries = queries
         self.languageServers = languageServers
+        self.debugAdapters = debugAdapters
+        self.mcpServers = mcpServers
+        self.slashCommands = slashCommands
+        self.documentationPackages = documentationPackages
         self.assets = assets
         self.diagnostics = diagnostics
         self.unsupportedFields = unsupportedFields

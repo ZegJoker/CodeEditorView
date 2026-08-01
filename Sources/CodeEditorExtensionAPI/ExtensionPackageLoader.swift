@@ -316,12 +316,35 @@ public enum ExtensionPackageLoader {
             c.extensionID = manifest.id
             return c
         }
+        var debugAdapters = toml.debugAdapters.map { contrib -> DebugAdapterContribution in
+            var c = contrib
+            c.extensionID = manifest.id
+            return c
+        }
+        var mcpServers = toml.mcpServers.map { contrib -> MCPServerContribution in
+            var c = contrib
+            c.extensionID = manifest.id
+            return c
+        }
+        var slashCommands = toml.slashCommands.map { contrib -> SlashCommandContribution in
+            var c = contrib
+            c.extensionID = manifest.id
+            return c
+        }
+        var documentationPackages = toml.documentationPackages.map { contrib -> DocumentationPackageContribution in
+            var c = contrib
+            c.extensionID = manifest.id
+            return c
+        }
 
         let hasData = !themes.isEmpty || !snippets.isEmpty || !icons.isEmpty
             || !languages.isEmpty || !grammars.isEmpty || !queries.isEmpty
-            || !languageServers.isEmpty
+            || !languageServers.isEmpty || !debugAdapters.isEmpty || !mcpServers.isEmpty
+            || !slashCommands.isEmpty || !documentationPackages.isEmpty
         let parity: String
-        if !languageServers.isEmpty {
+        if !debugAdapters.isEmpty || !mcpServers.isEmpty {
+            parity = "codeeditor-dap-mcp-s2"
+        } else if !languageServers.isEmpty {
             parity = "codeeditor-ls-s2"
         } else if hasData {
             parity = "codeeditor-data-s1"
@@ -343,6 +366,10 @@ public enum ExtensionPackageLoader {
             grammars: grammars,
             queries: queries,
             languageServers: languageServers,
+            debugAdapters: debugAdapters,
+            mcpServers: mcpServers,
+            slashCommands: slashCommands,
+            documentationPackages: documentationPackages,
             assets: assets.sorted { $0.relativePath < $1.relativePath },
             diagnostics: diagnostics,
             unsupportedFields: toml.unsupportedFields,

@@ -1,0 +1,20 @@
+id = "com.codeeditor.fixtures.dap-procedural"
+name = "DAP Procedural Fixture"
+version = "1.0.0"
+schema_version = 1
+api_version = "1.0"
+authors = ["CodeEditorView Fixtures"]
+
+[activation]
+events = ["startup", "language:swift"]
+
+[runtime]
+kind = "builtin"
+
+capabilities = ["languageServices"]
+permissions = ["startProcesses", "network", "readWorkspace"]
+
+[debug_adapters.mock-dap]
+name = "Mock DAP"
+languages = ["Swift", "swift"]
+command = "mock-dap"

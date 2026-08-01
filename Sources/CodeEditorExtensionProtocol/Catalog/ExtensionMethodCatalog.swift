@@ -30,6 +30,20 @@ public struct ExtensionMethodID: RawRepresentable, Hashable, Codable, Sendable, 
     public static let lsStatus: ExtensionMethodID = "ls.status"
     public static let lsRestart: ExtensionMethodID = "ls.restart"
 
+    // DAP / MCP / slash / docs (Phase 13)
+    public static let dapResolveLaunchPlan: ExtensionMethodID = "dap.resolveLaunchPlan"
+    public static let dapResolveConfigurations: ExtensionMethodID = "dap.resolveConfigurations"
+    public static let dapLocate: ExtensionMethodID = "dap.locate"
+    public static let dapStatus: ExtensionMethodID = "dap.status"
+    public static let dapRestart: ExtensionMethodID = "dap.restart"
+    public static let mcpResolveLaunchPlan: ExtensionMethodID = "mcp.resolveLaunchPlan"
+    public static let mcpStatus: ExtensionMethodID = "mcp.status"
+    public static let mcpRestart: ExtensionMethodID = "mcp.restart"
+    public static let slashExecute: ExtensionMethodID = "slash.execute"
+    public static let docsSuggest: ExtensionMethodID = "docs.suggest"
+    public static let docsBuildIndex: ExtensionMethodID = "docs.buildIndex"
+    public static let docsInvalidate: ExtensionMethodID = "docs.invalidate"
+
     // Broker
     public static let worktreeList: ExtensionMethodID = "broker.worktree.list"
     public static let worktreeRead: ExtensionMethodID = "broker.worktree.read"
@@ -61,6 +75,9 @@ public enum ExtensionMethodCatalog {
         .completion, .hover, .definition, .diagnostics,
         .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
         .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart,
+        .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart,
+        .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
+        .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate,
         .worktreeList, .worktreeRead, .worktreeWhich, .worktreeEnvironment, .projectInfo,
         .settingsGet, .settingsSet,
         .storageGet, .storageSet,

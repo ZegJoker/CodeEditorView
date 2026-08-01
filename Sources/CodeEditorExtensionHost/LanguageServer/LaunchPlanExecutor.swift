@@ -421,11 +421,14 @@ public actor LanguageServerLaunchPlanExecutor {
                 let handle = try await broker.npmHandle(extensionID: extensionID)
                 let dest = try await broker.npmInstall(handle: handle.id, package: package, version: version)
                 let exec = dest.appendingPathComponent(bin)
-                // npm install fixture may not create bin; for testFactory-style allow missing and use test
-                if !FileManager.default.fileExists(atPath: exec.path) {
-                    // Create placeholder executable script for tests
-                    try "#!/bin/sh\nexit 0\n".write(to: exec, atomically: true, encoding: .utf8)
-                    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: exec.path)
+                // Do not invent binaries — npm materialize must produce the declared bin.
+                guard FileManager.default.fileExists(atPath: exec.path) else {
+                    throw LaunchPlanError.diagnostic(.init(
+                        code: .binaryNotFound,
+                        message: "npm bin missing after install: \(bin)",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
                 }
                 try await ensureProcessAllowed(executable: exec.path, extensionID: extensionID, serverID: plan.serverID)
                 return Materialized(

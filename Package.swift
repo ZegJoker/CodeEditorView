@@ -27,6 +27,7 @@ let package = Package(
         .library(name: "CodeEditorExtensionGuest", targets: ["CodeEditorExtensionGuest"]),
         .executable(name: "ConformanceExtensionGuest", targets: ["ConformanceExtensionGuest"]),
         .library(name: "CodeEditorLSP", targets: ["CodeEditorLSP"]),
+        .library(name: "CodeEditorDAP", targets: ["CodeEditorDAP"]),
         .library(name: "CodeEditorSearch", targets: ["CodeEditorSearch"]),
         .library(name: "CodeEditorTasks", targets: ["CodeEditorTasks"]),
         .library(name: "CodeEditorTerminal", targets: ["CodeEditorTerminal"]),
@@ -640,6 +641,9 @@ let package = Package(
                 "CodeEditorLanguageSupport",
                 "CodeEditorLanguageServices",
                 "CodeEditorLSP",
+                "CodeEditorDAP",
+                "CodeEditorTasks",
+                "CodeEditorTerminal",
             ]
         ),
         .target(
@@ -649,6 +653,13 @@ let package = Package(
                 "CodeEditorDocuments",
                 "CodeEditorLanguageSupport",
                 "CodeEditorLanguageServices",
+            ]
+        ),
+        .target(
+            name: "CodeEditorDAP",
+            dependencies: [
+                "CodeEditorCore",
+                "CodeEditorDocuments",
             ]
         ),
         .target(
@@ -848,6 +859,14 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "CodeEditorDAPTests",
+            dependencies: [
+                "CodeEditorDAP",
+                "CodeEditorCore",
+                "CodeEditorDocuments",
+            ]
+        ),
+        .testTarget(
             name: "CodeEditorSearchTests",
             dependencies: ["CodeEditorSearch", "CodeEditorWorkspace", "CodeEditorDocuments"]
         ),
@@ -895,6 +914,9 @@ let package = Package(
                 "CodeEditorCore",
                 "CodeEditorDocuments",
                 "CodeEditorLSP",
+                "CodeEditorDAP",
+                "CodeEditorTasks",
+                "CodeEditorTerminal",
             ],
             resources: [.copy("../Fixtures/Wasm")]
         ),
