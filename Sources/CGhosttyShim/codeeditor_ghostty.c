@@ -97,3 +97,18 @@ int ce_ghostty_surface_snapshot_utf8(ce_ghostty_surface *surface, char *out, siz
     out[n] = 0;
     return (int)n;
 }
+
+int ce_ghostty_surface_key_input(ce_ghostty_surface *surface, const uint8_t *bytes, size_t len) {
+    if (!surface || (!bytes && len)) return -1;
+    /* Queue host→PTY bytes in spool (read via ce_ghostty_surface_read). */
+    if (surface->spool_len + len > surface->spool_cap) {
+        size_t ncap = (surface->spool_cap + len) * 2;
+        uint8_t *n = realloc(surface->spool, ncap);
+        if (!n) return -1;
+        surface->spool = n;
+        surface->spool_cap = ncap;
+    }
+    memcpy(surface->spool + surface->spool_len, bytes, len);
+    surface->spool_len += len;
+    return (int)len;
+}

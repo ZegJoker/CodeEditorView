@@ -1,5 +1,6 @@
 import CodeEditorDocuments
 import CodeEditorTerminal
+import CodeEditorTerminalGhostty
 import Observation
 import SwiftUI
 
@@ -175,55 +176,112 @@ struct WorkbenchProblemsPanelView: View {
     }
 }
 
-// MARK: - Terminal panel
+// MARK: - Terminal panel (Ghostty-backed, TER-004 / E13)
 
 @MainActor
 public final class WorkbenchTerminalPanelModel: ObservableObject {
-    @Published public private(set) var session: TerminalSession?
-    @Published public private(set) var screenText: String = ""
+    @Published public private(set) var sessionID: TerminalSessionID?
+    @Published public private(set) var snapshot: String = ""
+    @Published public private(set) var title: String = "Terminal"
     @Published public var errorMessage: String?
-    public let manager = TerminalSessionManager()
-    private var pollTask: Task<Void, Never>?
-    private var sessionID: TerminalSessionID?
+    @Published public private(set) var isRunning: Bool = false
 
-    public init() {}
+    public let service: TerminalService
+    private var controller: GhosttySessionController?
+    private var pollTask: Task<Void, Never>?
+
+    public init(service: TerminalService? = nil) {
+        self.service = service ?? TerminalService(
+            securityPolicy: .restricted,
+            requireGhosttyLinked: false,
+            isGhosttyLinked: { GhosttySessionController.isLinked }
+        )
+    }
 
     public func startIfNeeded() {
-        guard session == nil else { return }
+        guard sessionID == nil else { return }
         #if os(macOS)
-            Task {
-                await manager.attach(backend: PTYTerminalBackend())
-                do {
-                    let s = try await manager.create(title: "Terminal")
-                    await MainActor.run {
-                        self.session = s
-                        self.sessionID = s.id
-                        self.pollTask = Task { @MainActor in
-                            while !Task.isCancelled {
-                                if let id = self.sessionID,
-                                    let screen = await manager.screen(for: id)
-                                {
-                                    self.screenText = screen.accessibilityText(includeScrollback: true)
-                                    if let live = await manager.allSessions().first(where: { $0.id == id }) {
-                                        self.session = live
-                                    }
-                                }
-                                try? await Task.sleep(nanoseconds: 50_000_000)
-                            }
-                        }
-                    }
-                } catch {
-                    await MainActor.run { self.errorMessage = String(describing: error) }
-                }
-            }
+            Task { await self.startMacSession() }
         #else
-            errorMessage = "Local PTY is unavailable on this platform profile"
+            errorMessage = "Local PTY is unavailable on this platform profile; use remote transport."
         #endif
     }
 
-    public func write(_ text: String) {
+    #if os(macOS)
+        private func startMacSession() async {
+            do {
+                let ghostty = try GhosttySessionController(
+                    cols: 80, rows: 24, requireLinked: false)
+                self.controller = ghostty
+                let transport = LocalPTYTransport(securityPolicy: .restricted)
+                let id = try await service.create(
+                    metadata: TerminalMetadata(kind: .terminal, title: "Terminal"),
+                    configuration: TerminalConfiguration(cols: 80, rows: 24),
+                    transport: transport,
+                    onOutput: { [weak self] data in
+                        guard let self else { return }
+                        try? await ghostty.write(data)
+                        let snap = (try? await ghostty.snapshotUTF8()) ?? ""
+                        await MainActor.run {
+                            self.snapshot = snap
+                            self.isRunning = true
+                        }
+                    }
+                )
+                await MainActor.run {
+                    self.sessionID = id
+                    self.title = "Terminal"
+                    self.isRunning = true
+                    self.errorMessage = nil
+                    self.pollTask = Task { @MainActor in
+                        while !Task.isCancelled {
+                            if let c = self.controller {
+                                self.snapshot = (try? await c.snapshotUTF8()) ?? self.snapshot
+                            }
+                            if let id = self.sessionID {
+                                let states = await self.service.allSessions()
+                                if let s = states.first(where: { $0.id == id }) {
+                                    self.isRunning = s.isRunning
+                                    if !s.snapshotUTF8.isEmpty && self.snapshot.isEmpty {
+                                        self.snapshot = s.snapshotUTF8
+                                    }
+                                }
+                            }
+                            try? await Task.sleep(nanoseconds: 50_000_000)
+                        }
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = String(describing: error)
+                }
+            }
+        }
+    #endif
+
+    public func writeKey(_ data: Data) {
         guard let id = sessionID else { return }
-        Task { try? await manager.write(text, to: id) }
+        Task {
+            if let c = controller {
+                let encoded = (try? await c.keyInput(data)) ?? data
+                try? await service.write(encoded, to: id)
+            } else {
+                try? await service.write(data, to: id)
+            }
+        }
+    }
+
+    public func killSession() {
+        guard let id = sessionID else { return }
+        Task {
+            await service.close(id, reason: .user)
+            await controller?.shutdown()
+            await MainActor.run {
+                self.sessionID = nil
+                self.isRunning = false
+                self.pollTask?.cancel()
+            }
+        }
     }
 
     deinit { pollTask?.cancel() }
@@ -249,37 +307,51 @@ public final class WorkbenchTerminalPanelContribution: WorkbenchContribution {
 
 struct WorkbenchTerminalPanelView: View {
     @ObservedObject var model: WorkbenchTerminalPanelModel
-    @State private var input = ""
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack {
+                Text(model.title)
+                    .font(.caption.weight(.semibold))
+                Spacer()
+                if model.isRunning {
+                    Button("Kill") { model.killSession() }
+                        .font(.caption)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             if let err = model.errorMessage {
                 Text(err).font(.caption).foregroundStyle(.red).padding(8)
             }
-            ScrollView {
-                Text(model.screenText.isEmpty ? " " : model.screenText)
-                    .font(.system(.caption, design: .monospaced))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
-                    .padding(8)
-            }
-            Divider()
-            HStack {
-                TextField("Send input…", text: $input)
-                    .textFieldStyle(.plain)
-                    .font(.system(.caption, design: .monospaced))
-                    .onSubmit {
-                        model.write(input + "\n")
-                        input = ""
-                    }
-                Button("Send") {
-                    model.write(input + "\n")
-                    input = ""
+            #if os(macOS)
+                if let id = model.sessionID {
+                    GhosttySurfaceRepresentable(
+                        sessionID: id,
+                        snapshot: model.snapshot,
+                        onKeyData: { model.writeKey($0) }
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ContentUnavailableView(
+                        "Starting Terminal…",
+                        systemImage: "terminal",
+                        description: Text("Ghostty-backed session")
+                    )
                 }
-                .font(.caption)
-            }
-            .padding(8)
+            #else
+                Text(model.snapshot)
+                    .font(.system(.caption, design: .monospaced))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(8)
+            #endif
         }
         .accessibilityIdentifier("workbench.utility.terminal")
+        .accessibilityLabel(
+            GhosttyAccessibilityAdapter.from(
+                snapshot: model.snapshot, title: model.title, isRunning: model.isRunning
+            ).accessibilityLabel
+        )
+        .accessibilityValue(model.snapshot)
     }
 }

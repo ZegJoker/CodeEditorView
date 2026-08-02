@@ -237,6 +237,7 @@ let package = Package(
             dependencies: [
                 "CodeEditorCore",
                 "CodeEditorDocuments",
+                "CGhosttyShim",
             ]
         ),
         .target(
@@ -252,14 +253,18 @@ let package = Package(
             ],
             linkerSettings: ghosttyLinked ? [
                 .linkedLibrary("ghostty-vt", .when(platforms: [.macOS])),
+                .linkedLibrary("util", .when(platforms: [.macOS])),
                 .unsafeFlags(["-LVendor/ghostty/zig-out/lib"], .when(platforms: [.macOS])),
-            ] : []
+            ] : [
+                .linkedLibrary("util", .when(platforms: [.macOS])),
+            ]
         ),
         .target(
             name: "CodeEditorTerminalGhostty",
             dependencies: [
                 "CodeEditorTerminal",
                 "CGhosttyShim",
+                "CodeEditorDAP",
             ]
         ),
         .target(

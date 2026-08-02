@@ -59,6 +59,9 @@ int ce_ghostty_surface_resize(ce_ghostty_surface *surface, ce_ghostty_size size)
 /** Snapshot visible screen as UTF-8 into buffer; returns bytes written or -1. */
 int ce_ghostty_surface_snapshot_utf8(ce_ghostty_surface *surface, char *out, size_t cap);
 
+/** Feed host keystrokes into surface (for tests / unlinked spool). */
+int ce_ghostty_surface_key_input(ce_ghostty_surface *surface, const uint8_t *bytes, size_t len);
+
 #ifdef __cplusplus
 }
 #endif
