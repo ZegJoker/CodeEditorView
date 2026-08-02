@@ -10,7 +10,7 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
     public var platformProfile: PlatformCapabilityProfile
     public var trusted: Bool
     public var auth: (any SCMAuthCallback)?
-    private let processService: ProcessSupervisor
+    private let processService: ProcessService
     private let lock = NSLock()
     /// Per-operation handles (SCM-002 / §19.4) — never a single shared cancel target.
     private var activeHandles: [UUID: ProcessHandle] = [:]
@@ -27,7 +27,7 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
         self.platformProfile = platformProfile
         self.trusted = trusted
         self.auth = auth
-        self.processService = ProcessSupervisor(profile: platformProfile)
+        self.processService = ProcessService(profile: platformProfile)
     }
 
     public func status() async throws -> [SCMFileStatus] {
@@ -359,6 +359,8 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
             switch event {
             case .stdout(let d): out.append(d)
             case .stderr(let d): err.append(d)
+            case .outputGap:
+                break
             case .exited(let c, let timedOut):
                 if timedOut { throw SCMError.failed("timeout") }
                 code = c

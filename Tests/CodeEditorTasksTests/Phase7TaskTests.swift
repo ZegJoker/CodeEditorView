@@ -141,11 +141,23 @@ struct Phase7ProblemMatcherTests {
         #expect(!src.contains("struct FakeTaskRunner"))
     }
 
-    @Test func processSupervisorAliasExists() {
-        let a: ProcessSupervisor = ProcessService()
-        let b: ProcessService = a
-        #expect(type(of: a) == type(of: b))
-        #expect(ProcessSupervisor.self == ProcessService.self)
+    @Test func processSupervisorAndServiceShareLaunchSurface() async throws {
+        // ProcessSupervisor is the actor substrate; ProcessService remains the sync facade.
+        let service = ProcessService(profile: .test)
+        let supervisor = ProcessSupervisor(profile: .test)
+        #if os(macOS)
+        let fromService = try service.launch(
+            ProcessLaunchRequest(executable: "/bin/echo", arguments: ["svc"])
+        )
+        let fromSupervisor = try await supervisor.spawn(
+            ProcessLaunchRequest(executable: "/bin/echo", arguments: ["sup"])
+        )
+        _ = await fromService.awaitTermination()
+        _ = await fromSupervisor.awaitTermination()
+        #else
+        _ = service
+        _ = supervisor
+        #endif
     }
 
     @Test func cancelExclusiveWaitsForProcessDeath() async throws {

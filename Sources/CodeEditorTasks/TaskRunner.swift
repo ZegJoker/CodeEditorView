@@ -80,8 +80,8 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         return handle
     }
 
-    /// Cancel the task. For process-backed runs, signals the process and
-    /// **does not** complete until process death is observed by `pump`
+    /// Cancel the task. For process-backed runs, signals the process nonblocking
+    /// (CORE-N03). Completion is observed by `pump` when the process dies
     /// (TASK-003 / §18.4 — exclusive slots stay held until death).
     public func cancel() {
         lock.lock()
@@ -98,6 +98,7 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         lock.unlock()
 
         if hasProcess {
+            // Nonblocking signal; pump + awaitTermination paths observe death.
             processHandle?.cancel()
             return
         }
@@ -249,6 +250,8 @@ public final class TaskExecutionHandle: @unchecked Sendable {
             case .stderr(let data):
                 let text = String(data: data, encoding: .utf8) ?? String(decoding: data, as: UTF8.self)
                 emit(stderr: text)
+            case .outputGap:
+                break
             case .exited(let code, let timedOut):
                 let snapshot = applyExit(code: code, timedOut: timedOut)
                 complete(run: snapshot.run, stdout: snapshot.stdout, stderr: snapshot.stderr)
@@ -314,8 +317,8 @@ public final class TaskExecutionHandle: @unchecked Sendable {
 
 public struct ProcessTaskRunner: TaskRunner {
     public let platformProfile: PlatformCapabilityProfile
-    /// Shared process supervisor (PROC-001) — same API used by Git / helpers.
-    public let processService: ProcessSupervisor
+    /// Shared process launcher (PROC-001 / CORE substrate) — same API used by Git / helpers.
+    public let processService: ProcessService
     public var defaultTimeout: Duration?
 
     public init(
@@ -323,7 +326,7 @@ public struct ProcessTaskRunner: TaskRunner {
         defaultTimeout: Duration? = nil
     ) {
         self.platformProfile = platformProfile
-        self.processService = ProcessSupervisor(profile: platformProfile)
+        self.processService = ProcessService(profile: platformProfile)
         self.defaultTimeout = defaultTimeout
     }
 
@@ -344,7 +347,8 @@ public struct ProcessTaskRunner: TaskRunner {
             environment: resolved.environment,
             mergeEnvironment: true,
             timeout: resolved.timeout ?? defaultTimeout,
-            capabilityKind: .localProcess
+            // Shell mode is gated by localShellExecution inside ProcessLaunchEngine (CORE-N04).
+            capabilityKind: mode == .shell ? .localShellExecution : .localProcess
         )
 
         let processHandle: ProcessHandle

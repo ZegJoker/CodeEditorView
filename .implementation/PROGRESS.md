@@ -11,7 +11,7 @@
 |------:|------|---------:|--------|
 | 0 | release-truth | 9 | verified |
 | 1 | documents | 12 | verified |
-| 2 | substrate | 3 (+ shared substrate build) | open |
+| 2 | substrate | 3 (+ shared substrate build) | fixed |
 | 3a | commands | 5 | open |
 | 3b | native editor UI | 10 | open |
 | 4 | workspace | 10 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: Phase 2 substrate — fixed CORE-N02/N03/N04 + shared substrate (§22): AsyncBroadcastHub (sequence/gap/replay/finish), OneShotPromise + DeadlineScheduler/TestDeadlineClock, BoundedByteSpool, FramedRPCConnection (Content-Length + JSON-RPC codec), ProcessSupervisor actor. ProcessHandle multi-subscriber bounded events; cancel() nonblocking + awaitTermination; shell via localShellExecution. CodeEditorCoreTests+Tasks+SCM: 136 passed.
 - 2026-08-02: batch documents verified — DOC-N01…DOC-N11 + CORE-N01 status set to `verified` (all previously fixed with regression tests).
 - 2026-08-02: Phase 1 verifier residual (2) — DOC-N09 per-call peak retained payload (single buffer ≤N; hash-only ≤chunk); DOC-N10 beforeParentFsync pins disk==NEW (no soft ORIG); DOC-N05 overflow-safe residuals in TextRange/MultiRangeEdit/Search/LSP/LanguageServiceSanitize with adapter tests. 28 DOC-N/CORE-N01 + 190 product-suite tests pass.
 - 2026-08-02: Phase 1 verifier residual — strengthened weak tests: DOC-N06 drain+streamGap on overflow; DOC-N10 parentDirectoryFsyncObserver asserts real fsyncDirectory; CORE-N01 off-main assertOwnership violation probe; DOC-N04 atomic group DocumentStore.apply (no intentional partial mutation). 24 DOC-N/CORE-N01 tests pass.

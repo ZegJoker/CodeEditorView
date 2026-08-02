@@ -7,6 +7,7 @@ public enum ProcessLaunchMode: Sendable, Hashable {
     /// Execute `executable` with raw `arguments` (no shell).
     case direct
     /// Run via `/bin/sh -c` with POSIX shell quoting of argv.
+    /// Requires ``PlatformCapabilityKind/localShellExecution`` (CORE-N04).
     case shell
 }
 
@@ -22,6 +23,8 @@ public struct ProcessLaunchRequest: Sendable {
     public var maxStdoutBytes: Int
     public var maxStderrBytes: Int
     public var capabilityKind: PlatformCapabilityKind
+    /// Per-subscriber event buffer (CORE-N02). Defaults to a bounded capacity.
+    public var eventBufferCapacity: Int
 
     public init(
         executable: String,
@@ -33,7 +36,8 @@ public struct ProcessLaunchRequest: Sendable {
         timeout: Duration? = nil,
         maxStdoutBytes: Int = 8 * 1024 * 1024,
         maxStderrBytes: Int = 2 * 1024 * 1024,
-        capabilityKind: PlatformCapabilityKind = .localProcess
+        capabilityKind: PlatformCapabilityKind = .localProcess,
+        eventBufferCapacity: Int = 64
     ) {
         self.executable = executable
         self.arguments = arguments
@@ -45,13 +49,30 @@ public struct ProcessLaunchRequest: Sendable {
         self.maxStdoutBytes = maxStdoutBytes
         self.maxStderrBytes = maxStderrBytes
         self.capabilityKind = capabilityKind
+        self.eventBufferCapacity = max(1, eventBufferCapacity)
     }
 }
 
 public enum ProcessOutputEvent: Sendable, Hashable {
     case stdout(Data)
     case stderr(Data)
+    /// Delivered payload was truncated/spooled past the configured bound (CORE-N02).
+    case outputGap(stream: ProcessOutputStream, droppedBytes: Int)
     case exited(code: Int32, timedOut: Bool)
+}
+
+public enum ProcessOutputStream: String, Sendable, Hashable {
+    case stdout
+    case stderr
+}
+
+public struct ProcessExit: Sendable, Hashable {
+    public var code: Int32
+    public var timedOut: Bool
+    public init(code: Int32, timedOut: Bool) {
+        self.code = code
+        self.timedOut = timedOut
+    }
 }
 
 public enum ProcessServiceError: Error, Sendable, Equatable {
@@ -62,6 +83,8 @@ public enum ProcessServiceError: Error, Sendable, Equatable {
     case alreadyExited
     /// Foundation.Process is unavailable on this platform (e.g. iOS).
     case unavailableOnPlatform
+    /// Shell mode requested without ``PlatformCapabilityKind/localShellExecution``.
+    case shellCapabilityRequired
 }
 
 /// POSIX shell single-argument quoting for shell launch mode.
@@ -87,228 +110,511 @@ public enum ShellQuoting {
     }
 }
 
+// MARK: - Escalation
+
+public struct EscalationPolicy: Sendable, Hashable {
+    public var grace: Duration
+    public init(grace: Duration = .milliseconds(400)) {
+        self.grace = grace
+    }
+    public static func termThenKill(grace: Duration = .milliseconds(400)) -> EscalationPolicy {
+        EscalationPolicy(grace: grace)
+    }
+}
+
+// MARK: - Shared launch engine
+
+enum ProcessLaunchEngine {
+    static func requireCapabilities(
+        _ request: ProcessLaunchRequest,
+        profile: PlatformCapabilityProfile
+    ) throws {
+        switch request.mode {
+        case .shell:
+            // CORE-N04: shell is an explicit high-trust capability, not generic localProcess.
+            try profile.requireLocal(.localShellExecution)
+        case .direct:
+            try profile.requireLocal(request.capabilityKind)
+        }
+    }
+
 #if os(macOS)
-    /// Live handle for a launched process with streaming output and process-group teardown.
-    public final class ProcessHandle: @unchecked Sendable {
-        public let id: UUID
-        public private(set) var processIdentifier: Int32
-        private let process: Process
-        private let stdoutPipe: Pipe
-        private let stderrPipe: Pipe
-        private let lock = NSLock()
-        private var _terminated = false
-        private var continuation: AsyncStream<ProcessOutputEvent>.Continuation?
-        public let events: AsyncStream<ProcessOutputEvent>
-        private var timeoutTask: Task<Void, Never>?
-        private var stdoutBytes = 0
-        private var stderrBytes = 0
-        private let maxStdout: Int
-        private let maxStderr: Int
+    static func launch(
+        _ request: ProcessLaunchRequest,
+        profile: PlatformCapabilityProfile
+    ) throws -> ProcessHandle {
+        try requireCapabilities(request, profile: profile)
 
-        fileprivate init(
-            id: UUID = UUID(),
-            process: Process,
-            stdout: Pipe,
-            stderr: Pipe,
-            maxStdout: Int,
-            maxStderr: Int,
-            timeout: Duration?,
-            launch: Bool = true
-        ) {
-            self.id = id
-            self.process = process
-            self.stdoutPipe = stdout
-            self.stderrPipe = stderr
-            self.processIdentifier = process.processIdentifier
-            self.maxStdout = maxStdout
-            self.maxStderr = maxStderr
-            var cont: AsyncStream<ProcessOutputEvent>.Continuation!
-            self.events = AsyncStream(bufferingPolicy: .unbounded) { cont = $0 }
-            self.continuation = cont
-
-            let outHandle = stdout.fileHandleForReading
-            let errHandle = stderr.fileHandleForReading
-            outHandle.readabilityHandler = { [weak self] fh in
-                let data = fh.availableData
-                if data.isEmpty {
-                    fh.readabilityHandler = nil
-                    return
-                }
-                self?.emitStdout(data)
-            }
-            errHandle.readabilityHandler = { [weak self] fh in
-                let data = fh.availableData
-                if data.isEmpty {
-                    fh.readabilityHandler = nil
-                    return
-                }
-                self?.emitStderr(data)
-            }
-
-            process.terminationHandler = { [weak self] proc in
-                self?.drainAndFinish(code: proc.terminationStatus, timedOut: false)
-            }
-
-            if let timeout {
-                timeoutTask = Task { [weak self] in
-                    try? await Task.sleep(for: timeout)
-                    guard let self, !Task.isCancelled else { return }
-                    if !self.isTerminated {
-                        self.terminateProcessGroup()
-                        self.drainAndFinish(code: 124, timedOut: true)
-                    }
-                }
-            }
-            _ = launch
-        }
-
-        fileprivate func noteLaunched() {
-            processIdentifier = process.processIdentifier
-            let pid = processIdentifier
-            if pid > 0 {
-                _ = setpgid(pid, pid)
-            }
-            // If the process already finished before the handler was observed, finish now.
-            if !process.isRunning {
-                let code = process.terminationStatus
-                drainAndFinish(code: code, timedOut: false)
+        if let cwd = request.currentDirectory {
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: cwd.path, isDirectory: &isDir), isDir.boolValue else {
+                throw ProcessServiceError.invalidWorkingDirectory(cwd.path)
             }
         }
 
-        public var isTerminated: Bool {
-            lock.lock()
-            defer { lock.unlock() }
-            return _terminated
+        let process = Process()
+        switch request.mode {
+        case .direct:
+            process.executableURL = URL(fileURLWithPath: request.executable)
+            process.arguments = request.arguments
+        case .shell:
+            process.executableURL = URL(fileURLWithPath: "/bin/sh")
+            let cmd = ShellQuoting.joinCommand(executable: request.executable, arguments: request.arguments)
+            process.arguments = ["-c", cmd]
         }
 
-        public func waitUntilExit() async -> (code: Int32, timedOut: Bool) {
-            for await event in events {
-                if case .exited(let code, let timedOut) = event {
-                    return (code, timedOut)
-                }
-            }
-            return (process.terminationStatus, false)
+        if let cwd = request.currentDirectory {
+            process.currentDirectoryURL = cwd
         }
 
-        /// Cancel and **wait for process death** before finishing the event stream
-        /// so exclusive task slots are not released early (TASK-003 / §18.4).
-        public func cancel() {
-            if isTerminated { return }
-            terminateProcessGroup()
-            // Block until the OS reaps the process (or it already exited).
-            if process.isRunning {
-                process.waitUntilExit()
-            }
-            let code = process.terminationStatus
-            // Prefer SIGTERM convention when the process had no normal exit code.
-            drainAndFinish(code: code == 0 ? 143 : code, timedOut: false)
+        if request.mergeEnvironment {
+            var env = ProcessInfo.processInfo.environment
+            for (k, v) in request.environment { env[k] = v }
+            process.environment = env
+        } else if !request.environment.isEmpty {
+            process.environment = request.environment
         }
 
-        /// TERM process group, then KILL after grace.
-        public func terminateProcessGroup() {
-            let pid = process.processIdentifier
-            guard pid > 0 else {
-                if process.isRunning { process.terminate() }
-                return
-            }
-            kill(-pid, SIGTERM)
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.4) { [process] in
-                if process.isRunning {
-                    kill(-pid, SIGKILL)
-                    if process.isRunning { process.terminate() }
-                }
-            }
-        }
+        let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardOutput = stdout
+        process.standardError = stderr
+        process.standardInput = FileHandle.nullDevice
+        process.qualityOfService = .userInitiated
 
-        private func emitStdout(_ data: Data) {
-            lock.lock()
-            if _terminated {
-                lock.unlock()
-                return
-            }
-            stdoutBytes += data.count
-            let over = stdoutBytes > maxStdout
-            let cont = continuation
-            lock.unlock()
-            if over {
-                cont?.yield(.stderr(Data("… stdout capped\n".utf8)))
-                return
-            }
-            cont?.yield(.stdout(data))
+        let handle = ProcessHandle(
+            process: process,
+            stdout: stdout,
+            stderr: stderr,
+            maxStdout: request.maxStdoutBytes,
+            maxStderr: request.maxStderrBytes,
+            eventBufferCapacity: request.eventBufferCapacity,
+            timeout: request.timeout
+        )
+        do {
+            try process.run()
+        } catch {
+            throw ProcessServiceError.launchFailed(String(describing: error))
         }
-
-        private func emitStderr(_ data: Data) {
-            lock.lock()
-            if _terminated {
-                lock.unlock()
-                return
-            }
-            stderrBytes += data.count
-            let over = stderrBytes > maxStderr
-            let cont = continuation
-            lock.unlock()
-            if over { return }
-            cont?.yield(.stderr(data))
-        }
-
-        private func drainAndFinish(code: Int32, timedOut: Bool) {
-            lock.lock()
-            if _terminated {
-                lock.unlock()
-                return
-            }
-            _terminated = true
-            let cont = continuation
-            continuation = nil
-            lock.unlock()
-            timeoutTask?.cancel()
-            stdoutPipe.fileHandleForReading.readabilityHandler = nil
-            stderrPipe.fileHandleForReading.readabilityHandler = nil
-            // Drain remaining buffered pipe data.
-            let out = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-            if !out.isEmpty { cont?.yield(.stdout(out)) }
-            let err = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            if !err.isEmpty { cont?.yield(.stderr(err)) }
-            cont?.yield(.exited(code: code, timedOut: timedOut))
-            cont?.finish()
-        }
-
-        deinit {
-            if process.isRunning {
-                terminateProcessGroup()
-            }
-        }
+        handle.noteLaunched()
+        return handle
     }
 #else
-    /// Placeholder handle on platforms without Foundation.Process (iOS).
-    public final class ProcessHandle: @unchecked Sendable {
-        public let id: UUID
-        public private(set) var processIdentifier: Int32 = -1
-        public let events: AsyncStream<ProcessOutputEvent>
-
-        fileprivate init(id: UUID = UUID()) {
-            self.id = id
-            self.events = AsyncStream { $0.finish() }
-        }
-
-        public var isTerminated: Bool { true }
-
-        public func waitUntilExit() async -> (code: Int32, timedOut: Bool) {
-            (-1, false)
-        }
-
-        public func cancel() {}
-        public func terminateProcessGroup() {}
+    static func launch(
+        _ request: ProcessLaunchRequest,
+        profile: PlatformCapabilityProfile
+    ) throws -> ProcessHandle {
+        try requireCapabilities(request, profile: profile)
+        throw ProcessServiceError.unavailableOnPlatform
     }
 #endif
+}
+
+// MARK: - ProcessHandle
+
+#if os(macOS)
+/// Live handle for a launched process with multi-subscriber bounded output (CORE-N02/N03).
+public final class ProcessHandle: @unchecked Sendable {
+    public let id: UUID
+    public private(set) var processIdentifier: Int32
+    private let process: Process
+    private let stdoutPipe: Pipe
+    private let stderrPipe: Pipe
+    private let lock = NSLock()
+    private var _terminated = false
+    private var _exit: ProcessExit?
+    private var terminationWaiters: [CheckedContinuation<ProcessExit, Never>] = []
+    private let eventHub = AsyncBroadcastHub<ProcessOutputEvent>(maxHistory: 128)
+    private let eventPolicy: AsyncBroadcastHub<ProcessOutputEvent>.OverflowPolicy
+    /// Serializes all hub publishes so stdout/stderr cannot race past `.exited`/finish.
+    private let publishQueue = ProcessEventPublishQueue()
+    private var timeoutTask: Task<Void, Never>?
+    private var escalationTask: Task<Void, Never>?
+    private let stdoutSpool: BoundedByteSpool
+    private let stderrSpool: BoundedByteSpool
+    private var stdoutDropped = 0
+    private var stderrDropped = 0
+    private var stdoutCapped = false
+    private var stderrCapped = false
+    private let maxStdout: Int
+    private let maxStderr: Int
+
+    fileprivate init(
+        id: UUID = UUID(),
+        process: Process,
+        stdout: Pipe,
+        stderr: Pipe,
+        maxStdout: Int,
+        maxStderr: Int,
+        eventBufferCapacity: Int,
+        timeout: Duration?
+    ) {
+        self.id = id
+        self.process = process
+        self.stdoutPipe = stdout
+        self.stderrPipe = stderr
+        self.processIdentifier = process.processIdentifier
+        self.maxStdout = maxStdout
+        self.maxStderr = maxStderr
+        self.eventPolicy = .dropOldest(capacity: eventBufferCapacity, emitGap: true)
+        self.stdoutSpool = BoundedByteSpool(maxBytes: maxStdout, overflow: .rejectNewest)
+        self.stderrSpool = BoundedByteSpool(maxBytes: maxStderr, overflow: .rejectNewest)
+
+        let outHandle = stdout.fileHandleForReading
+        let errHandle = stderr.fileHandleForReading
+        outHandle.readabilityHandler = { [weak self] fh in
+            let data = fh.availableData
+            if data.isEmpty {
+                fh.readabilityHandler = nil
+                return
+            }
+            self?.emitStdout(data)
+        }
+        errHandle.readabilityHandler = { [weak self] fh in
+            let data = fh.availableData
+            if data.isEmpty {
+                fh.readabilityHandler = nil
+                return
+            }
+            self?.emitStderr(data)
+        }
+
+        process.terminationHandler = { [weak self] proc in
+            self?.drainAndFinish(code: proc.terminationStatus, timedOut: false)
+        }
+
+        if let timeout {
+            timeoutTask = Task { [weak self] in
+                try? await Task.sleep(for: timeout)
+                guard let self, !Task.isCancelled else { return }
+                if !self.isTerminated {
+                    self.requestCancellation(escalation: .termThenKill())
+                    self.drainAndFinish(code: 124, timedOut: true)
+                }
+            }
+        }
+    }
+
+    fileprivate func noteLaunched() {
+        processIdentifier = process.processIdentifier
+        let pid = processIdentifier
+        // Establish process group as early as possible after spawn (CORE-N03).
+        if pid > 0 {
+            _ = setpgid(pid, pid)
+        }
+        if !process.isRunning {
+            let code = process.terminationStatus
+            drainAndFinish(code: code, timedOut: false)
+        }
+    }
+
+    public var isTerminated: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return _terminated
+    }
+
+    /// Independent multi-consumer event subscription (CORE-N02).
+    /// Each access creates a new bounded subscription — never share a single iterator.
+    public var events: AsyncStream<ProcessOutputEvent> {
+        // Bridge hub StreamItem → ProcessOutputEvent for API compatibility.
+        let hub = eventHub
+        let policy = eventPolicy
+        return AsyncStream(bufferingPolicy: .bufferingOldest(64)) { continuation in
+            let task = Task {
+                let stream = await hub.subscribe(policy: policy, replay: .allBuffered)
+                for await item in stream {
+                    switch item {
+                    case .value(let env):
+                        continuation.yield(env.event)
+                    case .gap:
+                        continuation.yield(.outputGap(stream: .stdout, droppedBytes: 0))
+                    case .finished:
+                        continuation.finish()
+                        return
+                    }
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    /// Explicit subscription factory (preferred over ``events`` when policies matter).
+    public func makeEventStream(
+        capacity: Int = 64
+    ) -> AsyncStream<ProcessOutputEvent> {
+        let hub = eventHub
+        let policy = AsyncBroadcastHub<ProcessOutputEvent>.OverflowPolicy.dropOldest(
+            capacity: capacity,
+            emitGap: true
+        )
+        return AsyncStream(bufferingPolicy: .bufferingOldest(max(1, capacity))) { continuation in
+            let task = Task {
+                let stream = await hub.subscribe(policy: policy, replay: .allBuffered)
+                for await item in stream {
+                    switch item {
+                    case .value(let env):
+                        continuation.yield(env.event)
+                    case .gap:
+                        continuation.yield(.outputGap(stream: .stdout, droppedBytes: 0))
+                    case .finished:
+                        continuation.finish()
+                        return
+                    }
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    public func waitUntilExit() async -> (code: Int32, timedOut: Bool) {
+        let exit = await awaitTermination()
+        return (exit.code, exit.timedOut)
+    }
+
+    /// Wait until the process is reaped (CORE-N03). Separate from ``cancel()``.
+    public func awaitTermination() async -> ProcessExit {
+        if let exit = takeExitIfFinished() {
+            return exit
+        }
+        return await withCheckedContinuation { cont in
+            enqueueTerminationWaiter(cont)
+        }
+    }
+
+    nonisolated private func takeExitIfFinished() -> ProcessExit? {
+        lock.lock()
+        defer { lock.unlock() }
+        return _exit
+    }
+
+    nonisolated private func enqueueTerminationWaiter(_ cont: CheckedContinuation<ProcessExit, Never>) {
+        lock.lock()
+        if let exit = _exit {
+            lock.unlock()
+            cont.resume(returning: exit)
+            return
+        }
+        terminationWaiters.append(cont)
+        lock.unlock()
+    }
+
+    /// Request cancellation and return immediately (CORE-N03).
+    /// Does **not** wait for process death — call ``awaitTermination()`` for that.
+    public func cancel() {
+        requestCancellation(escalation: .termThenKill())
+    }
+
+    public func requestCancellation(escalation: EscalationPolicy) {
+        if isTerminated { return }
+        terminateProcessGroup(escalation: escalation)
+    }
+
+    /// TERM process group, then KILL after grace on a background task (never blocks caller).
+    public func terminateProcessGroup(escalation: EscalationPolicy = .termThenKill()) {
+        let pid = process.processIdentifier
+        guard pid > 0 else {
+            if process.isRunning { process.terminate() }
+            return
+        }
+        kill(-pid, SIGTERM)
+        let grace = escalation.grace
+        escalationTask?.cancel()
+        escalationTask = Task { [process] in
+            try? await Task.sleep(for: grace)
+            guard !Task.isCancelled else { return }
+            if process.isRunning {
+                kill(-pid, SIGKILL)
+                if process.isRunning { process.terminate() }
+            }
+        }
+    }
+
+    /// Compatibility alias.
+    public func terminateProcessGroup() {
+        terminateProcessGroup(escalation: .termThenKill())
+    }
+
+    private func emitStdout(_ data: Data) {
+        if isTerminated { return }
+        let hub = eventHub
+        let spool = stdoutSpool
+        publishQueue.enqueue { [weak self] in
+            guard let self else { return }
+            let result = await spool.append(data)
+            if result.truncated {
+                let dropped = result.droppedBytes
+                let shouldGap = self.noteStdoutDrop(dropped)
+                if shouldGap {
+                    await hub.publish(.outputGap(stream: .stdout, droppedBytes: dropped))
+                }
+                if result.acceptedBytes == 0 { return }
+                await hub.publish(.stdout(Data(data.prefix(result.acceptedBytes))))
+            } else {
+                await hub.publish(.stdout(data))
+            }
+        }
+    }
+
+    private func emitStderr(_ data: Data) {
+        if isTerminated { return }
+        let hub = eventHub
+        let spool = stderrSpool
+        publishQueue.enqueue { [weak self] in
+            guard let self else { return }
+            let result = await spool.append(data)
+            if result.truncated {
+                let dropped = result.droppedBytes
+                let shouldGap = self.noteStderrDrop(dropped)
+                if shouldGap {
+                    await hub.publish(.outputGap(stream: .stderr, droppedBytes: dropped))
+                }
+                if result.acceptedBytes == 0 { return }
+                await hub.publish(.stderr(Data(data.prefix(result.acceptedBytes))))
+            } else {
+                await hub.publish(.stderr(data))
+            }
+        }
+    }
+
+    nonisolated private func noteStdoutDrop(_ dropped: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        stdoutDropped += dropped
+        if !stdoutCapped {
+            stdoutCapped = true
+            return true
+        }
+        return false
+    }
+
+    nonisolated private func noteStderrDrop(_ dropped: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        stderrDropped += dropped
+        if !stderrCapped {
+            stderrCapped = true
+            return true
+        }
+        return false
+    }
+
+    private func drainAndFinish(code: Int32, timedOut: Bool) {
+        lock.lock()
+        if _terminated {
+            lock.unlock()
+            return
+        }
+        _terminated = true
+        let exit = ProcessExit(code: code, timedOut: timedOut)
+        _exit = exit
+        let waiters = terminationWaiters
+        terminationWaiters.removeAll()
+        lock.unlock()
+
+        timeoutTask?.cancel()
+        escalationTask?.cancel()
+        stdoutPipe.fileHandleForReading.readabilityHandler = nil
+        stderrPipe.fileHandleForReading.readabilityHandler = nil
+
+        // Drain remaining buffered pipe data, then publish exit/finish on the same serial queue
+        // so no stdout/stderr Task can overtake termination.
+        let out = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let err = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let hub = eventHub
+        let outSpool = stdoutSpool
+        let errSpool = stderrSpool
+        publishQueue.enqueue {
+            if !out.isEmpty {
+                let result = await outSpool.append(out)
+                if result.acceptedBytes > 0 {
+                    await hub.publish(.stdout(Data(out.prefix(result.acceptedBytes))))
+                }
+            }
+            if !err.isEmpty {
+                let result = await errSpool.append(err)
+                if result.acceptedBytes > 0 {
+                    await hub.publish(.stderr(Data(err.prefix(result.acceptedBytes))))
+                }
+            }
+            await hub.publish(.exited(code: code, timedOut: timedOut))
+            await hub.finish(.completed)
+        }
+
+        for w in waiters {
+            w.resume(returning: exit)
+        }
+    }
+
+    deinit {
+        if process.isRunning {
+            terminateProcessGroup()
+        }
+    }
+}
+#else
+/// Placeholder handle on platforms without Foundation.Process (iOS).
+public final class ProcessHandle: @unchecked Sendable {
+    public let id: UUID
+    public private(set) var processIdentifier: Int32 = -1
+
+    fileprivate init(id: UUID = UUID()) {
+        self.id = id
+    }
+
+    public var isTerminated: Bool { true }
+
+    public var events: AsyncStream<ProcessOutputEvent> {
+        AsyncStream { $0.finish() }
+    }
+
+    public func makeEventStream(capacity: Int = 64) -> AsyncStream<ProcessOutputEvent> {
+        _ = capacity
+        return events
+    }
+
+    public func waitUntilExit() async -> (code: Int32, timedOut: Bool) {
+        (-1, false)
+    }
+
+    public func awaitTermination() async -> ProcessExit {
+        ProcessExit(code: -1, timedOut: false)
+    }
+
+    public func cancel() {}
+    public func requestCancellation(escalation: EscalationPolicy) { _ = escalation }
+    public func terminateProcessGroup(escalation: EscalationPolicy = .termThenKill()) { _ = escalation }
+    public func terminateProcessGroup() {}
+}
+#endif
+
+// MARK: - Serial publish queue
+
+/// FIFO executor so process I/O events cannot race past exit/finish on the hub.
+final class ProcessEventPublishQueue: @unchecked Sendable {
+    private let lock = NSLock()
+    private var tail: Task<Void, Never>?
+
+    func enqueue(_ work: @escaping @Sendable () async -> Void) {
+        lock.lock()
+        let previous = tail
+        let task = Task {
+            _ = await previous?.value
+            await work()
+        }
+        tail = task
+        lock.unlock()
+    }
+}
+
+// MARK: - ProcessService (sync facade)
 
 /// Launches local processes with streaming I/O and process-group lifecycle.
-/// Shared non-PTY process supervisor used by tasks, Git, and helpers (PROC-001 / §18.10).
+/// Shared non-PTY process launcher used by tasks, Git, and helpers.
 ///
-/// Provides process-group launch, streaming I/O with byte caps, timeout, and
-/// cancellation that waits for process death before releasing exclusivity.
-public typealias ProcessSupervisor = ProcessService
-
+/// Prefer ``ProcessSupervisor`` for supervised lifecycle (cancel/awaitExit).
 public struct ProcessService: Sendable {
     public var profile: PlatformCapabilityProfile
 
@@ -317,66 +623,7 @@ public struct ProcessService: Sendable {
     }
 
     public func launch(_ request: ProcessLaunchRequest) throws -> ProcessHandle {
-        try profile.requireLocal(request.capabilityKind)
-
-        #if os(macOS)
-            if let cwd = request.currentDirectory {
-                var isDir: ObjCBool = false
-                guard FileManager.default.fileExists(atPath: cwd.path, isDirectory: &isDir), isDir.boolValue else {
-                    throw ProcessServiceError.invalidWorkingDirectory(cwd.path)
-                }
-            }
-
-            let process = Process()
-            switch request.mode {
-            case .direct:
-                process.executableURL = URL(fileURLWithPath: request.executable)
-                process.arguments = request.arguments
-            case .shell:
-                process.executableURL = URL(fileURLWithPath: "/bin/sh")
-                let cmd = ShellQuoting.joinCommand(executable: request.executable, arguments: request.arguments)
-                process.arguments = ["-c", cmd]
-            }
-
-            if let cwd = request.currentDirectory {
-                process.currentDirectoryURL = cwd
-            }
-
-            if request.mergeEnvironment {
-                var env = ProcessInfo.processInfo.environment
-                for (k, v) in request.environment { env[k] = v }
-                process.environment = env
-            } else if !request.environment.isEmpty {
-                process.environment = request.environment
-            }
-
-            let stdout = Pipe()
-            let stderr = Pipe()
-            process.standardOutput = stdout
-            process.standardError = stderr
-            process.standardInput = FileHandle.nullDevice
-            process.qualityOfService = .userInitiated
-
-            // Construct handle before run so terminationHandler is installed first.
-            let handle = ProcessHandle(
-                process: process,
-                stdout: stdout,
-                stderr: stderr,
-                maxStdout: request.maxStdoutBytes,
-                maxStderr: request.maxStderrBytes,
-                timeout: request.timeout,
-                launch: false
-            )
-            do {
-                try process.run()
-            } catch {
-                throw ProcessServiceError.launchFailed(String(describing: error))
-            }
-            handle.noteLaunched()
-            return handle
-        #else
-            throw ProcessServiceError.unavailableOnPlatform
-        #endif
+        try ProcessLaunchEngine.launch(request, profile: profile)
     }
 
     /// Convenience: run to completion collecting UTF-8 output.
@@ -392,6 +639,8 @@ public struct ProcessService: Sendable {
             switch event {
             case .stdout(let d): out.append(d)
             case .stderr(let d): err.append(d)
+            case .outputGap:
+                break
             case .exited(let c, let t):
                 code = c
                 timedOut = t
@@ -400,6 +649,7 @@ public struct ProcessService: Sendable {
         if timedOut { throw ProcessServiceError.timedOut }
         if Task.isCancelled {
             handle.cancel()
+            _ = await handle.awaitTermination()
             throw ProcessServiceError.cancelled
         }
         let stdout = String(data: out, encoding: .utf8) ?? String(decoding: out, as: UTF8.self)

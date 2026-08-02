@@ -133,8 +133,8 @@ struct Phase7SCMTests {
         #endif
     }
 
-    @Test func usesProcessSupervisor() {
-        // Compile-time: GitCLIProvider stores ProcessSupervisor
+    @Test func usesProcessServiceLauncher() {
+        // Compile-time: GitCLIProvider stores ProcessService (CORE process substrate)
         let root = URL(fileURLWithPath: "/tmp")
         let p = GitCLIProvider(repositoryRoot: root, trusted: false)
         #expect(p.trusted == false)

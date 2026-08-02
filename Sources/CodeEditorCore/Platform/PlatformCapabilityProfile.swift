@@ -71,6 +71,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
         shippingProfileID: .directMacOS,
         capabilities: [
             .localProcess: .local,
+            .localShellExecution: .local,
             .localPTY: .local,
             .localGitCLI: .local,
             .localLanguageServerProcess: .local,
@@ -92,6 +93,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
         shippingProfileID: .macAppStore,
         capabilities: [
             .localProcess: .local,
+            .localShellExecution: .local,
             .localPTY: .unavailable(reason: "PTY often restricted under App Sandbox; host must opt in"),
             .localGitCLI: .local,
             .localLanguageServerProcess: .local,
@@ -117,6 +119,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
         shippingProfileID: .iOS,
         capabilities: [
             .localProcess: .unavailable(reason: "Local process launch is not available on iOS"),
+            .localShellExecution: .unavailable(reason: "Shell execution is not available on iOS"),
             .localPTY: .unavailable(reason: "Local PTY is not available on iOS"),
             .localGitCLI: .unavailable(reason: "Git CLI is not available on iOS"),
             .localLanguageServerProcess: .remote,
@@ -142,6 +145,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
         shippingProfileID: .enterprise,
         capabilities: [
             .localProcess: .local,
+            .localShellExecution: .local,
             .localPTY: .local,
             .localGitCLI: .local,
             .localLanguageServerProcess: .local,
@@ -164,6 +168,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
         shippingProfileID: .test,
         capabilities: [
             .localProcess: .local,
+            .localShellExecution: .local,
             .localPTY: .local,
             .localGitCLI: .local,
             .localLanguageServerProcess: .local,
@@ -185,6 +190,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
         shippingProfileID: nil,
         capabilities: [
             .localProcess: .unavailable(reason: "Injected test profile denies localProcess"),
+            .localShellExecution: .unavailable(reason: "Injected test profile denies localShellExecution"),
             .localPTY: .unavailable(reason: "Injected test profile denies localPTY"),
             .localGitCLI: .unavailable(reason: "Injected test profile denies localGitCLI"),
             .localLanguageServerProcess: .unavailable(
@@ -228,6 +234,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
                 shippingProfileID: nil,
                 capabilities: [
                     .localProcess: .unavailable(reason: "Unsupported host platform"),
+                    .localShellExecution: .unavailable(reason: "Unsupported host platform"),
                     .localPTY: .unavailable(reason: "Unsupported host platform"),
                     .localGitCLI: .unavailable(reason: "Unsupported host platform"),
                     .localLanguageServerProcess: .unavailable(reason: "Unsupported host platform"),

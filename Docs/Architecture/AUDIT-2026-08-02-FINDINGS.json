@@ -374,9 +374,21 @@
       "severity_raw": "P0 cross-cutting substrate",
       "title": "process event stream is single-consumer and unbounded",
       "phase": 2,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/SubstrateBroadcastHubTests.swift::test_CORE_N02_multiSubscriberReceivesIndependentCopies",
+        "Tests/CodeEditorCoreTests/SubstrateBroadcastHubTests.swift::test_CORE_N02_overflowEmitsGapAndPreservesSequence",
+        "Tests/CodeEditorCoreTests/SubstrateBroadcastHubTests.swift::test_CORE_N02_finishIsExactlyOnce",
+        "Tests/CodeEditorCoreTests/SubstrateBroadcastHubTests.swift::test_CORE_N02_replayLastBuffered",
+        "Tests/CodeEditorCoreTests/SubstratePromiseAndRPCTests.swift::test_CORE_N02_oneShotPromiseCompletesExactlyOnce",
+        "Tests/CodeEditorCoreTests/SubstratePromiseAndRPCTests.swift::test_CORE_N02_oneShotPromiseResponseBeforeWait",
+        "Tests/CodeEditorCoreTests/SubstratePromiseAndRPCTests.swift::test_CORE_N02_oneShotPromiseDeadlineTimeout",
+        "Tests/CodeEditorCoreTests/SubstratePromiseAndRPCTests.swift::test_CORE_N02_framedRPCLifecycleCancelTimeoutLateResponse",
+        "Tests/CodeEditorCoreTests/SubstratePromiseAndRPCTests.swift::test_CORE_N02_boundedByteSpoolCapsAndMetrics",
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
+      ],
+      "notes": "AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection substrate per §22."
     },
     {
       "id": "CORE-N03",
@@ -384,9 +396,12 @@
       "severity_raw": "P1",
       "title": "process cancellation can synchronously block the caller",
       "phase": 2,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N03_cancelReturnsWithoutWaitingForDeath",
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N03_awaitTerminationIsSeparateFromCancel"
+      ],
+      "notes": "cancel()/requestCancellation nonblocking; awaitTermination/awaitExit separate; ProcessSupervisor actor; process-group TERM then KILL on background task."
     },
     {
       "id": "CORE-N04",
@@ -394,9 +409,13 @@
       "severity_raw": "P1 security/API",
       "title": "shell execution is an explicit high-trust capability",
       "phase": 2,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellModeRequiresShellCapability",
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellModeSucceedsWhenCapabilityGranted",
+        "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellCapabilityPresentOnShippingProfiles"
+      ],
+      "notes": "PlatformCapabilityKind.localShellExecution; ProcessLaunchMode.shell requires it (not localProcess); profiles grant/deny explicitly."
     },
     {
       "id": "CMD-N01",
