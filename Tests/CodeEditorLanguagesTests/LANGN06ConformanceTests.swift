@@ -255,15 +255,37 @@ struct LANGN06ConformanceTests {
         _ = CodeEditorLanguages.bootstrap()
         TreeSitterLanguageEnvironment.install(RegistryTreeSitterConfigurationProvider())
         let provider = TreeSitterHighlightProvider(language: .json)
-        let text = "{{{ not json at all %%%"
-        await provider.setDocumentText(text)
-        let ranges = try await provider.queryHighlights(
-            in: NSRange(location: 0, length: (text as NSString).length),
-            text: text
+        let malformed = "{{{ not json at all %%%"
+        await provider.setDocumentText(malformed)
+        let malformedRanges = try await provider.queryHighlights(
+            in: NSRange(location: 0, length: (malformed as NSString).length),
+            text: malformed
         )
-        // May be empty or partial; must not throw/crash. Provider stays usable.
-        #expect(ranges.count >= 0)
-        #expect(provider.highlightGeneration >= 0)
+        // Completes without throw/crash: every range is in-document (finite, well-formed).
+        let malformedLen = (malformed as NSString).length
+        #expect(malformedRanges.allSatisfy { r in
+            r.range.location >= 0
+                && r.range.length >= 0
+                && NSMaxRange(r.range) <= malformedLen
+        })
+        let session = provider.parseSession
+        #expect(await session.retainedLanguageID() == .json)
+        #expect(await session.snapshot().hasTree == true)
+
+        // Provider remains usable after malformed input: valid JSON yields real captures.
+        let valid = #"{"ok":1,"name":"x"}"#
+        await provider.setDocumentText(valid)
+        let validRanges = try await provider.queryHighlights(
+            in: NSRange(location: 0, length: (valid as NSString).length),
+            text: valid
+        )
+        #expect(validRanges.count > 0)
+        #expect(provider.highlightGeneration > 0)
+        let names = Set(validRanges.compactMap(\.rawCapture))
+        #expect(
+            names.contains(where: { $0.contains("string") || $0.contains("number") }),
+            "expected JSON scopes after recovery, got \(names)")
+        #expect(await session.snapshot().documentVersion >= 2)
     }
 }
 

@@ -181,8 +181,11 @@ public actor ParseSession {
     }
 
     /// Query highlights for a range. Tags result with current document + language generation.
+    ///
+    /// Cancellation fails closed with ``EngineError/cancelled`` (LANG-N05) — never a silent
+    /// empty success when the calling task is cancelled.
     public func queryHighlights(in range: NSRange) throws -> HighlightSnapshot {
-        try Task.checkCancellation()
+        try ensureNotCancelled()
         guard let configuration else {
             throw EngineError.notConfigured
         }
@@ -190,6 +193,7 @@ public actor ParseSession {
             throw EngineError.queryMissing("highlights")
         }
         guard let tree, range.length > 0, !source.isEmpty else {
+            try ensureNotCancelled()
             return HighlightSnapshot(
                 documentVersion: documentVersion,
                 languageGeneration: languageGeneration,
@@ -206,7 +210,7 @@ public actor ParseSession {
         var results: [HighlightRange] = []
         results.reserveCapacity(min(named.count, 256))
         for namedRange in named {
-            try Task.checkCancellation()
+            try ensureNotCancelled()
             let intersection = NSIntersectionRange(namedRange.range, range)
             guard intersection.length > 0 else { continue }
             let capture = CaptureName.from(capture: namedRange.name)
@@ -217,6 +221,7 @@ public actor ParseSession {
                 HighlightRange(range: intersection, capture: capture, rawCapture: namedRange.name)
             )
         }
+        try ensureNotCancelled()
         lastPublishedDocumentVersion = documentVersion
         return HighlightSnapshot(
             documentVersion: documentVersion,
@@ -224,6 +229,13 @@ public actor ParseSession {
             highlights: results,
             sourceLengthUTF16: documentLength
         )
+    }
+
+    /// Fail closed on cooperative cancellation (typed, not silent empty).
+    private func ensureNotCancelled() throws {
+        if Task.isCancelled {
+            throw EngineError.cancelled
+        }
     }
 
     /// Nearest identifier-like range at a UTF-16 offset (read from the single tree).

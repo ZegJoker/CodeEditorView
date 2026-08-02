@@ -259,17 +259,22 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
     }
 
     public func queryHighlights(in range: NSRange, text: String) async throws -> [HighlightRange] {
-        try Task.checkCancellation()
+        // Fail closed on cancel (LANG-N05) — never silent empty when cancelled.
+        if Task.isCancelled {
+            throw ParseSession.EngineError.cancelled
+        }
         do {
             let pub = try await session.queryHighlights(in: range)
             guard await session.isCurrent(
                 documentVersion: pub.documentVersion,
                 languageGeneration: pub.languageGeneration
             ) else {
-                return []  // stale
+                return []  // stale generation discard (not cancellation)
             }
             highlightGeneration = pub.generation
             return pub.highlights
+        } catch ParseSession.EngineError.cancelled {
+            throw ParseSession.EngineError.cancelled
         } catch ParseSession.EngineError.queryMissing {
             return []
         } catch ParseSession.EngineError.notConfigured {

@@ -1233,7 +1233,7 @@
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_largeFileRepeatedEdits",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_queryCaptureValidationEmptyWithoutConfig"
       ],
-      "notes": "2026-08-03 verifier residual: CodeEditorTreeSitterTests depends on CodeEditorLanguageJSON/Swift + real grammars; all N05 cases configure real TSLanguage (malformed source, large edits, query scopes string/number/constant, grammar unload/reload)."
+      "notes": "2026-08-03 verifier residual (2): cancellation fail-closed via EngineError.cancelled (self-cancel task; no soft success path); document+language generation stale discard both hard-asserted; real grammars/scopes retained."
     },
     {
       "id": "LANG-N06",
@@ -1251,7 +1251,7 @@
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_hostOwnedBootstrapDoesNotRequireSharedMutation",
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_malformedFixtureDoesNotCrashHighlightProvider"
       ],
-      "notes": "2026-08-03 verifier residual: expected highlight scopes for key packs; all present highlights must compile (0 failures); present optional queries fail closed (no soft/informational); pin-aligned perl/verilog/markdown-inline queries rewritten to compile against grammar pins."
+      "notes": "2026-08-03 verifier residual (2): malformed fixture asserts in-range captures + session retains language/tree; provider recovers to valid JSON with real string/number scopes (no vacuous count>=0)."
     },
     {
       "id": "LANG-N07",
@@ -1266,7 +1266,7 @@
         "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_explicitInitDoesNotUseGlobalSideEffect",
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_hostOwnedBootstrapDoesNotRequireSharedMutation"
       ],
-      "notes": "2026-08-03: bootstrap(into:installEnvironment:); RegistryTreeSitterConfigurationProvider(registry:); host-owned LanguageRegistry instances. Host-owned registry path exercised by N02/N04/N05 tree-sitter tests."
+      "notes": "2026-08-03 verifier residual (2): explicitInit asserts generation==0 empty snapshot + host register isolation from shared (no vacuous generation>=0); bootstrap(into:installEnvironment:)."
     },
     {
       "id": "LSP-N01",

@@ -39,9 +39,33 @@ struct LANGN07HostRegistryTests {
     }
 
     @Test func test_LANG_N07_explicitInitDoesNotUseGlobalSideEffect() {
-        // Constructing a registry must not require process-wide bootstrap.
+        // Constructing a host registry must not auto-bootstrap or mutate shared.
+        let probe = LanguageID(rawValue: "lang.n07.side-effect.probe.\(UUID().uuidString)")
+        #expect(LanguageRegistry.shared.definition(for: probe) == nil)
+
         let registry = LanguageRegistry()
         #expect(registry.snapshot().definitions.isEmpty)
-        #expect(registry.currentGeneration == 0 || registry.snapshot().generation >= 0)
+        #expect(registry.currentGeneration == 0)
+        #expect(registry.snapshot().generation == 0)
+        #expect(registry.snapshot().languageIDsWithParsers.isEmpty)
+        #expect(registry.snapshot().languageIDsWithQueries.isEmpty)
+
+        // Host mutation stays isolated: shared never gains this definition.
+        let result = registry.register(
+            LanguageDefinition(id: probe, displayName: "Probe", tsName: "probe"),
+            owner: .host,
+            priority: 1
+        )
+        #expect(result.didBecomeEffective)
+        #expect(registry.currentGeneration > 0)
+        #expect(registry.definition(for: probe) != nil)
+        #expect(LanguageRegistry.shared.definition(for: probe) == nil)
+        #expect(LanguageRegistry.shared.snapshot().definitions.contains(where: {
+            $0.id == probe
+        }) == false)
+
+        registry.removeAll()
+        #expect(registry.definition(for: probe) == nil)
+        #expect(registry.snapshot().definitions.isEmpty)
     }
 }

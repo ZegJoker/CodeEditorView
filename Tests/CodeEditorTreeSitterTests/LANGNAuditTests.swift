@@ -536,7 +536,9 @@ struct LANGN05TreeSitterOwnershipTests {
         let snap1 = try await session.queryHighlights(in: range)
         #expect(snap1.highlights.count > 0)
         #expect(snap1.documentVersion == g1)
+        let langGenAtSnap1 = snap1.languageGeneration
 
+        // Document-version stale: prior highlight snapshot must be discarded.
         let g2 = try await session.setText(#"{"two":2}"#)
         #expect(g2 > g1)
         #expect(await session.isCurrent(generation: g1) == false)
@@ -545,23 +547,37 @@ struct LANGN05TreeSitterOwnershipTests {
                 documentVersion: snap1.documentVersion,
                 languageGeneration: snap1.languageGeneration) == false)
 
-        // Cancelled task must surface EngineError.cancelled, not a silent empty result.
+        // Language-generation stale: reconfigure bumps languageGeneration independently.
+        try await session.configure(config, languageRef: ref)
+        let langGenAfter = await session.languageGeneration
+        #expect(langGenAfter > langGenAtSnap1)
+        #expect(
+            await session.isCurrent(documentVersion: g2, languageGeneration: langGenAtSnap1)
+                == false)
+        #expect(
+            await session.isCurrent(
+                documentVersion: await session.documentVersion,
+                languageGeneration: langGenAfter))
+
+        // Cancellation is deterministic: task cancels itself before query work so the
+        // session must surface a typed cancel error — never a silent success snapshot.
         let cancelSession = ParseSession()
         try await cancelSession.configure(config, languageRef: ref)
-        _ = try await cancelSession.setText(#"{"c":true}"#)
+        _ = try await cancelSession.setText(#"{"c":true,"d":2,"e":[1,2,3]}"#)
+        let queryRange = NSRange(
+            location: 0, length: (#"{"c":true,"d":2,"e":[1,2,3]}"# as NSString).length)
         let task = Task {
-            try Task.checkCancellation()
-            return try await cancelSession.queryHighlights(
-                in: NSRange(location: 0, length: 10))
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await cancelSession.queryHighlights(in: queryRange)
         }
-        task.cancel()
         do {
-            _ = try await task.value
-            // May complete before cancel lands; still require stale discard path above.
-        } catch is CancellationError {
-            // ok
+            let unexpected = try await task.value
+            Issue.record(
+                "cancelled query must not succeed; got \(unexpected.highlights.count) highlights")
         } catch ParseSession.EngineError.cancelled {
-            // ok
+            // Fail closed with typed cancel (not silent empty / success).
+        } catch {
+            Issue.record("expected EngineError.cancelled, got \(error)")
         }
     }
 
