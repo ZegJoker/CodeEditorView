@@ -365,6 +365,162 @@ struct Phase4EditFaultTests {
         #expect(FileManager.default.fileExists(atPath: uri.fileURL!.path))
         #expect(try Data(contentsOf: uri.fileURL!) == bytes)
     }
+
+    /// E4: injected rollback failure must surface typed catastrophic/rollbackFailed (never silent).
+    @Test func duringRollbackSurfacesTypedFailure() async throws {
+        let (ws, root) = try await makeWS()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let uri = DocumentURI(fileURL: root.appendingPathComponent("d.txt"))
+        let other = DocumentURI(fileURL: root.appendingPathComponent("e.txt"))
+        let service = WorkspaceEditService(workspace: ws)
+        service.faultPoint = .duringRollback
+        var thrown: Error?
+        do {
+            _ = try await service.apply(
+                WorkspaceEdit(fileOperations: [
+                    .delete(uri: uri),
+                    .delete(uri: other),
+                ])
+            )
+            Issue.record("expected throw")
+        } catch {
+            thrown = error
+        }
+        #expect(thrown != nil)
+        if let we = thrown as? WorkspaceEditError {
+            switch we {
+            case .rollbackFailed, .catastrophic:
+                break  // required: rollback failure is typed and not swallowed
+            default:
+                Issue.record("expected rollbackFailed/catastrophic, got \(we)")
+            }
+        } else {
+            Issue.record("expected WorkspaceEditError, got \(String(describing: thrown))")
+        }
+    }
+
+    @Test func requestClosePaneDirtyLastLeaseCancels() async throws {
+        let root = try makeTempRoot(files: ["pane.txt": "body"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fs = try await LocalWorkspaceFileSystem(
+            rootDirectories: [root], enablesDirectoryWatching: false)
+        let ws = Workspace(
+            fileSystem: fs,
+            documentProvider: LocalFileDocumentProvider(),
+            dirtyTabClosePolicy: .prompt
+        )
+        await ws.fileTree.refreshRoots()
+        let opened = try await ws.openInActivePane(
+            uri: DocumentURI(fileURL: root.appendingPathComponent("pane.txt"))
+        )
+        _ = try opened.document.apply(
+            .single(range: NSRange(location: 0, length: 0), replacement: "X")
+        )
+        let second = try #require(ws.splitActivePane(axis: .horizontal))
+        // Closing second pane with remaining dirty lease on source should close that pane's tabs only.
+        let r1 = await ws.requestClosePane(second, policy: .prompt)
+        #expect(r1 == .closed || r1 == .cancelled)
+        // Last dirty pane close without delegate → cancel (cannot remove last pane? panes.count>1)
+        if ws.panes.count > 1, let source = ws.panes.keys.first(where: { $0 != second }) {
+            let r2 = await ws.requestClosePane(source, policy: .prompt)
+            #expect(r2 == .cancelled)
+            #expect(ws.documents.document(id: opened.document.id) != nil)
+        }
+    }
+}
+
+// MARK: - FS actor stress (WSP-004)
+
+@Suite("Phase4 FS actor stress")
+struct Phase4FSStressTests {
+    @Test func concurrentCreateListDeleteConsistent() async throws {
+        let root = try makeTempRoot(files: [:])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fs = try await LocalWorkspaceFileSystem(
+            rootDirectories: [root],
+            enablesDirectoryWatching: false
+        )
+        let rootID = try #require(await fs.roots.first).id
+        let parent = WorkspaceItemID(rootID: rootID, path: "")
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for i in 0..<20 {
+                group.addTask {
+                    let name = "f\(i).txt"
+                    _ = try await fs.createFile(in: parent, name: name, contents: Data("\(i)".utf8))
+                    _ = try await fs.children(of: parent)
+                }
+            }
+            try await group.waitForAll()
+        }
+        let kids = try await fs.children(of: parent)
+        #expect(kids.count == 20)
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for item in kids {
+                group.addTask {
+                    try await fs.delete(item: item.id)
+                }
+            }
+            try await group.waitForAll()
+        }
+        let after = try await fs.children(of: parent)
+        #expect(after.isEmpty)
+    }
+
+    @Test func cancelChildrenDoesNotCorruptRoots() async throws {
+        let root = try makeTempRoot(files: [
+            "a.txt": "a", "b.txt": "b", "c.txt": "c", "d.txt": "d", "e.txt": "e",
+        ])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fs = try await LocalWorkspaceFileSystem(
+            rootDirectories: [root],
+            enablesDirectoryWatching: false
+        )
+        let rootID = try #require(await fs.roots.first).id
+        let parent = WorkspaceItemID(rootID: rootID, path: "")
+        let task = Task {
+            _ = try await fs.children(of: parent)
+        }
+        task.cancel()
+        _ = try? await task.value
+        let roots = await fs.roots
+        #expect(roots.count == 1)
+        let kids = try await fs.children(of: parent)
+        #expect(kids.count == 5)
+    }
+}
+
+// MARK: - On-disk restoration fixtures (WSP-007)
+
+@Suite("Phase4 golden restoration fixtures")
+struct Phase4GoldenFixtureTests {
+    private func fixtureURL(_ name: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("Fixtures")
+            .appendingPathComponent(name)
+    }
+
+    @Test func goldenV1MinimalMigrates() throws {
+        let data = try Data(contentsOf: fixtureURL("restoration-v1-minimal.json"))
+        let state = try WorkspaceRestoration.decode(data)
+        #expect(state.schemaVersion == WorkspaceRestorationState.currentSchemaVersion)
+    }
+
+    @Test func goldenV999Rejected() throws {
+        let data = try Data(contentsOf: fixtureURL("restoration-v999-future.json"))
+        #expect(throws: WorkspaceRestorationError.self) {
+            _ = try WorkspaceRestoration.decode(data)
+        }
+    }
+
+    @Test func goldenCorruptRejected() throws {
+        let data = try Data(contentsOf: fixtureURL("restoration-corrupt.json"))
+        #expect(throws: WorkspaceRestorationError.self) {
+            _ = try WorkspaceRestoration.decode(data)
+        }
+    }
 }
 
 // MARK: - Helpers

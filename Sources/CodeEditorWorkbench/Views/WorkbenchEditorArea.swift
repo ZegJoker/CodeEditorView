@@ -345,8 +345,14 @@ struct WorkbenchTabBar: View {
                     }
                     Divider()
                     Button("Close Pane", role: .destructive) {
-                        withAnimation(WorkbenchMotion.pane) {
-                            model.workspace.closePane(pane.id)
+                        Task { @MainActor in
+                            let result = await model.requestClosePane(pane.id)
+                            if result == .closed {
+                                withAnimation(WorkbenchMotion.pane) {
+                                    // Layout already updated by requestClosePane.
+                                    _ = model.workspace.revision
+                                }
+                            }
                         }
                     }
                 } label: {

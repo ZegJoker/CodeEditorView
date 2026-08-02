@@ -322,6 +322,15 @@ public final class WorkbenchModel {
         await workspace.requestCloseAllTabs(policy: policy)
     }
 
+    /// Pane close through the dirty-close coordinator (WSP-001 / §10.2).
+    @discardableResult
+    public func requestClosePane(
+        _ id: EditorPaneID,
+        policy: DirtyTabClosePolicy? = nil
+    ) async -> CloseTransactionResult {
+        await workspace.requestClosePane(id, policy: policy)
+    }
+
     public func presentCommandPalette() {
         focus(.commandPalette)
         isCommandPalettePresented = true

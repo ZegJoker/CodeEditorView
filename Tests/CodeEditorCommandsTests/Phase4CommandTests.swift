@@ -192,4 +192,31 @@ struct Phase4CommandResultTests {
             )
         }
     }
+
+    /// E12: palette-filtered execute path surfaces typed failures (CMD-004).
+    @Test func palettePathExecuteUnknownIsNotFound() async throws {
+        let dispatcher = CommandDispatcher()
+        let editor = MockEditor()
+        let context = CommandContext.make(from: editor)
+        let palette = CommandPaletteModel(query: "missing")
+        let filtered = palette.filteredCommands(from: dispatcher.commands, context: context)
+        #expect(filtered.isEmpty)
+        let result = try await dispatcher.executeAsync("test.palette.missing.cmd", context: context)
+        #expect(result == .failed("notFound:test.palette.missing.cmd"))
+    }
+
+    @Test func unsupportedResultIsTyped() async throws {
+        let dispatcher = CommandDispatcher()
+        let editor = MockEditor()
+        let context = CommandContext.make(from: editor)
+        _ = dispatcher.commands.register(
+            EditorCommand(
+                id: "test.unsupported.cmd",
+                title: "U",
+                handler: { _ in throw CommandError.unsupported("nope") }
+            )
+        )
+        let result = try await dispatcher.executeAsync("test.unsupported.cmd", context: context)
+        #expect(result == .failed("unsupported:nope"))
+    }
 }

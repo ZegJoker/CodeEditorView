@@ -1,0 +1,38 @@
+{
+  "activePaneID" : {
+    "rawValue" : "08363355-ED04-4C9F-9F09-620F0C6AA869"
+  },
+  "focusHistory" : [
+    {
+      "rawValue" : "08363355-ED04-4C9F-9F09-620F0C6AA869"
+    }
+  ],
+  "layout" : {
+    "pane" : {
+      "_0" : {
+        "rawValue" : "08363355-ED04-4C9F-9F09-620F0C6AA869"
+      }
+    }
+  },
+  "navigation" : [
+
+  ],
+  "navigationIndex" : -1,
+  "panes" : [
+    {
+      "id" : {
+        "rawValue" : "08363355-ED04-4C9F-9F09-620F0C6AA869"
+      },
+      "tabs" : [
+
+      ]
+    }
+  ],
+  "roots" : [
+
+  ],
+  "schemaVersion" : 999,
+  "workspaceID" : {
+    "rawValue" : "51AA4DE0-46AE-412C-95FE-59A8E7FDA34E"
+  }
+}

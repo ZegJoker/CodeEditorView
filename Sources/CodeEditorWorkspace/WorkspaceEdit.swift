@@ -80,6 +80,8 @@ public enum WorkspaceEditFaultPoint: String, Sendable, Hashable {
     case afterDocuments
     case afterFirstFileOp
     case beforeCommit
+    /// After first FS op succeeds, throw to enter rollback; restore then fails (E4).
+    case duringRollback
 }
 
 // MARK: - Durable journal
@@ -250,6 +252,10 @@ public final class WorkspaceEditService {
                 try await applyFileOperation(op, completed: &completedOps, inverse: &inverseOps)
                 if faultPoint == .afterFirstFileOp, index == 0, edit.fileOperations.count > 1 {
                     throw WorkspaceEditError.injectedFault(WorkspaceEditFaultPoint.afterFirstFileOp.rawValue)
+                }
+                // duringRollback: mutate at least one FS entry, then fail apply so catch → rollback.
+                if faultPoint == .duringRollback, index == 0 {
+                    throw WorkspaceEditError.injectedFault("triggerRollback")
                 }
             }
 
@@ -518,6 +524,9 @@ public final class WorkspaceEditService {
         inverseOps: [WorkspaceFileOperation],
         captures: [CapturedFSEntry]
     ) async throws {
+        if faultPoint == .duringRollback {
+            throw WorkspaceEditError.rollbackFailed("injected duringRollback")
+        }
         var rollbackErrors: [String] = []
 
         // Prefer byte-exact captures for FS restoration.
