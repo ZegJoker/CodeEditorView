@@ -219,33 +219,60 @@ public enum ExtensionPackageSigner {
 
     public static func fileDigests(packageRoot: URL) throws -> [String: String] {
         let root = packageRoot.resolvingSymlinksInPath()
-        let digest = try ExtensionPackageDigest.compute(packageRoot: root)
         let fm = FileManager.default
+        // EXT-007: fail closed on key material / symlink before digesting.
+        if fm.fileExists(atPath: root.appendingPathComponent("ed25519.private").path)
+            || fm.fileExists(atPath: root.appendingPathComponent("ed25519.public").path)
+            || fm.fileExists(atPath: root.appendingPathComponent("keys", isDirectory: true).path)
+        {
+            throw PackageSignatureError.checksumMismatch("key-material")
+        }
+        let digest = try ExtensionPackageDigest.compute(packageRoot: root)
         guard
             let enumerator = fm.enumerator(
                 at: root,
-                includingPropertiesForKeys: [.isRegularFileKey],
+                includingPropertiesForKeys: [
+                    .isRegularFileKey, .isSymbolicLinkKey, .isDirectoryKey,
+                ],
                 options: [.skipsHiddenFiles]
             )
         else {
             throw PackageSignatureError.missingChecksums
         }
         var map: [String: String] = [:]
-        let rootPath = root.path
+        // Standardized path so /var vs /private/var cannot leak into relative names.
+        let rootPath = root.standardizedFileURL.path
         for case let url as URL in enumerator {
-            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
-            guard values.isRegularFile == true else { continue }
-            let file = url.resolvingSymlinksInPath()
-            var rel = file.path
-            if rel.hasPrefix(rootPath) {
-                rel = String(rel.dropFirst(rootPath.count))
+            let values = try url.resourceValues(forKeys: [
+                .isRegularFileKey, .isSymbolicLinkKey, .isDirectoryKey,
+            ])
+            let filePath = url.standardizedFileURL.path
+            guard filePath == rootPath || filePath.hasPrefix(rootPath + "/") else {
+                throw PackageSignatureError.checksumMismatch("path-escape:\(filePath)")
             }
+            var rel = String(filePath.dropFirst(rootPath.count))
             rel = rel.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            if rel == "checksums.json" || rel == "signature.ed25519" || rel == "publisher.json" { continue }
+            if rel.isEmpty { continue }
+            // EXT-007: reject symlinks and non-regular special files (do not follow).
+            if values.isSymbolicLink == true {
+                throw PackageSignatureError.checksumMismatch("symlink:\(rel)")
+            }
+            if values.isDirectory == true { continue }
+            guard values.isRegularFile == true else {
+                throw PackageSignatureError.checksumMismatch("special-file:\(rel)")
+            }
+            if rel == "checksums.json" || rel == "signature.ed25519" || rel == "publisher.json"
+                || rel == "signed-statement.json"
+            {
+                continue
+            }
             if rel.hasPrefix(".codeeditor/") { continue }
-            // Ignore authoring key material accidentally left under the package tree.
-            if rel.hasPrefix("keys/") || rel == "ed25519.private" || rel == "ed25519.public" { continue }
-            let data = try Data(contentsOf: file)
+            if rel.hasPrefix("keys/") || rel == "ed25519.private" || rel == "ed25519.public"
+                || rel.contains("/keys/")
+            {
+                throw PackageSignatureError.checksumMismatch("key-material:\(rel)")
+            }
+            let data = try Data(contentsOf: url)
             map[rel] = sha256Hex(data)
         }
         map["__package__"] = digest

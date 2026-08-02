@@ -92,10 +92,35 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
         guard let semver = SemanticVersion.parse(version) else {
             throw ExtensionError.dataLoad("invalid version: \(version)")
         }
-        let apiMin = SemanticVersion.parse(apiVersion) ?? .phase9API
-        let events = activationEvents.compactMap(Self.parseActivationEvent)
-        let caps = Set(capabilities.compactMap { HostCapability(rawValue: $0) })
-        let perms = Set(permissions.compactMap { ExtensionPermission(rawValue: $0) })
+        // EXT-008 / §15.9–15.11: never silently coerce api_version or drop unknown required fields.
+        guard let apiMin = SemanticVersion.parse(apiVersion) else {
+            throw ExtensionError.dataLoad("invalid api_version: \(apiVersion)")
+        }
+        let events: [ExtensionActivationEvent]
+        if activationEvents.isEmpty {
+            events = [.startup]
+        } else {
+            events = try activationEvents.map { raw in
+                guard let e = Self.parseActivationEvent(raw) else {
+                    throw ExtensionError.dataLoad("unknown activation event: \(raw)")
+                }
+                return e
+            }
+        }
+        var caps = Set<HostCapability>()
+        for raw in capabilities {
+            guard let c = HostCapability(rawValue: raw) else {
+                throw ExtensionError.dataLoad("unknown capability: \(raw)")
+            }
+            caps.insert(c)
+        }
+        var perms = Set<ExtensionPermission>()
+        for raw in permissions {
+            guard let p = ExtensionPermission(rawValue: raw) else {
+                throw ExtensionError.dataLoad("unknown permission: \(raw)")
+            }
+            perms.insert(p)
+        }
         let extensionID: ExtensionID
         do {
             extensionID = try ExtensionID(validating: id)
@@ -107,7 +132,7 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
             displayName: name,
             version: semver,
             requiredAPIVersion: .from(apiMin),
-            activationEvents: events.isEmpty ? [.startup] : events,
+            activationEvents: events,
             requiredHostCapabilities: caps,
             requestedPermissions: perms
         )

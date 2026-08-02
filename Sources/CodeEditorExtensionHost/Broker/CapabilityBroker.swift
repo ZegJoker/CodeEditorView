@@ -48,6 +48,8 @@ public enum BrokerError: Error, Sendable, Equatable {
     case downloadDenied(String)
     case npmDenied(String)
     case invalidRequest(String)
+    case unsupported(String)
+    case revokedHandle
 }
 
 // MARK: - Broker
@@ -61,9 +63,13 @@ public actor CapabilityBroker {
         public var toolCacheRoot: URL
         public var storageQuotaBytes: Int
         public var maxDownloadBytes: Int
+        /// Max bytes for a single worktree read (EXT-015 / §15.19).
+        public var maxWorktreeReadBytes: Int
         public var processAllowlist: [ProcessAllow]
         public var downloadAllowlist: [DownloadAllow]
         public var npmAllowlist: [NPMAllow]
+        /// Host-owned npm package materialization root: `{name}/{version}/` trees (EXT-013).
+        public var npmRegistryRoot: URL?
         public var platformProfile: PlatformCapabilityProfile
 
         public init(
@@ -73,9 +79,11 @@ public actor CapabilityBroker {
             toolCacheRoot: URL,
             storageQuotaBytes: Int = 16 * 1024 * 1024,
             maxDownloadBytes: Int = 32 * 1024 * 1024,
+            maxWorktreeReadBytes: Int = 4 * 1024 * 1024,
             processAllowlist: [ProcessAllow] = [],
             downloadAllowlist: [DownloadAllow] = [],
             npmAllowlist: [NPMAllow] = [],
+            npmRegistryRoot: URL? = nil,
             platformProfile: PlatformCapabilityProfile = .default()
         ) {
             self.worktreeRoots = worktreeRoots
@@ -84,9 +92,11 @@ public actor CapabilityBroker {
             self.toolCacheRoot = toolCacheRoot
             self.storageQuotaBytes = storageQuotaBytes
             self.maxDownloadBytes = maxDownloadBytes
+            self.maxWorktreeReadBytes = maxWorktreeReadBytes
             self.processAllowlist = processAllowlist
             self.downloadAllowlist = downloadAllowlist
             self.npmAllowlist = npmAllowlist
+            self.npmRegistryRoot = npmRegistryRoot
             self.platformProfile = platformProfile
         }
     }
@@ -124,6 +134,8 @@ public actor CapabilityBroker {
     private var generations: [ExtensionID: UInt64] = [:]
     private var storageBytes: [ExtensionID: Int] = [:]
     private var liveProcesses: [BrokerHandleID: ProcessHandle] = [:]
+    /// Per-handle worktree root (EXT-015 / §15.18 multi-root).
+    private var worktreeRootByHandle: [BrokerHandleID: URL] = [:]
     private let processService: ProcessService
 
     public init(config: Config) {
@@ -148,6 +160,7 @@ public actor CapabilityBroker {
         let toKill = handles.values.filter { $0.extensionID == id }
         for h in toKill {
             handles[h.id] = nil
+            worktreeRootByHandle[h.id] = nil
             if let p = liveProcesses.removeValue(forKey: h.id) {
                 p.cancel()
             }
@@ -165,22 +178,50 @@ public actor CapabilityBroker {
         "CARGO_HOME", "RUSTUP_HOME", "GOPATH", "GOROOT", "JAVA_HOME", "NODE_PATH",
     ]
 
-    public func worktreeHandle(extensionID: ExtensionID) throws -> BrokerHandle {
+    /// Issue a worktree handle bound to a specific root (defaults to first configured root).
+    public func worktreeHandle(extensionID: ExtensionID, root: URL? = nil) throws -> BrokerHandle {
         try require(extensionID, .readWorkspace)
-        return issue(extensionID, kind: "worktree", ops: ["list", "read", "which", "environment"])
+        let selected: URL?
+        if let root {
+            let want = root.resolvingSymlinksInPath().standardizedFileURL
+            guard config.worktreeRoots.contains(where: {
+                $0.resolvingSymlinksInPath().standardizedFileURL == want
+            }) else {
+                throw BrokerError.pathEscape
+            }
+            selected = want
+        } else if let first = config.worktreeRoots.first {
+            selected = first.resolvingSymlinksInPath().standardizedFileURL
+        } else {
+            // Handle may still be issued; list/read fail with notFound until roots exist.
+            selected = nil
+        }
+        let handle = issue(extensionID, kind: "worktree", ops: ["list", "read", "which", "environment"])
+        if let selected {
+            worktreeRootByHandle[handle.id] = selected
+        }
+        return handle
     }
 
     public func worktreeList(handle: BrokerHandleID, relative: String = "") throws -> [String] {
         let h = try resolve(handle, kind: "worktree", op: "list")
-        let root = try resolveWorktreePath(h.extensionID, relative: relative)
+        let root = try resolveWorktreePath(handle: h.id, extensionID: h.extensionID, relative: relative)
         let items = (try? FileManager.default.contentsOfDirectory(atPath: root.path)) ?? []
         return items.sorted()
     }
 
     public func worktreeRead(handle: BrokerHandleID, relative: String) throws -> Data {
         let h = try resolve(handle, kind: "worktree", op: "read")
-        let url = try resolveWorktreePath(h.extensionID, relative: relative)
-        return try Data(contentsOf: url)
+        let url = try resolveWorktreePath(handle: h.id, extensionID: h.extensionID, relative: relative)
+        let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
+        if let size = attrs[.size] as? NSNumber, size.intValue > config.maxWorktreeReadBytes {
+            throw BrokerError.quotaExceeded
+        }
+        let data = try Data(contentsOf: url)
+        if data.count > config.maxWorktreeReadBytes {
+            throw BrokerError.quotaExceeded
+        }
+        return data
     }
 
     /// Find an executable under worktree roots first, then the process PATH (scoped).
@@ -246,9 +287,7 @@ public actor CapabilityBroker {
         ]
     }
 
-    // MARK: - Settings
-
-    private var settingsStore: [ExtensionID: [String: String]] = [:]
+    // MARK: - Settings (durable under storage root — EXT-011)
 
     public func settingsHandle(extensionID: ExtensionID) throws -> BrokerHandle {
         return issue(extensionID, kind: "settings", ops: ["get", "set"])
@@ -256,14 +295,15 @@ public actor CapabilityBroker {
 
     public func settingsGet(handle: BrokerHandleID, key: String) throws -> String? {
         let h = try resolve(handle, kind: "settings", op: "get")
-        return settingsStore[h.extensionID]?[key]
+        let map = try loadSettings(extensionID: h.extensionID)
+        return map[key]
     }
 
     public func settingsSet(handle: BrokerHandleID, key: String, value: String) throws {
         let h = try resolve(handle, kind: "settings", op: "set")
-        var map = settingsStore[h.extensionID] ?? [:]
+        var map = try loadSettings(extensionID: h.extensionID)
         map[key] = value
-        settingsStore[h.extensionID] = map
+        try saveSettings(extensionID: h.extensionID, map: map)
     }
 
     // MARK: - Storage
@@ -281,14 +321,17 @@ public actor CapabilityBroker {
 
     public func storageSet(handle: BrokerHandleID, key: String, value: Data) throws {
         let h = try resolve(handle, kind: "storage", op: "set")
-        let used = storageBytes[h.extensionID] ?? 0
-        if used + value.count > config.storageQuotaBytes {
+        let url = storageURL(extensionID: h.extensionID, key: key)
+        let existing = (try? Data(contentsOf: url))?.count ?? 0
+        // Prefer live disk reconciliation so restarts cannot zero quotas (EXT-010).
+        let used = max(storageBytes[h.extensionID] ?? 0, usageOnDisk(extensionID: h.extensionID))
+        let next = used - existing + value.count
+        if next > config.storageQuotaBytes {
             throw BrokerError.quotaExceeded
         }
-        let url = storageURL(extensionID: h.extensionID, key: key)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try value.write(to: url, options: .atomic)
-        storageBytes[h.extensionID] = used + value.count
+        storageBytes[h.extensionID] = usageOnDisk(extensionID: h.extensionID)
     }
 
     // MARK: - Process
@@ -355,13 +398,39 @@ public actor CapabilityBroker {
         guard isDownloadAllowed(host: host, path: url.path) else {
             throw BrokerError.downloadDenied(host)
         }
-        // Local fixture scheme for tests: file:// under tool cache or explicit test fetch via data
-        // Real HTTPS download with size cap.
-        let (data, response) = try await URLSession.shared.data(from: url)
-        if data.count > config.maxDownloadBytes {
-            throw BrokerError.quotaExceeded
+        // EXT-012: stream with mid-stream byte cap (never load full response then check).
+        let delegate = DownloadRedirectGuard(isAllowed: { [config] host, path in
+            // Capture allowlist via local copy of checks
+            for allow in config.downloadAllowlist {
+                if allow.host == host || allow.host == "**" {
+                    if allow.pathPrefix.isEmpty { return true }
+                    let prefix = "/" + allow.pathPrefix.joined(separator: "/")
+                    if path.hasPrefix(prefix) || path.hasPrefix(String(prefix.dropFirst())) { return true }
+                }
+            }
+            return false
+        })
+        let session = URLSession(
+            configuration: .ephemeral,
+            delegate: delegate,
+            delegateQueue: nil
+        )
+        defer { session.finishTasksAndInvalidate() }
+        let (bytes, response) = try await session.bytes(from: url)
+        if let http = response as? HTTPURLResponse, let finalURL = http.url {
+            guard let finalHost = finalURL.host else { throw BrokerError.downloadDenied("no host") }
+            guard isDownloadAllowed(host: finalHost, path: finalURL.path) else {
+                throw BrokerError.downloadDenied(finalHost)
+            }
         }
-        _ = response
+        var data = Data()
+        data.reserveCapacity(min(config.maxDownloadBytes, 64 * 1024))
+        for try await byte in bytes {
+            data.append(byte)
+            if data.count > config.maxDownloadBytes {
+                throw BrokerError.quotaExceeded
+            }
+        }
         if let expectedDigest {
             let actual = sha256Hex(data)
             if actual != expectedDigest {
@@ -369,7 +438,7 @@ public actor CapabilityBroker {
             }
         }
         let dest = config.toolCacheRoot
-            .appendingPathComponent(h.extensionID.rawValue, isDirectory: true)
+            .appendingPathComponent(h.extensionID.directoryKey, isDirectory: true)
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: dest, options: .atomic)
@@ -396,7 +465,7 @@ public actor CapabilityBroker {
             }
         }
         let dest = config.toolCacheRoot
-            .appendingPathComponent(h.extensionID.rawValue, isDirectory: true)
+            .appendingPathComponent(h.extensionID.directoryKey, isDirectory: true)
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: dest, options: .atomic)
@@ -415,21 +484,52 @@ public actor CapabilityBroker {
         return issue(extensionID, kind: "npm", ops: ["install"])
     }
 
+    /// Host-owned npm materializer (EXT-013): copies from local registry root only.
+    /// No lifecycle scripts. Not a stub `package.json` writer.
     public func npmInstall(handle: BrokerHandleID, package: String, version: String?) throws -> URL {
         let h = try resolve(handle, kind: "npm", op: "install")
         guard isNPMAllowed(package: package, version: version) else {
             throw BrokerError.npmDenied(package)
         }
-        // No lifecycle scripts: materialize a lockfile-style stub package dir (real install optional via allowlist).
+        guard let registry = config.npmRegistryRoot else {
+            throw BrokerError.npmDenied("no npm registry configured")
+        }
+        let ver = version ?? "latest"
+        // Reject path-like package names.
+        if package.contains("..") || package.contains("/") || package.contains("\\") {
+            throw BrokerError.npmDenied(package)
+        }
+        let source = registry
+            .appendingPathComponent(package, isDirectory: true)
+            .appendingPathComponent(ver, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: source.path) else {
+            throw BrokerError.notFound("npm package \(package)@\(ver)")
+        }
+        // Reject symlinks at package root.
+        let srcValues = try source.resourceValues(forKeys: [.isSymbolicLinkKey])
+        if srcValues.isSymbolicLink == true {
+            throw BrokerError.npmDenied("symlink package")
+        }
         let dest = config.toolCacheRoot
-            .appendingPathComponent(h.extensionID.rawValue, isDirectory: true)
-            .appendingPathComponent("npm")
-            .appendingPathComponent(package)
-        try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
-        let meta = """
-            {"name":"\(package)","version":"\(version ?? "*")","scripts_disabled":true}
-            """
-        try meta.write(to: dest.appendingPathComponent("package.json"), atomically: true, encoding: .utf8)
+            .appendingPathComponent(h.extensionID.directoryKey, isDirectory: true)
+            .appendingPathComponent("npm", isDirectory: true)
+            .appendingPathComponent(package, isDirectory: true)
+            .appendingPathComponent(ver, isDirectory: true)
+        if FileManager.default.fileExists(atPath: dest.path) {
+            try FileManager.default.removeItem(at: dest)
+        }
+        try FileManager.default.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try copyTreeRejectingSymlinks(from: source, to: dest, maxBytes: config.maxDownloadBytes)
+        // Ensure no scripts execute — strip scripts from package.json if present.
+        let pkgJSON = dest.appendingPathComponent("package.json")
+        if FileManager.default.fileExists(atPath: pkgJSON.path),
+            var obj = try JSONSerialization.jsonObject(with: Data(contentsOf: pkgJSON)) as? [String: Any]
+        {
+            obj["scripts"] = [:]
+            obj["scripts_disabled"] = true
+            let out = try JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys])
+            try out.write(to: pkgJSON, options: .atomic)
+        }
         return dest
     }
 
@@ -575,42 +675,139 @@ public actor CapabilityBroker {
         }
     }
 
-    private func resolveWorktreePath(_ extensionID: ExtensionID, relative: String) throws -> URL {
+    private func resolveWorktreePath(
+        handle: BrokerHandleID,
+        extensionID: ExtensionID,
+        relative: String
+    ) throws -> URL {
         _ = extensionID
-        guard let root = config.worktreeRoots.first else {
+        guard let root = worktreeRootByHandle[handle] ?? config.worktreeRoots.first else {
             throw BrokerError.notFound("no worktree root")
         }
         let cleaned = relative.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         if cleaned.contains("..") { throw BrokerError.pathEscape }
-        let url = cleaned.isEmpty ? root : root.appendingPathComponent(cleaned)
-        let resolved = url.resolvingSymlinksInPath().standardizedFileURL
+        // Component-aware containment (not string hasPrefix alone).
         let rootResolved = root.resolvingSymlinksInPath().standardizedFileURL
-        if resolved.path != rootResolved.path && !resolved.path.hasPrefix(rootResolved.path + "/") {
+        let url = cleaned.isEmpty ? rootResolved : rootResolved.appendingPathComponent(cleaned)
+        let resolved = url.resolvingSymlinksInPath().standardizedFileURL
+        let rootParts = rootResolved.pathComponents
+        let fullParts = resolved.pathComponents
+        guard fullParts.count >= rootParts.count,
+            Array(fullParts.prefix(rootParts.count)) == rootParts
+        else {
             throw BrokerError.pathEscape
         }
         return resolved
     }
 
+    /// Collision-free key encoding (EXT-010) — never sanitize by replacing `/` with `_`.
     private func storageURL(extensionID: ExtensionID, key: String) -> URL {
-        let safe = key.replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "..", with: "_")
+        let encoded = sha256Hex(Data(key.utf8))
         return config.storageRoot
-            .appendingPathComponent(extensionID.rawValue, isDirectory: true)
-            .appendingPathComponent(safe)
+            .appendingPathComponent(extensionID.directoryKey, isDirectory: true)
+            .appendingPathComponent("kv", isDirectory: true)
+            .appendingPathComponent(encoded)
     }
 
-    private func isProcessAllowed(executable: String, arguments: [String]) -> Bool {
-        for allow in config.processAllowlist {
-            if allow.command == executable || allow.command == "**" {
-                if allow.argsGlob == ["**"] { return true }
-                // simple equality check when not **
-                if allow.argsGlob == arguments { return true }
+    private func settingsFileURL(extensionID: ExtensionID) -> URL {
+        config.storageRoot
+            .appendingPathComponent(extensionID.directoryKey, isDirectory: true)
+            .appendingPathComponent("settings.json")
+    }
+
+    private func loadSettings(extensionID: ExtensionID) throws -> [String: String] {
+        let url = settingsFileURL(extensionID: extensionID)
+        guard FileManager.default.fileExists(atPath: url.path) else { return [:] }
+        let data = try Data(contentsOf: url)
+        return (try JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:]
+    }
+
+    private func saveSettings(extensionID: ExtensionID, map: [String: String]) throws {
+        let url = settingsFileURL(extensionID: extensionID)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let data = try JSONSerialization.data(withJSONObject: map, options: [.sortedKeys])
+        try data.write(to: url, options: .atomic)
+    }
+
+    private func usageOnDisk(extensionID: ExtensionID) -> Int {
+        let kv = config.storageRoot
+            .appendingPathComponent(extensionID.directoryKey, isDirectory: true)
+            .appendingPathComponent("kv", isDirectory: true)
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: kv.path) else { return 0 }
+        var total = 0
+        if let files = try? fm.contentsOfDirectory(at: kv, includingPropertiesForKeys: [.fileSizeKey]) {
+            for f in files {
+                if let size = try? f.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                    total += size
+                }
             }
-            // basename match
-            if URL(fileURLWithPath: executable).lastPathComponent == allow.command {
+        }
+        return total
+    }
+
+    /// EXT-014: no basename-only allow — absolute path identity or trusted-dir resolution.
+    private func isProcessAllowed(executable: String, arguments: [String]) -> Bool {
+        let execPath = URL(fileURLWithPath: executable).resolvingSymlinksInPath().standardizedFileURL.path
+        for allow in config.processAllowlist {
+            if allow.command == "**" {
+                return allow.argsGlob == ["**"] || allow.argsGlob == arguments
+            }
+            let allowedPath: String
+            if allow.command.hasPrefix("/") {
+                allowedPath = URL(fileURLWithPath: allow.command).resolvingSymlinksInPath().standardizedFileURL.path
+            } else {
+                // Name-only entries resolve only under fixed trusted system directories.
+                var found: String?
+                for dir in ["/usr/bin", "/bin", "/usr/local/bin"] {
+                    let candidate = URL(fileURLWithPath: dir).appendingPathComponent(allow.command)
+                    if FileManager.default.isExecutableFile(atPath: candidate.path) {
+                        found = candidate.resolvingSymlinksInPath().standardizedFileURL.path
+                        break
+                    }
+                }
+                guard let found else { continue }
+                allowedPath = found
+            }
+            if execPath == allowedPath {
                 return allow.argsGlob == ["**"] || allow.argsGlob == arguments
             }
         }
         return false
+    }
+
+    private func copyTreeRejectingSymlinks(from source: URL, to dest: URL, maxBytes: Int) throws {
+        let fm = FileManager.default
+        try fm.createDirectory(at: dest, withIntermediateDirectories: true)
+        let children = try fm.contentsOfDirectory(
+            at: source,
+            includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        )
+        var total = 0
+        for url in children {
+            let values = try url.resourceValues(forKeys: [
+                .isRegularFileKey, .isSymbolicLinkKey, .isDirectoryKey, .fileSizeKey,
+            ])
+            if values.isSymbolicLink == true {
+                throw BrokerError.npmDenied("symlink in package")
+            }
+            if values.isDirectory == true {
+                let nested = dest.appendingPathComponent(url.lastPathComponent, isDirectory: true)
+                try copyTreeRejectingSymlinks(from: url, to: nested, maxBytes: maxBytes - total)
+                // Approximate nested size by scanning dest (best-effort).
+                continue
+            }
+            guard values.isRegularFile == true else {
+                throw BrokerError.npmDenied("special file in package")
+            }
+            let size = values.fileSize ?? 0
+            total += size
+            if total > maxBytes { throw BrokerError.quotaExceeded }
+            let out = dest.appendingPathComponent(url.lastPathComponent)
+            if fm.fileExists(atPath: out.path) { try fm.removeItem(at: out) }
+            try fm.copyItem(at: url, to: out)
+        }
     }
 
     private func isDownloadAllowed(host: String, path: String) -> Bool {
@@ -662,7 +859,36 @@ public actor CapabilityBroker {
             let d = SHA256.hash(data: data)
             return d.map { String(format: "%02x", $0) }.joined()
         #else
-            return String(data.count)
+            fatalError("CryptoKit unavailable: broker digests require SHA-256 (fail closed)")
         #endif
+    }
+}
+
+// MARK: - Download redirect revalidation (EXT-012)
+
+/// URLSession delegate that rejects redirects to hosts/paths outside the download allowlist.
+final class DownloadRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let isAllowed: @Sendable (String, String) -> Bool
+
+    init(isAllowed: @escaping @Sendable (String, String) -> Bool) {
+        self.isAllowed = isAllowed
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        guard let url = request.url, let host = url.host else {
+            completionHandler(nil)
+            return
+        }
+        if isAllowed(host, url.path) {
+            completionHandler(request)
+        } else {
+            completionHandler(nil)
+        }
     }
 }

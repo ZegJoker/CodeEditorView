@@ -16,6 +16,14 @@ private func makeBroker(roots: [URL] = []) -> CapabilityBroker {
     let tmp = FileManager.default.temporaryDirectory
         .appendingPathComponent("broker-\(UUID().uuidString)", isDirectory: true)
     try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+    // Host-owned npm fixture registry for left-pad@1.0.0
+    let npmReg = tmp.appendingPathComponent("npm-registry/left-pad/1.0.0", isDirectory: true)
+    try? FileManager.default.createDirectory(at: npmReg, withIntermediateDirectories: true)
+    try? """
+        {"name":"left-pad","version":"1.0.0","main":"index.js"}
+        """.write(to: npmReg.appendingPathComponent("package.json"), atomically: true, encoding: .utf8)
+    try? "module.exports=function(){}\n".write(
+        to: npmReg.appendingPathComponent("index.js"), atomically: true, encoding: .utf8)
     return CapabilityBroker(
         config: .init(
             worktreeRoots: roots,
@@ -33,8 +41,8 @@ private func makeBroker(roots: [URL] = []) -> CapabilityBroker {
             ],
             npmAllowlist: [
                 .init(package: "left-pad", version: "1.0.0"),
-                .init(package: "**"),
-            ]
+            ],
+            npmRegistryRoot: tmp.appendingPathComponent("npm-registry", isDirectory: true)
         ))
 }
 
@@ -286,8 +294,10 @@ struct Phase10BrokerTests {
         await broker.registerExtension(id: id, generation: 1, granted: [.network])
         let handle = try await broker.npmHandle(extensionID: id)
         let dest = try await broker.npmInstall(handle: handle.id, package: "left-pad", version: "1.0.0")
+        #expect(FileManager.default.fileExists(atPath: dest.appendingPathComponent("index.js").path))
         let pkg = try String(contentsOf: dest.appendingPathComponent("package.json"), encoding: .utf8)
-        #expect(pkg.contains("scripts_disabled"))
+        #expect(pkg.contains("scripts_disabled") || pkg.contains("\"scripts\""))
+        #expect(dest.path.contains(id.directoryKey))
     }
 
     @Test func storageQuota() async throws {
@@ -391,10 +401,10 @@ struct Phase10OrchestratorTests {
             )
         )
         let pkg = PreparedExtensionPackage(
-            packageID: "crashy",
+            packageID: "com.example.crashy",
             displayName: "Crashy",
             version: SemanticVersion(major: 1),
-            manifest: ExtensionManifest(id: "crashy", displayName: "Crashy"),
+            manifest: ExtensionManifest(id: "com.example.crashy", displayName: "Crashy"),
             trustClass: .workspaceDev,
             runtimePreference: .builtIn,
             builtInExtension: ConformanceExt()

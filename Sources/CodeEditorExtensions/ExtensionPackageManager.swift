@@ -154,11 +154,40 @@ public actor ExtensionPackageManager {
         packagesRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
     }
 
+    /// Store-wide quarantine when durable trust state cannot be loaded safely (EXT-005 / §15.5).
+    public private(set) var storeQuarantined: Bool = false
+    public private(set) var storeQuarantineReason: String?
+
     /// Load durable state and revocation list (call once after init).
+    /// Corrupt state enters **quarantined store** mode — never an empty permissive allow.
     public func bootstrap() {
         ensureLayout()
-        try? loadDurableState()
-        try? loadRevocationList()
+        do {
+            try loadDurableState()
+        } catch {
+            storeQuarantined = true
+            storeQuarantineReason = "corrupt durable state: \(error)"
+            packages.removeAll()
+            rebuildSnapshot()
+        }
+        do {
+            try loadRevocationList()
+        } catch {
+            storeQuarantined = true
+            let prior = storeQuarantineReason.map { $0 + "; " } ?? ""
+            storeQuarantineReason = prior + "corrupt revocation list: \(error)"
+            // Fail closed: clear revocation and deny activation until repaired.
+            revocation = RevocationListDocument()
+        }
+    }
+
+    /// Clear store quarantine after operator repair (re-runs bootstrap load).
+    public func repairStoreBootstrap() throws {
+        storeQuarantined = false
+        storeQuarantineReason = nil
+        packages.removeAll()
+        try loadDurableState()
+        try loadRevocationList()
     }
 
     public func setVerifier(_ verifier: (any PackageVerifying)?) {
@@ -398,6 +427,7 @@ public actor ExtensionPackageManager {
     }
 
     /// Recover interrupted staging and reconcile durable state with filesystem.
+    /// EXT-009: never activate a generation that fails live re-verify.
     public func recoverCorruptedState() {
         // Remove leftover staging dirs
         if let idDirs = try? FileManager.default.contentsOfDirectory(
@@ -423,7 +453,14 @@ public actor ExtensionPackageManager {
             if pkg.quarantined { continue }
             if !pkg.isDev {
                 let idRoot = packageDirectory(for: id)
-                if let rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: pkg) {
+                if var rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: pkg) {
+                    // Re-verify staged tree before trusting it as active.
+                    if let v = try? runVerify(packageRoot: rebuilt.installPath), v.quarantined {
+                        rebuilt.quarantined = true
+                        rebuilt.quarantineReason = v.error ?? "recover re-verify failed"
+                        rebuilt.enabled = false
+                        rebuilt.state = .quarantined
+                    }
                     packages[id] = rebuilt
                     continue
                 }
@@ -523,6 +560,11 @@ public actor ExtensionPackageManager {
     }
 
     public func assertCanActivate(id: ExtensionID) throws {
+        if storeQuarantined {
+            recordDenied(id: id, reason: "store_quarantined")
+            throw ExtensionError.dataLoad(
+                "store quarantined: \(storeQuarantineReason ?? "untrusted state")")
+        }
         guard let pkg = packages[id] else { throw ExtensionError.notRegistered }
         if pkg.quarantined {
             recordDenied(id: id, reason: "quarantined")

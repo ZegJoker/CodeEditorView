@@ -30,7 +30,7 @@ public struct ConformanceEvent: Sendable, Equatable, Hashable, Codable {
         #if canImport(CryptoKit)
             return SHA256.hash(data: data).prefix(8).map { String(format: "%02x", $0) }.joined()
         #else
-            return String(format: "%08x", data.count)
+            fatalError("CryptoKit unavailable: conformance digests require SHA-256")
         #endif
     }
 }

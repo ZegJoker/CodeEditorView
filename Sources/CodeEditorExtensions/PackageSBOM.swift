@@ -237,7 +237,8 @@ public enum PackageSBOM {
         #if canImport(CryptoKit)
             return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         #else
-            return String(data.count)
+            // EXT-006: never fall back to a non-cryptographic digest (length is not a hash).
+            fatalError("CryptoKit unavailable: package SBOM digests require SHA-256 (fail closed)")
         #endif
     }
 }

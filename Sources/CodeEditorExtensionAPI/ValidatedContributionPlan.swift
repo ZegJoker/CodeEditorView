@@ -262,22 +262,38 @@ public enum ImmutableContributionRegistry {
 public enum ExtensionPackageDigest {
     public static func compute(packageRoot: URL) throws -> String {
         let fm = FileManager.default
+        let root = packageRoot.standardizedFileURL
         guard
             let enumerator = fm.enumerator(
-                at: packageRoot,
-                includingPropertiesForKeys: [.isRegularFileKey],
+                at: root,
+                includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey],
                 options: [.skipsHiddenFiles]
             )
         else {
             throw ExtensionError.dataLoad("cannot enumerate package")
         }
         var files: [(String, Data)] = []
+        let rootPath = root.path
+        let skipNames: Set<String> = [
+            "checksums.json", "signature.ed25519", "publisher.json", "signed-statement.json",
+        ]
         for case let url as URL in enumerator {
-            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+            if values.isSymbolicLink == true {
+                throw ExtensionError.dataLoad("package contains symlink: \(url.lastPathComponent)")
+            }
             guard values.isRegularFile == true else { continue }
-            let rel = url.path.replacingOccurrences(of: packageRoot.path, with: "")
+            let filePath = url.standardizedFileURL.path
+            guard filePath == rootPath || filePath.hasPrefix(rootPath + "/") else { continue }
+            var rel = String(filePath.dropFirst(rootPath.count))
                 .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            if rel.isEmpty { continue }
             if rel.hasPrefix(".codeeditor/") { continue }
+            // Signature metadata is written after the package digest is sealed.
+            if skipNames.contains(rel) { continue }
+            if rel.hasPrefix("keys/") || rel == "ed25519.private" || rel == "ed25519.public" {
+                throw ExtensionError.dataLoad("package contains key material: \(rel)")
+            }
             let data = try Data(contentsOf: url)
             files.append((rel, data))
         }
