@@ -2,7 +2,7 @@
   "schema_version": 1,
   "program": "audit-2026-08-remediation",
   "source": "CodeEditorView_Deep_Audit_Xcode26_Ghostty.md",
-  "updated": "2026-08-01",
+  "updated": "2026-08-02",
   "defects": [
     {
       "id": "PKG-001",
@@ -79,14 +79,14 @@
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "Dirty-close coordinator"
+      "summary": "Close coordinator + leases on all paths; fail-closed"
     },
     {
       "id": "WSP-002",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "Durable workspace edit journal"
+      "summary": "Journal + byte-exact capture + fault matrix; rollback never swallowed"
     },
     {
       "id": "EXT-001",
@@ -135,7 +135,7 @@
       "severity": "P0",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "Duplicate a11y removed"
+      "summary": "Duplicate a11y removed; iOS example host from Phase 1"
     },
     {
       "id": "LSP-001",
@@ -163,14 +163,14 @@
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Registration tokens retained"
+      "summary": "RegistrationBag host lifetime; contributions survive build"
     },
     {
       "id": "CMD-002",
       "severity": "P1",
       "product": "CodeEditorCommands",
       "status": "fixed",
-      "summary": "Chord state machine"
+      "summary": "Chord prefix wait + timeout short + Escape + layer tests"
     },
     {
       "id": "LSP-002",
@@ -212,7 +212,7 @@
       "severity": "P1",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "Grapheme UITextInput, selection rects, BiDi, marked subrange"
+      "summary": "Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session"
     },
     {
       "id": "SCM-001",
@@ -226,7 +226,7 @@
       "severity": "P1",
       "product": "CodeEditorTreeSitter",
       "status": "fixed",
-      "summary": "TreeSitterLanguageRuntime actor; off-main load"
+      "summary": "TreeSitterLanguageRuntime actor; lock-box env; no nonisolated(unsafe) globals"
     },
     {
       "id": "WB-001",
@@ -276,6 +276,111 @@
       "product": "CodeEditorCore",
       "status": "fixed",
       "summary": "DocumentStore no longer @unchecked Sendable; main-actor-affine documented"
+    },
+    {
+      "id": "UI-002",
+      "severity": "P0",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "MarkedTextSession + applyMarkedText without undo registration"
+    },
+    {
+      "id": "UI-003",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "AppKit internal drag uses moveText transaction; external size guard"
+    },
+    {
+      "id": "UI-004",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "WordNavigationMode codeSubword/camelCase/snake/acronym"
+    },
+    {
+      "id": "UI-005",
+      "severity": "P2",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "EditorTextServicesPolicy code-editor defaults"
+    },
+    {
+      "id": "UI-006",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Layout max-width cache; invalidate on edit"
+    },
+    {
+      "id": "UI-007",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Virtualized accessibility value (viewport + line/col)"
+    },
+    {
+      "id": "UI-008",
+      "severity": "P2",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "EditorSignposts + EditorPerformanceHarness budgets"
+    },
+    {
+      "id": "UI-009",
+      "severity": "P0",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "AppKit insertText honors replacementRange"
+    },
+    {
+      "id": "WSP-003",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "RelativeWorkspacePath + symlink/volume corpus"
+    },
+    {
+      "id": "WSP-004",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "LocalWorkspaceFileSystem is actor; no unchecked Sendable races"
+    },
+    {
+      "id": "WSP-005",
+      "severity": "P1",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "FSEvents recursive watcher with overflow/rescan + mock tests"
+    },
+    {
+      "id": "WSP-006",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "DocumentLeaseRegistry ref-count; final release unregisters"
+    },
+    {
+      "id": "WSP-007",
+      "severity": "P1",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "Restoration rejects future schema; golden v1 + corrupt fixtures"
+    },
+    {
+      "id": "CMD-003",
+      "severity": "P1",
+      "product": "CodeEditorCommands",
+      "status": "fixed",
+      "summary": "CommandContextSnapshot from real focus/document/trust"
+    },
+    {
+      "id": "CMD-004",
+      "severity": "P1",
+      "product": "CodeEditorCommands",
+      "status": "fixed",
+      "summary": "Typed notFound/disabled; no silent no-op"
     }
   ]
 }
