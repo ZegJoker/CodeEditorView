@@ -79,14 +79,14 @@
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "Close coordinator + leases on all paths; fail-closed"
+      "summary": "All UI close paths use requestClose*; Close Pane wired; leases fail-closed"
     },
     {
       "id": "WSP-002",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "Journal + byte-exact capture + fault matrix; rollback never swallowed"
+      "summary": "Full fault matrix + duringRollback inject surfaces catastrophic/rollbackFailed"
     },
     {
       "id": "EXT-001",
@@ -345,7 +345,7 @@
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "LocalWorkspaceFileSystem is actor; no unchecked Sendable races"
+      "summary": "FS actor + concurrent stress + cancel tests"
     },
     {
       "id": "WSP-005",
@@ -366,7 +366,7 @@
       "severity": "P1",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "Restoration rejects future schema; golden v1 + corrupt fixtures"
+      "summary": "On-disk golden fixtures v1/v999/corrupt; reject future schema"
     },
     {
       "id": "CMD-003",
@@ -380,7 +380,7 @@
       "severity": "P1",
       "product": "CodeEditorCommands",
       "status": "fixed",
-      "summary": "Typed notFound/disabled; no silent no-op"
+      "summary": "Typed notFound/disabled/unsupported; palette-path executeAsync proof"
     }
   ]
 }

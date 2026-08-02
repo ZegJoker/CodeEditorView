@@ -16,8 +16,8 @@ Updated: 2026-08-02
 | DOC-002 | P0 | CodeEditorDocuments | fixed | Throwing undo/redo; stacks move only after success; dirty from savedVersion; no try? apply |
 | DOC-003 | P0 | CodeEditorCore | fixed | Exact offsets; private scalarIndex throws; never EOF fallback |
 | DOC-004 | P0 | CodeEditorDocuments | fixed | CAS save with expectedIdentity + revalidate; conflict SaveResult |
-| WSP-001 | P0 | CodeEditorWorkspace | fixed | Close coordinator + leases on all paths |
-| WSP-002 | P0 | CodeEditorWorkspace | fixed | Journal + fault matrix; rollback never swallowed |
+| WSP-001 | P0 | CodeEditorWorkspace | fixed | All UI close paths use requestClose*; leases fail-closed |
+| WSP-002 | P0 | CodeEditorWorkspace | fixed | Fault matrix + duringRollback typed catastrophic |
 | EXT-001 | P0 | CodeEditorExtensionAPI | fixed | Validated ExtensionID |
 | EXT-002 | P0 | CodeEditorExtensionHost | fixed | File-set signature equality |
 | EXT-003 | P0 | CodeEditorExtensionHost | fixed | Publisher binding |
@@ -54,9 +54,9 @@ Updated: 2026-08-02
 | UI-008 | P2 | CodeEditorView | fixed | EditorSignposts + EditorPerformanceHarness budgets |
 | UI-009 | P0 | CodeEditorView | fixed | AppKit insertText honors replacementRange |
 | WSP-003 | P0 | CodeEditorWorkspace | fixed | RelativeWorkspacePath + path corpus |
-| WSP-004 | P0 | CodeEditorWorkspace | fixed | LocalWorkspaceFileSystem actor-isolated |
+| WSP-004 | P0 | CodeEditorWorkspace | fixed | FS actor + concurrent stress + cancel tests |
 | WSP-005 | P1 | CodeEditorWorkspace | fixed | FSEvents recursive + overflow/rescan |
 | WSP-006 | P0 | CodeEditorWorkspace | fixed | DocumentLeaseRegistry ref-count |
-| WSP-007 | P1 | CodeEditorWorkspace | fixed | Future schema reject + v1 fixtures |
+| WSP-007 | P1 | CodeEditorWorkspace | fixed | On-disk golden v1/v999/corrupt fixtures |
 | CMD-003 | P1 | CodeEditorCommands | fixed | CommandContextSnapshot from focus/trust |
-| CMD-004 | P1 | CodeEditorCommands | fixed | Typed notFound/disabled results |
+| CMD-004 | P1 | CodeEditorCommands | fixed | Typed notFound/disabled/unsupported on palette path |

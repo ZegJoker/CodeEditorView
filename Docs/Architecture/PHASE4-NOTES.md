@@ -107,16 +107,28 @@ Every dirty close routes through a coordinator; workspace edits are journaled an
 
 **Evidence:** `Phase4CommandResultTests`, workbench context snapshot test.
 
+## TDD residual pass (post-commit honesty)
+
+Re-opened partial residuals and closed via red→green:
+
+| Residual | Red test | Green fix |
+|---|---|---|
+| UI Close Pane sync | `workbenchEditorAreaUsesRequestClosePane` | `requestClosePane` on model + WorkbenchEditorArea |
+| Mid-rollback silent | `duringRollbackSurfacesTypedFailure` | `WorkspaceEditFaultPoint.duringRollback` |
+| FS stress | `concurrentCreateListDeleteConsistent`, `cancelChildrenDoesNotCorruptRoots` | actor already correct; tests prove |
+| Golden fixtures | `goldenV1MinimalMigrates` / v999 / corrupt | `Tests/CodeEditorWorkspaceTests/Fixtures/*` |
+| Palette typed | `palettePathExecuteUnknownIsNotFound`, `unsupportedResultIsTyped` | already typed; tests prove |
+
 ## Gate evidence
 
 ```text
-swift test --filter 'Phase4|CodeEditorWorkspaceTests|CodeEditorCommandsTests|WorkbenchLogic|WorkbenchPhase8|Phase4Workbench'
-# 92 tests / 33 suites — all passed
+swift test --filter 'Phase4'
+# 43 tests / 11 suites — all passed
 ```
 
 Grep bans (manual):
 
-- No direct dirty tab drop without coordinator on UI paths (`WorkbenchEditorArea` uses `requestClose*`)
+- No `closePane(` / `closeTab(` in `Sources/CodeEditorWorkbench` (user paths use `requestClose*`)
 - `LocalWorkspaceFileSystem` is `actor` (not `@unchecked Sendable`)
 - `WorkspaceEdit` rollback does not swallow errors
 

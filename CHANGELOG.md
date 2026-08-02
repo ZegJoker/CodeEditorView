@@ -10,13 +10,13 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
-- **Phase 4 complete (WSP-001…WSP-007 / CMD-001…CMD-004 / §8–9):**
-  - Dirty-close coordinator on all tab/pane/window paths; `DocumentLeaseRegistry`
-  - Workspace edit journal + byte-exact capture + fault-matrix rollback (never silent)
-  - `RelativeWorkspacePath` path security corpus; FS actor isolation; FSEvents overflow
-  - Trust default restricted with capability gates; restoration rejects future schemas
+- **Phase 4 complete (WSP-001…WSP-007 / CMD-001…CMD-004 / §8–9) + TDD residual pass:**
+  - Dirty-close coordinator on all tab/pane/window paths; UI Close Pane → `requestClosePane`
+  - Workspace edit journal + fault matrix including `duringRollback` typed catastrophic
+  - `RelativeWorkspacePath` path security corpus; FS actor stress/cancel tests; FSEvents overflow
+  - Trust default restricted with capability gates; on-disk golden restoration fixtures
   - `RegistrationBag` host lifetime; chord SM (prefix wait / timeout / Escape)
-  - `CommandContextSnapshot` from real focus/trust; typed notFound/disabled results
+  - `CommandContextSnapshot` from real focus/trust; typed notFound/disabled/unsupported
 - **Phase 3 complete (UI-001…UI-009 / TS-001 / §11):**
   - MarkedTextSession provisional IME (no per-keystroke undo)
   - AppKit replacementRange; grapheme delete; code subword navigation
