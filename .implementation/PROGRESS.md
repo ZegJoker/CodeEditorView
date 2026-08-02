@@ -9,7 +9,7 @@
 
 | Phase | Name | Findings | Status |
 |------:|------|---------:|--------|
-| 0 | release-truth | 9 | fixed |
+| 0 | release-truth | 9 | verified |
 | 1 | documents | 12 | open |
 | 2 | substrate | 3 (+ shared substrate build) | open |
 | 3a | commands | 5 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: batch release-truth verified — PKG-N01, REL-N01…REL-N08 status set to `verified` (all previously fixed with regression tests).
 - 2026-08-02: Phase 0 verifier residual close — REL-N04 live AppKit AX probe (NSHostingController + WorkbenchAccessibilityNSAnchorView; no hardcoded chrome catalog) + Switch Control fail-closed throws with real API invocation; PKG-N01 always executes ARCHIVE_PHASE=smoke clean archive path (CI full suite via FULL_ARCHIVE_TEST=1); 39 Phase-0 regression tests pass.
 - 2026-08-02: Phase 0 REL-N06 — regenerated digester/symbol-graph baselines after MockRemoteTerminalTransport left production (API freeze green; 38 Phase-0 regression tests pass).
 - 2026-08-02: Phase 0 verifier rework — PKG-N01 hard suite exit + no soft --version; REL-N02 generate-product-scorecards evidence; REL-N04 content-sourced a11y + fail-closed Switch Control; REL-N05 DocumentStore/LineIndex fixed datasets; REL-N06 real digester/symbol-graph (no public seed); REL-N08 DAP post-init responses + DAPTestTransport/MockRemote moved to Tests/.
