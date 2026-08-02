@@ -1,5 +1,6 @@
 import CodeEditorLanguageSupport
 import Foundation
+import SwiftTreeSitter
 
 /// Limits applied when loading / executing Tree-sitter queries.
 public struct TreeSitterQueryLimits: Sendable, Hashable {
@@ -133,21 +134,63 @@ public enum QuerySetLoader: Sendable {
         return (sources, diagnostics)
     }
 
-    /// Non-throwing soft load retained only for optional feature discovery in tests.
-    /// Prefer ``loadSources(languageID:kinds:registry:limits:required:)``.
-    public static func loadSourcesSoft(
+    /// Compiles a loaded query source against a grammar. Fail closed (LANG-N02):
+    /// malformed present query text throws ``QuerySetError/malformed`` — never omitted.
+    public static func compile(
+        languageID: LanguageID,
+        kind: QueryKind,
+        source: String,
+        language: Language,
+        path: String? = nil
+    ) throws -> Query {
+        guard let data = source.data(using: .utf8), !data.isEmpty else {
+            throw QuerySetError.malformed(
+                language: languageID,
+                kind: kind,
+                path: path,
+                detail: "empty or non-UTF8 query source"
+            )
+        }
+        do {
+            return try Query(language: language, data: data)
+        } catch {
+            throw QuerySetError.malformed(
+                language: languageID,
+                kind: kind,
+                path: path,
+                detail: String(describing: error)
+            )
+        }
+    }
+
+    /// Loads and compiles queries for the given kinds. Present malformed sources throw.
+    public static func loadAndCompile(
         languageID: LanguageID,
         kinds: Set<QueryKind>,
+        language: Language,
         registry: LanguageRegistry = .shared,
-        limits: TreeSitterQueryLimits = .default
-    ) -> (sources: [QueryKind: String], diagnostics: [QuerySetDiagnostic]) {
-        (try? loadSources(
+        limits: TreeSitterQueryLimits = .default,
+        required: Set<QueryKind> = [.highlights]
+    ) throws -> (queries: [QueryKind: Query], diagnostics: [QuerySetDiagnostic]) {
+        let (sources, diagnostics) = try loadSources(
             languageID: languageID,
             kinds: kinds,
             registry: registry,
             limits: limits,
-            required: []
-        )) ?? ([:], kinds.map { .missing($0) })
+            required: required
+        )
+        var queries: [QueryKind: Query] = [:]
+        for (kind, source) in sources {
+            let path = registry.queryURL(for: languageID, kind: kind)?.path
+            queries[kind] = try compile(
+                languageID: languageID,
+                kind: kind,
+                source: source,
+                language: language,
+                path: path
+            )
+        }
+        return (queries, diagnostics)
     }
 
     /// Combined highlights text including optional parent highlights.

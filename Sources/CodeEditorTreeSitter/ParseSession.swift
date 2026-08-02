@@ -264,6 +264,11 @@ public actor ParseSession {
         languageRef?.languageID
     }
 
+    /// Full ownership handle retained for the session lifetime (LANG-N04).
+    public func retainedLanguageRef() -> TSLanguageRef? {
+        languageRef
+    }
+
     private static func clampedIdentifierRange(_ range: NSRange, documentLength: Int) -> NSRange? {
         guard range.location >= 0, range.location < documentLength else { return nil }
         let maxLen = 64

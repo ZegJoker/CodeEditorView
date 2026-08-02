@@ -101,9 +101,21 @@ struct LANGN06ConformanceTests {
         #expect(failures.isEmpty, "highlight failures: \(failures)")
     }
 
+    /// Expected highlight capture substrings for pilot/representative packs (LANG-N06 scopes).
+    private static let expectedHighlightScopes: [String: [String]] = [
+        "json": ["string", "number"],
+        "swift": ["function", "keyword", "type"],
+        "python": ["function", "keyword"],
+        "javascript": ["variable", "function", "keyword"],
+        "go": ["function", "keyword"],
+        "rust": ["function", "keyword"],
+        "c": ["function", "type", "keyword"],
+    ]
+
     @Test func test_LANG_N06_representativeSourceParsesWithoutCrash() async throws {
         var parseFailures: [String] = []
         var highlightCompileFailures: [String] = []
+        var scopeFailures: [String] = []
         var highlightOK = 0
         for id in Self.shippedLanguageIDs {
             guard let pointer = LanguageRegistry.shared.parser(for: id) else {
@@ -131,8 +143,27 @@ struct LANGN06ConformanceTests {
             if let codeLang = CodeLanguages.language(id: id.rawValue) {
                 TreeSitterConfigurationFactory.clearCache()
                 do {
-                    if try TreeSitterConfigurationFactory.languageConfiguration(for: codeLang) != nil {
+                    if let config = try TreeSitterConfigurationFactory.languageConfiguration(for: codeLang) {
                         highlightOK += 1
+                        // Expected scopes for key packs: query real captures (not compile-only).
+                        if let expected = Self.expectedHighlightScopes[id.rawValue],
+                            let highlightsQuery = config.queries[.highlights],
+                            let parsed = tree
+                        {
+                            let cursor = highlightsQuery.execute(in: parsed)
+                            cursor.setRange(NSRange(location: 0, length: (source as NSString).length))
+                            let named = cursor
+                                .resolve(with: Predicate.Context(string: source))
+                                .highlights()
+                            let names = Set(named.map(\.name))
+                            let matched = expected.contains { exp in
+                                names.contains(where: { $0.localizedCaseInsensitiveContains(exp) })
+                            }
+                            if !matched {
+                                scopeFailures.append(
+                                    "\(id.rawValue): expected one of \(expected) in \(names.sorted())")
+                            }
+                        }
                     }
                 } catch TreeSitterConfigurationFactory.Error.malformedQuery {
                     highlightCompileFailures.append(id.rawValue)
@@ -142,17 +173,19 @@ struct LANGN06ConformanceTests {
             }
         }
         #expect(parseFailures.isEmpty, "parse failures: \(parseFailures)")
-        // Vast majority of packs must compile highlights; known pin skew is fail-closed not silent.
-        #expect(highlightOK >= 35, "highlight compile ok=\(highlightOK) fail=\(highlightCompileFailures)")
-        // Failures must be typed malformed (fail closed), not silent omission — list is non-empty only
-        // when inventory/query pins diverge (perl/verilog historically).
-        for name in highlightCompileFailures {
-            #expect(!name.isEmpty)
-        }
+        // All shipped packs must compile highlights (fail closed — no soft omit).
+        #expect(
+            highlightCompileFailures.isEmpty,
+            "highlight compile failures (fail closed): \(highlightCompileFailures)")
+        #expect(
+            highlightOK >= Self.shippedLanguageIDs.count - 1,
+            "highlight compile ok=\(highlightOK) of \(Self.shippedLanguageIDs.count)")
+        #expect(scopeFailures.isEmpty, "expected scopes missing: \(scopeFailures)")
     }
 
     @Test func test_LANG_N06_optionalShippedQueriesCompileWhenPresent() throws {
         var failures: [String] = []
+        var compiledCount = 0
         let optionalKinds: [QueryKind] = [
             .folds, .indents, .injections, .locals, .tags, .outline, .textobjects, .structure,
         ]
@@ -161,31 +194,26 @@ struct LANGN06ConformanceTests {
             let language = Language(language: pointer)
             for kind in optionalKinds {
                 guard let url = LanguageRegistry.shared.queryURL(for: id, kind: kind) else {
-                    continue  // not shipped — OK
+                    continue  // not shipped — OK (missing optional is not an error)
                 }
                 let text = try String(contentsOf: url, encoding: .utf8)
-                guard let data = text.data(using: .utf8), !data.isEmpty else { continue }
+                guard let data = text.data(using: .utf8), !data.isEmpty else {
+                    failures.append("\(id.rawValue).\(kind.rawValue): empty present file")
+                    continue
+                }
                 do {
+                    // Present optional queries must compile (LANG-N02/N06 fail closed).
                     _ = try Query(language: language, data: data)
+                    compiledCount += 1
                 } catch {
-                    // Some shipped queries target different grammar versions; record but
-                    // only fail hard for highlights (checked separately). Optional kinds
-                    // that fail compile are diagnostics for pack maintenance.
                     failures.append("\(id.rawValue).\(kind.rawValue): \(error)")
                 }
             }
         }
-        // Optional kinds that fail compile are recorded; matrix still proves every shipped
-        // file was opened and attempted. Require the scan visited every language.
         #expect(Self.shippedLanguageIDs.count >= 39)
-        // At least some optional queries must compile (folds/indents widely shipped).
-        let compiledOptional = Self.shippedLanguageIDs.filter { id in
-            LanguageRegistry.shared.queryURL(for: id, kind: .folds) != nil
-                || LanguageRegistry.shared.queryURL(for: id, kind: .indents) != nil
-        }
-        #expect(compiledOptional.count >= 10, "expected many packs to ship folds/indents")
-        // Failures list is informational; do not silently ignore total scan collapse.
-        #expect(failures.count < Self.shippedLanguageIDs.count * optionalKinds.count)
+        #expect(compiledCount >= 10, "expected many shipped optional queries to compile, got \(compiledCount)")
+        // Fail closed: no soft/informational pass on present-but-broken optional queries.
+        #expect(failures.isEmpty, "present optional queries must compile: \(failures)")
     }
 
     @Test func test_LANG_N06_inventoryProvenancePresentForSwiftAndJSON() {

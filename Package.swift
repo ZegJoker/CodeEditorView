@@ -399,7 +399,16 @@ let package = Package(
         ),
         .testTarget(
             name: "CodeEditorTreeSitterTests",
-            dependencies: ["CodeEditorTreeSitter", "CodeEditorLanguageSupport"]
+            dependencies: [
+                "CodeEditorTreeSitter",
+                "CodeEditorLanguageSupport",
+                // Real grammars for LANG-N02/N04/N05 ownership + fail-closed query compile.
+                "CodeEditorLanguageJSON",
+                "CodeEditorLanguageSwift",
+                .product(name: "SwiftTreeSitter", package: "swift-tree-sitter"),
+                .product(name: "TreeSitterJsonGrammar", package: "CodeEditorGrammars"),
+                .product(name: "TreeSitterSwiftGrammar", package: "CodeEditorGrammars"),
+            ]
         ),
         .testTarget(
             name: "CodeEditorLanguagesTests",

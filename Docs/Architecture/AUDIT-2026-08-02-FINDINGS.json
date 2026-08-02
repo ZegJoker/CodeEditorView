@@ -1166,7 +1166,7 @@
         "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_unregisterByOwnerRemovesOnlyThatOwner",
         "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_parserFactoryBoundToTokenSurvivesOtherUnregister"
       ],
-      "notes": "2026-08-03: LanguageRegistrationRecord with owner/generation/priority/token; dispose removes only that record; extension registrar token-based."
+      "notes": "2026-08-03: LanguageRegistrationRecord with owner/generation/priority/token; dispose removes only that record; extension registrar token-based. Verifier residual 2026-08-03: N01 ownership tests remain hard (no vacuous soft-pass)."
     },
     {
       "id": "LANG-N02",
@@ -1180,9 +1180,10 @@
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_malformedHighlightsQueryThrowsTypedError",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_querySetErrorMapsToLanguagePackError",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_missingOptionalQueryIsDiagnosticNotThrow",
-        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_factoryFailsClosedOnBrokenQueryWithRealGrammar"
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_factoryFailsClosedOnBrokenQueryWithRealGrammar",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_validHighlightsCompileWithRealJSONGrammar"
       ],
-      "notes": "2026-08-03: QuerySetError fail-closed; present unreadable/malformed/oversized throw; no silent try? omit on compile."
+      "notes": "2026-08-03 verifier residual: CodeEditorTreeSitterTests links TreeSitterJsonGrammar; QuerySetLoader.compile/loadAndCompile throw QuerySetError.malformed on present broken SCM; factoryFailsClosed uses real grammar pointer (no #expect(Bool(true))); removed loadSourcesSoft try? API."
     },
     {
       "id": "LANG-N03",
@@ -1197,7 +1198,7 @@
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_highlightProviderUsesParseSessionOnly",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_languageDocumentActorIsParseSession"
       ],
-      "notes": "2026-08-03: ParseSession single actor path; TreeSitterHighlightProvider no dual main-actor tree; LanguageDocumentActor=ParseSession."
+      "notes": "2026-08-03 verifier residual: stale HighlightSnapshot discard with real JSON grammar + non-empty highlights; provider configures ParseSession only (hasTree, retainedLanguageID)."
     },
     {
       "id": "LANG-N04",
@@ -1212,7 +1213,7 @@
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_sessionRetainsLanguageRefAcrossEdits",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_deallocationStressRepeatedSessionCycle"
       ],
-      "notes": "2026-08-03: TSLanguageRef ownership enum (staticGrammarSymbol); session retains languageRef; stress reset cycle."
+      "notes": "2026-08-03 verifier residual: session.configure(real LanguageConfiguration, languageRef); retainedLanguageRef/ID asserted across setText/applyEdit/query; deallocation stress cycles configured sessions with tree+query."
     },
     {
       "id": "LANG-N05",
@@ -1226,11 +1227,13 @@
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_malformedSourceDoesNotCrashSession",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_cancellationAndStaleGenerationDiscard",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_allQueryKindsHaveBasenames",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_allSupportedQueryCategoriesCompileForJSON",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_duplicateRegistrationAndUnload",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_grammarUnloadReload",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_largeFileRepeatedEdits",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_queryCaptureValidationEmptyWithoutConfig"
       ],
-      "notes": "2026-08-03: Expanded CodeEditorTreeSitterTests coverage for edits/unicode/stale/query kinds/reload/large files."
+      "notes": "2026-08-03 verifier residual: CodeEditorTreeSitterTests depends on CodeEditorLanguageJSON/Swift + real grammars; all N05 cases configure real TSLanguage (malformed source, large edits, query scopes string/number/constant, grammar unload/reload)."
     },
     {
       "id": "LANG-N06",
@@ -1248,7 +1251,7 @@
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_hostOwnedBootstrapDoesNotRequireSharedMutation",
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_malformedFixtureDoesNotCrashHighlightProvider"
       ],
-      "notes": "2026-08-03: 39-grammar conformance matrix (parser load, representative parse, highlights, optional queries, provenance inventory, host bootstrap)."
+      "notes": "2026-08-03 verifier residual: expected highlight scopes for key packs; all present highlights must compile (0 failures); present optional queries fail closed (no soft/informational); pin-aligned perl/verilog/markdown-inline queries rewritten to compile against grammar pins."
     },
     {
       "id": "LANG-N07",
@@ -1263,7 +1266,7 @@
         "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_explicitInitDoesNotUseGlobalSideEffect",
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_hostOwnedBootstrapDoesNotRequireSharedMutation"
       ],
-      "notes": "2026-08-03: bootstrap(into:installEnvironment:); RegistryTreeSitterConfigurationProvider(registry:); host-owned LanguageRegistry instances."
+      "notes": "2026-08-03: bootstrap(into:installEnvironment:); RegistryTreeSitterConfigurationProvider(registry:); host-owned LanguageRegistry instances. Host-owned registry path exercised by N02/N04/N05 tree-sitter tests."
     },
     {
       "id": "LSP-N01",
