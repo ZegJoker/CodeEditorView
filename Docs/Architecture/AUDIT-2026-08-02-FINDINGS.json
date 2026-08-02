@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked “fixed” rows",
+      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the “durable” claim",
+      "severity_raw": "P1 for the \u201cdurable\u201d claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
     },
     {
       "id": "CORE-N03",
@@ -498,7 +498,7 @@
       "severity_raw": "P1 native input correctness",
       "title": "UIKit vertical movement is raw UTF-16 arithmetic",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_verticalMovePreservesPreferredXAcrossUnevenLines",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_verticalMoveDoesNotLandInsideGrapheme",
@@ -513,7 +513,7 @@
       "severity_raw": "P1",
       "title": "generic offset clamping can return invalid insertion points",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N02_midSurrogateIsInvalidInsertionPoint",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N02_validatedSelectionRangeRejectsMidGraphemeEndpoints",
@@ -527,7 +527,7 @@
       "severity_raw": "P1 performance",
       "title": "selection rectangle generation is O(selection UTF-16 length)",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N03_rectsArePerFragmentNotPerUTF16Unit",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N03_largeSelectionIsSublinearInUTF16Length",
@@ -541,7 +541,7 @@
       "severity_raw": "P1",
       "title": "BiDi behavior is heuristic/incomplete",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_arabicParagraphResolvesRTLFromPlatformLayout",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_latinParagraphResolvesLTR",
@@ -557,7 +557,7 @@
       "severity_raw": "P1",
       "title": "first-rect/attributed-substring contracts are incomplete",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N05_attributedSubstringReturnsActualRangeMatchingContent",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N05_attributedSubstringRejectsInvalidInteriorWithEmptyActual",
@@ -571,7 +571,7 @@
       "severity_raw": "P1",
       "title": "IME conformance is not complete",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_compositionCancelRestoresPreCompositionSnapshot",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_commitCreatesSingleUndoBoundary",
@@ -587,7 +587,7 @@
       "severity_raw": "P1",
       "title": "AppKit/UIKit error paths are frequently suppressed",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N07_inputFailuresRouteToDiagnosticChannel",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N07_executeCommandFailureSurfacesAndKeepsSelection",
@@ -601,7 +601,7 @@
       "severity_raw": "P1",
       "title": "platform build/runtime evidence is incomplete",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_platformMatrixDocumentExists",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_platformMatrixScriptIsHardGate",
@@ -616,7 +616,7 @@
       "severity_raw": "P1 for Xcode-class claim",
       "title": "large-file architecture needs an explicit mode",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_thresholdActivatesExplicitMode",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_activeModeDisablesHeavyFeatures",
@@ -634,7 +634,7 @@
       "severity_raw": "P1",
       "title": "accessibility must be semantic, not identifier-only",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_lineColumnSelectionSummary",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_multiCursorAnnouncement",
@@ -850,7 +850,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for “gitignore-compatible” claim",
+      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "open",
@@ -1201,7 +1201,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current “real LSP” gate is not an integration test",
+      "title": "current \u201creal LSP\u201d gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1221,7 +1221,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as “early” responses",
+      "title": "late responses are retained as \u201cearly\u201d responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1361,7 +1361,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n²)-prone",
+      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1511,7 +1511,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process “argsGlob” is not a glob",
+      "title": "process \u201cargsGlob\u201d is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1581,7 +1581,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one “passing” flag",
+      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1931,7 +1931,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution “fault isolation” is not isolation",
+      "title": "contribution \u201cfault isolation\u201d is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

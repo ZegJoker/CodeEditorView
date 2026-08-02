@@ -13,7 +13,7 @@
 | 1 | documents | 12 | verified |
 | 2 | substrate | 3 (+ shared substrate build) | verified |
 | 3a | commands | 5 | verified |
-| 3b | native editor UI | 10 | fixed |
+| 3b | native editor UI | 10 | verified |
 | 4 | workspace | 10 | open |
 | 5a | search | 9 | open |
 | 5b | tasks | 8 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch native-editor-ui verified — UI-N01, UI-N02, UI-N03, UI-N04, UI-N05, UI-N06, UI-N07, UI-N08, UI-N09, UI-N10 status set to `verified` (all previously fixed with regression tests; CodeEditorViewTests UINAudit green).
 - 2026-08-03: Phase 3b verifier residual — UI-N01 host `visualCaretMove`/AppKit moveDown; UI-N04 CoreText CTLine platform BiDi; UI-N08 real macOS+iOS sim builds + platform-matrix.json evidence (xcodebuild hosts under CI); UI-N09 enforce highlighter suspend/diagnostics reject/bounded undo + auto-refresh; UI-N10 AppKit/UIKit custom rotors, live breakpoints/symbols, completion announcements, chrome landmarks, system reduce-motion. CodeEditorViewTests UIN0+UIN10: 45 passed.
 - 2026-08-02: Phase 3b native editor UI — fixed UI-N01…UI-N10: CaretNavigationEngine + layout snapshots; grapheme-valid positions; fragment selection geometry; WritingDirectionModel BiDi; firstRect/attributedSubstring contracts; IME begin/cancel/commit lifecycle; EditorDiagnosticChannel (no silent try? on input); PLATFORM-MATRIX + check-platform-matrix.sh; LargeFileMode explicit limitations; semantic accessibility (line/col, rotor, multi-cursor, completion, landmarks, reduced motion). CodeEditorViewTests UINAudit 36 passed.
 - 2026-08-02: batch commands verified — CMD-N01, CMD-N02, CMD-N03, CMD-N04, CMD-N05 status set to `verified` (all previously fixed with regression tests; CodeEditorCommandsTests green).
