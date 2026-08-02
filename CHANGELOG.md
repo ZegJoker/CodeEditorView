@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 9 complete (WASM-001…009 / §16 real Swift-Wasm execution):**
+  - WasmKit executes submitted module bytes (factory ignored); dual abi_version proof
+  - Host imports read guest linear memory; wall-time + cancel interrupt for infinite poll
+  - Memory OOB/limit policy; hostile fixtures on WasmKit; simulation alias = LinkedGuest only
+  - Dual-run contract tests; `check-wasm-fixture.sh`; PHASE9-NOTES rewritten for Wasm
 - **Phase 8 complete (EXT-001…016 / §15 package-store-broker security):**
   - ExtensionID corpus + `directoryKey` roots for broker storage/download/npm
   - Sealed package digests; reject symlink/special/key material; publisher subject-swap deny

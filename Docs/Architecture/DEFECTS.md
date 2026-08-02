@@ -34,8 +34,15 @@ Updated: 2026-08-02
 | EXT-014 | P0 | CodeEditorExtensionHost | fixed | Process allowlist canonical/trusted-dir paths |
 | EXT-015 | P1 | CodeEditorExtensionHost | fixed | Multi-root worktree + read limits + revoke |
 | EXT-016 | P1 | CodeEditorExtensionHost | fixed | ExtensionSDKConformance kit |
-| WASM-001 | P0 | CodeEditorWasmEngineWasmKit | fixed | Real WasmKit parse/instantiate/call |
-| WASM-002 | P0 | CodeEditorWasmEngine | fixed | Real module execution tests pass |
+| WASM-001 | P0 | CodeEditorWasmEngineWasmKit | fixed | WasmKit parse/instantiate/call; bytes determine behavior |
+| WASM-002 | P0 | CodeEditorWasmEngine | fixed | Real module + interrupt/hostile containment tests |
+| WASM-003 | P0 | CodeEditorWasmEngineWasmKit | fixed | Host imports read guest linear memory OOB-safe |
+| WASM-004 | P0 | CodeEditorWasmEngineWasmKit | fixed | Wall-time + cooperative cancel interrupt |
+| WASM-005 | P1 | CodeEditorWasmEngine | fixed | Memory limit/OOB enforcement |
+| WASM-006 | P0 | CodeEditorWasmEngineTests | fixed | Hostile fixture suite on WasmKit |
+| WASM-007 | P1 | CodeEditorExtensionHost | fixed | Dual-run contract LinkedGuest vs WasmKit |
+| WASM-008 | P1 | CodeEditorWasmEngine | fixed | Simulation alias = LinkedGuest; WasmKit is real |
+| WASM-009 | P1 | CodeEditorWasmEngine | fixed | Fixture gate script + session lifecycle |
 | IOS-001 | P0 | CodeEditorView | fixed | Duplicate a11y removed; iOS example host from Phase 1 |
 | LSP-001 | P0 | CodeEditorLSP | fixed | Full-text debounce + rapid-edit matrix vs mock server |
 

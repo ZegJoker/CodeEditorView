@@ -121,14 +121,14 @@
       "severity": "P0",
       "product": "CodeEditorWasmEngineWasmKit",
       "status": "fixed",
-      "summary": "Real WasmKit parse/instantiate/call"
+      "summary": "WasmKit parse/instantiate/call; bytes determine behavior"
     },
     {
       "id": "WASM-002",
       "severity": "P0",
       "product": "CodeEditorWasmEngine",
       "status": "fixed",
-      "summary": "Real module execution tests pass"
+      "summary": "Real module + interrupt/hostile containment tests"
     },
     {
       "id": "IOS-001",
@@ -619,6 +619,55 @@
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
       "summary": "ExtensionSDKConformance kit"
+    },
+    {
+      "id": "WASM-003",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineWasmKit",
+      "status": "fixed",
+      "summary": "Host imports read guest linear memory OOB-safe"
+    },
+    {
+      "id": "WASM-004",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineWasmKit",
+      "status": "fixed",
+      "summary": "Wall-time + cooperative cancel interrupt"
+    },
+    {
+      "id": "WASM-005",
+      "severity": "P1",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Memory limit/OOB enforcement"
+    },
+    {
+      "id": "WASM-006",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineTests",
+      "status": "fixed",
+      "summary": "Hostile fixture suite on WasmKit"
+    },
+    {
+      "id": "WASM-007",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Dual-run contract LinkedGuest vs WasmKit"
+    },
+    {
+      "id": "WASM-008",
+      "severity": "P1",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Simulation alias = LinkedGuest; WasmKit is real"
+    },
+    {
+      "id": "WASM-009",
+      "severity": "P1",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Fixture gate script + session lifecycle"
     }
   ]
 }
