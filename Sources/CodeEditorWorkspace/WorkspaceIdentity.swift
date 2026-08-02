@@ -93,18 +93,15 @@ public enum EditorSplitAxis: String, Codable, Sendable, Hashable {
 }
 
 public enum WorkspacePath {
+    /// Normalize separators and drop `.` / empty segments.
+    ///
+    /// **Does not** collapse `..` — path security must reject traversal rather than
+    /// silently rewrite relative paths (audit §8.3).
     public static func normalize(_ path: String) -> String {
         let trimmed = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         let parts = trimmed.split(separator: "/").map(String.init).filter { $0 != "." && !$0.isEmpty }
-        var stack: [String] = []
-        for part in parts {
-            if part == ".." {
-                if !stack.isEmpty { stack.removeLast() }
-            } else {
-                stack.append(part)
-            }
-        }
-        return stack.joined(separator: "/")
+        // Preserve `..` so resolveUnderRoot / validateRelativePath can reject.
+        return parts.joined(separator: "/")
     }
 
     public static func join(_ base: String, _ name: String) -> String {

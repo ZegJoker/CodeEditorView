@@ -12,7 +12,7 @@ struct WorkspaceEditTransactionTests {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("we-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let fs = try LocalWorkspaceFileSystem(
+        let fs = try await LocalWorkspaceFileSystem(
             rootDirectories: [root],
             enablesDirectoryWatching: false
         )
@@ -110,7 +110,7 @@ struct WorkspaceEditTransactionTests {
         let doc = TextDocument(text: "x")
         ws.documents.register(doc)
         _ = try doc.apply(.single(range: NSRange(location: 1, length: 0), replacement: "y"))
-        let snap = ws.snapshot()
+        let snap = await ws.snapshot()
         #expect(snap.documentVersions[doc.uri] == doc.version)
         #expect(snap.openDocumentIDs.contains(doc.id))
     }

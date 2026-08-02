@@ -54,7 +54,7 @@ struct SearchReplaceStaleTests {
             .appendingPathComponent("sr-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
-        let fs = try LocalWorkspaceFileSystem(rootDirectories: [root], enablesDirectoryWatching: false)
+        let fs = try await LocalWorkspaceFileSystem(rootDirectories: [root], enablesDirectoryWatching: false)
         let ws = Workspace(fileSystem: fs)
         let doc = TextDocument(text: "hello hello")
         ws.documents.register(doc)

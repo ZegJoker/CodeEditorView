@@ -118,7 +118,7 @@ public final class WorkspaceEditService {
         self.journalRoot = journalRoot
     }
 
-    public func validate(_ edit: WorkspaceEdit) throws {
+    public func validate(_ edit: WorkspaceEdit) async throws {
         // Reject empty edits.
         guard !edit.documentChanges.isEmpty || !edit.fileOperations.isEmpty else {
             throw WorkspaceEditError.validationFailed("empty workspace edit")
@@ -153,7 +153,7 @@ public final class WorkspaceEditService {
         // File op preflight: resolve paths, reject conflicts/duplicates.
         var touchedPaths = Set<String>()
         for op in edit.fileOperations {
-            try preflightFileOperation(op, touched: &touchedPaths)
+            try await preflightFileOperation(op, touched: &touchedPaths)
         }
     }
 
@@ -171,7 +171,7 @@ public final class WorkspaceEditService {
     /// Transactional apply: preflight → journal → stage → commit → coherent update.
     /// On any failure, rolls back with errors surfaced (never swallowed) (WSP-002).
     public func apply(_ edit: WorkspaceEdit) async throws -> WorkspaceEditResult {
-        try validate(edit)
+        try await validate(edit)
 
         var applied: [AppliedEditTransaction] = []
         var inverseDocs: [DocumentChange] = []
@@ -592,7 +592,7 @@ public final class WorkspaceEditService {
         return workspace.documents.document(uri: change.uri)
     }
 
-    private func preflightFileOperation(_ op: WorkspaceFileOperation, touched: inout Set<String>) throws {
+    private func preflightFileOperation(_ op: WorkspaceFileOperation, touched: inout Set<String>) async throws {
         func touch(_ uri: DocumentURI) throws {
             guard let path = uri.fileURL?.standardizedFileURL.path else {
                 throw WorkspaceEditError.unsupportedURI(uri.rawValue)
@@ -604,7 +604,7 @@ public final class WorkspaceEditService {
         switch op {
         case .createFile(let uri, _), .createFileBytes(let uri, _), .createDirectory(let uri):
             try touch(uri)
-            guard parentItem(for: uri) != nil, fileName(for: uri) != nil else {
+            guard await parentItem(for: uri) != nil, fileName(for: uri) != nil else {
                 throw WorkspaceEditError.unsupportedURI(uri.rawValue)
             }
             if let url = uri.fileURL, FileManager.default.fileExists(atPath: url.path) {
@@ -612,16 +612,16 @@ public final class WorkspaceEditService {
             }
         case .delete(let uri):
             try touch(uri)
-            guard workspace.fileSystem.item(for: uri) != nil else {
+            guard await workspace.fileSystem.item(for: uri) != nil else {
                 throw WorkspaceEditError.documentNotFound(uri.rawValue)
             }
         case .rename(let from, let to):
             try touch(from)
             try touch(to)
-            guard workspace.fileSystem.item(for: from) != nil else {
+            guard await workspace.fileSystem.item(for: from) != nil else {
                 throw WorkspaceEditError.documentNotFound(from.rawValue)
             }
-            guard parentItem(for: to) != nil, fileName(for: to) != nil else {
+            guard await parentItem(for: to) != nil, fileName(for: to) != nil else {
                 throw WorkspaceEditError.unsupportedURI(to.rawValue)
             }
             if let url = to.fileURL, FileManager.default.fileExists(atPath: url.path) {
@@ -637,7 +637,7 @@ public final class WorkspaceEditService {
     ) async throws {
         switch op {
         case .createFile(let uri, let contents):
-            guard let parentItem = parentItem(for: uri), let name = fileName(for: uri) else {
+            guard let parentItem = await parentItem(for: uri), let name = fileName(for: uri) else {
                 throw WorkspaceEditError.unsupportedURI(uri.rawValue)
             }
             let data = Data(contents.utf8)
@@ -647,7 +647,7 @@ public final class WorkspaceEditService {
             inverse.append(.delete(uri: uri))
 
         case .createFileBytes(let uri, let b64):
-            guard let parentItem = parentItem(for: uri), let name = fileName(for: uri) else {
+            guard let parentItem = await parentItem(for: uri), let name = fileName(for: uri) else {
                 throw WorkspaceEditError.unsupportedURI(uri.rawValue)
             }
             guard let data = Data(base64Encoded: b64) else {
@@ -659,7 +659,7 @@ public final class WorkspaceEditService {
             inverse.append(.delete(uri: uri))
 
         case .createDirectory(let uri):
-            guard let parentItem = parentItem(for: uri), let name = fileName(for: uri) else {
+            guard let parentItem = await parentItem(for: uri), let name = fileName(for: uri) else {
                 throw WorkspaceEditError.unsupportedURI(uri.rawValue)
             }
             let item = try await workspace.fileSystem.createDirectory(in: parentItem, name: name)
@@ -668,7 +668,7 @@ public final class WorkspaceEditService {
             inverse.append(.delete(uri: uri))
 
         case .delete(let uri):
-            guard let item = workspace.fileSystem.item(for: uri) else {
+            guard let item = await workspace.fileSystem.item(for: uri) else {
                 throw WorkspaceEditError.documentNotFound(uri.rawValue)
             }
             // Inverse is restored from capture; record delete for inverse stack only if capture missing.
@@ -688,10 +688,10 @@ public final class WorkspaceEditService {
             completed.append(op)
 
         case .rename(let from, let to):
-            guard let item = workspace.fileSystem.item(for: from) else {
+            guard let item = await workspace.fileSystem.item(for: from) else {
                 throw WorkspaceEditError.documentNotFound(from.rawValue)
             }
-            guard let parentItem = parentItem(for: to), let name = fileName(for: to) else {
+            guard let parentItem = await parentItem(for: to), let name = fileName(for: to) else {
                 throw WorkspaceEditError.unsupportedURI(to.rawValue)
             }
             let moved = try await workspace.fileSystem.move(item: item.id, to: parentItem, newName: name)
@@ -706,14 +706,14 @@ public final class WorkspaceEditService {
         }
     }
 
-    private func parentItem(for uri: DocumentURI) -> WorkspaceItemID? {
+    private func parentItem(for uri: DocumentURI) async -> WorkspaceItemID? {
         guard let url = uri.fileURL else { return nil }
         let parentURL = url.deletingLastPathComponent()
         let parentURI = DocumentURI(fileURL: parentURL)
-        if let item = workspace.fileSystem.item(for: parentURI) {
+        if let item = await workspace.fileSystem.item(for: parentURI) {
             return item.id
         }
-        for root in workspace.fileSystem.roots {
+        for root in await workspace.fileSystem.roots {
             if root.uri.fileURL?.standardizedFileURL == parentURL.standardizedFileURL {
                 return WorkspaceItemID(rootID: root.id, path: "")
             }

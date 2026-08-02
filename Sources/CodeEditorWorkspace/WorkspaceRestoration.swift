@@ -91,7 +91,6 @@ public enum WorkspaceRestorationError: Error, Sendable, Equatable {
 public enum WorkspaceRestoration {
     /// Migrate known older schemas. **Rejects** unknown future schemas (audit §8.9).
     public static func migrate(_ state: WorkspaceRestorationState) throws -> WorkspaceRestorationState {
-        var state = state
         if state.schemaVersion > WorkspaceRestorationState.currentSchemaVersion {
             throw WorkspaceRestorationError.unsupportedSchemaVersion(
                 found: state.schemaVersion,
@@ -110,16 +109,32 @@ public enum WorkspaceRestoration {
     }
 
     @MainActor
-    public static func encode(_ workspace: Workspace) throws -> Data {
-        let state = workspace.captureRestorationState()
+    public static func encode(_ workspace: Workspace) async throws -> Data {
+        let state = await workspace.captureRestorationStateAsync()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         return try encoder.encode(state)
     }
 
+    /// Decode and migrate; rejects unknown future schemas (audit §8.9).
     public static func decode(_ data: Data) throws -> WorkspaceRestorationState {
         let decoder = JSONDecoder()
-        let state = try decoder.decode(WorkspaceRestorationState.self, from: data)
-        return try migrate(state)
+        do {
+            let state = try decoder.decode(WorkspaceRestorationState.self, from: data)
+            return try migrate(state)
+        } catch let error as WorkspaceRestorationError {
+            throw error
+        } catch {
+            throw WorkspaceRestorationError.corruptPayload(String(describing: error))
+        }
+    }
+
+    /// Decode without migration (preserves original payload for inspection).
+    public static func decodeRaw(_ data: Data) throws -> WorkspaceRestorationState {
+        do {
+            return try JSONDecoder().decode(WorkspaceRestorationState.self, from: data)
+        } catch {
+            throw WorkspaceRestorationError.corruptPayload(String(describing: error))
+        }
     }
 }
