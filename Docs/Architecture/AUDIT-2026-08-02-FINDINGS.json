@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "title": "defect gate trusts manually marked “fixed” rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "severity_raw": "P1 for the “durable” claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -498,9 +498,13 @@
       "severity_raw": "P1 native input correctness",
       "title": "UIKit vertical movement is raw UTF-16 arithmetic",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_verticalMovePreservesPreferredXAcrossUnevenLines",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_verticalMoveDoesNotLandInsideGrapheme",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_uiKitVerticalUsesEngineNotRawUTF16"
+      ],
+      "notes": "2026-08-02: CaretNavigationEngine + EditorLayoutSnapshot; UIKit vertical uses engine not raw UTF-16."
     },
     {
       "id": "UI-N02",
@@ -508,9 +512,13 @@
       "severity_raw": "P1",
       "title": "generic offset clamping can return invalid insertion points",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N02_midSurrogateIsInvalidInsertionPoint",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N02_validatedSelectionRangeRejectsMidGraphemeEndpoints",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N02_positionFactoryNeverReturnsInvalidOffset"
+      ],
+      "notes": "2026-08-02: TextOffsetSemantics grapheme validation; NativeInputPositions factory; UITextInput positions grapheme-snapped."
     },
     {
       "id": "UI-N03",
@@ -518,9 +526,13 @@
       "severity_raw": "P1 performance",
       "title": "selection rectangle generation is O(selection UTF-16 length)",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N03_rectsArePerFragmentNotPerUTF16Unit",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N03_largeSelectionIsSublinearInUTF16Length",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N03_offscreenSelectionIsVirtualized"
+      ],
+      "notes": "2026-08-02: SelectionGeometry fragment intersection; virtualized offscreen; multi-cursor support."
     },
     {
       "id": "UI-N04",
@@ -528,9 +540,14 @@
       "severity_raw": "P1",
       "title": "BiDi behavior is heuristic/incomplete",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_arabicParagraphResolvesRTLFromPlatformLayout",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_latinParagraphResolvesLTR",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_setBaseWritingDirectionIsNotNoOp",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_mixedBidiUsesStoredOverrideOverHeuristic"
+      ],
+      "notes": "2026-08-02: WritingDirectionModel stores overrides; setBaseWritingDirection not no-op; UAX#9 paragraph resolve."
     },
     {
       "id": "UI-N05",
@@ -538,9 +555,13 @@
       "severity_raw": "P1",
       "title": "first-rect/attributed-substring contracts are incomplete",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N05_attributedSubstringReturnsActualRangeMatchingContent",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N05_attributedSubstringRejectsInvalidInteriorWithEmptyActual",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N05_firstRectActualRangeMatchesGeometrySpan"
+      ],
+      "notes": "2026-08-02: NativeInputContracts firstRect/attributedSubstring actualRange contracts on AppKit/UIKit."
     },
     {
       "id": "UI-N06",
@@ -548,9 +569,15 @@
       "severity_raw": "P1",
       "title": "IME conformance is not complete",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_compositionCancelRestoresPreCompositionSnapshot",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_commitCreatesSingleUndoBoundary",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_markedSubSelectionAndReplacementRange",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_emojiZWJAndSkinToneCompositionSurvivesMarkedLifecycle",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N06_koreanSyllableCompositionSteps"
+      ],
+      "notes": "2026-08-02: MarkedTextSession begin/cancel/commit with pre-composition snapshot + single undo boundary."
     },
     {
       "id": "UI-N07",
@@ -558,9 +585,13 @@
       "severity_raw": "P1",
       "title": "AppKit/UIKit error paths are frequently suppressed",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N07_inputFailuresRouteToDiagnosticChannel",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N07_executeCommandFailureSurfacesAndKeepsSelection",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N07_noSilentTryOnInputPathHelpers"
+      ],
+      "notes": "2026-08-02: EditorDiagnosticChannel; input-path try? replaced with runCommand/reportCommandFailure."
     },
     {
       "id": "UI-N08",
@@ -568,9 +599,13 @@
       "severity_raw": "P1",
       "title": "platform build/runtime evidence is incomplete",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_platformMatrixDocumentExists",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_platformMatrixScriptIsHardGate",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_packagePlatformsMatchDocumentedMatrix"
+      ],
+      "notes": "2026-08-02: PLATFORM-MATRIX.md + Scripts/check-platform-matrix.sh hard gate; Apple silicon-only policy."
     },
     {
       "id": "UI-N09",
@@ -578,9 +613,14 @@
       "severity_raw": "P1 for Xcode-class claim",
       "title": "large-file architecture needs an explicit mode",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_thresholdActivatesExplicitMode",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_activeModeDisablesHeavyFeatures",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_controllerSurfacesLargeFileMode",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_memoryPressureEscalatesMode"
+      ],
+      "notes": "2026-08-02: LargeFilePolicy/Mode explicit limitations; controller.refreshLargeFileMode + memory pressure."
     },
     {
       "id": "UI-N10",
@@ -588,9 +628,15 @@
       "severity_raw": "P1",
       "title": "accessibility must be semantic, not identifier-only",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_lineColumnSelectionSummary",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_multiCursorAnnouncement",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_rotorSurfacesAreSemantic",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_completionAccessibilityAnnouncement",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_panelLandmarksAndReducedMotion"
+      ],
+      "notes": "2026-08-02: Semantic line/col summary, rotor surfaces, multi-cursor, completion a11y, landmarks, reduced motion."
     },
     {
       "id": "WSP-N01",
@@ -795,7 +841,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "severity_raw": "P1 for “gitignore-compatible” claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "open",
@@ -1146,7 +1192,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "title": "current “real LSP” gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1166,7 +1212,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as \u201cearly\u201d responses",
+      "title": "late responses are retained as “early” responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1306,7 +1352,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "title": "repeated full-string snapshots are O(n²)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1456,7 +1502,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process \u201cargsGlob\u201d is not a glob",
+      "title": "process “argsGlob” is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1526,7 +1572,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "title": "compatibility claims need levels, not one “passing” flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1876,7 +1922,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

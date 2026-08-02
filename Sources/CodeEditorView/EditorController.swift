@@ -566,13 +566,39 @@ public final class EditorController {
         )
     }
 
-    /// Virtualized accessibility value for platform hosts (UI-007): selection + visible lines.
+    /// Virtualized accessibility value for platform hosts (UI-007 / UI-N10): selection + visible lines.
     public var accessibilityValueText: String {
         let visible = layout.latestVisibleUTF16Range
         return EditorAccessibility.virtualizedValueText(
             fullText: text,
             selectedRange: selectedRange,
             visibleUTF16Range: visible.length > 0 ? visible : nil
+        )
+    }
+
+    /// Semantic line/column/selection announcement (UI-N10).
+    public var accessibilitySemanticSummary: EditorAccessibility.SemanticSummary {
+        EditorAccessibility.semanticSummary(
+            fullText: text,
+            selectedRange: selectedRange,
+            multiCursorCount: selectedRanges.count,
+            languageID: languageID,
+            isEditable: configuration.behavior.isEditable,
+            isDirty: textDocument.isDirty,
+            largeFileModeActive: largeFileMode.isActive
+        )
+    }
+
+    /// Rotor surfaces derived from live editor state (UI-N10).
+    public var accessibilityRotorItems: [EditorAccessibility.RotorItem] {
+        let foldCount = foldModel.foldCache.allFolds.count
+        return EditorAccessibility.rotorItems(
+            diagnosticsCount: annotations.count,
+            foldCount: foldCount,
+            changeCount: textDocument.isDirty ? 1 : 0,
+            breakpointCount: 0,
+            symbolCount: 0,
+            searchMatchCount: findSession.matches.count
         )
     }
 
@@ -615,12 +641,63 @@ public final class EditorController {
 
     // MARK: - Editing
 
-    /// Active IME composition (UI-001/UI-002). When active, platform `setMarkedText` paths
+    /// Active IME composition (UI-001/UI-002/UI-N06). When active, platform `setMarkedText` paths
     /// must use ``applyMarkedText`` so undo/LSP are not spammed per composition update.
     public private(set) var markedTextSession: MarkedTextSession = .inactive
 
     /// True while IME composition is active.
     public var isComposingMarkedText: Bool { markedTextSession.isActive }
+
+    /// Centralized input/action diagnostics — never swallow with `try?` on input paths (UI-N07).
+    public let diagnosticChannel = EditorDiagnosticChannel()
+
+    /// Explicit base writing direction overrides (UI-N04).
+    public var writingDirectionModel = WritingDirectionModel()
+
+    /// Large-file policy thresholds (UI-N09).
+    public var largeFilePolicy: LargeFilePolicy = .default
+
+    /// Current large-file mode (explicit limitations; never silent) (UI-N09).
+    public private(set) var largeFileMode: LargeFileMode = .inactive
+
+    /// Peripherals after large-file policy is applied.
+    public var effectivePeripherals: EditorConfiguration.Peripherals {
+        var p = configuration.peripherals
+        if largeFileMode.isActive {
+            if !largeFileMode.minimapEnabled { p.showMinimap = false }
+            if !largeFileMode.foldingEnabled { p.showFoldingRibbon = false }
+        }
+        return p
+    }
+
+    /// Recompute large-file mode from document size (UI-N09).
+    public func refreshLargeFileMode() {
+        let utf16 = document.length
+        // Ensure line index exists for non-empty docs.
+        if layout.lineIndex.count == 0, utf16 > 0 {
+            layout.invalidateAll()
+        }
+        let lineCount = max(layout.lineIndex.count, text.components(separatedBy: .newlines).count)
+        largeFileMode = LargeFileMode.evaluate(
+            utf16Length: utf16,
+            lineCount: lineCount,
+            policy: largeFilePolicy
+        )
+        if largeFileMode.isActive {
+            diagnosticChannel.report(
+                EditorDiagnostic(
+                    domain: .largeFile,
+                    severity: .info,
+                    message: largeFileMode.limitationsDescription
+                )
+            )
+        }
+    }
+
+    /// Apply system memory-pressure escalation (UI-N09).
+    public func applyMemoryPressure(_ pressure: Bool) {
+        largeFileMode = largeFileMode.applyingMemoryPressure(pressure, policy: largeFilePolicy)
+    }
 
     public func replaceCharacters(in range: NSRange, with string: String) {
         replaceCharacters(in: range, with: string, registerUndo: true)
@@ -638,7 +715,15 @@ public final class EditorController {
         publishSelectionChange()
     }
 
-    /// Apply or update marked (composition) text without undo registration (UI-002).
+    /// Begin IME composition, capturing pre-composition document snapshot for cancel (UI-N06).
+    public func beginMarkedTextComposition(replacing replaceRange: NSRange) {
+        markedTextSession.beginComposition(
+            documentSnapshot: text,
+            replaceRange: replaceRange
+        )
+    }
+
+    /// Apply or update marked (composition) text without undo registration (UI-002 / UI-N06).
     public func applyMarkedText(
         _ text: String,
         selectedRangeInMarked: NSRange,
@@ -653,6 +738,9 @@ public final class EditorController {
         } else {
             let sel = selectedRange
             baseRange = sel
+        }
+        if !markedTextSession.isActive || markedTextSession.preCompositionDocumentSnapshot == nil {
+            markedTextSession.beginComposition(documentSnapshot: self.text, replaceRange: baseRange)
         }
         replaceCharacters(in: baseRange, with: text, registerUndo: false)
         markedTextSession.setMarked(
@@ -671,14 +759,51 @@ public final class EditorController {
         markedTextSession.clear()
     }
 
-    /// Finalize composition: document already holds provisional text (no per-keystroke undo).
-    /// Registers a single undo barrier by re-committing the marked range with undo enabled
-    /// only when the composition replaced non-empty original content tracking is available.
-    public func commitMarkedTextAsNormalEdit() {
-        // Composition text is already in the buffer with registerUndo: false.
-        // Begin a new undo group boundary so subsequent typing doesn't merge with pre-IME text.
-        textDocument.undo.endGrouping()
+    /// Cancel composition and restore the pre-composition document snapshot (UI-N06).
+    public func cancelMarkedTextComposition() {
+        guard markedTextSession.isActive || markedTextSession.preCompositionDocumentSnapshot != nil else {
+            markedTextSession.clear()
+            return
+        }
+        if let snapshot = markedTextSession.preCompositionDocumentSnapshot {
+            let restoreRange = NSRange(location: 0, length: document.length)
+            replaceCharacters(in: restoreRange, with: snapshot, registerUndo: false)
+            if let r = markedTextSession.preCompositionReplaceRange {
+                selection.setSelectedRange(NSRange(location: r.location, length: 0))
+            }
+        }
         markedTextSession.clear()
+        publishSelectionChange()
+    }
+
+    /// Commit composition: register one undo unit for the final composition (UI-N06).
+    public func commitMarkedTextComposition() {
+        commitMarkedTextAsNormalEdit()
+    }
+
+    /// Finalize composition: document already holds provisional text (no per-keystroke undo).
+    /// Restores the pre-composition snapshot and re-applies the committed string as **one**
+    /// undoable edit so Undo reverses the entire composition (UI-N06).
+    public func commitMarkedTextAsNormalEdit() {
+        let snapshot = markedTextSession.preCompositionDocumentSnapshot
+        let replace = markedTextSession.preCompositionReplaceRange
+        let committed = markedTextSession.text
+        markedTextSession.clear()
+
+        if let snapshot, let replace {
+            let full = NSRange(location: 0, length: document.length)
+            replaceCharacters(in: full, with: snapshot, registerUndo: false)
+            let loc = min(max(0, replace.location), (snapshot as NSString).length)
+            let maxLen = (snapshot as NSString).length - loc
+            let len = min(max(0, replace.length), maxLen)
+            replaceCharacters(
+                in: NSRange(location: loc, length: len),
+                with: committed,
+                registerUndo: true
+            )
+        } else {
+            textDocument.undo.endGrouping()
+        }
     }
 
     public func insertText(_ string: String) {

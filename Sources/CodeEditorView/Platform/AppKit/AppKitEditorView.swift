@@ -716,8 +716,18 @@
                 let dispatcher = controller.commandDispatcher
             {
                 let context = controller.makeCommandContext()
-                if (try? dispatcher.handleKeyPress(press, context: context)) == true {
-                    finishEdit()
+                // UI-N07: never swallow keybinding errors with try?.
+                do {
+                    if try dispatcher.handleKeyPress(press, context: context) {
+                        finishEdit()
+                        return
+                    }
+                } catch {
+                    controller.diagnosticChannel.reportCommandFailure(
+                        error,
+                        operation: "handleKeyPress",
+                        selectionSnapshot: controller.selectedRanges
+                    )
                     return
                 }
             }
@@ -934,18 +944,26 @@
                 replacementRange.location != NSNotFound
                 ? replacementRange
                 : (markedRangeStorage.location != NSNotFound ? markedRangeStorage : nil)
+            if !controller.isComposingMarkedText {
+                controller.beginMarkedTextComposition(replacing: replace ?? controller.selectedRange)
+            }
             controller.applyMarkedText(text, selectedRangeInMarked: selectedRange, replaceRange: replace)
-            markedRangeStorage =
-                controller.markedTextSession.isActive
-                ? controller.markedTextSession.range
-                : NSRange(location: NSNotFound, length: 0)
+            if text.isEmpty {
+                controller.cancelMarkedTextComposition()
+                markedRangeStorage = NSRange(location: NSNotFound, length: 0)
+            } else {
+                markedRangeStorage =
+                    controller.markedTextSession.isActive
+                    ? controller.markedTextSession.range
+                    : NSRange(location: NSNotFound, length: 0)
+            }
             onTextChange?(controller.text)
             relayout()
         }
 
         public func unmarkText() {
-            // Composition already in buffer; mark session inactive without extra undo spam.
-            controller.clearMarkedTextSession()
+            // Commit with single undo boundary (UI-N06).
+            controller.commitMarkedTextComposition()
             markedRangeStorage = NSRange(location: NSNotFound, length: 0)
         }
 
@@ -956,8 +974,14 @@
         public func attributedSubstring(
             forProposedRange range: NSRange, actualRange: NSRangePointer?
         ) -> NSAttributedString? {
-            actualRange?.pointee = range
-            return controller.document.attributedSubstring(from: range)
+            // Contract: actualRange matches returned content length (UI-N05).
+            let result = NativeInputContracts.attributedSubstring(
+                proposedRange: range,
+                documentLength: controller.document.length,
+                substring: { controller.document.attributedSubstring(from: $0) }
+            )
+            actualRange?.pointee = result.actualRange
+            return result.string
         }
 
         public func validAttributesForMarkedText() -> [NSAttributedString.Key] {
@@ -965,12 +989,15 @@
         }
 
         public func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?) -> NSRect {
-            actualRange?.pointee = range
-            guard let caret = controller.layout.caretRect(atUTF16Offset: range.location, containerWidth: containerWidth)
-            else {
-                return .zero
-            }
-            let rect = convert(caret, to: nil)
+            // Contract: actualRange is the geometry span (UI-N05).
+            let width = containerWidth > 0 ? containerWidth : max(bounds.width, 1)
+            let snapshot = controller.layout.makeEditorLayoutSnapshot(
+                containerWidth: width,
+                documentText: controller.document.fullString
+            )
+            let result = NativeInputContracts.firstRect(for: range, layout: snapshot)
+            actualRange?.pointee = result.actualRange
+            let rect = convert(result.rect, to: nil)
             return window?.convertToScreen(rect) ?? rect
         }
 

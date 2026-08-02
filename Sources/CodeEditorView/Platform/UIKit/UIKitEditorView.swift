@@ -4,6 +4,7 @@
     import CoreGraphics
     import CoreText
     import CodeEditorCore
+    import CodeEditorCommands
 
     /// UIKit host view for ``EditorController`` with `UITextInput` and accessibility.
     open class UIKitEditorView: UIView, UITextInput, UIKeyInput, UIDragInteractionDelegate, UIDropInteractionDelegate {
@@ -510,72 +511,88 @@
         }
 
         @objc private func handleToggleCompletions() {
-            try? controller.executeCommand(BuiltInCommandID.completionShow)
+            runCommand(BuiltInCommandID.completionShow)
             setNeedsDisplay()
         }
 
         @objc private func handleEscape() {
-            try? controller.executeCommand(BuiltInCommandID.cancel)
+            runCommand(BuiltInCommandID.cancel)
             setNeedsDisplay()
         }
 
         @objc private func handleCompletionUp() {
-            try? controller.executeCommand(BuiltInCommandID.completionUp)
+            runCommand(BuiltInCommandID.completionUp)
             setNeedsDisplay()
         }
 
         @objc private func handleCompletionDown() {
-            try? controller.executeCommand(BuiltInCommandID.completionDown)
+            runCommand(BuiltInCommandID.completionDown)
             setNeedsDisplay()
         }
 
         @objc private func handleCompletionApply() {
-            try? controller.executeCommand(BuiltInCommandID.completionApply)
+            runCommand(BuiltInCommandID.completionApply)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
         }
 
         @objc private func handleBacktab() {
-            try? controller.executeCommand(BuiltInCommandID.insertBacktab)
+            runCommand(BuiltInCommandID.insertBacktab)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
         }
 
         @objc private func handleIndent() {
-            try? controller.executeCommand(BuiltInCommandID.indent)
+            runCommand(BuiltInCommandID.indent)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
         }
 
         @objc private func handleOutdent() {
-            try? controller.executeCommand(BuiltInCommandID.outdent)
+            runCommand(BuiltInCommandID.outdent)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
         }
 
         @objc private func handleMoveLinesUp() {
-            try? controller.executeCommand(BuiltInCommandID.moveLinesUp)
+            runCommand(BuiltInCommandID.moveLinesUp)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
         }
 
         @objc private func handleMoveLinesDown() {
-            try? controller.executeCommand(BuiltInCommandID.moveLinesDown)
+            runCommand(BuiltInCommandID.moveLinesDown)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
         }
 
         @objc private func handleToggleComment() {
-            try? controller.executeCommand(BuiltInCommandID.toggleLineComment)
+            runCommand(BuiltInCommandID.toggleLineComment)
             onTextChange?(controller.text)
             onSelectionChange?(controller.selectedRange)
             relayout()
+        }
+
+        /// Input-path command execution fails closed into the diagnostic channel (UI-N07).
+        private func runCommand(_ id: CommandID) {
+            let snapshot = controller.selectedRanges
+            do {
+                try controller.executeCommand(id)
+            } catch {
+                controller.diagnosticChannel.reportCommandFailure(
+                    error,
+                    operation: id.rawValue,
+                    selectionSnapshot: snapshot
+                )
+                // Restore selection if the failed op desynchronized it.
+                controller.setSelectedRanges(snapshot)
+            }
         }
 
         // MARK: - UITextInput
@@ -597,15 +614,19 @@
         public func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
             inputDelegate?.textWillChange(self)
             let text = markedText ?? ""
-            // UI-002: provisional composition via MarkedTextSession (no undo registration).
+            // UI-002 / UI-N06: provisional composition via MarkedTextSession (no undo registration).
             let replace =
                 markedRangeStorage.location != NSNotFound
                 ? markedRangeStorage
                 : controller.selectedRange
+            if !controller.isComposingMarkedText {
+                controller.beginMarkedTextComposition(replacing: replace)
+            }
             controller.applyMarkedText(text, selectedRangeInMarked: selectedRange, replaceRange: replace)
             if text.isEmpty {
+                // Empty marked text cancels composition and restores pre-composition snapshot.
+                controller.cancelMarkedTextComposition()
                 markedRangeStorage = NSRange(location: NSNotFound, length: 0)
-                controller.clearMarkedTextSession()
             } else {
                 markedRangeStorage = controller.markedTextSession.range
             }
@@ -615,8 +636,8 @@
         }
 
         public func unmarkText() {
-            // Leave committed text in place; clear composition session only.
-            controller.clearMarkedTextSession()
+            // Commit composition with a single undo boundary (UI-N06).
+            controller.commitMarkedTextComposition()
             markedRangeStorage = NSRange(location: NSNotFound, length: 0)
         }
 
@@ -624,42 +645,91 @@
             guard let from = fromPosition as? EditorTextPosition,
                 let to = toPosition as? EditorTextPosition
             else { return nil }
-            let location = min(from.offset, to.offset)
-            return EditorTextRange(range: NSRange(location: location, length: abs(from.offset - to.offset)))
+            let text = controller.document.fullString
+            let a = NativeInputPositions.clampedGraphemePosition(utf16Offset: from.offset, in: text)
+            let b = NativeInputPositions.clampedGraphemePosition(utf16Offset: to.offset, in: text)
+            let location = min(a, b)
+            let range = NativeInputPositions.clampedGraphemeRange(
+                NSRange(location: location, length: abs(a - b)),
+                in: text
+            )
+            return EditorTextRange(range: range)
         }
 
         public func position(from position: UITextPosition, offset: Int) -> UITextPosition? {
             guard let pos = position as? EditorTextPosition else { return nil }
-            // Protocol UTF-16 offset math for UITextInput positioning APIs.
-            let next = min(max(0, pos.offset + offset), controller.document.length)
-            return EditorTextPosition(offset: next)
+            // Grapheme-valid positions only (UI-N02) — never mid-cluster UTF-16 units.
+            let text = controller.document.fullString
+            var utf16 = NativeInputPositions.clampedGraphemePosition(utf16Offset: pos.offset, in: text)
+            let steps = abs(offset)
+            do {
+                if offset >= 0 {
+                    for _ in 0..<steps {
+                        utf16 = try TextOffsetSemantics.graphemeBoundaryAfter(utf16Offset: utf16, in: text)
+                    }
+                } else {
+                    for _ in 0..<steps {
+                        utf16 = try TextOffsetSemantics.graphemeBoundaryBefore(utf16Offset: utf16, in: text)
+                    }
+                }
+            } catch {
+                controller.diagnosticChannel.reportInputFailure(error, operation: "position(from:offset:)")
+                utf16 = NativeInputPositions.clampedGraphemePosition(
+                    utf16Offset: min(max(0, pos.offset + offset), controller.document.length),
+                    in: text
+                )
+            }
+            return EditorTextPosition(offset: utf16)
         }
 
         public func position(
             from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int
         ) -> UITextPosition? {
             guard let pos = position as? EditorTextPosition else { return nil }
-            // Grapheme-aware caret movement for left/right (UI-001); vertical still uses line layout.
+            // Grapheme-aware left/right; vertical via CaretNavigationEngine + layout snapshot (UI-N01).
             let text = controller.document.fullString
-            var utf16 = pos.offset
-            do {
-                switch direction {
-                case .left:
+            var utf16 = NativeInputPositions.clampedGraphemePosition(utf16Offset: pos.offset, in: text)
+            let visual: VisualDirection
+            switch direction {
+            case .left: visual = .left
+            case .right: visual = .right
+            case .up: visual = .up
+            case .down: visual = .down
+            @unknown default: visual = .right
+            }
+            switch visual {
+            case .left, .right:
+                do {
                     for _ in 0..<max(0, offset) {
-                        utf16 = try TextOffsetSemantics.graphemeBoundaryBefore(utf16Offset: utf16, in: text)
+                        let moved = CaretNavigationEngine.move(
+                            caret: TextPosition(utf16Offset: utf16),
+                            direction: visual,
+                            preferredX: nil,
+                            layout: controller.layout.makeEditorLayoutSnapshot(
+                                containerWidth: containerWidth > 0 ? containerWidth : bounds.width,
+                                documentText: text
+                            )
+                        )
+                        utf16 = moved.position.utf16Offset
                     }
-                case .right:
-                    for _ in 0..<max(0, offset) {
-                        utf16 = try TextOffsetSemantics.graphemeBoundaryAfter(utf16Offset: utf16, in: text)
-                    }
-                case .up, .down:
-                    let delta = (direction == .up) ? -offset : offset
-                    return self.position(from: position, offset: delta)
-                @unknown default:
-                    return self.position(from: position, offset: offset)
                 }
-            } catch {
-                return self.position(from: position, offset: direction == .left || direction == .up ? -offset : offset)
+            case .up, .down:
+                let width = containerWidth > 0 ? containerWidth : max(bounds.width, 1)
+                let snapshot = controller.layout.makeEditorLayoutSnapshot(
+                    containerWidth: width,
+                    documentText: text
+                )
+                var preferred = controller.selection.primarySelection.preferredX
+                for _ in 0..<max(0, offset) {
+                    let moved = CaretNavigationEngine.move(
+                        caret: TextPosition(utf16Offset: utf16),
+                        direction: visual,
+                        preferredX: preferred,
+                        layout: snapshot
+                    )
+                    utf16 = moved.position.utf16Offset
+                    preferred = moved.preferredX
+                }
             }
             return EditorTextPosition(offset: utf16)
         }
@@ -700,91 +770,89 @@
         public func baseWritingDirection(
             for position: UITextPosition, in direction: UITextStorageDirection
         ) -> NSWritingDirection {
-            // Resolve from Unicode paragraph direction around the caret (UI-001).
-            let text = controller.document.fullString as NSString
+            // Platform BiDi + stored overrides (UI-N04) — not a first-char-only heuristic.
+            _ = direction
             guard let pos = position as? EditorTextPosition else { return .leftToRight }
-            let loc = min(max(0, pos.offset), max(0, text.length - 1))
-            guard text.length > 0 else { return .leftToRight }
-            let attrs = controller.document.attributedSubstring(from: NSRange(location: loc, length: 1))
-            if let dir = attrs.attribute(.writingDirection, at: 0, effectiveRange: nil) as? [NSNumber],
-                let first = dir.first
-            {
-                return NSWritingDirection(rawValue: first.intValue) ?? .leftToRight
-            }
-            // Bidi class heuristic: if paragraph has strong RTL scalar near caret, report RTL.
-            let windowStart = max(0, loc - 32)
-            let windowLen = min(64, text.length - windowStart)
-            let slice = text.substring(with: NSRange(location: windowStart, length: windowLen))
-            for scalar in slice.unicodeScalars {
-                if scalar.properties.generalCategory == .otherLetter {
-                    // Arabic/Hebrew blocks
-                    let v = scalar.value
-                    if (0x0590...0x08FF).contains(v) || (0xFB1D...0xFEFC).contains(v) {
-                        return .rightToLeft
-                    }
-                }
-            }
-            return .leftToRight
+            let text = controller.document.fullString
+            let resolved = controller.writingDirectionModel.resolvedDirection(at: pos.offset, in: text)
+            return resolved.nsWritingDirection
         }
 
         public func setBaseWritingDirection(_ writingDirection: NSWritingDirection, for range: UITextRange) {
-            // Custom renderer: writing direction is resolved dynamically from paragraph content.
-            // Attribute storage is optional; ignore when range is empty.
-            _ = writingDirection
-            _ = range
+            // Persist override — not a no-op (UI-N04).
+            guard let editorRange = range as? EditorTextRange else { return }
+            let dir = WritingDirectionModel.Direction(ns: writingDirection)
+            controller.writingDirectionModel.setBaseWritingDirection(dir, for: editorRange.range)
+            // Also stamp paragraph writingDirection attribute for attributedSubstring clients.
+            let attrDir: NSWritingDirection = writingDirection == .rightToLeft ? .rightToLeft : .leftToRight
+            controller.document.setAttributes(
+                [.writingDirection: [attrDir.rawValue as NSNumber]],
+                range: editorRange.range
+            )
+            setNeedsDisplay()
         }
 
         public func firstRect(for range: UITextRange) -> CGRect {
             guard let editorRange = range as? EditorTextRange else { return .zero }
-            return controller.layout.caretRect(
-                atUTF16Offset: editorRange.range.location, containerWidth: containerWidth) ?? .zero
+            let width = containerWidth > 0 ? containerWidth : max(bounds.width, 1)
+            let snapshot = controller.layout.makeEditorLayoutSnapshot(
+                containerWidth: width,
+                documentText: controller.document.fullString
+            )
+            return NativeInputContracts.firstRect(for: editorRange.range, layout: snapshot).rect
         }
 
         public func caretRect(for position: UITextPosition) -> CGRect {
             guard let pos = position as? EditorTextPosition else { return .zero }
-            return controller.layout.caretRect(atUTF16Offset: pos.offset, containerWidth: containerWidth) ?? .zero
+            let text = controller.document.fullString
+            let snapped = NativeInputPositions.clampedGraphemePosition(utf16Offset: pos.offset, in: text)
+            return controller.layout.caretRect(atUTF16Offset: snapped, containerWidth: containerWidth) ?? .zero
         }
 
         public func selectionRects(for range: UITextRange) -> [UITextSelectionRect] {
             guard let editorRange = range as? EditorTextRange else { return [] }
-            // Build per-line selection fragments from caret geometry (UI-001).
-            var rects: [UITextSelectionRect] = []
-            let start = editorRange.range.location
-            let end = start + editorRange.range.length
-            var offset = start
-            while offset < end {
-                let caret = controller.layout.caretRect(atUTF16Offset: offset, containerWidth: containerWidth) ?? .zero
-                var width: CGFloat = caret.width
-                let lineY = caret.minY
-                var walk = offset + 1
-                while walk < end {
-                    let next = controller.layout.caretRect(atUTF16Offset: walk, containerWidth: containerWidth) ?? .zero
-                    if abs(next.minY - lineY) > 0.5 { break }
-                    width = next.maxX - caret.minX
-                    walk += 1
-                }
-                let fragment = CGRect(x: caret.minX, y: caret.minY, width: max(width, 1), height: max(caret.height, 1))
-                rects.append(
-                    EditorSelectionRect(
-                        rect: fragment,
-                        containsStart: offset == start,
-                        containsEnd: walk >= end
-                    ))
-                offset = walk
+            // Fragment-based geometry — O(fragments), not O(UTF-16) (UI-N03).
+            let width = containerWidth > 0 ? containerWidth : max(bounds.width, 1)
+            let snapshot = controller.layout.makeEditorLayoutSnapshot(
+                containerWidth: width,
+                documentText: controller.document.fullString
+            )
+            let visible = bounds
+            let frags = SelectionGeometry.selectionRects(
+                for: editorRange.range,
+                layout: snapshot,
+                visibleRect: visible
+            )
+            return frags.map {
+                EditorSelectionRect(
+                    rect: $0.rect,
+                    containsStart: $0.containsStart,
+                    containsEnd: $0.containsEnd,
+                    writingDirectionRTL: $0.writingDirectionRTL
+                )
             }
-            return rects
         }
 
         public func closestPosition(to point: CGPoint) -> UITextPosition? {
-            EditorTextPosition(offset: controller.hitTestOffset(at: point, containerWidth: containerWidth))
+            let raw = controller.hitTestOffset(at: point, containerWidth: containerWidth)
+            let snapped = NativeInputPositions.clampedGraphemePosition(
+                utf16Offset: raw,
+                in: controller.document.fullString
+            )
+            return EditorTextPosition(offset: snapped)
         }
 
         public func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {
             guard let editorRange = range as? EditorTextRange,
                 let pos = closestPosition(to: point) as? EditorTextPosition
             else { return nil }
-            let lo = editorRange.range.location
-            let hi = editorRange.range.location + editorRange.range.length
+            let text = controller.document.fullString
+            let lo = NativeInputPositions.clampedGraphemePosition(
+                utf16Offset: editorRange.range.location, in: text
+            )
+            let hi = NativeInputPositions.clampedGraphemePosition(
+                utf16Offset: editorRange.range.location + editorRange.range.length, in: text
+            )
             let clamped = min(max(pos.offset, lo), hi)
             return EditorTextPosition(offset: clamped)
         }
@@ -792,14 +860,20 @@
         public func characterRange(at point: CGPoint) -> UITextRange? {
             let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
             let text = controller.document.fullString
-            // Extend by one grapheme cluster, not one UTF-16 unit (UI-001).
+            let start = NativeInputPositions.clampedGraphemePosition(utf16Offset: offset, in: text)
             let end: Int
-            if let after = try? TextOffsetSemantics.graphemeBoundaryAfter(utf16Offset: offset, in: text) {
-                end = after
-            } else {
-                end = min(offset + 1, controller.document.length)
+            do {
+                end = try TextOffsetSemantics.graphemeBoundaryAfter(utf16Offset: start, in: text)
+            } catch {
+                controller.diagnosticChannel.reportInputFailure(error, operation: "characterRange(at:)")
+                end = min(start + 1, controller.document.length)
             }
-            return EditorTextRange(range: NSRange(location: offset, length: max(0, end - offset)))
+            return EditorTextRange(
+                range: NativeInputPositions.clampedGraphemeRange(
+                    NSRange(location: start, length: max(0, end - start)),
+                    in: text
+                )
+            )
         }
 
         // MARK: - Drag / Drop
@@ -892,21 +966,23 @@
         init(offset: Int) { self.offset = offset }
     }
 
-    /// Concrete selection rect for UITextInput selection geometry (UI-001).
+    /// Concrete selection rect for UITextInput selection geometry (UI-001 / UI-N03).
     final class EditorSelectionRect: UITextSelectionRect {
         private let _rect: CGRect
         private let _containsStart: Bool
         private let _containsEnd: Bool
+        private let _rtl: Bool
 
-        init(rect: CGRect, containsStart: Bool, containsEnd: Bool) {
+        init(rect: CGRect, containsStart: Bool, containsEnd: Bool, writingDirectionRTL: Bool = false) {
             self._rect = rect
             self._containsStart = containsStart
             self._containsEnd = containsEnd
+            self._rtl = writingDirectionRTL
             super.init()
         }
 
         override var rect: CGRect { _rect }
-        override var writingDirection: NSWritingDirection { .natural }
+        override var writingDirection: NSWritingDirection { _rtl ? .rightToLeft : .leftToRight }
         override var containsStart: Bool { _containsStart }
         override var containsEnd: Bool { _containsEnd }
         override var isVertical: Bool { false }

@@ -158,6 +158,91 @@ public enum TextOffsetSemantics: Sendable {
 
     // MARK: - Grapheme boundaries
 
+    /// True when `utf16Offset` sits on an extended grapheme cluster boundary (UI-N02).
+    ///
+    /// Valid carets are only at grapheme boundaries in `[0, utf16Length]`.
+    public static func isGraphemeBoundary(utf16Offset: Int, in text: String) -> Bool {
+        let nsLen = (text as NSString).length
+        guard isValidUTF16Offset(utf16Offset, documentUTF16Length: nsLen) else { return false }
+        if utf16Offset == 0 || utf16Offset == nsLen { return true }
+        // Mid-surrogate is never a grapheme boundary.
+        guard (try? scalarIndex(atUTF16Offset: utf16Offset, in: text, policy: .exact)) != nil else {
+            return false
+        }
+        let ns = text as NSString
+        // Boundary if the composed sequence that contains the previous unit ends here,
+        // or the sequence at this offset starts here.
+        if utf16Offset > 0 {
+            let prev = ns.rangeOfComposedCharacterSequence(at: utf16Offset - 1)
+            if prev.location + prev.length == utf16Offset {
+                return true
+            }
+        }
+        let range = ns.rangeOfComposedCharacterSequence(at: utf16Offset)
+        return range.location == utf16Offset
+    }
+
+    /// Validates an insertion point: must be a grapheme boundary under ``BoundaryPolicy/exact``,
+    /// or snapped under rounding policies (UI-N02).
+    public static func validatedInsertionPoint(
+        utf16Offset: Int,
+        in text: String,
+        policy: BoundaryPolicy = .exact
+    ) throws -> Int {
+        let ns = text as NSString
+        let nsLen = ns.length
+        guard isValidUTF16Offset(utf16Offset, documentUTF16Length: nsLen) else {
+            throw DocumentStoreError.invalidOffset(utf16Offset)
+        }
+        if isGraphemeBoundary(utf16Offset: utf16Offset, in: text) {
+            return utf16Offset
+        }
+        switch policy {
+        case .exact:
+            throw DocumentStoreError.notGraphemeBoundary(utf16Offset)
+        case .roundDownToScalar, .roundToGrapheme:
+            // Prefer NSString composed-sequence (handles mid-surrogate safely).
+            if nsLen == 0 { return 0 }
+            let probe = min(max(0, utf16Offset), nsLen - 1)
+            let cluster = ns.rangeOfComposedCharacterSequence(at: probe)
+            let start = cluster.location
+            let end = cluster.location + cluster.length
+            if utf16Offset > start, utf16Offset < end {
+                return start
+            }
+            if utf16Offset >= end {
+                return end
+            }
+            return start
+        case .roundUpToScalar:
+            if nsLen == 0 { return 0 }
+            let probe = min(max(0, utf16Offset), nsLen - 1)
+            let cluster = ns.rangeOfComposedCharacterSequence(at: probe)
+            let end = cluster.location + cluster.length
+            if utf16Offset > cluster.location, utf16Offset < end {
+                return end
+            }
+            return try graphemeBoundaryAfter(utf16Offset: utf16Offset, in: text)
+        }
+    }
+
+    /// Validates that both endpoints of `range` are grapheme boundaries (UI-N02).
+    public static func validatedSelectionRange(
+        _ range: NSRange,
+        in text: String,
+        policy: BoundaryPolicy = .exact
+    ) throws -> NSRange {
+        let nsLen = (text as NSString).length
+        let validated = try validatedUTF16Range(range, documentUTF16Length: nsLen)
+        let start = try validatedInsertionPoint(
+            utf16Offset: validated.location, in: text, policy: policy
+        )
+        let endRaw = try utf16EndOffset(location: validated.location, length: validated.length)
+        let end = try validatedInsertionPoint(utf16Offset: endRaw, in: text, policy: policy)
+        let loc = min(start, end)
+        return NSRange(location: loc, length: abs(end - start))
+    }
+
     /// Nearest grapheme-cluster boundary at or before the UTF-16 offset (caret-left semantics).
     public static func graphemeBoundaryBefore(
         utf16Offset: Int,

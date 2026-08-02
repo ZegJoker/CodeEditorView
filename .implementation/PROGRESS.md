@@ -13,7 +13,7 @@
 | 1 | documents | 12 | verified |
 | 2 | substrate | 3 (+ shared substrate build) | verified |
 | 3a | commands | 5 | verified |
-| 3b | native editor UI | 10 | open |
+| 3b | native editor UI | 10 | fixed |
 | 4 | workspace | 10 | open |
 | 5a | search | 9 | open |
 | 5b | tasks | 8 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: Phase 3b native editor UI — fixed UI-N01…UI-N10: CaretNavigationEngine + layout snapshots; grapheme-valid positions; fragment selection geometry; WritingDirectionModel BiDi; firstRect/attributedSubstring contracts; IME begin/cancel/commit lifecycle; EditorDiagnosticChannel (no silent try? on input); PLATFORM-MATRIX + check-platform-matrix.sh; LargeFileMode explicit limitations; semantic accessibility (line/col, rotor, multi-cursor, completion, landmarks, reduced motion). CodeEditorViewTests UINAudit 36 passed.
 - 2026-08-02: batch commands verified — CMD-N01, CMD-N02, CMD-N03, CMD-N04, CMD-N05 status set to `verified` (all previously fixed with regression tests; CodeEditorCommandsTests green).
 - 2026-08-02: Phase 3a commands — fixed CMD-N01…CMD-N05: rejectDuplicate registration + owned replace with diagnostics; CommandID lowercase grammar + reserved `codeeditor` namespace; explicit synchronous dispose (no deinit Task); chord timeout re-resolves live context/focus scope and surfaces errors; CommandExecutionClass gates long-running off sync MainActor. CodeEditorCommandsTests 45 passed; Search/Tasks/SCM/Extensions/Workbench subset green.
 - 2026-08-02: batch substrate verified — CORE-N02, CORE-N03, CORE-N04 status set to `verified` (all previously fixed with regression tests; ProcessSubstrate+Broadcast+Promise/RPC green).
