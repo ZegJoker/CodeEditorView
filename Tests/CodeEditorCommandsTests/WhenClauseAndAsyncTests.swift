@@ -58,7 +58,7 @@ struct AsyncCommandTests {
         let registry = CommandRegistry()
         let dispatcher = CommandDispatcher(commands: registry)
         var ran = false
-        _ = registry.register(
+        _ = try registry.register(
             EditorCommand(
                 id: "test.async",
                 title: "Async",
@@ -85,10 +85,10 @@ struct AsyncCommandTests {
         #expect(conflicts[0].shadowedCommandIDs.map(\.rawValue).contains("a.cmd"))
     }
 
-    @Test func paletteRanksPrefixHigher() {
+    @Test func paletteRanksPrefixHigher() throws {
         let registry = CommandRegistry()
-        _ = registry.register(EditorCommand(id: "x.find", title: "Find in Files") { _ in })
-        _ = registry.register(EditorCommand(id: "x.open", title: "Open File") { _ in })
+        _ = try registry.register(EditorCommand(id: "x.find", title: "Find in Files") { _ in })
+        _ = try registry.register(EditorCommand(id: "x.open", title: "Open File") { _ in })
         let model = CommandPaletteModel(query: "find")
         let editor = MockEditor()
         let list = model.filteredCommands(from: registry, context: .make(from: editor))

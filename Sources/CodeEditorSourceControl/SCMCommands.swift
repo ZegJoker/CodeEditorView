@@ -13,12 +13,14 @@ public enum SCMCommands {
         onRefresh: @escaping @MainActor () -> Void = {},
         onStage: @escaping @MainActor () -> Void = {},
         onCommit: @escaping @MainActor () -> Void = {}
-    ) -> any CommandDisposable {
+    ) throws -> any CommandDisposable {
         let tokens = [
-            registry.register(
+            try registry.register(
                 EditorCommand(id: refresh, title: "SCM: Refresh", category: .general) { _ in onRefresh() }),
-            registry.register(EditorCommand(id: stage, title: "SCM: Stage", category: .general) { _ in onStage() }),
-            registry.register(EditorCommand(id: commit, title: "SCM: Commit", category: .general) { _ in onCommit() }),
+            try registry.register(
+                EditorCommand(id: stage, title: "SCM: Stage", category: .general) { _ in onStage() }),
+            try registry.register(
+                EditorCommand(id: commit, title: "SCM: Commit", category: .general) { _ in onCommit() }),
         ]
         return RegistrationToken {
             for token in tokens {

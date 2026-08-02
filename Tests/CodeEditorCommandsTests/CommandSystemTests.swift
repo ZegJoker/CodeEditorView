@@ -45,18 +45,16 @@ private final class MockEditor: EditorCommandClient {
 @Suite("Command registry and keybindings")
 @MainActor
 struct CommandRegistryTests {
-    @Test func registerAndDispose() {
+    @Test func registerAndDispose() throws {
         let registry = CommandRegistry()
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
-        let token = registry.register(
+        let token = try registry.register(
             EditorCommand.action(id: "test.cmd", title: "Test", action: .indent)
         )
         #expect(registry.command(id: "test.cmd") != nil)
         #expect(registry.enabledCommands(in: context).contains { $0.id.rawValue == "test.cmd" })
         token.dispose()
-        // Token dispose is async via Task — call unregister directly for deterministic test.
-        registry.unregister(id: "test.cmd")
         #expect(registry.command(id: "test.cmd") == nil)
     }
 
@@ -83,7 +81,7 @@ struct CommandRegistryTests {
         let dispatcher = CommandDispatcher()
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: "chord.cmd", title: "Chord", action: .indent)
         )
         let chord = Keybinding(chord: [
@@ -101,19 +99,19 @@ struct CommandRegistryTests {
     @Test func executeByID() throws {
         let dispatcher = CommandDispatcher()
         let editor = MockEditor()
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: BuiltInCommandID.indent, title: "Indent", action: .indent)
         )
         try dispatcher.execute(BuiltInCommandID.indent, context: CommandContext.make(from: editor))
         #expect(editor.lastAction == .indent)
     }
 
-    @Test func paletteFilters() {
+    @Test func paletteFilters() throws {
         let registry = CommandRegistry()
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
-        _ = registry.register(EditorCommand.action(id: "codeeditor.edit.indent", title: "Indent", action: .indent))
-        _ = registry.register(
+        _ = try registry.register(EditorCommand.action(id: "codeeditor.edit.indent", title: "Indent", action: .indent))
+        _ = try registry.register(
             EditorCommand.action(
                 id: "test.hidden",
                 title: "Secret",

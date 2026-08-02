@@ -32,10 +32,10 @@ struct Phase4ChordTests {
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
 
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: "test.chord.short", title: "Short", action: .indent)
         )
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: "test.chord.long", title: "Long", action: .outdent)
         )
         let k = KeyPress(key: "k", modifiers: .command)
@@ -54,7 +54,7 @@ struct Phase4ChordTests {
         let dispatcher = CommandDispatcher()
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: "test.chord.short2", title: "Short", action: .indent)
         )
         let k = KeyPress(key: "k", modifiers: .command)
@@ -73,10 +73,10 @@ struct Phase4ChordTests {
         let dispatcher = CommandDispatcher()
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: "test.chord.timeout", title: "Short", action: .indent)
         )
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand.action(id: "test.chord.timeout.long", title: "Long", action: .outdent)
         )
         let k = KeyPress(key: "k", modifiers: .command)
@@ -120,7 +120,7 @@ struct Phase4CommandResultTests {
         let editor = MockEditor()
         editor.isEditable = false
         let context = CommandContext.make(from: editor)
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand(
                 id: "test.needs.edit",
                 title: "Needs Edit",
@@ -162,10 +162,10 @@ struct Phase4CommandResultTests {
         #expect(ctx.languageID == "swift")
     }
 
-    @Test func registrationBagRetainsUntilDispose() {
+    @Test func registrationBagRetainsUntilDispose() throws {
         let bag = RegistrationBag()
         let registry = CommandRegistry()
-        let token = registry.register(
+        let token = try registry.register(
             EditorCommand.action(id: "test.bag.cmd", title: "Bag", action: .indent)
         )
         bag.retain(token)
@@ -173,8 +173,7 @@ struct Phase4CommandResultTests {
         // Dropping local token reference must not unregister while bag holds it.
         #expect(bag.count == 1)
         bag.disposeAll()
-        // Dispose is async via Task in registry token — unregister for deterministic assert.
-        registry.unregister(id: "test.bag.cmd")
+        // Dispose is synchronous (CMD-N03).
         #expect(registry.command(id: "test.bag.cmd") == nil)
         #expect(bag.isDisposed)
     }
@@ -183,12 +182,12 @@ struct Phase4CommandResultTests {
         let registry = CommandRegistry()
         _ = try registry.register(
             EditorCommand.action(id: "test.dup.cmd", title: "A", action: .indent),
-            replaceExisting: false
+            policy: .rejectDuplicate
         )
         #expect(throws: CommandIdentityError.self) {
             _ = try registry.register(
                 EditorCommand.action(id: "test.dup.cmd", title: "B", action: .outdent),
-                replaceExisting: false
+                policy: .rejectDuplicate
             )
         }
     }
@@ -209,7 +208,7 @@ struct Phase4CommandResultTests {
         let dispatcher = CommandDispatcher()
         let editor = MockEditor()
         let context = CommandContext.make(from: editor)
-        _ = dispatcher.commands.register(
+        _ = try dispatcher.commands.register(
             EditorCommand(
                 id: "test.unsupported.cmd",
                 title: "U",

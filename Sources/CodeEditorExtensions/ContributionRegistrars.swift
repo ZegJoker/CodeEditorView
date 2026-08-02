@@ -16,14 +16,14 @@ public final class CommandContributionRegistrar: @unchecked Sendable {
 
     @MainActor
     @discardableResult
-    public func register(_ command: EditorCommand) -> any ExtensionDisposable {
-        let token = registry.register(command)
+    public func register(_ command: EditorCommand) throws -> any ExtensionDisposable {
+        let token = try registry.register(command, policy: .rejectDuplicate)
         return ExtensionRegistrationToken(wrapping: token)
     }
 
-    public func registerAsync(_ command: EditorCommand) async -> any ExtensionDisposable {
-        await MainActor.run {
-            register(command)
+    public func registerAsync(_ command: EditorCommand) async throws -> any ExtensionDisposable {
+        try await MainActor.run {
+            try register(command)
         }
     }
 }

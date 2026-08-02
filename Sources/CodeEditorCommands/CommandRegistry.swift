@@ -5,39 +5,56 @@ import Foundation
 public final class CommandRegistry {
     private struct Entry {
         var command: EditorCommand
-        var tokenID: UUID
+        var tokenID: CommandRegistrationToken.ID
     }
 
     private var entries: [CommandID: Entry] = [:]
 
+    /// Optional diagnostic sink for replace/reject events (CMD-N01).
+    public var onRegistrationDiagnostic: ((CommandRegistrationDiagnostic) -> Void)?
+
     public init() {}
 
-    /// Registers a command. Throws ``CommandIdentityError/duplicateRegistration`` when
-    /// an existing entry would be silently replaced (audit §9.3).
+    /// Registers a command under the given policy (default: ``CommandRegistrationPolicy/rejectDuplicate``).
     @discardableResult
-    public func register(_ command: EditorCommand, replaceExisting: Bool = false) throws -> any CommandDisposable {
+    public func register(
+        _ command: EditorCommand,
+        policy: CommandRegistrationPolicy = .rejectDuplicate
+    ) throws -> CommandRegistrationToken {
         guard CommandID.isValid(command.id.rawValue) else {
             throw CommandIdentityError.invalidID(command.id.rawValue)
         }
-        if entries[command.id] != nil, !replaceExisting {
-            throw CommandIdentityError.duplicateRegistration(command.id.rawValue)
-        }
-        let tokenID = UUID()
-        entries[command.id] = Entry(command: command, tokenID: tokenID)
-        return RegistrationToken { [weak self] in
-            Task { @MainActor in
-                guard let self else { return }
-                if self.entries[command.id]?.tokenID == tokenID {
-                    self.entries.removeValue(forKey: command.id)
+
+        if let existing = entries[command.id] {
+            switch policy {
+            case .rejectDuplicate:
+                onRegistrationDiagnostic?(.rejectedDuplicate(commandID: command.id))
+                throw CommandIdentityError.duplicateRegistration(command.id.rawValue)
+            case .replaceOwnedRegistration(let expected):
+                guard existing.tokenID == expected else {
+                    onRegistrationDiagnostic?(
+                        .ownershipMismatch(
+                            commandID: command.id,
+                            expected: expected,
+                            actual: existing.tokenID
+                        )
+                    )
+                    throw CommandIdentityError.ownershipMismatch(command.id.rawValue)
                 }
+                onRegistrationDiagnostic?(
+                    .replacedOwnedRegistration(commandID: command.id, previousToken: existing.tokenID)
+                )
             }
         }
-    }
 
-    /// Soft register for migration: replaces existing without throwing.
-    @discardableResult
-    public func register(_ command: EditorCommand) -> any CommandDisposable {
-        (try? register(command, replaceExisting: true)) ?? RegistrationToken {}
+        let tokenID = UUID()
+        entries[command.id] = Entry(command: command, tokenID: tokenID)
+        return CommandRegistrationToken(id: tokenID) { [weak self] in
+            guard let self else { return }
+            if self.entries[command.id]?.tokenID == tokenID {
+                self.entries.removeValue(forKey: command.id)
+            }
+        }
     }
 
     public func unregister(id: CommandID) {

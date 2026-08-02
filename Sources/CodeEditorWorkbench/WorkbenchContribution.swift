@@ -136,14 +136,13 @@ public final class WorkbenchContributionRegistry {
         )
         faults.removeValue(forKey: contribution.id)
         revision &+= 1
+        // Dispose unregisters synchronously on MainActor (CMD-N03 pattern).
         return RegistrationToken { [weak self] in
-            Task { @MainActor in
-                guard let self else { return }
-                if self.entries[contribution.id]?.tokenID == tokenID {
-                    self.entries.removeValue(forKey: contribution.id)
-                    self.faults.removeValue(forKey: contribution.id)
-                    self.revision &+= 1
-                }
+            guard let self else { return }
+            if self.entries[contribution.id]?.tokenID == tokenID {
+                self.entries.removeValue(forKey: contribution.id)
+                self.faults.removeValue(forKey: contribution.id)
+                self.revision &+= 1
             }
         }
     }

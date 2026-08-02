@@ -32,7 +32,7 @@ struct CommandSampleExtension: CodeEditorExtension {
                 title: "Hello Extension"
             ) { _ in }
         }
-        let token = await commands.registerAsync(command)
+        let token = try await commands.registerAsync(command)
         context.track(token)
         context.info("command registered")
     }

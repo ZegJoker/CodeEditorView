@@ -423,9 +423,14 @@
       "severity_raw": "P1 API correctness",
       "title": "public soft registration silently replaces commands",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N01_defaultPolicyRejectsDuplicate",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N01_softRegisterConvenienceRemovedOrRejects",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N01_replaceOwnedRequiresMatchingToken",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N01_replaceOwnedEmitsDiagnostic"
+      ],
+      "notes": "2026-08-02: CommandRegistrationPolicy rejectDuplicate default; replaceOwnedRegistration requires token ownership + diagnostics; soft non-throwing replace removed."
     },
     {
       "id": "CMD-N02",
@@ -433,9 +438,14 @@
       "severity_raw": "P2",
       "title": "`CommandID` validation and documentation disagree",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N02_rejectsUppercase",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N02_acceptsRecommendedGrammar",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N02_rejectsInvalidCharsetAndLength",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N02_reservedHostNamespaces"
+      ],
+      "notes": "2026-08-02: grammar ^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$, maxLength 200, reserved host prefix codeeditor; built-in IDs kebab-cased."
     },
     {
       "id": "CMD-N03",
@@ -443,9 +453,13 @@
       "severity_raw": "P1 lifecycle nondeterminism",
       "title": "token deinit unregisters through an unstructured task",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N03_disposeUnregistersSynchronously",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N03_tokenDeinitDoesNotScheduleUnregister",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N03_keybindingDisposeIsSynchronous"
+      ],
+      "notes": "2026-08-02: explicit dispose only; synchronous MainActor unregister; deinit never schedules Task."
     },
     {
       "id": "CMD-N04",
@@ -453,9 +467,14 @@
       "severity_raw": "P1",
       "title": "chord timeout executes with stale context and hides errors",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N04_timeoutReResolvesContextAndRespectsEnablement",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N04_timeoutSurfacesExecutionErrors",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N04_timeoutCancelsWhenFocusScopeChanges",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N04_contextChangeClearsPendingChord"
+      ],
+      "notes": "2026-08-02: timeout re-makes CommandContext from editor, checks focusScopeID, re-evaluates enablement, onCommandFailure surfaces errors (no try?)."
     },
     {
       "id": "CMD-N05",
@@ -463,9 +482,15 @@
       "severity_raw": "P1",
       "title": "synchronous handlers can block the main actor",
       "phase": 3,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_syncExecuteRejectsLongRunning",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_syncExecuteRejectsAsynchronousClass",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_executeAsyncRunsLongRunningOffSyncPath",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_longRunningWithoutAsyncHandlerFailsClosed",
+        "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_immediateUIStillRunsSynchronously"
+      ],
+      "notes": "2026-08-02: CommandExecutionClass on EditorCommand; sync execute only immediateUI; longRunning/async require executeAsync + asyncHandler fail-closed."
     },
     {
       "id": "UI-N01",

@@ -171,15 +171,15 @@ final class HostServices {
             )
         }
 
-        // Tooling commands
+        // Tooling commands (CMD-N01: fail-closed registration, no soft replace)
         let cmds = workbench.commandDispatcher.commands
-        commandTokens.append(SearchCommands.register(into: cmds, onFindInFiles: { [weak self] in
+        commandTokens.append(try! SearchCommands.register(into: cmds, onFindInFiles: { [weak self] in
             self?.workbench?.selectNavigator(id: "fullworkbench.navigator.find")
         }))
-        commandTokens.append(SCMCommands.register(into: cmds, onRefresh: { [weak self] in
+        commandTokens.append(try! SCMCommands.register(into: cmds, onRefresh: { [weak self] in
             Task { await self?.refreshSCM() }
         }))
-        commandTokens.append(TaskCommands.register(into: cmds, onRun: { [weak self] in
+        commandTokens.append(try! TaskCommands.register(into: cmds, onRun: { [weak self] in
             Task { await self?.runDemoTask() }
         }))
 

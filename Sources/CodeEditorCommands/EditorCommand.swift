@@ -85,6 +85,31 @@ public enum CommandResult: Sendable, Equatable {
     case failed(String)
 }
 
+/// Declares how a command may execute (CMD-N05).
+///
+/// Long-running and asynchronous work must not run through the synchronous
+/// MainActor ``CommandDispatcher/execute`` path.
+public enum CommandExecutionClass: Sendable, Equatable, Codable, Hashable {
+    /// Short MainActor UI mutation; may use the synchronous handler.
+    case immediateUI
+    /// Must use ``CommandDispatcher/executeAsync`` and an async handler.
+    case asynchronous
+    /// Workspace-scoped transactional work; async only.
+    case transactionalWorkspace
+    /// Cancellable long-running work; async only — never block MainActor sync execute.
+    case longRunningCancellable
+
+    /// Whether the class may run on the synchronous MainActor execute path.
+    public var allowsSynchronousMainActorExecution: Bool {
+        switch self {
+        case .immediateUI:
+            return true
+        case .asynchronous, .transactionalWorkspace, .longRunningCancellable:
+            return false
+        }
+    }
+}
+
 /// Immutable context passed to command handlers.
 @MainActor
 public struct CommandContext {
@@ -135,6 +160,17 @@ public struct CommandContext {
         )
     }
 
+    /// Stable focus-scope identity for chord ownership (CMD-N04).
+    public var focusScopeID: String {
+        if let sessionID {
+            return "session:\(sessionID.rawValue.uuidString)"
+        }
+        if let documentID {
+            return "document:\(documentID.rawValue.uuidString)"
+        }
+        return "editor:\(ObjectIdentifier(editor))"
+    }
+
     public static func make(
         from editor: any EditorCommandClient,
         services: CommandServiceLocator = CommandServiceLocator(),
@@ -164,6 +200,8 @@ public struct EditorCommand {
     public let defaultKeybindings: [Keybinding]
     public let enablement: ContextExpression
     public let placement: CommandPlacement
+    /// Execution class — long-running work must not use sync MainActor execute (CMD-N05).
+    public let executionClass: CommandExecutionClass
     /// Synchronous MainActor handler (built-ins never suspend).
     public let handler: (CommandContext) throws -> Void
     /// Optional async handler; when set, preferred by ``CommandDispatcher/executeAsync``.
@@ -176,6 +214,7 @@ public struct EditorCommand {
         defaultKeybindings: [Keybinding] = [],
         enablement: ContextExpression = .always,
         placement: CommandPlacement = .default,
+        executionClass: CommandExecutionClass = .immediateUI,
         handler: @escaping (CommandContext) throws -> Void
     ) {
         self.id = id
@@ -184,6 +223,7 @@ public struct EditorCommand {
         self.defaultKeybindings = defaultKeybindings
         self.enablement = enablement
         self.placement = placement
+        self.executionClass = executionClass
         self.handler = handler
         self.asyncHandler = nil
     }
@@ -195,6 +235,7 @@ public struct EditorCommand {
         defaultKeybindings: [Keybinding] = [],
         enablement: ContextExpression = .always,
         placement: CommandPlacement = .default,
+        executionClass: CommandExecutionClass = .asynchronous,
         asyncHandler: @escaping (CommandContext) async throws -> CommandResult
     ) {
         self.id = id
@@ -203,6 +244,7 @@ public struct EditorCommand {
         self.defaultKeybindings = defaultKeybindings
         self.enablement = enablement
         self.placement = placement
+        self.executionClass = executionClass
         self.handler = { _ in }
         self.asyncHandler = asyncHandler
     }
@@ -215,6 +257,7 @@ public struct EditorCommand {
         defaultKeybindings: [Keybinding] = [],
         enablement: ContextExpression = .always,
         placement: CommandPlacement = .default,
+        executionClass: CommandExecutionClass = .immediateUI,
         action: EditorCommandAction
     ) -> EditorCommand {
         EditorCommand(
@@ -223,7 +266,8 @@ public struct EditorCommand {
             category: category,
             defaultKeybindings: defaultKeybindings,
             enablement: enablement,
-            placement: placement
+            placement: placement,
+            executionClass: executionClass
         ) { context in
             try context.editor.perform(action)
         }

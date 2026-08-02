@@ -150,9 +150,12 @@ extension EditorController {
                 defaultKeybindings: keys,
                 enablement: enablement,
                 placement: placement,
+                executionClass: .immediateUI,
                 action: action
             )
-            tokens.append(dispatcher.commands.register(command))
+            // Built-in catalog owns these IDs; reject duplicates rather than soft-replace (CMD-N01).
+            let token = try! dispatcher.commands.register(command, policy: .rejectDuplicate)
+            tokens.append(token)
             for kb in keys {
                 tokens.append(
                     dispatcher.keybindings.bind(kb, to: id, source: .builtIn)

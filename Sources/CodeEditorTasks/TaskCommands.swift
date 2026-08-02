@@ -11,11 +11,11 @@ public enum TaskCommands {
         into registry: CommandRegistry,
         onRun: @escaping @MainActor () -> Void = {},
         onCancel: @escaping @MainActor () -> Void = {}
-    ) -> any CommandDisposable {
-        let t1 = registry.register(
+    ) throws -> any CommandDisposable {
+        let t1 = try registry.register(
             EditorCommand(id: run, title: "Run Task", category: .general) { _ in onRun() }
         )
-        let t2 = registry.register(
+        let t2 = try registry.register(
             EditorCommand(id: cancel, title: "Cancel Task", category: .general) { _ in onCancel() }
         )
         return RegistrationToken {

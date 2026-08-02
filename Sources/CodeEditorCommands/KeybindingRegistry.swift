@@ -31,10 +31,9 @@ public final class KeybindingRegistry {
             priority: priority
         )
         bindings.append(entry)
+        // CMD-N03: dispose unregisters synchronously on MainActor — no unstructured Task.
         return RegistrationToken { [weak self] in
-            Task { @MainActor in
-                self?.bindings.removeAll { $0.id == id }
-            }
+            self?.bindings.removeAll { $0.id == id }
         }
     }
 
