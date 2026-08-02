@@ -1,10 +1,10 @@
 {
-  "commit": "5d9f2d4a4a89b308ca02ac9fd35bc3e3fa874337",
-  "generated_at": "2026-08-02T14:02:02Z",
-  "open_findings": 165,
-  "open_p0": 49,
-  "open_p1": 102,
-  "run_id": "local-20260802T140202Z",
+  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da",
+  "generated_at": "2026-08-02T18:37:13Z",
+  "open_findings": 99,
+  "open_p0": 39,
+  "open_p1": 53,
+  "run_id": "local-20260802T183713Z",
   "schema_version": 1,
   "source": "AUDIT-2026-08-02-FINDINGS.json",
   "status": "fail"

@@ -340,6 +340,8 @@ public enum SCMError: Error, Sendable, Equatable {
     case authFailed(String)
     /// Destructive op blocked by open dirty editor buffers (SCM-N06).
     case dirtyDocuments([String])
+    /// Destructive op attempted without a bound document coordinator (SCM-N06 fail-closed).
+    case documentCoordinatorRequired
     /// Process stdout/stderr exceeded bound (SCM-N09).
     case outputOverflow(stream: String, droppedBytes: Int)
     /// `git apply --check` failed before mutation (SCM-N07).

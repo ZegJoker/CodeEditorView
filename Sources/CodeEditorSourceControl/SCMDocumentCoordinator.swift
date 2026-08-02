@@ -6,6 +6,8 @@ import Foundation
 ///
 /// Fail-closed: discard / checkout / pull / reset must not run while a dirty
 /// document covers an affected path. Hosts bind ``DocumentLifecycleCoordinator``.
+/// When no coordinator is bound, destructive ops throw
+/// ``SCMError/documentCoordinatorRequired`` — never soft-return.
 public struct SCMDocumentCoordinator: Sendable {
     public typealias Check = @Sendable (_ repositoryRoot: URL, _ relativePaths: [String]) async throws -> Void
 
@@ -14,6 +16,9 @@ public struct SCMDocumentCoordinator: Sendable {
     public init(check: @escaping Check) {
         self.check = check
     }
+
+    /// Headless / fixture path with no open editors (still an explicit binding).
+    public static let alwaysClean = SCMDocumentCoordinator { _, _ in }
 
     /// Assert no dirty open documents intersect `relativePaths` under `repositoryRoot`.
     /// Empty `relativePaths` means whole-repository mutation (checkout/pull/merge).

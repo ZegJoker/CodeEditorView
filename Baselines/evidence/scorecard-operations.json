@@ -1,7 +1,7 @@
 {
-  "commit": "5d9f2d4a4a89b308ca02ac9fd35bc3e3fa874337",
+  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da",
   "fault_suite": "Docs/Architecture/defects.json",
-  "generated_at": "2026-08-02T14:02:02Z",
+  "generated_at": "2026-08-02T18:37:13Z",
   "schema_version": 1,
   "status": "fail"
 }

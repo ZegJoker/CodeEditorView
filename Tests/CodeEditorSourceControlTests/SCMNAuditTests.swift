@@ -24,7 +24,10 @@ struct SCMNAuditTests {
     }
 
     private func runGit(_ args: [String], in root: URL) throws {
-        guard let git = Self.gitExecutable else { return }
+        guard let git = Self.gitExecutable else {
+            Issue.record("git executable missing at /usr/bin/git")
+            throw SCMError.failed("git missing")
+        }
         let p = Process()
         p.executableURL = git
         p.arguments = args
@@ -34,10 +37,13 @@ struct SCMNAuditTests {
         try p.run()
         p.waitUntilExit()
         #expect(p.terminationStatus == 0, "git \(args.joined(separator: " ")) failed")
+        if p.terminationStatus != 0 {
+            throw SCMError.failed("git \(args.joined(separator: " ")) exit \(p.terminationStatus)")
+        }
     }
 
     private func initRepo(_ root: URL) throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required at /usr/bin/git")
         try runGit(["init"], in: root)
         try runGit(["config", "user.email", "scm-n@example.com"], in: root)
         try runGit(["config", "user.name", "SCM N"], in: root)
@@ -109,15 +115,42 @@ struct SCMNAuditTests {
         let auth = CaptureAuth()
         let root = try makeTempRepo(named: "auth")
         defer { try? FileManager.default.removeItem(at: root) }
+        try initRepo(root)
         let provider = GitCLIProvider(repositoryRoot: root, trusted: true, auth: auth)
-        // Direct broker path used by fetch/pull/push before git spawn.
-        let creds = await provider.resolveCredentials(
-            for: SCMAuthRequest(protocolName: "https", host: "example.com", path: "/repo.git")
-        )
-        #expect(creds?.username == "user")
-        #expect(creds?.password == "s3cret-token")
-        #expect(await auth.callCount() == 1)
-        #expect(await auth.firstHost() == "example.com")
+
+        // Remote path must resolve credentials and wire GIT_ASKPASS before git spawn (not only direct resolve).
+        let env = await provider.gitEnvironmentForRemote(host: "example.com")
+        #expect(env["GIT_TERMINAL_PROMPT"] == "0")
+        guard let askpass = env["GIT_ASKPASS"], !askpass.isEmpty else {
+            Issue.record("GIT_ASKPASS must be set when auth callback is configured")
+            return
+        }
+        #expect(FileManager.default.isExecutableFile(atPath: askpass))
+        #expect(env["GIT_ASKPASS_REQUIRE"] == "force")
+
+        // fetch/pull path invokes auth callback and writes askpass material before spawning git.
+        do {
+            try await provider.fetch(remote: "origin")
+        } catch {
+            // Remote may not exist — auth + askpass wiring still required.
+        }
+        #expect(await auth.callCount() >= 1)
+        let host = await auth.firstHost()
+        #expect(host == "origin" || host == "example.com")
+
+        // Runtime: git-compatible askpass helper returns password when prompted.
+        let passwordFile = URL(fileURLWithPath: askpass).deletingLastPathComponent()
+            .appendingPathComponent("password")
+        #expect(FileManager.default.fileExists(atPath: passwordFile.path))
+        let ask = Process()
+        ask.executableURL = URL(fileURLWithPath: askpass)
+        ask.arguments = ["Password for 'https://example.com':"]
+        let out = Pipe()
+        ask.standardOutput = out
+        try ask.run()
+        ask.waitUntilExit()
+        let got = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        #expect(got.contains("s3cret-token"))
     }
 
     @Test func test_SCM_N02_missingAuthFailsClosedWithoutTerminalPrompt() async throws {
@@ -152,20 +185,32 @@ struct SCMNAuditTests {
     @Test func test_SCM_N03_longOperationEmitsProgressAndSupportsCancel() async throws {
         let root = try makeTempRepo(named: "prog")
         defer { try? FileManager.default.removeItem(at: root) }
-        try initRepo(root)
-        guard Self.gitExecutable != nil else { return }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
 
-        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
-        var started = false
-        var finished = false
+        // Slow stand-in for a long git network op so cancel is observable.
+        let sleeper = root.appendingPathComponent("slow-git.sh")
+        try """
+            #!/bin/sh
+            sleep 30
+            exit 0
+            """.write(to: sleeper, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: sleeper.path)
+
+        let provider = GitCLIProvider(
+            repositoryRoot: root,
+            executable: sleeper,
+            trusted: true,
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean
+        )
+
         async let collector: [SCMProgressEvent] = {
             var events: [SCMProgressEvent] = []
             for await item in await provider.makeProgressStream(replay: .allBuffered) {
                 switch item {
                 case .value(let env):
                     events.append(env.event)
-                    if case .started = env.event { started = true }
-                    if case .finished = env.event { finished = true }
+                    if case .cancelled = env.event { return events }
+                    if case .finished = env.event { return events }
                 case .finished:
                     return events
                 case .gap:
@@ -175,15 +220,70 @@ struct SCMNAuditTests {
             return events
         }()
 
-        // status is a real coordinated operation with progress envelope
-        _ = try await provider.status()
+        let op = Task<Void, Never> {
+            do {
+                _ = try await provider.status()
+                Issue.record("expected cancellation before status completed")
+            } catch let error as SCMError {
+                #expect(error == .cancelled)
+            } catch {
+                // CancellationError or process failure after cancel
+            }
+        }
+
+        try await Task.sleep(nanoseconds: 80_000_000)
+        await provider.cancel()
+        await op.value
         try await Task.sleep(nanoseconds: 50_000_000)
         await provider.finishProgressStreamForTests()
         let events = await collector
+
         #expect(events.contains { if case .started(let op, _) = $0 { return op == "status" }; return false })
-        #expect(events.contains { if case .finished(let op, let ok) = $0 { return op == "status" && ok }; return false })
-        #expect(started || events.contains { if case .started = $0 { return true }; return false })
-        #expect(finished || events.contains { if case .finished = $0 { return true }; return false })
+        #expect(
+            events.contains { if case .cancelled(let op) = $0 { return op == "status" }; return false }
+                || events.contains { if case .finished(let op, let ok) = $0 { return op == "status" && !ok }; return false },
+            "cancel must emit cancelled (or failed finished) progress"
+        )
+        #expect(events.contains { if case .fraction = $0 { return true }; return false }, "must publish fraction progress")
+    }
+
+    @Test func test_SCM_N03_parsesGitProgressFractionAndPublishes() async throws {
+        #expect(GitCLIProvider.parseGitProgressFraction("Receiving objects:  45% (123/456)") == 0.45)
+        #expect(GitCLIProvider.parseGitProgressFraction("Resolving deltas: 100% (10/10), done.") == 1.0)
+        #expect(GitCLIProvider.parseGitProgressFraction("no percent here") == nil)
+
+        let root = try makeTempRepo(named: "prog-frac")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try initRepo(root)
+        #expect(Self.gitExecutable != nil, "git required for progress fraction integration")
+
+        let provider = GitCLIProvider(
+            repositoryRoot: root,
+            trusted: true,
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean
+        )
+        async let collector: [SCMProgressEvent] = {
+            var events: [SCMProgressEvent] = []
+            for await item in await provider.makeProgressStream(replay: .allBuffered) {
+                switch item {
+                case .value(let env):
+                    events.append(env.event)
+                    if case .finished = env.event { return events }
+                case .finished:
+                    return events
+                case .gap:
+                    break
+                }
+            }
+            return events
+        }()
+        _ = try await provider.status()
+        try await Task.sleep(nanoseconds: 30_000_000)
+        await provider.finishProgressStreamForTests()
+        let events = await collector
+        #expect(events.contains { if case .fraction(let f) = $0 { return f >= 0 && f <= 1 }; return false })
+        #expect(events.contains { if case .started = $0 { return true }; return false })
+        #expect(events.contains { if case .finished(_, true) = $0 { return true }; return false })
     }
 
     @Test func test_SCM_N03_oneOperationCoordinatorPerRepository() async throws {
@@ -284,7 +384,7 @@ struct SCMNAuditTests {
     // MARK: - SCM-N05 mutation serialization
 
     @Test func test_SCM_N05_mutationsAreSerializedPerRepository() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "serial")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -293,7 +393,11 @@ struct SCMNAuditTests {
         try runGit(["add", "f.txt"], in: root)
         try runGit(["commit", "-m", "i"], in: root)
 
-        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
+        let provider = GitCLIProvider(
+            repositoryRoot: root,
+            trusted: true,
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean
+        )
         let uri = DocumentURI(fileURL: file)
         try "two\n".write(to: file, atomically: true, encoding: .utf8)
 
@@ -314,7 +418,7 @@ struct SCMNAuditTests {
     // MARK: - SCM-N06 dirty document coordination
 
     @Test func test_SCM_N06_discardFailsClosedWhenDirtyBufferOpen() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "dirty")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -335,7 +439,7 @@ struct SCMNAuditTests {
         let service = SourceControlService()
         await service.setTrusted(true)
         await service.setDocumentCoordinator(coordinator)
-        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
+        let provider = GitCLIProvider(repositoryRoot: root, trusted: true, documentCoordinator: coordinator)
         await service.registerProvider(provider)
 
         do {
@@ -354,9 +458,79 @@ struct SCMNAuditTests {
         #expect(disk.contains("print(2)"))
     }
 
+    @Test func test_SCM_N06_missingCoordinatorFailsClosedOnDestructive() async throws {
+        #expect(Self.gitExecutable != nil, "git required")
+        let root = try makeTempRepo(named: "no-coord")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try initRepo(root)
+        let file = root.appendingPathComponent("doc.swift")
+        try "print(1)\n".write(to: file, atomically: true, encoding: .utf8)
+        try runGit(["add", "doc.swift"], in: root)
+        try runGit(["commit", "-m", "i"], in: root)
+        try "print(2)\n".write(to: file, atomically: true, encoding: .utf8)
+
+        let service = SourceControlService()
+        await service.setTrusted(true)
+        // Intentionally no setDocumentCoordinator — must fail closed, not soft-return.
+        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
+        await service.registerProvider(provider)
+        let uri = DocumentURI(fileURL: file)
+
+        do {
+            try await service.discard(uris: [uri])
+            Issue.record("expected documentCoordinatorRequired when coordinator unset")
+        } catch let error as SCMError {
+            #expect(
+                error == .documentCoordinatorRequired
+                    || { if case .dirtyDocuments = error { return true }; return false }()
+            )
+        }
+        let disk = try String(contentsOf: file, encoding: .utf8)
+        #expect(disk.contains("print(2)"), "git must not replace path without coordinator")
+    }
+
+    @Test func test_SCM_N06_providerDiscardAndDiscardHunkFailClosedWithoutCoordinator() async throws {
+        #expect(Self.gitExecutable != nil, "git required")
+        let root = try makeTempRepo(named: "prov-no-coord")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try initRepo(root)
+        let file = root.appendingPathComponent("doc.swift")
+        try "print(1)\n".write(to: file, atomically: true, encoding: .utf8)
+        try runGit(["add", "doc.swift"], in: root)
+        try runGit(["commit", "-m", "i"], in: root)
+        try "print(2)\n".write(to: file, atomically: true, encoding: .utf8)
+
+        // Provider-layer destructive ops must not bypass dirty preflight.
+        let provider = GitCLIProvider(repositoryRoot: root, trusted: true, documentCoordinator: nil)
+        let uri = DocumentURI(fileURL: file)
+        do {
+            try await provider.discard(uris: [uri])
+            Issue.record("provider.discard must fail closed without document coordinator")
+        } catch let error as SCMError {
+            #expect(error == .documentCoordinatorRequired)
+        }
+        do {
+            let hunk = SCMDiffHunk(
+                header: "@@ -1,1 +1,1 @@",
+                oldStart: 1,
+                oldCount: 1,
+                newStart: 1,
+                newCount: 1,
+                lines: ["-print(1)", "+print(2)"],
+                noNewlineAtEndOfFile: false
+            )
+            try await provider.discardHunk(hunk, uri: uri)
+            Issue.record("provider.discardHunk must fail closed without document coordinator")
+        } catch let error as SCMError {
+            #expect(error == .documentCoordinatorRequired)
+        }
+        let disk = try String(contentsOf: file, encoding: .utf8)
+        #expect(disk.contains("print(2)"))
+    }
+
     @Test @MainActor
     func test_SCM_N06_lifecycleBindingDetectsDirtyOpenDocument() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "life-dirty")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -375,8 +549,11 @@ struct SCMNAuditTests {
 
         let service = SourceControlService()
         await service.setTrusted(true)
-        await service.setDocumentCoordinator(SCMDocumentCoordinator.binding(lifecycle))
-        await service.registerProvider(GitCLIProvider(repositoryRoot: root, trusted: true))
+        let binding = SCMDocumentCoordinator.binding(lifecycle)
+        await service.setDocumentCoordinator(binding)
+        await service.registerProvider(
+            GitCLIProvider(repositoryRoot: root, trusted: true, documentCoordinator: binding)
+        )
 
         do {
             try await service.discard(uris: [uri])
@@ -393,7 +570,7 @@ struct SCMNAuditTests {
 
     @Test @MainActor
     func test_SCM_N06_checkoutFailsClosedForAnyDirtyRepoDocument() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "co-dirty")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -412,8 +589,11 @@ struct SCMNAuditTests {
 
         let service = SourceControlService()
         await service.setTrusted(true)
-        await service.setDocumentCoordinator(SCMDocumentCoordinator.binding(lifecycle))
-        await service.registerProvider(GitCLIProvider(repositoryRoot: root, trusted: true))
+        let binding = SCMDocumentCoordinator.binding(lifecycle)
+        await service.setDocumentCoordinator(binding)
+        await service.registerProvider(
+            GitCLIProvider(repositoryRoot: root, trusted: true, documentCoordinator: binding)
+        )
 
         do {
             try await service.checkout(branch: "other")
@@ -426,10 +606,21 @@ struct SCMNAuditTests {
         }
     }
 
+    @Test func test_SCM_N06_servicePropagatesCoordinatorToGitProvider() async throws {
+        let root = try makeTempRepo(named: "prop-coord")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let service = SourceControlService()
+        let provider = GitCLIProvider(repositoryRoot: root, trusted: true, documentCoordinator: nil)
+        await service.registerProvider(provider)
+        #expect(await provider.hasDocumentCoordinator == false)
+        await service.setDocumentCoordinator(SCMDocumentCoordinator.alwaysClean)
+        #expect(await provider.hasDocumentCoordinator == true, "service must wire coordinator into GitCLIProvider")
+    }
+
     // MARK: - SCM-N07 hunk patches
 
     @Test func test_SCM_N07_patchIncludesNoNewlineAndPassesGitApplyCheck() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "hunk")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -441,7 +632,11 @@ struct SCMNAuditTests {
         try runGit(["commit", "-m", "i"], in: root)
         try Data("line1\nline2-changed".utf8).write(to: file)
 
-        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
+        let provider = GitCLIProvider(
+            repositoryRoot: root,
+            trusted: true,
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean
+        )
         let uri = DocumentURI(fileURL: file)
         let diff = try await provider.diff(uri: uri)
         #expect(!diff.hunks.isEmpty)
@@ -466,18 +661,17 @@ struct SCMNAuditTests {
             noNewlineAtEndOfFile: false
         )
         let patch = GitPatchBuilder.makePatch(path: path, hunk: hunk)
-        #expect(
-            patch.contains("\"a/hello world.swift\"")
-                || patch.contains("a/hello world.swift"),
-            "path with spaces must appear (quoted) in patch headers"
-        )
+        // Git C-quote is required for paths with spaces — unquoted alone must fail the test.
+        #expect(patch.contains("\"a/hello world.swift\""), "diff --git a/ path must be quoted")
+        #expect(patch.contains("\"b/hello world.swift\""), "diff --git b/ path must be quoted")
         #expect(patch.contains("@@ -1,1 +1,1 @@"))
         #expect(patch.contains("-old"))
         #expect(patch.contains("+new"))
+        #expect(GitPatchBuilder.quotePath("a/hello world.swift").hasPrefix("\""))
     }
 
     @Test func test_SCM_N07_applyCheckFailureDoesNotMutate() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "bad-patch")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -486,7 +680,11 @@ struct SCMNAuditTests {
         try runGit(["add", "x.txt"], in: root)
         try runGit(["commit", "-m", "i"], in: root)
 
-        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
+        let provider = GitCLIProvider(
+            repositoryRoot: root,
+            trusted: true,
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean
+        )
         let uri = DocumentURI(fileURL: file)
         let bad = SCMDiffHunk(
             header: "@@ -1,1 +1,1 @@",
@@ -515,6 +713,7 @@ struct SCMNAuditTests {
     @Test func test_SCM_N08_statusStreamIsMulticastWithReplay() async throws {
         let service = SourceControlService()
         await service.setTrusted(true)
+        await service.setDocumentCoordinator(SCMDocumentCoordinator.alwaysClean)
         struct Mock: SourceControlProvider {
             let id: String
             let repositoryIdentity: SCMRepositoryIdentity
@@ -566,6 +765,7 @@ struct SCMNAuditTests {
 
     @Test func test_SCM_N08_providerRemovalFinishesStreamAndMarksStale() async throws {
         let service = SourceControlService()
+        await service.setDocumentCoordinator(SCMDocumentCoordinator.alwaysClean)
         struct Mock: SourceControlProvider {
             let id = "git:/tmp/gone"
             var repositoryIdentity: SCMRepositoryIdentity { SCMRepositoryIdentity(rawValue: id) }
@@ -593,39 +793,128 @@ struct SCMNAuditTests {
 
         await service.removeProvider(id: "git:/tmp/gone")
         try await Task.sleep(nanoseconds: 80_000_000)
-        // Prefer finish; stale emission also acceptable before finish.
         _ = await watch
         #expect(finished || sawStale)
         #expect(finished, "stream must finish on provider removal")
     }
 
+    @Test func test_SCM_N08_watcherDrivenDebouncedRefreshMarksStaleThenFresh() async throws {
+        #expect(Self.gitExecutable != nil, "git required")
+        let root = try makeTempRepo(named: "watch")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try initRepo(root)
+        let file = root.appendingPathComponent("w.txt")
+        try "one\n".write(to: file, atomically: true, encoding: .utf8)
+        try runGit(["add", "w.txt"], in: root)
+        try runGit(["commit", "-m", "i"], in: root)
+
+        let service = SourceControlService()
+        await service.setTrusted(true)
+        await service.setDocumentCoordinator(SCMDocumentCoordinator.alwaysClean)
+        await service.registerProvider(
+            GitCLIProvider(
+                repositoryRoot: root,
+                trusted: true,
+                documentCoordinator: SCMDocumentCoordinator.alwaysClean
+            )
+        )
+        _ = try await service.refresh()
+
+        // Injectable backend: service must debounce + mark stale then refresh.
+        final class InjectWatcher: WorkspaceFileWatchBackend, @unchecked Sendable {
+            var handler: (@Sendable (WorkspaceWatchSignal) -> Void)?
+            var started = false
+            func start(
+                rootID: WorkspaceRootID,
+                url: URL,
+                excludedNames: Set<String>,
+                onEvent: @escaping @Sendable (WorkspaceWatchSignal) -> Void
+            ) {
+                started = true
+                handler = onEvent
+            }
+            func stop(rootID: WorkspaceRootID) { handler = nil }
+            func stopAll() { handler = nil }
+            func emitChanged(rootID: WorkspaceRootID) { handler?(.changed(rootID: rootID)) }
+        }
+        let backend = InjectWatcher()
+        await service.startStatusWatching(
+            root: root,
+            debounce: .milliseconds(50),
+            backend: backend
+        )
+        #expect(backend.started)
+
+        actor StreamProbe {
+            var sawStale = false
+            var sawFreshAfterStale = false
+            func note(stale: Bool) {
+                if stale {
+                    sawStale = true
+                } else if sawStale {
+                    sawFreshAfterStale = true
+                }
+            }
+            func done() -> Bool { sawStale && sawFreshAfterStale }
+            func snapshot() -> (Bool, Bool) { (sawStale, sawFreshAfterStale) }
+        }
+        let probe = StreamProbe()
+        let collectTask = Task {
+            for await item in await service.makeStatusStream(replay: .allBuffered) {
+                if case .value(let env) = item {
+                    await probe.note(stale: env.event.isStale)
+                    if await probe.done() { return }
+                }
+            }
+        }
+        try await Task.sleep(nanoseconds: 30_000_000)
+
+        // Mutate worktree + fire watcher event (not a manual refresh command).
+        try "two\n".write(to: file, atomically: true, encoding: .utf8)
+        let rootID = await service.statusWatchRootID
+        #expect(rootID != nil)
+        backend.emitChanged(rootID: rootID!)
+
+        // Wait for debounced refresh path.
+        let deadline = ContinuousClock.now + .seconds(2)
+        while ContinuousClock.now < deadline {
+            if await probe.done() { break }
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        collectTask.cancel()
+        let (stale, fresh) = await probe.snapshot()
+        #expect(stale, "watcher change must publish explicit stale state")
+        #expect(fresh, "debounced refresh must publish non-stale snapshot")
+        await service.stopStatusWatching()
+    }
+
     // MARK: - SCM-N09 bounded process output
 
     @Test func test_SCM_N09_usesProcessSupervisorAndBoundedOutput() async throws {
+        #expect(Self.gitExecutable != nil, "git required for runtime spawn assertion")
         let root = try makeTempRepo(named: "bound")
         defer { try? FileManager.default.removeItem(at: root) }
+        try initRepo(root)
         let provider = GitCLIProvider(
             repositoryRoot: root,
             trusted: true,
-            maxStdoutBytes: 64,
-            maxStderrBytes: 64
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean,
+            maxStdoutBytes: 64 * 1024,
+            maxStderrBytes: 8 * 1024
         )
-        // Source contract: ProcessSupervisor + bounded launch limits
-        let url = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("Sources/CodeEditorSourceControl/Git/GitCLIProvider.swift")
-        let src = try String(contentsOf: url, encoding: .utf8)
-        #expect(src.contains("ProcessSupervisor"))
-        #expect(src.contains("maxStdoutBytes"))
-        #expect(src.contains("maxStderrBytes"))
-        #expect(await provider.maxStdoutBytes == 64)
-        #expect(await provider.maxStderrBytes == 64)
+        #expect(await provider.maxStdoutBytes == 64 * 1024)
+        #expect(await provider.maxStderrBytes == 8 * 1024)
+        #expect(await provider.lastSpawnMaxStdoutBytes == nil)
+        _ = try await provider.status()
+        // Runtime spawn must record ProcessSupervisor launch bounds (not source-string grep).
+        let launched = await provider.lastSpawnMaxStdoutBytes
+        #expect(launched == 64 * 1024, "status must spawn via ProcessSupervisor with maxStdoutBytes=\(String(describing: launched))")
+        #expect(await provider.lastSpawnMaxStderrBytes == 8 * 1024)
+        #expect(await provider.lastSpawnUsedProcessSupervisor == true)
     }
 
     @Test func test_SCM_N09_outputOverflowFailsClosed() async throws {
-        guard Self.gitExecutable != nil else { return }
+        #expect(Self.gitExecutable != nil, "git required")
         let root = try makeTempRepo(named: "overflow")
         defer { try? FileManager.default.removeItem(at: root) }
         try initRepo(root)
@@ -637,6 +926,7 @@ struct SCMNAuditTests {
         let provider = GitCLIProvider(
             repositoryRoot: root,
             trusted: true,
+            documentCoordinator: SCMDocumentCoordinator.alwaysClean,
             maxStdoutBytes: 32,
             maxStderrBytes: 32
         )

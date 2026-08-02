@@ -183,11 +183,26 @@ final class HostServices {
             Task { await self?.runDemoTask() }
         }))
 
-        // Git provider if repo exists.
-        await scm.setProvider(GitCLIProvider(repositoryRoot: rootURL, trusted: true))
+        // Git provider if repo exists — dirty-buffer coordination is mandatory (SCM-N06).
+        let lifecycleBinding = SCMDocumentCoordinator.binding(workbench.workspace.lifecycle)
+        await scm.setDocumentCoordinator(lifecycleBinding)
+        await scm.setProvider(
+            GitCLIProvider(
+                repositoryRoot: rootURL,
+                trusted: true,
+                documentCoordinator: lifecycleBinding
+            )
+        )
+        await scm.startStatusWatching(root: rootURL, debounce: .milliseconds(200))
         workbench.scmModel.trusted = true
         await refreshSCM()
-        await workbench.scmModel.refresh(provider: GitCLIProvider(repositoryRoot: rootURL, trusted: true))
+        await workbench.scmModel.refresh(
+            provider: GitCLIProvider(
+                repositoryRoot: rootURL,
+                trusted: true,
+                documentCoordinator: lifecycleBinding
+            )
+        )
 
         // Terminal backend + session.
         await terminal.attach(backend: terminalBackend)

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-02T14:02:02Z",
-  "upstream_commit": "5d9f2d4a4a89b308ca02ac9fd35bc3e3fa874337",
+  "generated_at": "2026-08-02T14:27:41Z",
+  "upstream_commit": "3185d8306dcef67c369cd9ac7945054c8ac50541",
   "toolchain_swift": "swift-driver version: 1.148.6 Apple Swift version 6.3 (swiftlang-6.3.0.123.5 clang-2100.0.123.102)",
   "toolchain_xcode": "Xcode 26.4 Build version 17E192 ",
   "test_suite_version": "swift-testing-package-v1",

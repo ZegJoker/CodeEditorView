@@ -1,49 +1,15 @@
 {
   "residuals_by_product": {
     "CodeEditorCore": [
-      "CORE-N02",
-      "CORE-N03",
-      "CORE-N04"
+      "CORE residual open \u2014 phase 2"
     ],
     "CodeEditorDocuments": [
-      "CORE-N01",
-      "DOC-N01",
-      "DOC-N02",
-      "DOC-N03",
-      "DOC-N04",
-      "DOC-N05",
-      "DOC-N06",
-      "DOC-N07",
-      "DOC-N08",
-      "DOC-N09",
-      "DOC-N10",
-      "DOC-N11"
+      "DOC residual open \u2014 phase 1"
     ],
     "CodeEditorCommands": [
-      "CMD-N01",
-      "CMD-N02",
-      "CMD-N03",
-      "CMD-N04",
-      "CMD-N05",
-      "UI-N01",
-      "UI-N02",
-      "UI-N03",
-      "UI-N04",
-      "UI-N05",
-      "UI-N06",
-      "UI-N07"
+      "CMD/UI residual open \u2014 phase 3"
     ],
     "CodeEditorWorkspace": [
-      "WSP-N01",
-      "WSP-N02",
-      "WSP-N03",
-      "WSP-N04",
-      "WSP-N05",
-      "WSP-N06",
-      "WSP-N07",
-      "WSP-N08",
-      "WSP-N09",
-      "WSP-N10",
       "LSP-N08"
     ],
     "CodeEditorWorkbench": [
@@ -56,18 +22,7 @@
       "WB-N07"
     ],
     "CodeEditorView": [
-      "CMD-N01",
-      "CMD-N02",
-      "CMD-N03",
-      "CMD-N04",
-      "CMD-N05",
-      "UI-N01",
-      "UI-N02",
-      "UI-N03",
-      "UI-N04",
-      "UI-N05",
-      "UI-N06",
-      "UI-N07"
+      "CMD/UI residual open \u2014 phase 3"
     ],
     "CodeEditorLanguageSupport": [
       "LANG-N01",
@@ -236,32 +191,10 @@
       "DAP-N10"
     ],
     "CodeEditorSearch": [
-      "SCM-N01",
-      "SCM-N02",
-      "SCM-N03",
-      "SCM-N04",
-      "SCM-N05",
-      "SCM-N06",
-      "SCM-N07",
-      "SCM-N08",
-      "SCM-N09",
-      "SRCH-N01",
-      "SRCH-N02",
-      "SRCH-N03"
+      "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
     "CodeEditorTasks": [
-      "SCM-N01",
-      "SCM-N02",
-      "SCM-N03",
-      "SCM-N04",
-      "SCM-N05",
-      "SCM-N06",
-      "SCM-N07",
-      "SCM-N08",
-      "SCM-N09",
-      "SRCH-N01",
-      "SRCH-N02",
-      "SRCH-N03"
+      "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
     "CodeEditorTerminal": [
       "DAP-N08",
@@ -277,18 +210,7 @@
       "TER-N10"
     ],
     "CodeEditorSourceControl": [
-      "SCM-N01",
-      "SCM-N02",
-      "SCM-N03",
-      "SCM-N04",
-      "SCM-N05",
-      "SCM-N06",
-      "SCM-N07",
-      "SCM-N08",
-      "SCM-N09",
-      "SRCH-N01",
-      "SRCH-N02",
-      "SRCH-N03"
+      "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
     "CodeEditorTreeSitter": [
       "LANG-N01",
@@ -387,6 +309,6 @@
       "BROKER-N12"
     ]
   },
-  "generated_at": "2026-08-02T14:02:02Z",
-  "commit": "5d9f2d4a4a89b308ca02ac9fd35bc3e3fa874337"
+  "generated_at": "2026-08-02T18:37:13Z",
+  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da"
 }

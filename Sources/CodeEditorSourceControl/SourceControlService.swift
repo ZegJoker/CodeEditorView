@@ -1,5 +1,6 @@
 import CodeEditorCore
 import CodeEditorDocuments
+import CodeEditorWorkspace
 import Foundation
 
 public actor SourceControlService {
@@ -13,14 +14,27 @@ public actor SourceControlService {
     public private(set) var trusted: Bool = true
     private var documentCoordinator: SCMDocumentCoordinator?
 
+    // SCM-N08 watcher-driven status
+    private var watchBackend: (any WorkspaceFileWatchBackend)?
+    private var watchRootID: WorkspaceRootID?
+    private var watchDebounceTask: Task<Void, Never>?
+    private var watchDebounce: Duration = .milliseconds(200)
+    public private(set) var isStatusWatching = false
+
     public init() {}
 
     public func setTrusted(_ value: Bool) {
         trusted = value
     }
 
-    public func setDocumentCoordinator(_ coordinator: SCMDocumentCoordinator?) {
+    /// Bind dirty-buffer coordination. Required for all destructive ops (SCM-N06 fail-closed).
+    public func setDocumentCoordinator(_ coordinator: SCMDocumentCoordinator?) async {
         documentCoordinator = coordinator
+        for p in providers.values {
+            if let git = p as? GitCLIProvider {
+                await git.setDocumentCoordinator(coordinator)
+            }
+        }
     }
 
     /// Multicast status stream (SCM-N08). Independent subscribers with optional replay.
@@ -32,20 +46,86 @@ public actor SourceControlService {
         await statusHub.subscribe(policy: policy, replay: replay)
     }
 
+    /// Root ID used by the active status watcher (tests / diagnostics).
+    public var statusWatchRootID: WorkspaceRootID? { watchRootID }
+
+    /// Start watcher-driven status refresh with debounce and explicit stale state (SCM-N08).
+    public func startStatusWatching(
+        root: URL? = nil,
+        debounce: Duration = .milliseconds(200),
+        backend: (any WorkspaceFileWatchBackend)? = nil
+    ) async {
+        await stopStatusWatching()
+        let watchURL: URL
+        if let root {
+            watchURL = root.resolvingSymlinksInPath().standardizedFileURL
+        } else if let active = activeRepositoryRoot() {
+            watchURL = active
+        } else {
+            return
+        }
+        watchDebounce = debounce
+        let rootID = WorkspaceRootID()
+        watchRootID = rootID
+        let chosen = backend ?? FSEventsWorkspaceWatcher()
+        watchBackend = chosen
+        isStatusWatching = true
+        let serviceBox = UncheckedServiceBox(self)
+        chosen.start(
+            rootID: rootID,
+            url: watchURL,
+            excludedNames: [".git/objects", ".git/objects/pack"]
+        ) { signal in
+            Task {
+                await serviceBox.service?.handleWatchSignal(signal)
+            }
+        }
+    }
+
+    public func stopStatusWatching() async {
+        watchDebounceTask?.cancel()
+        watchDebounceTask = nil
+        if let rootID = watchRootID {
+            watchBackend?.stop(rootID: rootID)
+        }
+        watchBackend?.stopAll()
+        watchBackend = nil
+        watchRootID = nil
+        isStatusWatching = false
+    }
+
+    /// Inject a watch signal (tests) or host-forwarded FS event.
+    public func handleWatchSignal(_ signal: WorkspaceWatchSignal) async {
+        guard isStatusWatching else { return }
+        switch signal {
+        case .changed, .overflow:
+            await publishStaleSnapshot()
+            scheduleDebouncedRefresh()
+        case .stopped:
+            break
+        }
+    }
+
     public func setProvider(_ provider: (any SourceControlProvider)?) async {
         if let provider {
             providers[provider.id] = provider
             activeID = provider.id
             statusFinished = false
+            if let git = provider as? GitCLIProvider, let documentCoordinator {
+                await git.setDocumentCoordinator(documentCoordinator)
+            }
         } else if let activeID {
             await removeProvider(id: activeID)
         }
     }
 
-    public func registerProvider(_ provider: any SourceControlProvider) {
+    public func registerProvider(_ provider: any SourceControlProvider) async {
         providers[provider.id] = provider
         if activeID == nil { activeID = provider.id }
         statusFinished = false
+        if let git = provider as? GitCLIProvider, let documentCoordinator {
+            await git.setDocumentCoordinator(documentCoordinator)
+        }
     }
 
     public func removeProvider(id: String) async {
@@ -66,6 +146,7 @@ public actor SourceControlService {
         if providers.isEmpty && !statusFinished {
             statusFinished = true
             await statusHub.finish(.completed)
+            await stopStatusWatching()
         }
     }
 
@@ -213,13 +294,14 @@ public actor SourceControlService {
     public func discoverAndRegister(
         roots: [URL],
         platformProfile: PlatformCapabilityProfile = .default()
-    ) {
+    ) async {
         for root in roots {
             if let repo = GitRepositoryDiscovery.discover(from: root) {
                 let provider = GitCLIProvider(
                     repositoryRoot: repo,
                     platformProfile: platformProfile,
-                    trusted: trusted
+                    trusted: trusted,
+                    documentCoordinator: documentCoordinator
                 )
                 providers[provider.id] = provider
                 if activeID == nil { activeID = provider.id }
@@ -231,16 +313,13 @@ public actor SourceControlService {
         if !trusted { throw SCMError.untrusted }
     }
 
+    /// SCM-N06: fail closed — missing coordinator is never a soft pass-through.
     private func assertCleanForDestructive(
         uris: [DocumentURI],
         wholeRepository: Bool
     ) async throws {
         guard let coordinator = documentCoordinator else {
-            // Fail closed when destructive ops are requested without a coordinator binding:
-            // hosts that opt out of document coordination must still not silently clobber.
-            // Only enforce when a coordinator is set — pure headless Git CLI use is allowed
-            // without open documents. When set, always enforce.
-            return
+            throw SCMError.documentCoordinatorRequired
         }
         guard let root = activeRepositoryRoot() else {
             throw SCMError.failed("no repository root for dirty-buffer check")
@@ -262,6 +341,35 @@ public actor SourceControlService {
         }
         try await coordinator.assertClean(repositoryRoot: root, relativePaths: relative)
     }
+
+    private func publishStaleSnapshot() async {
+        let repoID = activeID ?? "unknown"
+        statusSequence &+= 1
+        let stale = SCMStatusSnapshot(
+            repositoryID: repoID,
+            statuses: lastStatus,
+            isStale: true,
+            sequence: statusSequence
+        )
+        lastSnapshot = stale
+        await statusHub.publish(stale)
+    }
+
+    private func scheduleDebouncedRefresh() {
+        watchDebounceTask?.cancel()
+        let delay = watchDebounce
+        watchDebounceTask = Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled, let self else { return }
+            _ = try? await self.refresh()
+        }
+    }
+}
+
+/// Weak box so FSEvents callbacks can hop into the service actor without retaining cycles.
+private final class UncheckedServiceBox: @unchecked Sendable {
+    weak var service: SourceControlService?
+    init(_ service: SourceControlService) { self.service = service }
 }
 
 /// Explicit unavailable provider for iOS / fail-closed profiles.

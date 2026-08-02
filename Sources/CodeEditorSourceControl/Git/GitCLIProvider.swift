@@ -6,8 +6,9 @@ import Foundation
 ///
 /// - Per-repository identity (not constant `"git"`)
 /// - Auth via ``SCMAuthCallback`` + GIT_ASKPASS (fail-closed without callback)
-/// - Progress via ``AsyncBroadcastHub``
+/// - Progress via ``AsyncBroadcastHub`` (started / fraction / message / cancelled / finished)
 /// - Exclusive mutation gate
+/// - Destructive ops require ``SCMDocumentCoordinator`` (fail-closed)
 /// - ``ProcessSupervisor`` + bounded stdout/stderr
 public actor GitCLIProvider: SourceControlProvider {
     public nonisolated let id: String
@@ -20,16 +21,29 @@ public actor GitCLIProvider: SourceControlProvider {
 
     public private(set) var trusted: Bool
     public var auth: (any SCMAuthCallback)?
+    private var documentCoordinator: SCMDocumentCoordinator?
 
     public let operationGate: SCMRepositoryGate
+
+    /// Runtime spawn telemetry (SCM-N09 tests assert ProcessSupervisor bounds).
+    public private(set) var lastSpawnMaxStdoutBytes: Int?
+    public private(set) var lastSpawnMaxStderrBytes: Int?
+    public private(set) var lastSpawnUsedProcessSupervisor: Bool = false
+
+    public var hasDocumentCoordinator: Bool { documentCoordinator != nil }
 
     public func setTrusted(_ value: Bool) {
         trusted = value
     }
 
+    public func setDocumentCoordinator(_ coordinator: SCMDocumentCoordinator?) {
+        documentCoordinator = coordinator
+    }
+
     private let supervisor: ProcessSupervisor
     private let progressHub = AsyncBroadcastHub<SCMProgressEvent>(maxHistory: 64)
     private var activeHandles: [UUID: ProcessHandle] = [:]
+    private var cancelRequested = false
     private var askpassDir: URL?
 
     public init(
@@ -38,6 +52,7 @@ public actor GitCLIProvider: SourceControlProvider {
         platformProfile: PlatformCapabilityProfile = .default(),
         trusted: Bool = false,
         auth: (any SCMAuthCallback)? = nil,
+        documentCoordinator: SCMDocumentCoordinator? = nil,
         maxStdoutBytes: Int = 4 * 1024 * 1024,
         maxStderrBytes: Int = 1 * 1024 * 1024
     ) {
@@ -49,6 +64,7 @@ public actor GitCLIProvider: SourceControlProvider {
         self.platformProfile = platformProfile
         self.trusted = trusted
         self.auth = auth
+        self.documentCoordinator = documentCoordinator
         self.maxStdoutBytes = max(1, maxStdoutBytes)
         self.maxStderrBytes = max(1, maxStderrBytes)
         self.operationGate = SCMRepositoryGate()
@@ -105,6 +121,23 @@ public actor GitCLIProvider: SourceControlProvider {
     /// Test helper: finish progress hub so collectors can complete.
     public func finishProgressStreamForTests() async {
         await progressHub.finish(.completed)
+    }
+
+    /// Parse git `--progress` / status lines such as `Receiving objects:  45% (123/456)`.
+    public nonisolated static func parseGitProgressFraction(_ line: String) -> Double? {
+        guard let re = try? NSRegularExpression(pattern: #"(\d{1,3})\s*%"#, options: []) else {
+            return nil
+        }
+        let range = NSRange(line.startIndex..., in: line)
+        guard let match = re.firstMatch(in: line, options: [], range: range),
+            match.numberOfRanges >= 2,
+            let r = Range(match.range(at: 1), in: line),
+            let pct = Int(line[r])
+        else {
+            return nil
+        }
+        let clamped = min(100, max(0, pct))
+        return Double(clamped) / 100.0
     }
 
     // MARK: - Provider API
@@ -264,6 +297,7 @@ public actor GitCLIProvider: SourceControlProvider {
             try self.requireTrusted()
             let paths = try uris.map { try self.relativePath(for: $0) }
             guard !paths.isEmpty else { return }
+            try await self.assertCleanForDestructive(relativePaths: paths)
             _ = try await self.runString(["checkout", "--"] + paths)
         }
     }
@@ -272,7 +306,6 @@ public actor GitCLIProvider: SourceControlProvider {
         try await coordinated(operation: "stageHunk", category: .mutate) {
             try self.requireTrusted()
             let path = try self.relativePath(for: uri)
-            // Prefer Git-authored patch text when available for exact apply.
             let patch = try await self.patchForHunk(path: path, hunk: hunk)
             try await self.applyPatch(patch, cached: true, reverse: false)
         }
@@ -291,6 +324,7 @@ public actor GitCLIProvider: SourceControlProvider {
         try await coordinated(operation: "discardHunk", category: .mutate) {
             try self.requireTrusted()
             let path = try self.relativePath(for: uri)
+            try await self.assertCleanForDestructive(relativePaths: [path])
             let patch = GitPatchBuilder.makePatch(path: path, hunk: hunk)
             try await self.applyPatch(patch, cached: false, reverse: true)
         }
@@ -306,6 +340,7 @@ public actor GitCLIProvider: SourceControlProvider {
     public func checkout(branch: String) async throws {
         try await coordinated(operation: "checkout", category: .mutate) {
             try self.requireTrusted()
+            try await self.assertCleanForDestructive(relativePaths: [])
             _ = try await self.runString(["checkout", branch])
         }
     }
@@ -328,20 +363,21 @@ public actor GitCLIProvider: SourceControlProvider {
         try await coordinated(operation: "fetch", category: .network) {
             try self.requireTrusted()
             try await self.prepareRemoteAuth(remote: remote)
-            var args = ["fetch"]
+            var args = ["fetch", "--progress"]
             if let remote { args.append(remote) }
-            _ = try await self.runString(args, remoteHost: remote)
+            _ = try await self.runString(args, remoteHost: remote ?? "origin")
         }
     }
 
     public func pull(remote: String?, branch: String?) async throws {
         try await coordinated(operation: "pull", category: .network) {
             try self.requireTrusted()
+            try await self.assertCleanForDestructive(relativePaths: [])
             try await self.prepareRemoteAuth(remote: remote)
-            var args = ["pull"]
+            var args = ["pull", "--progress"]
             if let remote { args.append(remote) }
             if let branch { args.append(branch) }
-            _ = try await self.runString(args, remoteHost: remote)
+            _ = try await self.runString(args, remoteHost: remote ?? "origin")
         }
     }
 
@@ -349,10 +385,10 @@ public actor GitCLIProvider: SourceControlProvider {
         try await coordinated(operation: "push", category: .network) {
             try self.requireTrusted()
             try await self.prepareRemoteAuth(remote: remote)
-            var args = ["push"]
+            var args = ["push", "--progress"]
             if let remote { args.append(remote) }
             if let branch { args.append(branch) }
-            _ = try await self.runString(args, remoteHost: remote)
+            _ = try await self.runString(args, remoteHost: remote ?? "origin")
         }
     }
 
@@ -360,6 +396,7 @@ public actor GitCLIProvider: SourceControlProvider {
         try await coordinated(operation: "resolveConflict", category: .mutate) {
             try self.requireTrusted()
             let path = try self.relativePath(for: uri)
+            try await self.assertCleanForDestructive(relativePaths: [path])
             switch side {
             case .ours:
                 _ = try await self.runString(["checkout", "--ours", "--", path])
@@ -373,6 +410,7 @@ public actor GitCLIProvider: SourceControlProvider {
     }
 
     public func cancel() async {
+        cancelRequested = true
         let handles = Array(activeHandles.values)
         for h in handles {
             h.requestCancellation(escalation: .termThenKill())
@@ -386,19 +424,30 @@ public actor GitCLIProvider: SourceControlProvider {
         category: SCMOperationCategory,
         _ body: () async throws -> T
     ) async throws -> T {
+        cancelRequested = false
         await progressHub.publish(.started(operation: operation, repositoryID: id))
+        await progressHub.publish(.fraction(0))
         await operationGate.acquire(category)
         do {
             let result = try await body()
             await operationGate.release(category)
+            await progressHub.publish(.fraction(1))
             await progressHub.publish(.finished(operation: operation, success: true))
             return result
         } catch is CancellationError {
             await operationGate.release(category)
             await progressHub.publish(.cancelled(operation: operation))
             throw SCMError.cancelled
+        } catch let error as SCMError where error == .cancelled {
+            await operationGate.release(category)
+            await progressHub.publish(.cancelled(operation: operation))
+            throw error
         } catch {
             await operationGate.release(category)
+            if cancelRequested {
+                await progressHub.publish(.cancelled(operation: operation))
+                throw SCMError.cancelled
+            }
             await progressHub.publish(.finished(operation: operation, success: false))
             throw error
         }
@@ -406,6 +455,17 @@ public actor GitCLIProvider: SourceControlProvider {
 
     private func requireTrusted() throws {
         if !trusted { throw SCMError.untrusted }
+    }
+
+    /// SCM-N06 provider-layer preflight — never soft-return when unbound.
+    private func assertCleanForDestructive(relativePaths: [String]) async throws {
+        guard let coordinator = documentCoordinator else {
+            throw SCMError.documentCoordinatorRequired
+        }
+        try await coordinator.assertClean(
+            repositoryRoot: repositoryRoot,
+            relativePaths: relativePaths
+        )
     }
 
     private func relativePath(for uri: DocumentURI) throws -> String {
@@ -461,7 +521,6 @@ public actor GitCLIProvider: SourceControlProvider {
                 continue
             }
             if line.hasPrefix("@@") {
-                // Collect this hunk body until next @@ or end.
                 var body = [line]
                 i += 1
                 while i < lines.count {
@@ -470,7 +529,6 @@ public actor GitCLIProvider: SourceControlProvider {
                     body.append(l)
                     i += 1
                 }
-                // Match by header or by start line.
                 let matches =
                     body[0] == hunk.header
                     || body[0].hasPrefix("@@ -\(hunk.oldStart)")
@@ -480,10 +538,7 @@ public actor GitCLIProvider: SourceControlProvider {
                         return GitPatchBuilder.makePatch(path: path, hunk: hunk)
                     }
                     out.append(contentsOf: body)
-                    if !out.last!.hasSuffix("\n") {
-                        return out.joined(separator: "\n") + "\n"
-                    }
-                    return out.joined(separator: "\n") + (out.joined(separator: "\n").hasSuffix("\n") ? "" : "\n")
+                    return out.joined(separator: "\n") + "\n"
                 }
                 continue
             }
@@ -591,6 +646,10 @@ public actor GitCLIProvider: SourceControlProvider {
         try platformProfile.requireLocal(.localGitCLI)
         try requireTrusted()
 
+        if cancelRequested {
+            throw CancellationError()
+        }
+
         var env: [String: String] = [
             "GIT_TERMINAL_PROMPT": "0",
             "GIT_OPTIONAL_LOCKS": "0",
@@ -614,15 +673,27 @@ public actor GitCLIProvider: SourceControlProvider {
         )
 
         let handle = try await supervisor.spawn(request)
+        lastSpawnMaxStdoutBytes = maxStdoutBytes
+        lastSpawnMaxStderrBytes = maxStderrBytes
+        lastSpawnUsedProcessSupervisor = true
         activeHandles[handle.id] = handle
         defer { activeHandles[handle.id] = nil }
+
+        // Apply cancel that raced ahead of spawn registration (SCM-N03).
+        if cancelRequested {
+            handle.requestCancellation(escalation: .termThenKill())
+        }
 
         var out = Data()
         var err = Data()
         var code: Int32 = -1
         var overflow: SCMError?
+        var sawExit = false
 
         for await event in handle.events {
+            if cancelRequested {
+                handle.requestCancellation(escalation: .termThenKill())
+            }
             switch event {
             case .stdout(let d):
                 out.append(d)
@@ -631,7 +702,11 @@ public actor GitCLIProvider: SourceControlProvider {
                 if let text = String(data: d, encoding: .utf8), !text.isEmpty {
                     let sanitized = SCMLogSanitizer.sanitize(text)
                     for line in sanitized.split(separator: "\n") where !line.isEmpty {
-                        await progressHub.publish(.message(String(line)))
+                        let s = String(line)
+                        await progressHub.publish(.message(s))
+                        if let frac = Self.parseGitProgressFraction(s) {
+                            await progressHub.publish(.fraction(frac))
+                        }
                     }
                 }
             case .outputGap(let stream, let dropped):
@@ -640,11 +715,15 @@ public actor GitCLIProvider: SourceControlProvider {
                     droppedBytes: dropped
                 )
             case .exited(let c, let timedOut):
+                sawExit = true
                 if timedOut { throw SCMError.failed("timeout") }
                 code = c
             }
         }
 
+        if cancelRequested {
+            throw CancellationError()
+        }
         if let overflow {
             throw overflow
         }
@@ -652,7 +731,15 @@ public actor GitCLIProvider: SourceControlProvider {
             throw SCMError.outputOverflow(stream: "stdout", droppedBytes: 0)
         }
 
+        if !sawExit {
+            if cancelRequested { throw CancellationError() }
+            throw SCMError.failed("process ended without exit event")
+        }
+
         if code != 0 {
+            if cancelRequested {
+                throw CancellationError()
+            }
             let e = String(data: err, encoding: .utf8) ?? String(decoding: err, as: UTF8.self)
             let sanitized = SCMLogSanitizer.sanitize(e)
             if sanitized.lowercased().contains("not a git repository") {

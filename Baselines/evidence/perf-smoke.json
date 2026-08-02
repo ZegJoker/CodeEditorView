@@ -1,12 +1,12 @@
 {
-  "allocations" : 60,
-  "cpu_user_seconds" : 0.087288000000000004,
+  "allocations" : 120,
+  "cpu_user_seconds" : 0.12663099999999999,
   "dataset" : "editor_fixed_v1",
   "dataset_line_width" : 80,
   "dataset_lines" : 2000,
   "dataset_version" : "1",
   "dropped_events" : 0,
-  "generated_at" : "2026-08-02T13:14:51Z",
+  "generated_at" : "2026-08-02T16:05:36Z",
   "hardware" : {
     "hardware_class" : "apple-silicon-dev-or-ci",
     "machine" : "arm64",
@@ -14,13 +14,13 @@
     "swift" : "swift-testing",
     "system" : "Darwin"
   },
-  "iterations" : 40,
-  "memory_peak_bytes" : 36700160,
+  "iterations" : 80,
+  "memory_peak_bytes" : 37879808,
   "metric" : "keystroke_insert",
   "metrics" : [
     {
       "dataset" : "editor_fixed_v1",
-      "iterations" : 40,
+      "iterations" : 80,
       "name" : "keystroke_insert",
       "p50_ms" : 0.0010728836059570312,
       "p95_ms" : 0.0020265579223632812,
@@ -28,27 +28,27 @@
     },
     {
       "dataset" : "editor_fixed_v1",
-      "iterations" : 10,
+      "iterations" : 20,
       "name" : "line_index_rebuild",
-      "p50_ms" : 2.7220249176025391,
-      "p95_ms" : 2.8059542179107666,
-      "p99_ms" : 2.8235924243927002
+      "p50_ms" : 2.6989579200744629,
+      "p95_ms" : 2.8942525386810303,
+      "p99_ms" : 3.0188262462615967
     },
     {
       "dataset" : "editor_fixed_v1",
-      "iterations" : 10,
+      "iterations" : 20,
       "name" : "document_parse_load",
-      "p50_ms" : 0.22101402282714844,
-      "p95_ms" : 0.22399425506591797,
-      "p99_ms" : 0.22399425506591797
+      "p50_ms" : 0.22155046463012695,
+      "p95_ms" : 0.24080872535705569,
+      "p99_ms" : 0.26807904243469233
     },
     {
       "dataset" : "editor_fixed_v1",
-      "iterations" : 10,
+      "iterations" : 20,
       "name" : "edit_storm_scroll_window",
-      "p50_ms" : 0.063002109527587891,
-      "p95_ms" : 0.070232152938842773,
-      "p99_ms" : 0.071648359298706055
+      "p50_ms" : 0.068068504333496094,
+      "p95_ms" : 0.074028968811035156,
+      "p99_ms" : 0.074028968811035156
     }
   ],
   "p50_ms" : 0.0010728836059570312,
@@ -56,8 +56,8 @@
   "p99_ms" : 0.0020265579223632812,
   "per_op_us" : 1.0728836059570312,
   "producer" : "Tests\/CodeEditorCoreTests\/RELN05PerfBenchmarks.swift",
-  "run_id" : "E48B41FC-E256-4AEC-9708-120CF0E70E09",
+  "run_id" : "FC14CF9F-2A01-44E0-BC17-CD3C2E2C0D8B",
   "schema_version" : 3,
-  "warmup" : 4,
+  "warmup" : 8,
   "within_unit_bound" : true
 }
