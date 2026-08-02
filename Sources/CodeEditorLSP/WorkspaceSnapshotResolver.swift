@@ -4,8 +4,8 @@ import Foundation
 
 /// Resolves document text/version for any URI (open buffer or disk) for cross-file LSP positions.
 ///
-/// LSP-003: every location/edit must resolve against the **target** document content,
-/// never the request document's text when URIs differ.
+/// LSP-N09: every location/edit must resolve against the **target** document content,
+/// never the request document's text when URIs differ. Failure is typed — never empty text.
 public protocol WorkspaceSnapshotResolver: Sendable {
     func snapshot(for uri: DocumentURI) async throws -> TextSnapshot
 }
@@ -42,8 +42,10 @@ public struct DefaultWorkspaceSnapshotResolver: WorkspaceSnapshotResolver {
             return TextSnapshot(uri: uri, text: open.0, version: open.1)
         }
         guard let url = uri.fileURL else {
-            // Unresolvable non-file URI: empty text so line/character conversion stays conservative.
-            return TextSnapshot(uri: uri, text: "", version: nil)
+            throw LSPError.snapshotUnavailable(
+                uri: uri.rawValue,
+                reason: "non-file URI with no open document"
+            )
         }
         let data: Data
         do {
@@ -52,16 +54,26 @@ public struct DefaultWorkspaceSnapshotResolver: WorkspaceSnapshotResolver {
             let limit = Int(min(maxDiskBytes + 1, UInt64(Int.max)))
             data = try handle.read(upToCount: limit) ?? Data()
             if UInt64(data.count) > maxDiskBytes {
-                throw LSPError.decode("file too large for snapshot: \(uri.rawValue)")
+                throw LSPError.snapshotUnavailable(
+                    uri: uri.rawValue,
+                    reason: "file too large for snapshot"
+                )
             }
         } catch let error as LSPError {
             throw error
         } catch {
-            throw LSPError.decode("snapshot read failed: \(uri.rawValue): \(error)")
+            throw LSPError.snapshotUnavailable(
+                uri: uri.rawValue,
+                reason: "snapshot read failed: \(error)"
+            )
         }
-        let text =
-            String(data: data, encoding: .utf8)
-            ?? String(decoding: data, as: UTF8.self)
+        // Fail closed on non-UTF8 for edit/navigation accuracy (no lossy empty fallback).
+        guard let text = String(data: data, encoding: .utf8) else {
+            throw LSPError.snapshotUnavailable(
+                uri: uri.rawValue,
+                reason: "file is not valid UTF-8"
+            )
+        }
         return TextSnapshot(uri: uri, text: text, version: nil)
     }
 }

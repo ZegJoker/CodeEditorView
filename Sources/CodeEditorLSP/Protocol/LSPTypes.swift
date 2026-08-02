@@ -351,6 +351,13 @@ struct LSPTextEditResult: Codable, Sendable {
     // array of text edits at top level handled as [LSPTextEdit]
 }
 
+/// LSP textDocumentSync change kind (LSP-N04).
+public enum TextDocumentSyncKind: Int, Sendable, Hashable, Codable {
+    case none = 0
+    case full = 1
+    case incremental = 2
+}
+
 // Capabilities snapshot (public)
 public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
     public var completion: Bool
@@ -383,6 +390,7 @@ public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
     public var callHierarchy: Bool
     public var executeCommand: Bool
     public var incrementalSync: Bool
+    public var textDocumentSyncKind: TextDocumentSyncKind
     public var workspaceFolders: Bool
     public var supportedCommands: [String]
 
@@ -395,7 +403,8 @@ public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
         semanticTokensDelta: false, foldingRange: false, signatureHelp: false,
         documentLink: false, documentColor: false, inlayHint: false, inlayHintResolve: false,
         documentHighlight: false, typeHierarchy: false, callHierarchy: false,
-        executeCommand: false, incrementalSync: false, workspaceFolders: false,
+        executeCommand: false, incrementalSync: false, textDocumentSyncKind: .none,
+        workspaceFolders: false,
         supportedCommands: []
     )
 
@@ -405,14 +414,17 @@ public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
             if caps[key] is Bool { return caps[key] as? Bool ?? false }
             return caps[key] != nil
         }
-        var incremental = false
+        var syncKind: TextDocumentSyncKind = .none
         if let sync = caps["textDocumentSync"] as? Int {
-            incremental = sync == 2
+            syncKind = TextDocumentSyncKind(rawValue: sync) ?? .none
         } else if let sync = caps["textDocumentSync"] as? [String: Any] {
             if let change = sync["change"] as? Int {
-                incremental = change == 2
+                syncKind = TextDocumentSyncKind(rawValue: change) ?? .none
+            } else if sync["openClose"] as? Bool == true {
+                syncKind = .full
             }
         }
+        let incremental = syncKind == .incremental
         let completionProvider = caps["completionProvider"] as? [String: Any]
         let completionResolve = completionProvider?["resolveProvider"] as? Bool ?? false
         let codeActionProvider = caps["codeActionProvider"]
@@ -480,6 +492,7 @@ public struct ServerCapabilitiesSnapshot: Sendable, Hashable {
             callHierarchy: has("callHierarchyProvider"),
             executeCommand: has("executeCommandProvider"),
             incrementalSync: incremental,
+            textDocumentSyncKind: syncKind,
             workspaceFolders: foldersSupported,
             supportedCommands: commands
         )

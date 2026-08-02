@@ -13,6 +13,8 @@ public actor MockLanguageServer {
     public private(set) var openCount = 0
     public private(set) var changeCount = 0
     public private(set) var closeCount = 0
+    /// True when the last didChange was a full-text replace (no range).
+    public private(set) var lastChangeWasFullText = false
 
     /// When true, publish a warning diagnostic on didOpen/didChange.
     public var publishDiagnosticsOnChange = true
@@ -137,22 +139,18 @@ public actor MockLanguageServer {
                     ])
             }
             if requestApplyEditAfterInit {
+                // Resource create needs no open-buffer snapshot (LSP-N08/N09 fail-closed).
                 await request(
                     id: "server-apply-1",
                     method: "workspace/applyEdit",
                     params: [
                         "edit": [
-                            "changes": [
-                                "inmemory:x": [
-                                    [
-                                        "range": [
-                                            "start": ["line": 0, "character": 0],
-                                            "end": ["line": 0, "character": 0],
-                                        ],
-                                        "newText": "// applied\n",
-                                    ] as [String: Any]
-                                ]
-                            ] as [String: Any]
+                            "documentChanges": [
+                                [
+                                    "kind": "create",
+                                    "uri": "inmemory:applied.swift",
+                                ] as [String: Any]
+                            ]
                         ] as [String: Any]
                     ]
                 )
@@ -175,22 +173,56 @@ public actor MockLanguageServer {
             {
                 openText[uri] = text
                 if publishDiagnosticsOnChange {
-                    await publishDiagnostics(uri: uri, version: doc["version"] as? Int, text: text)
+                    await publishDiagnostics(
+                        uri: uri,
+                        version: Self.jsonInt(doc["version"]),
+                        text: text
+                    )
                 }
             }
         case "textDocument/didChange":
             changeCount += 1
             if let doc = params["textDocument"] as? [String: Any],
                 let uri = doc["uri"] as? String,
-                let version = doc["version"] as? Int
+                let version = Self.jsonInt(doc["version"])
             {
                 changeLog.append((uri, version))
-                if let changes = params["contentChanges"] as? [[String: Any]],
-                    let last = changes.last,
-                    let text = last["text"] as? String,
-                    last["range"] == nil
-                {
-                    openText[uri] = text
+                if let changes = params["contentChanges"] as? [[String: Any]] {
+                    // Full-text when any change lacks a range.
+                    lastChangeWasFullText = changes.contains { $0["range"] == nil }
+                    if lastChangeWasFullText,
+                        let last = changes.last,
+                        let text = last["text"] as? String,
+                        last["range"] == nil
+                    {
+                        openText[uri] = text
+                    } else if var current = openText[uri] {
+                        // Apply incremental changes in order (test mock only).
+                        for change in changes {
+                            guard let text = change["text"] as? String else { continue }
+                            if let range = change["range"] as? [String: Any],
+                                let start = range["start"] as? [String: Any],
+                                let end = range["end"] as? [String: Any]
+                            {
+                                let sl = Self.jsonInt(start["line"]) ?? 0
+                                let sc = Self.jsonInt(start["character"]) ?? 0
+                                let el = Self.jsonInt(end["line"]) ?? 0
+                                let ec = Self.jsonInt(end["character"]) ?? 0
+                                let startOff = Self.utf16Offset(line: sl, character: sc, in: current)
+                                let endOff = Self.utf16Offset(line: el, character: ec, in: current)
+                                let ns = current as NSString
+                                let loc = min(startOff, ns.length)
+                                let len = max(0, min(endOff, ns.length) - loc)
+                                current = ns.replacingCharacters(
+                                    in: NSRange(location: loc, length: len),
+                                    with: text
+                                )
+                            } else {
+                                current = text
+                            }
+                        }
+                        openText[uri] = current
+                    }
                 }
                 if publishDiagnosticsOnChange {
                     await publishDiagnostics(uri: uri, version: version, text: openText[uri] ?? "")
@@ -605,5 +637,38 @@ public actor MockLanguageServer {
         ]
         guard let body = try? JSONSerialization.data(withJSONObject: message) else { return }
         try? await transport.send(LSPMessageFraming.encode(body))
+    }
+
+    private static func jsonInt(_ value: Any?) -> Int? {
+        if let i = value as? Int { return i }
+        if let n = value as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() {
+            return n.intValue
+        }
+        return nil
+    }
+
+    private static func utf16Offset(line: Int, character: Int, in text: String) -> Int {
+        let ns = text as NSString
+        var currentLine = 0
+        var i = 0
+        let targetLine = max(0, line)
+        while i < ns.length && currentLine < targetLine {
+            let ch = ns.character(at: i)
+            i += 1
+            if ch == 0x0A {
+                currentLine += 1
+            } else if ch == 0x0D {
+                if i < ns.length, ns.character(at: i) == 0x0A { i += 1 }
+                currentLine += 1
+            }
+        }
+        var col = 0
+        while i < ns.length && col < character {
+            let ch = ns.character(at: i)
+            if ch == 0x0A || ch == 0x0D { break }
+            i += 1
+            col += 1
+        }
+        return i
     }
 }

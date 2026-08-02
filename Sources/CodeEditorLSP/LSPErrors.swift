@@ -21,6 +21,13 @@ public enum LSPError: Error, Sendable, Equatable {
     case capabilityUnavailable(String)
     case framing(String)
     case budgetExceeded(String)
+    /// Snapshot resolution failed; never fabricate empty text for ranges (LSP-N09).
+    case snapshotUnavailable(uri: String, reason: String)
+    /// Document is not open on this session / wrong open phase (LSP-N07).
+    case documentNotOpen(uri: String)
+    /// Version continuity broken; full resync required (LSP-N04/N05).
+    case versionGap(uri: String, expected: UInt64, actual: UInt64)
+    case invalidSynchronize(String)
 }
 
 public enum LSPLogLevel: String, Sendable, Hashable, Codable {

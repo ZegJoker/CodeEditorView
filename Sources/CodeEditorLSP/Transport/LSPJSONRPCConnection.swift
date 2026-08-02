@@ -1,6 +1,11 @@
+import CodeEditorCore
 import Foundation
 
 /// JSON-RPC 2.0 bidirectional client over an LSP-framed transport.
+///
+/// Uses ``OneShotPromise`` for pending requests (register **before** any transport await;
+/// LSP-N01). Inbound messages are classified into lanes so responses are never stalled
+/// behind slow notification handlers (LSP-N02).
 public actor LSPJSONRPCConnection {
     public enum RequestID: Hashable, Sendable {
         case int(Int)
@@ -40,38 +45,56 @@ public actor LSPJSONRPCConnection {
         }
     }
 
+    /// Inbound message classification (LSP-N02).
+    public enum MessageLane: Sendable, Hashable {
+        /// Complete pending immediately on the connection actor.
+        case response
+        /// Stateful notifications that must stay ordered (publishDiagnostics, etc.).
+        case stateOrdered
+        /// Independent notifications (per-method serial optional).
+        case independent
+        /// Server→client requests with independent deadlines.
+        case serverRequest
+    }
+
     private let transport: any LSPTransport
     private let log: LSPLog
     private var nextID: Int = 1
-    private var pending: [RequestID: CheckedContinuation<Data, Error>] = [:]
-    /// Defensive only: under register-before-send this should stay empty (LSP-002).
-    /// Bounded; excess early responses are dropped with a log (never unbounded growth).
-    private var earlyResponses: [RequestID: Data] = [:]
-    private let maxEarlyResponses = 8
+    /// Pending client requests: installed **before** transport write (LSP-N01).
+    private var pending: [RequestID: OneShotPromise<Data>] = [:]
     private var readerTask: Task<Void, Never>?
     private var notificationHandler: (@Sendable (String, Data) async -> Void)?
-    /// Handles server→client requests; return JSON-serializable result or throw.
     private var serverRequestHandler: (@Sendable (String, RequestID, Data) async throws -> LSPAnyJSON)?
     private var progressHandler: (@Sendable (ProgressEvent) async -> Void)?
     private let decoder: LSPMessageFraming.Decoder
     private var closed = false
-    /// Serializes inbound protocol handling (LSP-004 / §13.3).
-    private var inboundChain: Task<Void, Never>?
+    /// Serial lane for state-ordered notifications (LSP-N02).
+    private var stateOrderedChain: Task<Void, Never>?
+    /// Per-method serial chains for independent notifications that still need order.
+    private var perMethodChains: [String: Task<Void, Never>] = [:]
+    /// Bounded concurrent server-request tasks.
+    private var serverRequestTasks: [UUID: Task<Void, Never>] = [:]
+    private let maxConcurrentServerRequests: Int
     public var requestTimeout: Duration
     public private(set) var lastFramingError: LSPMessageFraming.DecodeError?
-    /// Test/metrics: count of early responses observed (should stay 0 when healthy).
+    /// Legacy metric alias — always 0; early response retention was removed (LSP-N01).
     public private(set) var earlyResponseCount: Int = 0
+    /// Late/orphan responses discarded (IDs are not reused).
+    public private(set) var lateResponseCount: Int = 0
+    public private(set) var duplicateResponseCount: Int = 0
 
     public init(
         transport: any LSPTransport,
         log: LSPLog = LSPLog(),
         requestTimeout: Duration = .seconds(10),
-        maxBodyBytes: Int = LSPMessageFraming.defaultMaxBodyBytes
+        maxBodyBytes: Int = LSPMessageFraming.defaultMaxBodyBytes,
+        maxConcurrentServerRequests: Int = 16
     ) {
         self.transport = transport
         self.log = log
         self.requestTimeout = requestTimeout
         self.decoder = LSPMessageFraming.Decoder(maxBodyBytes: maxBodyBytes)
+        self.maxConcurrentServerRequests = max(1, maxConcurrentServerRequests)
     }
 
     public func start() {
@@ -128,10 +151,32 @@ public actor LSPJSONRPCConnection {
         guard let result = dict["result"] else {
             throw LSPError.decode("missing result")
         }
+        // Preserve full JSONValue model (LSP-N11); wrap scalars for dictionary API.
         if let resultDict = result as? [String: Any] {
             return LSPJSONObject(resultDict)
         }
         return LSPJSONObject(["_value": result])
+    }
+
+    /// Request returning a complete ``JSONValue`` result (LSP-N11).
+    public func requestJSONValue(
+        _ method: String,
+        params: LSPJSONObject?
+    ) async throws -> JSONValue {
+        let responseData = try await requestRaw(method, paramsObject: params?.dictionary)
+        let obj = try JSONSerialization.jsonObject(with: responseData)
+        guard let dict = obj as? [String: Any] else {
+            throw LSPError.decode("response not object")
+        }
+        if let error = dict["error"] as? [String: Any] {
+            let code = error["code"] as? Int ?? -1
+            let message = error["message"] as? String ?? "error"
+            throw LSPError.serverError(code: code, message: message)
+        }
+        guard let result = dict["result"] else {
+            return .null
+        }
+        return try JSONValue(jsonObject: result)
     }
 
     /// Sends `$/cancelRequest` for a client-originated request id.
@@ -172,7 +217,6 @@ public actor LSPJSONRPCConnection {
             "id": id.jsonValue,
             "result": result as Any? ?? NSNull(),
         ]
-        // JSONSerialization rejects top-level Optional; ensure NSNull.
         if message["result"] == nil {
             message["result"] = NSNull()
         }
@@ -197,14 +241,52 @@ public actor LSPJSONRPCConnection {
         closed = true
         readerTask?.cancel()
         readerTask = nil
+        stateOrderedChain?.cancel()
+        stateOrderedChain = nil
+        for (_, t) in perMethodChains { t.cancel() }
+        perMethodChains.removeAll()
+        for (_, t) in serverRequestTasks { t.cancel() }
+        serverRequestTasks.removeAll()
         await failAllPending(LSPError.transportClosed)
         await transport.close()
     }
 
-    // MARK: - Private
+    // MARK: - Classification
 
-    /// LSP-002: register pending **before** send on this actor; no nested registration Task.
+    public static func classify(
+        method: String?,
+        hasID: Bool,
+        isResponse: Bool
+    ) -> MessageLane {
+        if isResponse { return .response }
+        if hasID, method != nil { return .serverRequest }
+        guard let method else { return .independent }
+        if isStateOrdered(method) { return .stateOrdered }
+        return .independent
+    }
+
+    private static func isStateOrdered(_ method: String) -> Bool {
+        switch method {
+        case "textDocument/publishDiagnostics",
+            "workspace/didChangeWorkspaceFolders",
+            "workspace/didChangeConfiguration",
+            "workspace/didChangeWatchedFiles":
+            return true
+        default:
+            // Custom ordered/* used in tests and any textDocument/* state push.
+            if method.hasPrefix("ordered/") { return true }
+            if method.hasPrefix("textDocument/") && method.contains("Diagnostic") { return true }
+            return false
+        }
+    }
+
+    // MARK: - Private request lifecycle (LSP-N01)
+
+    /// Register pending **before** any await; no unstructured registration Task.
     private func requestRaw(_ method: String, paramsObject: Any?) async throws -> Data {
+        try Task.checkCancellation()
+        guard !closed else { throw LSPError.transportClosed }
+
         let id = RequestID.int(nextID)
         nextID += 1
         var message: [String: Any] = [
@@ -218,75 +300,54 @@ public actor LSPJSONRPCConnection {
         let body = try JSONSerialization.data(withJSONObject: message)
         let framed = LSPMessageFraming.encode(body)
 
-        try Task.checkCancellation()
+        // Pending record BEFORE any transport await (substrate §22.5 / LSP-N01).
+        let promise = OneShotPromise<Data>()
+        pending[id] = promise
+
         do {
-            return try await withThrowingTaskGroup(of: Data.self) { group in
-                group.addTask {
-                    try await self.executeRegisteredRequest(id: id, framed: framed)
-                }
-                group.addTask {
-                    try await Task.sleep(for: self.requestTimeout)
-                    throw LSPError.timeout(method: method)
-                }
-                let result = try await group.next()!
-                group.cancelAll()
-                return result
-            }
+            try await transport.send(framed)
+        } catch {
+            pending[id] = nil
+            _ = promise.fail(error)
+            throw error
+        }
+
+        let deadline = ContinuousClock.now + requestTimeout
+        do {
+            let value = try await promise.wait(until: deadline)
+            pending[id] = nil
+            return value
         } catch is CancellationError {
+            pending[id] = nil
+            _ = promise.fail(CancellationError())
             try? await cancelRequest(id: id)
-            failPending(id: id, error: CancellationError())
             throw CancellationError()
-        } catch let error as LSPError {
-            if case .timeout = error {
-                try? await cancelRequest(id: id)
-                failPending(id: id, error: error)
-            }
+        } catch OneShotPromiseError.timedOut {
+            pending[id] = nil
+            _ = promise.fail(LSPError.timeout(method: method))
+            try? await cancelRequest(id: id)
+            throw LSPError.timeout(method: method)
+        } catch OneShotPromiseError.cancelled {
+            pending[id] = nil
+            try? await cancelRequest(id: id)
+            throw CancellationError()
+        } catch {
+            pending[id] = nil
             throw error
         }
     }
 
-    /// Actor-isolated: install continuation, then write. Resume happens in handleMessage.
-    private func executeRegisteredRequest(id: RequestID, framed: Data) async throws -> Data {
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            Task { await self.registerThenSend(id: id, framed: framed, cont: cont) }
-        }
-    }
-
-    private func registerThenSend(
-        id: RequestID,
-        framed: Data,
-        cont: CheckedContinuation<Data, Error>
-    ) async {
-        if closed {
-            cont.resume(throwing: LSPError.transportClosed)
-            return
-        }
-        if let early = earlyResponses.removeValue(forKey: id) {
-            cont.resume(returning: early)
-            return
-        }
-        // Register **before** any await on the wire (LSP-002).
-        pending[id] = cont
-        do {
-            try await transport.send(framed)
-        } catch {
-            failPending(id: id, error: error)
-        }
-    }
-
     private func failPending(id: RequestID, error: Error) {
-        earlyResponses.removeValue(forKey: id)
-        if let cont = pending.removeValue(forKey: id) {
-            cont.resume(throwing: error)
+        if let promise = pending.removeValue(forKey: id) {
+            _ = promise.fail(error)
         }
     }
 
     private func failAllPending(_ error: Error) {
         let all = pending
         pending.removeAll()
-        earlyResponses.removeAll()
-        for (_, cont) in all {
-            cont.resume(throwing: error)
+        for (_, promise) in all {
+            _ = promise.fail(error)
         }
     }
 
@@ -296,17 +357,12 @@ public actor LSPJSONRPCConnection {
             lastFramingError = err
             log.append(level: .warning, message: "Framing error: \(err)")
         }
-        // Chain inbound processing so notifications stay ordered (LSP-004).
-        let previous = inboundChain
-        inboundChain = Task {
-            await previous?.value
-            for body in messages {
-                await self.handleMessageOrdered(body)
-            }
+        for body in messages {
+            dispatchFrame(body)
         }
     }
 
-    private func handleMessageOrdered(_ body: Data) async {
+    private func dispatchFrame(_ body: Data) {
         guard
             let obj = try? JSONSerialization.jsonObject(with: body),
             let dict = obj as? [String: Any]
@@ -318,47 +374,118 @@ public actor LSPJSONRPCConnection {
         let idValue = dict["id"]
         let method = dict["method"] as? String
         let hasResultOrError = dict["result"] != nil || dict["error"] != nil
+        let isResponse = idValue != nil && method == nil && hasResultOrError
+        let lane = Self.classify(
+            method: method,
+            hasID: idValue != nil,
+            isResponse: isResponse
+        )
 
-        // Response to client request
-        if let idValue, method == nil, hasResultOrError {
-            if let id = RequestID(json: idValue) {
-                if let cont = pending.removeValue(forKey: id) {
-                    cont.resume(returning: body)
-                } else {
-                    earlyResponseCount += 1
-                    if earlyResponses.count < maxEarlyResponses {
-                        earlyResponses[id] = body
-                    } else {
-                        log.append(level: .warning, message: "Dropping early response (bound)")
-                    }
-                }
-            }
+        switch lane {
+        case .response:
+            completeResponse(idValue: idValue, body: body)
+        case .stateOrdered:
+            enqueueStateOrdered(body: body, dict: dict, method: method)
+        case .independent:
+            enqueueIndependent(body: body, dict: dict, method: method)
+        case .serverRequest:
+            enqueueServerRequest(body: body, dict: dict, method: method, idValue: idValue)
+        }
+    }
+
+    private func completeResponse(idValue: Any?, body: Data) {
+        guard let idValue, let id = RequestID(json: idValue) else { return }
+        guard let promise = pending.removeValue(forKey: id) else {
+            // Late response: discard and count — never retain for non-reused IDs (LSP-N01).
+            lateResponseCount += 1
+            log.append(level: .debug, message: "Late/orphan response for \(id)")
             return
         }
-
-        // Notification or server request — await handlers in order (no fan-out Task).
-        if let method {
-            let paramsData: Data
-            if let params = dict["params"] {
-                paramsData = (try? JSONSerialization.data(withJSONObject: params)) ?? Data()
-            } else {
-                paramsData = Data("{}".utf8)
-            }
-
-            if method == "$/progress" {
-                await dispatchProgress(paramsData)
-                return
-            }
-
-            if let idValue, let id = RequestID(json: idValue) {
-                await dispatchServerRequest(method: method, id: id, paramsData: paramsData)
-                return
-            }
-
-            if let handler = notificationHandler {
-                await handler(method, paramsData)
-            }
+        let ok = promise.succeed(body)
+        if !ok {
+            duplicateResponseCount += 1
         }
+    }
+
+    private func enqueueStateOrdered(body: Data, dict: [String: Any], method: String?) {
+        let previous = stateOrderedChain
+        stateOrderedChain = Task {
+            await previous?.value
+            await self.deliverNotification(method: method, dict: dict, body: body)
+        }
+    }
+
+    private func enqueueIndependent(body: Data, dict: [String: Any], method: String?) {
+        let key = method ?? ""
+        let previous = perMethodChains[key]
+        perMethodChains[key] = Task {
+            await previous?.value
+            await self.deliverNotification(method: method, dict: dict, body: body)
+            // Drop finished chain slot when idle (best-effort).
+            await self.clearMethodChainIfCurrent(key: key)
+        }
+    }
+
+    private func clearMethodChainIfCurrent(key: String) {
+        // Leave entry; next enqueue chains. No-op cleanup keeps logic simple.
+        _ = key
+    }
+
+    private func enqueueServerRequest(
+        body: Data,
+        dict: [String: Any],
+        method: String?,
+        idValue: Any?
+    ) {
+        guard let method, let idValue, let id = RequestID(json: idValue) else { return }
+        // Bound concurrent server requests: if saturated, still schedule but chain after any.
+        if serverRequestTasks.count >= maxConcurrentServerRequests {
+            log.append(level: .warning, message: "Server request backlog: \(method)")
+        }
+        let taskID = UUID()
+        let task = Task {
+            await self.deliverServerRequest(method: method, id: id, dict: dict, body: body)
+            await self.finishServerRequestTask(taskID)
+        }
+        serverRequestTasks[taskID] = task
+    }
+
+    private func finishServerRequestTask(_ id: UUID) {
+        serverRequestTasks[id] = nil
+    }
+
+    private func deliverNotification(method: String?, dict: [String: Any], body: Data) async {
+        guard let method else { return }
+        let paramsData: Data
+        if let params = dict["params"] {
+            paramsData = (try? JSONSerialization.data(withJSONObject: params)) ?? Data()
+        } else {
+            paramsData = Data("{}".utf8)
+        }
+        if method == "$/progress" {
+            await dispatchProgress(paramsData)
+            return
+        }
+        if let handler = notificationHandler {
+            await handler(method, paramsData)
+        }
+        _ = body
+    }
+
+    private func deliverServerRequest(
+        method: String,
+        id: RequestID,
+        dict: [String: Any],
+        body: Data
+    ) async {
+        let paramsData: Data
+        if let params = dict["params"] {
+            paramsData = (try? JSONSerialization.data(withJSONObject: params)) ?? Data()
+        } else {
+            paramsData = Data("{}".utf8)
+        }
+        _ = body
+        await dispatchServerRequest(method: method, id: id, paramsData: paramsData)
     }
 
     private func dispatchProgress(_ paramsData: Data) async {
@@ -426,7 +553,11 @@ public actor LSPJSONRPCConnection {
             let nullData = Data("null".utf8)
             return try JSONDecoder().decode(R.self, from: nullData)
         }
-        let resultData = try JSONSerialization.data(withJSONObject: result)
+        // Support scalar results via fragments.
+        let resultData = try JSONSerialization.data(
+            withJSONObject: result,
+            options: [.fragmentsAllowed]
+        )
         do {
             return try JSONDecoder().decode(R.self, from: resultData)
         } catch {

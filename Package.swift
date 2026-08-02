@@ -206,6 +206,7 @@ let package = Package(
                 "CodeEditorDocuments",
                 "CodeEditorLanguageSupport",
                 "CodeEditorLanguageServices",
+                "CodeEditorWorkspace",
             ]
         ),
         .target(
@@ -456,6 +457,8 @@ let package = Package(
                 "CodeEditorLSP",
                 "CodeEditorLanguageServices",
                 "CodeEditorDocuments",
+                "CodeEditorWorkspace",
+                "CodeEditorCore",
             ]
         ),
         .testTarget(

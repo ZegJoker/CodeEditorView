@@ -30,11 +30,67 @@ public struct DocumentEditPlan: Sendable, Hashable, Codable {
     }
 }
 
-public struct WorkspaceEditPlan: Sendable, Hashable, Codable {
-    public var documentEdits: [DocumentEditPlan]
+/// Versioned text-document edit from LSP `documentChanges` (TextDocumentEdit).
+public struct VersionedDocumentEditPlan: Sendable, Hashable, Codable {
+    public var uri: DocumentURI
+    public var version: Int?
+    public var edits: [TextEditPlan]
 
-    public init(documentEdits: [DocumentEditPlan] = []) {
+    public init(uri: DocumentURI, version: Int? = nil, edits: [TextEditPlan]) {
+        self.uri = uri
+        self.version = version
+        self.edits = edits
+    }
+}
+
+/// LSP resource operations (create / rename / delete).
+public enum WorkspaceResourceOperation: Sendable, Hashable, Codable {
+    case create(uri: DocumentURI, overwrite: Bool?)
+    case rename(from: DocumentURI, to: DocumentURI, overwrite: Bool?)
+    case delete(uri: DocumentURI, recursive: Bool?)
+}
+
+/// Change annotation for WorkspaceEdit confirmation (LSP 3.16+).
+public struct WorkspaceChangeAnnotation: Sendable, Hashable, Codable {
+    public var label: String
+    public var needsConfirmation: Bool
+    public var description: String?
+
+    public init(label: String, needsConfirmation: Bool = false, description: String? = nil) {
+        self.label = label
+        self.needsConfirmation = needsConfirmation
+        self.description = description
+    }
+}
+
+public struct WorkspaceEditPlan: Sendable, Hashable, Codable {
+    /// Unversioned `changes` map edits.
+    public var documentEdits: [DocumentEditPlan]
+    /// Versioned `documentChanges` TextDocumentEdit entries.
+    public var versionedDocumentEdits: [VersionedDocumentEditPlan]
+    /// Create / rename / delete resource operations from `documentChanges`.
+    public var resourceOperations: [WorkspaceResourceOperation]
+    /// Change annotations keyed by annotation id.
+    public var changeAnnotations: [String: WorkspaceChangeAnnotation]
+
+    public init(
+        documentEdits: [DocumentEditPlan] = [],
+        versionedDocumentEdits: [VersionedDocumentEditPlan] = [],
+        resourceOperations: [WorkspaceResourceOperation] = [],
+        changeAnnotations: [String: WorkspaceChangeAnnotation] = [:]
+    ) {
         self.documentEdits = documentEdits
+        self.versionedDocumentEdits = versionedDocumentEdits
+        self.resourceOperations = resourceOperations
+        self.changeAnnotations = changeAnnotations
+    }
+
+    /// Backward-compatible document-only plan.
+    public init(documentEdits: [DocumentEditPlan]) {
+        self.documentEdits = documentEdits
+        self.versionedDocumentEdits = []
+        self.resourceOperations = []
+        self.changeAnnotations = [:]
     }
 }
 
