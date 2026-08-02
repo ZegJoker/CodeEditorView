@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 6 complete (LSP-001…009 / TS-001…002 / §12–13):**
+  - `LanguageDocumentActor` off-main Tree-sitter; generation-tagged highlights
+  - LSP register-before-send; ordered inbound; rapid-edit full-text matrix
+  - Position encoding negotiation; diagnostic store; dynamic registration tracking
+  - `scripts/check-real-lsp.sh` for real-server gate
 - **Phase 5 complete (TER-001…TER-008 / §20–21 Ghostty terminal):**
   - `CGhosttyShim` + `ce_pty_spawn` (no Swift in child); `LocalPTYTransport` non-lossy
   - `TerminalService` + `GhosttySessionController` + AppKit/SwiftUI surface

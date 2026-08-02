@@ -25,7 +25,7 @@ Updated: 2026-08-02
 | WASM-001 | P0 | CodeEditorWasmEngineWasmKit | fixed | Real WasmKit parse/instantiate/call |
 | WASM-002 | P0 | CodeEditorWasmEngine | fixed | Real module execution tests pass |
 | IOS-001 | P0 | CodeEditorView | fixed | Duplicate a11y removed; iOS example host from Phase 1 |
-| LSP-001 | P0 | CodeEditorLSP | fixed | Full-text debounce resync |
+| LSP-001 | P0 | CodeEditorLSP | fixed | Full-text debounce + rapid-edit matrix vs mock server |
 
 
 
@@ -38,14 +38,14 @@ Updated: 2026-08-02
 | CI-001 | P1 | scripts | fixed | generate-release-evidence.sh produces artifacts from tests |
 | CMD-001 | P1 | CodeEditorWorkbench | fixed | RegistrationBag host lifetime + tests |
 | CMD-002 | P1 | CodeEditorCommands | fixed | Chord SM: prefix, timeout short, Escape, layers |
-| LSP-002 | P1 | CodeEditorLSP | fixed | Register-before-send |
-| LSP-003 | P1 | CodeEditorLSP | fixed | WorkspaceSnapshotResolver cross-file |
+| LSP-002 | P1 | CodeEditorLSP | fixed | Register-before-send actor path; earlyResponses bounded |
+| LSP-003 | P1 | CodeEditorLSP | fixed | WorkspaceSnapshotResolver; cross-file tests retained |
 | DAP-001 | P1 | CodeEditorDAP | fixed | Register-before-send |
 | TASK-001 | P1 | CodeEditorTasks | fixed | No fabricated offsets |
 | TASK-002 | P1 | CodeEditorTasks | fixed | Rolling readiness window; dep requires ready |
 | UI-001 | P1 | CodeEditorView | fixed | Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session |
 | SCM-001 | P1 | CodeEditorSourceControl | fixed | Rename + path containment |
-| TS-001 | P1 | CodeEditorTreeSitter | fixed | TreeSitterLanguageRuntime actor; lock-box env; no nonisolated(unsafe) globals |
+| TS-001 | P1 | CodeEditorTreeSitter | fixed | LanguageDocumentActor off-main; provider delegates highlights |
 | WB-001 | P1 | CodeEditorWorkbench | fixed | Real utility panels |
 | DOC-005 | P0 | CodeEditorDocuments | fixed | Streaming readContentAndIdentity; no Data(contentsOf) identity path |
 | DOC-006 | P1 | CodeEditorDocuments | fixed | CoordinatedFileIO once-resume box; test-proven |
@@ -76,3 +76,10 @@ Updated: 2026-08-02
 | TER-006 | P1 | CodeEditorDAP | fixed | runInTerminal → TerminalService debuggee |
 | TER-007 | P1 | CodeEditorTerminal | fixed | Security policy + a11y adapter |
 | TER-008 | P0 | CodeEditorTerminal | fixed | Workbench path without TerminalScreen feed |
+| LSP-004 | P1 | CodeEditorLSP | fixed | Ordered inbound notification/request chain |
+| LSP-005 | P1 | CodeEditorLSP | fixed | negotiatedPositionEncoding stored on session |
+| LSP-006 | P1 | CodeEditorLSP | fixed | Dynamic registration tracks methods |
+| LSP-007 | P1 | CodeEditorLSP | fixed | applyEdit plan path (WorkspaceEditPlan) retained + tests |
+| LSP-008 | P1 | CodeEditorLSP | fixed | LSPDiagnosticStore version-aware clear on empty/server |
+| LSP-009 | P1 | CodeEditorLSP | fixed | scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1 |
+| TS-002 | P1 | CodeEditorTreeSitter | fixed | Generation-tagged highlights; stale discarded |

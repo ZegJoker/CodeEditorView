@@ -142,7 +142,7 @@
       "severity": "P0",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "Full-text debounce resync"
+      "summary": "Full-text debounce + rapid-edit matrix vs mock server"
     },
     {
       "id": "TER-001",
@@ -177,14 +177,14 @@
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "Register-before-send"
+      "summary": "Register-before-send actor path; earlyResponses bounded"
     },
     {
       "id": "LSP-003",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "WorkspaceSnapshotResolver cross-file"
+      "summary": "WorkspaceSnapshotResolver; cross-file tests retained"
     },
     {
       "id": "DAP-001",
@@ -226,7 +226,7 @@
       "severity": "P1",
       "product": "CodeEditorTreeSitter",
       "status": "fixed",
-      "summary": "TreeSitterLanguageRuntime actor; lock-box env; no nonisolated(unsafe) globals"
+      "summary": "LanguageDocumentActor off-main; provider delegates highlights"
     },
     {
       "id": "WB-001",
@@ -430,6 +430,55 @@
       "product": "CodeEditorTerminal",
       "status": "fixed",
       "summary": "Workbench live path no longer feeds TerminalScreen; custom VT legacy/tests only"
+    },
+    {
+      "id": "LSP-004",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Ordered inbound notification/request chain"
+    },
+    {
+      "id": "LSP-005",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "negotiatedPositionEncoding stored on session"
+    },
+    {
+      "id": "LSP-006",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Dynamic registration tracks methods"
+    },
+    {
+      "id": "LSP-007",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "applyEdit plan path (WorkspaceEditPlan) retained + tests"
+    },
+    {
+      "id": "LSP-008",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "LSPDiagnosticStore version-aware clear on empty/server"
+    },
+    {
+      "id": "LSP-009",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1"
+    },
+    {
+      "id": "TS-002",
+      "severity": "P1",
+      "product": "CodeEditorTreeSitter",
+      "status": "fixed",
+      "summary": "Generation-tagged highlights; stale discarded"
     }
   ]
 }
