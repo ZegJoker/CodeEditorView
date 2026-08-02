@@ -83,16 +83,19 @@ public final class WorkbenchModel {
         }
     }
 
-    private var contributionTokens: [any CommandDisposable] = []
+    /// Owns contribution / command registration tokens for host lifetime (CMD-001).
+    public let registrationBag = RegistrationBag()
     private var builtInCommandToken: (any CommandDisposable)?
     /// Serializes async opens so the latest request wins (avoids selection lag races).
     private var openGeneration: UInt64 = 0
+    /// Real focus/document/trust snapshot for command enablement (CMD-003).
+    public private(set) var commandContextSnapshot: CommandContextSnapshot = .empty
 
     /// Registers a contribution and retains its token for the workbench lifetime (CMD-001).
     @discardableResult
     public func retainContribution(_ contribution: any WorkbenchContribution) -> any CommandDisposable {
         let token = contributionRegistry.register(contribution)
-        contributionTokens.append(token)
+        registrationBag.retain(token)
         return token
     }
 
@@ -121,23 +124,13 @@ public final class WorkbenchModel {
         documentViewRegistry.register(ImageDocumentViewProvider())
         documentViewRegistry.register(TextDocumentViewProvider())
 
-        // Built-in contributions
-        contributionTokens.append(
-            contributionRegistry.register(FileTreeNavigatorContribution())
-        )
-        contributionTokens.append(
-            contributionRegistry.register(StatusBarContribution())
-        )
+        // Built-in contributions — retained in RegistrationBag for host lifetime (CMD-001).
+        registrationBag.retain(contributionRegistry.register(FileTreeNavigatorContribution()))
+        registrationBag.retain(contributionRegistry.register(StatusBarContribution()))
         // Real utility panels (WB-001) — not ContentUnavailable placeholders.
-        contributionTokens.append(
-            contributionRegistry.register(WorkbenchOutputPanelContribution())
-        )
-        contributionTokens.append(
-            contributionRegistry.register(WorkbenchProblemsPanelContribution())
-        )
-        contributionTokens.append(
-            contributionRegistry.register(WorkbenchTerminalPanelContribution())
-        )
+        registrationBag.retain(contributionRegistry.register(WorkbenchOutputPanelContribution()))
+        registrationBag.retain(contributionRegistry.register(WorkbenchProblemsPanelContribution()))
+        registrationBag.retain(contributionRegistry.register(WorkbenchTerminalPanelContribution()))
 
         activeNavigatorID = "workbench.navigator.files"
         activeUtilityID = "workbench.utility.problems"
@@ -150,6 +143,10 @@ public final class WorkbenchModel {
 
         // Catalog of editor commands for the palette (executed via active client).
         builtInCommandToken = EditorController.installBuiltInCommandCatalog(into: self.commandDispatcher)
+        if let builtInCommandToken {
+            registrationBag.retain(builtInCommandToken)
+        }
+        refreshCommandContextSnapshot()
         lifecyclePhase = .active
     }
 
@@ -158,19 +155,19 @@ public final class WorkbenchModel {
     public func enterBackground() {
         guard lifecyclePhase == .active else { return }
         lifecyclePhase = .background
+        refreshCommandContextSnapshot()
     }
 
     public func enterForeground() {
         if lifecyclePhase == .background || lifecyclePhase == .restoring {
             lifecyclePhase = .active
         }
+        refreshCommandContextSnapshot()
     }
 
     public func beginTearDown() {
         lifecyclePhase = .tearingDown
-        for token in contributionTokens { token.dispose() }
-        contributionTokens.removeAll()
-        builtInCommandToken?.dispose()
+        registrationBag.disposeAll()
         builtInCommandToken = nil
     }
 
@@ -272,10 +269,57 @@ public final class WorkbenchModel {
     // MARK: - Commands / open
 
     public func makeCommandContext() -> CommandContext? {
+        refreshCommandContextSnapshot()
         guard let client = editorClientRegistry.activeClient(workspace: workspace) else {
             return nil
         }
-        return CommandContext.make(from: client)
+        return CommandContext.make(from: client, snapshot: commandContextSnapshot)
+    }
+
+    /// Rebuild ``commandContextSnapshot`` from real focus / document / trust (CMD-003).
+    public func refreshCommandContextSnapshot() {
+        let client = editorClientRegistry.activeClient(workspace: workspace)
+        let part: String
+        switch focusedTarget {
+        case .editor: part = "editor"
+        case .navigator: part = "navigator"
+        case .inspector: part = "inspector"
+        case .utility: part = "utility"
+        case .commandPalette: part = "commandPalette"
+        case .openQuickly: part = "openQuickly"
+        case .toolbar: part = "toolbar"
+        }
+        let doc = client.flatMap { c in
+            c.documentID.flatMap { workspace.documents.document(id: $0) }
+        }
+        let selections = client?.selections ?? []
+        let hasSelection = selections.contains { $0.length > 0 }
+        let isEditorFocused = focusedTarget == .editor && client != nil
+        commandContextSnapshot = CommandContextSnapshot(
+            activePart: part,
+            documentURI: doc?.uri,
+            documentID: client?.documentID,
+            sessionID: client?.sessionID,
+            languageID: client?.languageID,
+            isEditable: (client?.isEditable ?? false) && isEditorFocused,
+            isFocused: isEditorFocused,
+            isDirty: doc?.isDirty ?? false,
+            hasSelection: hasSelection,
+            hasDocument: doc != nil,
+            workspaceTrust: workspace.trust.level.rawValue,
+            isDebugActive: false,
+            isTaskRunning: false,
+            flags: client?.contextFlags ?? [:],
+            selections: selections
+        )
+        // Context change clears pending chords (CMD-002).
+        commandDispatcher.clearChordOnContextChange()
+    }
+
+    /// Window / workspace close aggregates dirty docs through the coordinator (WSP-001 / §10.2).
+    @discardableResult
+    public func requestCloseWindow(policy: DirtyTabClosePolicy? = nil) async -> CloseTransactionResult {
+        await workspace.requestCloseAllTabs(policy: policy)
     }
 
     public func presentCommandPalette() {
@@ -368,9 +412,9 @@ public final class WorkbenchModel {
         try WorkbenchRestoration.encode(captureRestorationState())
     }
 
-    public func applyRestoration(_ state: WorkbenchRestorationState) {
+    public func applyRestoration(_ state: WorkbenchRestorationState) throws {
         lifecyclePhase = .restoring
-        let migrated = WorkbenchRestoration.migrate(state)
+        let migrated = try WorkbenchRestoration.migrate(state)
         windowRegistry.applyRestoration(migrated)
         if let focused = windowRegistry.focused() {
             applyWindowState(focused)
@@ -482,15 +526,17 @@ public final class WorkbenchModel {
     }
 
     public func revealInFinder(_ id: WorkspaceItemID) {
-        guard let uri = workspace.fileSystem.uri(for: id),
-            let url = uri.fileURL
-        else {
-            navigatorError = "Cannot reveal item"
-            return
+        Task {
+            guard let uri = await workspace.fileSystem.uri(for: id),
+                let url = uri.fileURL
+            else {
+                navigatorError = "Cannot reveal item"
+                return
+            }
+            #if os(macOS)
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            #endif
         }
-        #if os(macOS)
-            NSWorkspace.shared.activateFileViewerSelecting([url])
-        #endif
     }
 
     private func resolveCreateParent(_ parent: WorkspaceItemID?) async throws -> WorkspaceItemID {
@@ -510,8 +556,8 @@ public final class WorkbenchModel {
         if item.path.isEmpty {
             return item
         }
-        if let uri = workspace.fileSystem.uri(for: item),
-            let meta = workspace.fileSystem.item(for: uri)
+        if let uri = await workspace.fileSystem.uri(for: item),
+            let meta = await workspace.fileSystem.item(for: uri)
         {
             return meta.isDirectory
                 ? item

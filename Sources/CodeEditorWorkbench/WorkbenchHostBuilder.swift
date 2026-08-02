@@ -90,7 +90,7 @@ public final class WorkbenchHostBuilder {
             model.toolingSurfaces.upsert(surface)
         }
         if let restoration {
-            model.applyRestoration(restoration)
+            try model.applyRestoration(restoration)
         }
         return model
     }

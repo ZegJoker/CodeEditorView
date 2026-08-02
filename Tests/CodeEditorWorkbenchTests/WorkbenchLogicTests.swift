@@ -165,7 +165,8 @@ struct WorkbenchOpenCreateTests {
         defer { try? FileManager.default.removeItem(at: root) }
 
         let workspace = try await Workspace.local(rootDirectories: [root])
-        let rootID = workspace.fileTree.roots[0].id
+        #expect(!workspace.fileTree.roots.isEmpty)
+        let rootID = try #require(workspace.fileTree.roots.first).id
         let parent = WorkspaceItemID(rootID: rootID, path: "")
         let item = try await workspace.createFile(
             in: parent,

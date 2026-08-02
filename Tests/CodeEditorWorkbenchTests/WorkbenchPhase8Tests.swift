@@ -52,7 +52,7 @@ struct WorkbenchLifecycleTests {
         #expect(decoded.windows.contains(where: { $0.isUtilityVisible }))
 
         let model2 = try await makeModel()
-        model2.applyRestoration(decoded)
+        try model2.applyRestoration(decoded)
         #expect(model2.isUtilityVisible)
         #expect(model2.activeUtilityID == "workbench.utility.terminal")
         #expect(model2.utilityHeight == 220)

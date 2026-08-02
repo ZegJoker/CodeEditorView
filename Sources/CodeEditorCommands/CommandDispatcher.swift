@@ -30,8 +30,13 @@ public final class CommandDispatcher {
     /// Partial chord buffer.
     private var chordBuffer: [KeyPress] = []
     private var chordResetTask: Task<Void, Never>?
-    /// Chord idle timeout in nanoseconds (default 1s).
+    /// Exact command pending while waiting for a longer chord (CMD-002).
+    private var pendingExactID: CommandID?
+    private var pendingContext: CommandContext?
+    /// Chord idle timeout in nanoseconds (default 1s). On timeout, pending exact binding executes.
     public var chordTimeoutNanoseconds: UInt64 = 1_000_000_000
+    /// Optional feedback callback when entering/leaving pending chord state.
+    public var onChordStateChange: (([KeyPress]) -> Void)?
 
     public init(
         commands: CommandRegistry = CommandRegistry(),
@@ -40,6 +45,12 @@ public final class CommandDispatcher {
         self.commands = commands
         self.keybindings = keybindings
     }
+
+    /// Whether a multi-key chord is currently pending.
+    public var isChordPending: Bool { !chordBuffer.isEmpty }
+
+    /// Current chord prefix buffer (for UI feedback).
+    public var currentChordBuffer: [KeyPress] { chordBuffer }
 
     public func execute(_ id: CommandID, context: CommandContext) throws {
         guard let command = commands.command(id: id) else {
@@ -53,6 +64,7 @@ public final class CommandDispatcher {
     }
 
     /// Async execution path (preferred for long-running / cancellable commands).
+    /// Returns typed results — never silent success for unknown/disabled (CMD-004).
     @discardableResult
     public func executeAsync(_ id: CommandID, context: CommandContext) async throws -> CommandResult {
         guard let command = commands.command(id: id) else {
@@ -82,107 +94,153 @@ public final class CommandDispatcher {
     /// When the current sequence is both an exact binding **and** a strict prefix of a longer
     /// chord (e.g. ⌘K vs ⌘K,⌘C), the dispatcher enters a pending-chord state instead of
     /// executing immediately. Resolution occurs on the next keystroke or after
-    /// ``chordTimeoutNanoseconds``. Escape clears the buffer without executing.
+    /// ``chordTimeoutNanoseconds`` (timeout executes the short binding). Escape clears
+    /// the buffer without executing.
     @discardableResult
     public func handleKeyPress(_ press: KeyPress, context: CommandContext) throws -> Bool {
         let input = context.evaluationInput
 
-        // Escape cancels a pending chord.
+        // Escape cancels a pending chord without executing.
         if press.key == "escape", !chordBuffer.isEmpty {
-            chordBuffer.removeAll()
-            chordResetTask?.cancel()
+            clearChordState()
             return true
         }
 
-        scheduleChordReset()
+        scheduleChordReset(context: context)
         chordBuffer.append(press)
+        onChordStateChange?(chordBuffer)
 
         let exactID = keybindings.resolve(presses: chordBuffer, input: input)
         let longerExists = keybindings.hasLongerPrefix(presses: chordBuffer, input: input)
 
         if let id = exactID, longerExists {
             // Ambiguous: exact match is a prefix of a longer chord — wait.
+            pendingExactID = id
+            pendingContext = context
             return true
         }
 
         if let id = exactID {
-            chordBuffer.removeAll()
-            chordResetTask?.cancel()
+            clearChordState()
             try execute(id, context: context)
             return true
         }
 
         if keybindings.hasPrefix(presses: chordBuffer, input: input) {
-            // Wait for more presses in the chord.
+            // Wait for more presses in the chord (no exact match yet).
+            pendingExactID = nil
+            pendingContext = context
             return true
         }
 
-        // No match — if buffer length > 1, try current press alone (after failing longer chord).
+        // No match — if buffer length > 1, try committing pending prefix then reprocess.
         if chordBuffer.count > 1 {
-            // If we had a pending exact match for the prefix, execute it first.
             let prefix = Array(chordBuffer.dropLast())
             if let prefixID = keybindings.resolve(presses: prefix, input: input) {
-                chordBuffer = [press]
-                chordResetTask?.cancel()
+                clearChordState()
                 try execute(prefixID, context: context)
                 // Then re-process the current press as a fresh sequence.
                 return try handleKeyPressAfterPrefixCommit(press, context: context)
             }
             chordBuffer = [press]
+            pendingExactID = nil
             if let id = keybindings.resolve(presses: chordBuffer, input: input) {
                 let longer = keybindings.hasLongerPrefix(presses: chordBuffer, input: input)
                 if longer {
+                    pendingExactID = id
+                    pendingContext = context
                     return true
                 }
-                chordBuffer.removeAll()
-                chordResetTask?.cancel()
+                clearChordState()
                 try execute(id, context: context)
                 return true
             }
             if keybindings.hasPrefix(presses: chordBuffer, input: input) {
+                pendingContext = context
                 return true
             }
         }
 
-        chordBuffer.removeAll()
-        chordResetTask?.cancel()
+        clearChordState()
         return false
     }
 
     /// After committing a prefix binding, re-evaluate the latest press alone.
     private func handleKeyPressAfterPrefixCommit(_ press: KeyPress, context: CommandContext) throws -> Bool {
         let input = context.evaluationInput
-        scheduleChordReset()
+        scheduleChordReset(context: context)
         chordBuffer = [press]
+        onChordStateChange?(chordBuffer)
         if let id = keybindings.resolve(presses: chordBuffer, input: input) {
             if keybindings.hasLongerPrefix(presses: chordBuffer, input: input) {
+                pendingExactID = id
+                pendingContext = context
                 return true
             }
-            chordBuffer.removeAll()
-            chordResetTask?.cancel()
+            clearChordState()
             try execute(id, context: context)
             return true
         }
         if keybindings.hasPrefix(presses: chordBuffer, input: input) {
+            pendingContext = context
             return true
         }
-        chordBuffer.removeAll()
-        chordResetTask?.cancel()
+        clearChordState()
         return false
     }
 
     public func resetChordBuffer() {
-        chordBuffer.removeAll()
-        chordResetTask?.cancel()
+        clearChordState()
     }
 
-    private func scheduleChordReset() {
+    /// Clear pending chord when focus/context changes (CMD-002).
+    public func clearChordOnContextChange() {
+        clearChordState()
+    }
+
+    /// Test/host hook: immediately resolve a pending exact chord as if the idle timeout fired.
+    public func resolvePendingChordTimeout() throws {
+        chordResetTask?.cancel()
+        chordResetTask = nil
+        if let id = pendingExactID, let ctx = pendingContext {
+            pendingExactID = nil
+            pendingContext = nil
+            chordBuffer.removeAll()
+            onChordStateChange?([])
+            try execute(id, context: ctx)
+        } else {
+            clearChordState()
+        }
+    }
+
+    private func clearChordState() {
+        chordBuffer.removeAll()
+        chordResetTask?.cancel()
+        chordResetTask = nil
+        pendingExactID = nil
+        pendingContext = nil
+        onChordStateChange?([])
+    }
+
+    private func scheduleChordReset(context: CommandContext) {
         chordResetTask?.cancel()
         let timeout = chordTimeoutNanoseconds
+        pendingContext = context
         chordResetTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: timeout)
             guard !Task.isCancelled else { return }
-            self?.chordBuffer.removeAll()
+            guard let self else { return }
+            // Timeout: execute pending exact short binding if present (CMD-002 policy).
+            if let id = self.pendingExactID, let ctx = self.pendingContext {
+                self.chordBuffer.removeAll()
+                self.pendingExactID = nil
+                self.pendingContext = nil
+                self.chordResetTask = nil
+                self.onChordStateChange?([])
+                try? self.execute(id, context: ctx)
+            } else {
+                self.clearChordState()
+            }
         }
     }
 }

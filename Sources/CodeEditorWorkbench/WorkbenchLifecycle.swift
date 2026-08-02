@@ -103,28 +103,46 @@ public struct WorkbenchRestorationState: Codable, Sendable {
     }
 }
 
+public enum WorkbenchRestorationError: Error, Sendable, Equatable {
+    case unsupportedSchemaVersion(found: Int, supported: Int)
+    case corruptPayload(String)
+}
+
 public enum WorkbenchRestoration {
-    public static func migrate(_ state: WorkbenchRestorationState) -> WorkbenchRestorationState {
-        var state = state
+    /// Migrate known older schemas. **Rejects** unknown future schemas (audit §8.9).
+    public static func migrate(_ state: WorkbenchRestorationState) throws -> WorkbenchRestorationState {
         if state.schemaVersion > WorkbenchRestorationState.currentSchemaVersion {
-            state.schemaVersion = WorkbenchRestorationState.currentSchemaVersion
+            throw WorkbenchRestorationError.unsupportedSchemaVersion(
+                found: state.schemaVersion,
+                supported: WorkbenchRestorationState.currentSchemaVersion
+            )
         }
         if state.schemaVersion < 1 {
-            state.schemaVersion = 1
+            throw WorkbenchRestorationError.unsupportedSchemaVersion(
+                found: state.schemaVersion,
+                supported: WorkbenchRestorationState.currentSchemaVersion
+            )
         }
+        // v1 is baseline; future versions migrate stepwise here.
         return state
     }
 
     public static func encode(_ state: WorkbenchRestorationState) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
-        return try encoder.encode(migrate(state))
+        return try encoder.encode(try migrate(state))
     }
 
     public static func decode(_ data: Data) throws -> WorkbenchRestorationState {
         let decoder = JSONDecoder()
-        let state = try decoder.decode(WorkbenchRestorationState.self, from: data)
-        return migrate(state)
+        do {
+            let state = try decoder.decode(WorkbenchRestorationState.self, from: data)
+            return try migrate(state)
+        } catch let error as WorkbenchRestorationError {
+            throw error
+        } catch {
+            throw WorkbenchRestorationError.corruptPayload(String(describing: error))
+        }
     }
 }
 

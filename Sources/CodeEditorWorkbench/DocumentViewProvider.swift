@@ -189,26 +189,43 @@ struct TextDocumentEditorHost: View {
 }
 
 /// Minimal command client backed by document/session when full EditorController is unavailable.
+///
+/// Does **not** fabricate always-true focus/editable (CMD-003). Hosts must set
+/// ``isEditable`` / ``isFocused`` from the real responder chain.
 @MainActor
 final class SessionCommandClient: EditorCommandClient {
     let document: TextDocument
     let session: EditorSession
+    var isEditable: Bool
+    var isFocused: Bool
+    var languageID: String?
+    var contextFlags: [String: Bool]
 
-    init(document: TextDocument, session: EditorSession) {
+    init(
+        document: TextDocument,
+        session: EditorSession,
+        isEditable: Bool = true,
+        isFocused: Bool = false,
+        languageID: String? = nil,
+        contextFlags: [String: Bool] = [:]
+    ) {
         self.document = document
         self.session = session
+        self.isEditable = isEditable
+        self.isFocused = isFocused
+        self.languageID = languageID
+        self.contextFlags = contextFlags
     }
 
-    var isEditable: Bool { true }
-    var isFocused: Bool { true }
     var selections: [CodeEditorCore.TextRange] { session.selections }
     var snapshot: DocumentSnapshot { document.snapshot() }
     var documentID: DocumentID? { document.id }
     var sessionID: EditorSessionID? { session.id }
-    var languageID: String? { nil }
-    var contextFlags: [String: Bool] { [:] }
 
     func perform(_ action: EditorCommandAction) throws {
+        guard isEditable || action == .selectAll else {
+            throw CommandError.disabled("session.readOnly")
+        }
         switch action {
         case .undo: try document.performUndo()
         case .redo: try document.performRedo()
@@ -216,7 +233,8 @@ final class SessionCommandClient: EditorCommandClient {
             let len = document.length
             session.selections = [CodeEditorCore.TextRange(location: 0, length: len)]
         default:
-            break
+            // Unsupported on the session-only client — typed result, not silent success.
+            throw CommandError.unsupported(String(describing: action))
         }
     }
 }
