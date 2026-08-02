@@ -149,7 +149,7 @@
       "severity": "P0",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "CGhosttyShim + GhosttySessionController + non-lossy PTY; pin file; workbench terminal"
+      "summary": "GhosttySessionController + TerminalService production path; pin; fail-closed unlinked"
     },
     {
       "id": "CI-001",
@@ -381,6 +381,55 @@
       "product": "CodeEditorCommands",
       "status": "fixed",
       "summary": "Typed notFound/disabled/unsupported; palette-path executeAsync proof"
+    },
+    {
+      "id": "TER-002",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "ce_pty_spawn C helper; LocalPTYTransport exclusive FD; EAGAIN wait"
+    },
+    {
+      "id": "TER-003",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "TerminalByteTransport ordered events; overflow fatal; no bufferingNewest drops"
+    },
+    {
+      "id": "TER-004",
+      "severity": "P0",
+      "product": "CodeEditorTerminalGhostty",
+      "status": "fixed",
+      "summary": "GhosttySurfaceView/Representable; workbench uses Ghostty surface"
+    },
+    {
+      "id": "TER-005",
+      "severity": "P1",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "TerminalService create/write/close/closeAll/restoration config-only"
+    },
+    {
+      "id": "TER-006",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "GhosttyRunInTerminalHandler \u2192 TerminalService debuggee sessions"
+    },
+    {
+      "id": "TER-007",
+      "severity": "P1",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "TerminalSecurityPolicy OSC52 deny; a11y adapter from Ghostty snapshot"
+    },
+    {
+      "id": "TER-008",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "Workbench live path no longer feeds TerminalScreen; custom VT legacy/tests only"
     }
   ]
 }

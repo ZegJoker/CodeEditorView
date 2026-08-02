@@ -10,6 +10,12 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 5 complete (TER-001…TER-008 / §20–21 Ghostty terminal):**
+  - `CGhosttyShim` + `ce_pty_spawn` (no Swift in child); `LocalPTYTransport` non-lossy
+  - `TerminalService` + `GhosttySessionController` + AppKit/SwiftUI surface
+  - Workbench terminal panel Ghostty-backed (not custom `TerminalScreen` dump)
+  - DAP `GhosttyRunInTerminalHandler`; security policy; a11y adapter
+  - Pin check script; fail-closed when `requireLinked` and Ghostty unlinked
 - **Phase 4 complete (WSP-001…WSP-007 / CMD-001…CMD-004 / §8–9) + TDD residual pass:**
   - Dirty-close coordinator on all tab/pane/window paths; UI Close Pane → `requestClosePane`
   - Workspace edit journal + fault matrix including `duringRollback` typed catastrophic

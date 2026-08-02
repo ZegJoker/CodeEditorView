@@ -1,57 +1,77 @@
-# Phase 5 notes — Editor view façade and UI quality
+# Phase 5 notes — Ghostty terminal migration
+
+**Source of truth:** `~/Downloads/CodeEditorView_Deep_Audit_Xcode26_Ghostty.md` §20–21, Phase 5 gate  
+**Branch:** `remediation/audit-2026-08`  
+**Policy:** TDD; no silent byte drop; production path not custom VT.
+
+> Prior content of this file described an older “view façade” phase; that work lives under Phase 3 notes.
 
 ## Goal
 
-Reference workflows pass; public façade shrinks and is documented; IME/a11y/theme/lifecycle improved with tests.
-
-## Ownership model
-
-```
-TextDocument (versioned text + undo; attribute paints do not bump version)
-  └─ EditorController
-       ├─ document: DocumentStore (shared store or session-local mirror)
-       ├─ layout / selection / highlighter (revision-aware; cancel on disappear)
-       ├─ platform host (AppKitEditorView / UIKitEditorView)
-       └─ SwiftUI CodeEditor bindings (text, selection, EditorState)
-```
-
-Remote multi-controller edits: `EditorController+SharedDocument` + document event stream.  
-Highlight tasks stamp generation/version and drop stale results (`Highlighter`).
+Production integrated terminal: Ghostty engine + safe PTY transport + workbench surface + DAP `runInTerminal`, without custom `VTParser`/`TerminalScreen` on the live workbench path.
 
 ## Deliverables
 
 | Item | Status |
 |---|---|
-| `VIEW-PUBLIC-API.md` allowlist | Done |
-| Demote Rendering/* + CursorBlinkController to `package` | Done |
-| `EditorAccessibility` helpers + controller surfaces | Done |
-| AppKit/UIKit a11y label/value/hint improvements | Done |
-| UIKit real marked-text range composition | Done |
-| `EditorTheme.tokenOverrides` / `resolve(token:)` / `applyTokenMap` | Done |
-| `Highlighter.cancelPendingWork` + disappear cancel | Done |
-| Reference workflow + IME composition tests | Done |
+| `GHOSTTY.pin` + `scripts/check-ghostty-pin.sh` | Done |
+| `CGhosttyShim` ABI + PTY spawn C helper (`ce_pty_*`) | Done |
+| `TerminalByteTransport` / `MockByteTransport` / `LocalPTYTransport` | Done |
+| Non-lossy ordered events; overflow fatal; EAGAIN wait (no busy-spin) | Done |
+| `TerminalService` sessions, closeAll, config-only restore | Done |
+| `GhosttySessionController` actor + requireLinked fail-closed | Done |
+| `GhosttySurfaceView` / `GhosttySurfaceRepresentable` | Done |
+| Workbench terminal panel uses Ghostty surface (not TerminalScreen dump) | Done |
+| `GhosttyRunInTerminalHandler` → TerminalService | Done |
+| `TerminalSecurityPolicy` OSC52 deny; shell integration trust-gated | Done |
+| `GhosttyAccessibilityAdapter` | Done |
+| Custom VT retained only for legacy `TerminalSessionManager` / unit tests | Documented |
 
 ## Gate evidence
 
-| Check | Result |
+```text
+./scripts/check-ghostty-pin.sh
+# OK: pin valid
+
+swift test --filter 'Phase5|GhosttyShim|Terminal'
+# 32 tests / 8 suites — all passed
+```
+
+### Key tests
+
+| Exit | Test |
 |---|---|
-| `swift test --filter CodeEditorView` | **204 tests / 55 suites — passed** (includes reference workflows) |
-| Type/select/undo, find, fold smoke, lifecycle, a11y, theme tokens, IME model | Pass |
-| Isolation | unchanged product graph |
+| E5 ordered / no drop | `mockTransportOrderedEchoNoDrop` |
+| E5 overflow visible | `overflowTerminatesVisibly` |
+| E9 service lifecycle | `terminalServiceCreateWriteClose`, `closeAllOnReplace` |
+| E2 require linked | `requireGhosttyLinkedFailsClosed`, `requireLinkedThrowsWhenUnlinked` |
+| E3 UTF-8 chunks | `utf8BoundaryChunksCoalesceInSnapshot` |
+| E11 security | `securityPolicyOSC52DeniedByDefault` |
+| E12 a11y | `accessibilityAdapterFromSnapshot` |
+| E10 DAP | `runInTerminalCreatesDebuggeeSession` |
+| E15 soak | `soakCreateCloseControllers` |
 
-### Full-package note
+## Linked Ghostty
 
-A full `swift test` of the entire package can still hit intermittent parallel-suite instability (observed SIGSEGV / Dictionary index trap under high concurrency). View-filtered suite and isolated suites are green. Prefer `swift test --filter CodeEditorView` for View gate evidence; CI should keep product isolation jobs.
+Default package evaluate builds **unlinked** (`ce_ghostty_is_linked() == false`) with shim spool for lifecycle tests. Production hosts:
 
-## Residual / manual
+```bash
+./scripts/build-ghostty.sh vt
+export CODEEDITOR_GHOSTTY_LINKED=1
+# then swift build / app
+```
 
-- XCUITest / screenshot goldens across scale and Dynamic Type  
-- Full VoiceOver line-oriented tree for folds/diagnostics  
-- UIKit marked-text selection *within* composition range  
-- Further façade demotion of layout/typeset types (kept public for existing tests)  
-- iOS Simulator interactive QA checklist  
+When unlinked, `requireLinked: true` fails closed (no fake production terminal claim).
+
+## Residual vs full §21.14 Stable
+
+Automated suite covers architecture + lifecycle + policy. Full Stable still needs linked-lib soak (100 MiB, Kitty keyboard, VoiceOver manual) on CI with Ghostty build artifact — tracked as follow-on hardening, not a soft-stub of Phase 5 architecture.
+
+## Defects
+
+TER-001…TER-008 closed with evidence above.
 
 ## Related
 
-- Phase 6: LanguageServices + LSP  
-- Phase 9: Zed theme contribution import into `tokenOverrides`  
+- Phase 4 workspace trust gates process/PTY  
+- Phase 6 LSP matrix (separate)

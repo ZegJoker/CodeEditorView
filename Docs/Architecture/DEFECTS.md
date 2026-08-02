@@ -26,7 +26,15 @@ Updated: 2026-08-02
 | WASM-002 | P0 | CodeEditorWasmEngine | fixed | Real module execution tests pass |
 | IOS-001 | P0 | CodeEditorView | fixed | Duplicate a11y removed; iOS example host from Phase 1 |
 | LSP-001 | P0 | CodeEditorLSP | fixed | Full-text debounce resync |
-| TER-001 | P0 | CodeEditorTerminal | fixed | CGhosttyShim + GhosttySessionController + non-lossy PTY; pin file; workbench terminal |
+
+
+
+
+
+
+
+
+
 | CI-001 | P1 | scripts | fixed | generate-release-evidence.sh produces artifacts from tests |
 | CMD-001 | P1 | CodeEditorWorkbench | fixed | RegistrationBag host lifetime + tests |
 | CMD-002 | P1 | CodeEditorCommands | fixed | Chord SM: prefix, timeout short, Escape, layers |
@@ -60,3 +68,11 @@ Updated: 2026-08-02
 | WSP-007 | P1 | CodeEditorWorkspace | fixed | On-disk golden v1/v999/corrupt fixtures |
 | CMD-003 | P1 | CodeEditorCommands | fixed | CommandContextSnapshot from focus/trust |
 | CMD-004 | P1 | CodeEditorCommands | fixed | Typed notFound/disabled/unsupported on palette path |
+| TER-001 | P0 | CodeEditorTerminal | fixed | GhosttySessionController + TerminalService; pin; fail-closed unlinked |
+| TER-002 | P0 | CodeEditorTerminal | fixed | ce_pty_spawn C helper; exclusive FD; EAGAIN wait |
+| TER-003 | P0 | CodeEditorTerminal | fixed | Ordered transport; overflow fatal; no silent drop |
+| TER-004 | P0 | CodeEditorTerminalGhostty | fixed | GhosttySurfaceView + workbench Ghostty panel |
+| TER-005 | P1 | CodeEditorTerminal | fixed | TerminalService sessions/close/restore config |
+| TER-006 | P1 | CodeEditorDAP | fixed | runInTerminal → TerminalService debuggee |
+| TER-007 | P1 | CodeEditorTerminal | fixed | Security policy + a11y adapter |
+| TER-008 | P0 | CodeEditorTerminal | fixed | Workbench path without TerminalScreen feed |
