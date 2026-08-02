@@ -6,18 +6,24 @@ import TextStory
 /// Conforms to TextStory's `TextStoring` so mutations and inverse computation
 /// share a single abstraction across layout, selection, and undo.
 ///
-/// Content mutations advance ``version`` monotonically. Attribute-only updates
-/// (syntax highlighting) do **not** change the version.
+/// Content mutations advance ``version`` monotonically and assign a new
+/// ``contentState``. Attribute-only updates (syntax highlighting) do **not**
+/// change the version or content state.
 ///
-/// ## Concurrency (DOC-010 / §7.12)
-/// Not `@MainActor` so it can satisfy TextStory's nonisolated `TextStoring`.
-/// **Invariant:** treat as main-actor-affine mutable state. Cross-isolation
-/// sharing must use ``snapshot()`` (`DocumentSnapshot` is `Sendable`).
+/// ## Concurrency (CORE-N01)
+/// Owned and mutated exclusively on the main actor. Cross-isolation sharing
+/// must use ``snapshot()`` (`DocumentSnapshot` is `Sendable`). Concurrent
+/// mutation is undefined. The type is intentionally **not** `Sendable`.
 ///
-/// Concurrent mutation is **undefined**. The type is intentionally **not**
-/// `Sendable`. Callers that need cross-actor access must hop to the owning
-/// isolation or use ``snapshot()`` only.
+/// Ownership is the **main actor** model: every mutating entry point calls
+/// ``assertOwnership()`` (`dispatchPrecondition` on the main queue). The type
+/// is not `@MainActor`-annotated so it can still satisfy TextStory's nonisolated
+/// ``TextStoring`` protocol; callers remain responsible for hopping to main
+/// before mutation (UI and ``TextDocument`` already do).
 public final class DocumentStore: TextStoring {
+    /// Enforced ownership model (CORE-N01).
+    public static let ownershipModel: DocumentOwnershipModel = .mainActor
+
     /// Attributed storage for paint paths. Package-visible so View can paint without
     /// making the buffer a long-lived public API surface.
     package private(set) var storage: NSMutableAttributedString
@@ -27,6 +33,9 @@ public final class DocumentStore: TextStoring {
     /// Monotonic content generation. Starts at ``DocumentVersion/zero``.
     public private(set) var version: DocumentVersion = .zero
 
+    /// Logical content identity (DOC-N01). Undo restores a prior ID; versions stay monotonic.
+    public private(set) var contentState: DocumentContentStateID
+
     public init(
         string: String = "",
         attributes: [NSAttributedString.Key: Any] = [:]
@@ -34,13 +43,14 @@ public final class DocumentStore: TextStoring {
         self.defaultAttributes = attributes
         self.storage = NSMutableAttributedString(string: string, attributes: attributes)
         self.lineEnding = LineEnding.detect(in: string)
+        self.contentState = DocumentContentStateID()
     }
 
     // MARK: - Snapshot
 
     /// Immutable plain-text snapshot of the current content generation.
     public func snapshot() -> DocumentSnapshot {
-        DocumentSnapshot(version: version, text: fullString)
+        DocumentSnapshot(version: version, text: fullString, contentState: contentState)
     }
 
     // MARK: - TextStoring
@@ -62,8 +72,14 @@ public final class DocumentStore: TextStoring {
     }
 
     public func applyMutation(_ mutation: TextMutation) {
+        assertOwnership()
         applyMutationWithoutVersionBump(mutation)
-        bumpVersion()
+        bumpVersionAndContentState()
+    }
+
+    /// Fail closed if called off the owning isolation (CORE-N01).
+    public func assertOwnership() {
+        dispatchPrecondition(condition: .onQueue(.main))
     }
 
     // MARK: - Convenience
@@ -108,9 +124,10 @@ public final class DocumentStore: TextStoring {
     }
 
     public func setFullText(_ string: String) {
+        assertOwnership()
         storage = NSMutableAttributedString(string: string, attributes: defaultAttributes)
         lineEnding = LineEnding.detect(in: string)
-        bumpVersion()
+        bumpVersionAndContentState()
     }
 
     /// Override detected line ending (e.g. after load with explicit fidelity).
@@ -156,9 +173,10 @@ public final class DocumentStore: TextStoring {
     /// Applies a replacement and returns the recorded edit (bumps version once).
     @discardableResult
     public func replaceCharacters(in range: NSRange, with replacement: String) -> TextEdit {
+        assertOwnership()
         let edit = makeEdit(in: range, replacement: replacement)
         applyMutationWithoutVersionBump(edit.mutation)
-        bumpVersion()
+        bumpVersionAndContentState()
         return edit
     }
 
@@ -173,19 +191,25 @@ public final class DocumentStore: TextStoring {
     ///
     /// ## Ordering
     /// - `sortHighToLow == true` (default): changes are sorted by descending
-    ///   `replacedRange.location`, then descending length, then stable insertion order
-    ///   for equal-location insertions (deterministic multi-cursor edits).
+    ///   `replacedRange.location`, then descending length. Equal-offset pure insertions
+    ///   are applied in **reverse declaration order** so the visible result matches
+    ///   declaration order (DOC-N03): inserting `"1"` then `"2"` at the same offset
+    ///   yields `…12…`.
     /// - `sortHighToLow == false`: applies `transaction.changes` in the given order
     ///   (required for undo/redo sequences that already encode application order).
     ///
     /// - Parameter expectedVersion: When set, throws ``DocumentStoreError/staleVersion`` if the
     ///   store's generation does not match (optimistic concurrency for multi-session hosts).
+    /// - Parameter restoreContentState: When set (undo/redo), assign this content state
+    ///   instead of minting a new ID so dirty tracking can return to a savepoint (DOC-N01).
     @discardableResult
     public func apply(
         _ transaction: EditTransaction,
         sortHighToLow: Bool = true,
-        expectedVersion: DocumentVersion? = nil
+        expectedVersion: DocumentVersion? = nil,
+        restoreContentState: DocumentContentStateID? = nil
     ) throws -> AppliedEditTransaction {
+        assertOwnership()
         guard !transaction.changes.isEmpty else {
             throw DocumentStoreError.emptyTransaction
         }
@@ -194,6 +218,7 @@ public final class DocumentStore: TextStoring {
         }
 
         let oldVersion = version
+        let beforeState = contentState
         let preLength = length
 
         // 1. Validate every range against the pre-edit snapshot (no mutation yet).
@@ -232,12 +257,14 @@ public final class DocumentStore: TextStoring {
             throw DocumentStoreError.overlappingRanges(overlapping)
         }
 
-        // 3. Determine application order.
+        // 3. Coalesce equal-offset pure insertions into one declaration-order string (DOC-N03).
+        let coalesced = Self.coalesceEqualOffsetInsertions(validated)
+
+        // 4. Determine application order.
         let ordered: [(index: Int, change: TextChange, range: NSRange)]
         if sortHighToLow {
-            // High→low location; for equal location prefer longer replace first, then
-            // original index ascending so equal-offset pure insertions keep declaration order.
-            ordered = validated.sorted { a, b in
+            // High→low location; for equal location prefer longer replace first, then index.
+            ordered = coalesced.sorted { a, b in
                 if a.range.location != b.range.location {
                     return a.range.location > b.range.location
                 }
@@ -247,12 +274,11 @@ public final class DocumentStore: TextStoring {
                 return a.index < b.index
             }
         } else {
-            ordered = validated
+            ordered = coalesced
         }
 
-        // 4. Build the complete mutation plan (edits + inverses) against the pre-edit store
-        //    for high→low (ranges stay valid). For ordered sequences, re-validate as we go
-        //    on a staging buffer so failure never touches the live store.
+        // 5. Build the complete mutation plan on a staging buffer so failure never
+        //    touches the live store.
         let staging = NSMutableAttributedString(attributedString: storage)
         var textEdits: [TextEdit] = []
         textEdits.reserveCapacity(ordered.count)
@@ -261,9 +287,6 @@ public final class DocumentStore: TextStoring {
         for item in ordered {
             let range: NSRange
             if sortHighToLow {
-                // Still valid against original; after prior high→low mutations lower
-                // ranges are unchanged, so validate against staged length which equals
-                // original for remaining pre-edit coordinates when applying high→low.
                 range = try TextOffsetSemantics.validatedUTF16Range(
                     item.range,
                     documentUTF16Length: stagedLength
@@ -293,10 +316,19 @@ public final class DocumentStore: TextStoring {
             textEdits.append(TextEdit(mutation: mutation, inverse: inverse))
         }
 
-        // 5. Commit staging → live storage in one step; bump version once.
+        // 6. Commit staging → live storage in one step; bump version once.
         storage = staging
         lineEnding = LineEnding.detect(in: storage.string)
-        bumpVersion()
+        let afterState: DocumentContentStateID
+        if let restoreContentState {
+            contentState = restoreContentState
+            afterState = restoreContentState
+            version = version.advanced()
+        } else {
+            afterState = DocumentContentStateID()
+            contentState = afterState
+            version = version.advanced()
+        }
         let newVersion = version
 
         // Inverse: undo last-applied first (reverse of application order).
@@ -317,12 +349,47 @@ public final class DocumentStore: TextStoring {
             ),
             oldVersion: oldVersion,
             newVersion: newVersion,
+            beforeState: beforeState,
+            afterState: afterState,
             inverse: inverse,
             textEdits: textEdits
         )
     }
 
     // MARK: - Private
+
+    /// Merge pure insertions that share the same pre-edit offset into one replacement
+    /// whose string is the concatenation in **declaration order** (DOC-N03).
+    private static func coalesceEqualOffsetInsertions(
+        _ validated: [(index: Int, change: TextChange, range: NSRange)]
+    ) -> [(index: Int, change: TextChange, range: NSRange)] {
+        var groups: [Int: [(index: Int, change: TextChange, range: NSRange)]] = [:]
+        var nonInsertOrder: [(index: Int, change: TextChange, range: NSRange)] = []
+        for item in validated {
+            if item.range.length == 0 {
+                groups[item.range.location, default: []].append(item)
+            } else {
+                nonInsertOrder.append(item)
+            }
+        }
+        var result = nonInsertOrder
+        for (location, items) in groups {
+            if items.count == 1 {
+                result.append(items[0])
+                continue
+            }
+            let sorted = items.sorted { $0.index < $1.index }
+            let concatenated = sorted.map(\.change.replacement).joined()
+            let first = sorted[0]
+            let change = TextChange(
+                range: NSRange(location: location, length: 0),
+                replacement: concatenated
+            )
+            result.append((index: first.index, change: change, range: first.range))
+        }
+        // Preserve relative order by original index for the non-high-to-low path.
+        return result.sorted { $0.index < $1.index }
+    }
 
     private func applyMutationWithoutVersionBump(_ mutation: TextMutation) {
         storage.replaceCharacters(in: mutation.range, with: mutation.string)
@@ -332,7 +399,8 @@ public final class DocumentStore: TextStoring {
         }
     }
 
-    private func bumpVersion() {
+    private func bumpVersionAndContentState() {
         version = version.advanced()
+        contentState = DocumentContentStateID()
     }
 }

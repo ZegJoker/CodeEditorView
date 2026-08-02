@@ -2,10 +2,32 @@ import Foundation
 import TextStory
 
 /// Groups text edits into undoable units without relying on Combine or UIKit/AppKit UndoManager coupling.
+///
+/// Only **atomic group** apply APIs are public (DOC-N04). Per-edit callbacks that can partially
+/// mutate external state were removed.
 @MainActor
 public final class UndoCoordinator {
+    /// One undoable unit: edits plus content-state endpoints for dirty tracking (DOC-N01).
+    public struct RegisteredGroup: Sendable {
+        public var edits: [TextEdit]
+        public var beforeState: DocumentContentStateID
+        public var afterState: DocumentContentStateID
+
+        public init(
+            edits: [TextEdit],
+            beforeState: DocumentContentStateID,
+            afterState: DocumentContentStateID
+        ) {
+            self.edits = edits
+            self.beforeState = beforeState
+            self.afterState = afterState
+        }
+    }
+
     private struct Group {
         var edits: [TextEdit]
+        var beforeState: DocumentContentStateID?
+        var afterState: DocumentContentStateID?
     }
 
     private var undoStack: [Group] = []
@@ -35,6 +57,7 @@ public final class UndoCoordinator {
     public func disable() { isDisabled = true }
     public func enable() { isDisabled = false }
 
+    /// Registers a single edit. Prefer ``register(applied:)`` so content states are tracked.
     public func register(edit: TextEdit) {
         guard !isDisabled, !isUndoing, !isRedoing else { return }
 
@@ -58,49 +81,57 @@ public final class UndoCoordinator {
         }
     }
 
-    /// Undoes the last group. Prefer ``undoGroup`` so the host can apply one versioned transaction.
-    public func undo(apply: (TextEdit) throws -> Void) throws {
-        try undoGroup { edits in
-            for edit in edits {
-                try apply(edit)
-            }
-        }
+    /// Registers a full applied transaction as one undo group with content states (DOC-N01).
+    public func register(applied: AppliedEditTransaction) {
+        guard !isDisabled, !isUndoing, !isRedoing else { return }
+        flushOpenGroup()
+        guard !applied.textEdits.isEmpty else { return }
+        undoStack.append(
+            Group(
+                edits: applied.textEdits,
+                beforeState: applied.beforeState,
+                afterState: applied.afterState
+            )
+        )
+        redoStack.removeAll()
+        breakNextGroup = true
     }
 
-    /// Undoes the last group as a whole. `edits` are in **undo application order**
+    /// Undoes the last group as a whole. `group.edits` are in **undo application order**
     /// (reverse of original registration order).
     ///
-    /// Stack ownership moves only after `apply` succeeds (DOC-002). Failed application
+    /// Stack ownership moves only after `apply` succeeds (DOC-002 / DOC-N04). Failed application
     /// leaves both stacks unchanged. State flags are always cleared via `defer`.
-    public func undoGroup(apply: ([TextEdit]) throws -> Void) throws {
+    public func undoGroup(apply: (RegisteredGroup) throws -> Void) throws {
         flushOpenGroup()
         guard let group = undoStack.last else { return }
         isUndoing = true
         defer { isUndoing = false }
-        try apply(group.edits.reversed())
+        let registered = RegisteredGroup(
+            edits: group.edits.reversed(),
+            beforeState: group.beforeState ?? DocumentContentStateID(),
+            afterState: group.afterState ?? DocumentContentStateID()
+        )
+        try apply(registered)
         // Commit stack transition only after successful apply.
         _ = undoStack.popLast()
         redoStack.append(group)
     }
 
-    /// Redoes the last undone group. Prefer ``redoGroup`` for a single versioned transaction.
-    public func redo(apply: (TextEdit) throws -> Void) throws {
-        try redoGroup { edits in
-            for edit in edits {
-                try apply(edit)
-            }
-        }
-    }
-
-    /// Redoes the last group as a whole. `edits` are in original application order.
+    /// Redoes the last group as a whole. `group.edits` are in original application order.
     ///
-    /// Stack ownership moves only after `apply` succeeds (DOC-002).
-    public func redoGroup(apply: ([TextEdit]) throws -> Void) throws {
+    /// Stack ownership moves only after `apply` succeeds (DOC-002 / DOC-N04).
+    public func redoGroup(apply: (RegisteredGroup) throws -> Void) throws {
         flushOpenGroup()
         guard let group = redoStack.last else { return }
         isRedoing = true
         defer { isRedoing = false }
-        try apply(group.edits)
+        let registered = RegisteredGroup(
+            edits: group.edits,
+            beforeState: group.beforeState ?? DocumentContentStateID(),
+            afterState: group.afterState ?? DocumentContentStateID()
+        )
+        try apply(registered)
         _ = redoStack.popLast()
         undoStack.append(group)
     }

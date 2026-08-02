@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "title": "defect gate trusts manually marked “fixed” rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -214,9 +214,11 @@
       "severity_raw": "P1 concurrency",
       "title": "`DocumentStore` main-thread ownership is convention, not enforced architecture",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_CORE_N01_documentStoreIsMainActorOwned"
+      ],
+      "notes": "DocumentOwnershipModel.mainActor; assertOwnership via dispatchPrecondition on mutation entry points; not Sendable."
     },
     {
       "id": "DOC-N01",
@@ -224,9 +226,16 @@
       "severity_raw": "P0 data-integrity/user-trust defect",
       "title": "saved-version dirty tracking is logically impossible after undo",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N01_undoToSavepointIsClean",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N01_redoBecomesDirty",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N01_saveAfterUndoMovesSavepoint",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N01_monotonicVersionsShareContentState",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N01_externalReloadEstablishesCleanState",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N01_failedSaveDoesNotBecomeClean"
+      ],
+      "notes": "DocumentContentStateID + DocumentSavepoint; isDirty from content state; undo/redo restores state IDs; versions stay monotonic."
     },
     {
       "id": "DOC-N02",
@@ -234,9 +243,13 @@
       "severity_raw": "P0 potential overwrite",
       "title": "normal save bypasses conflict-aware save",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N02_externalModifyBetweenLoadAndSaveReturnsConflict",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N02_overwriteRequiresExplicitPolicy",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N02_inMemoryUnsupportedConflictDetection"
+      ],
+      "notes": "Single DocumentSaveRequest/DocumentSaveOutcome API; removed overwrite default bridge; providers declare supportsConflictDetection."
     },
     {
       "id": "DOC-N03",
@@ -244,9 +257,12 @@
       "severity_raw": "P1 correctness/API contract",
       "title": "equal-offset insertion contract is internally contradictory",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N03_equalOffsetInsertionsDeclarationOrder",
+        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N03_equalOffsetPropertyManyCarets"
+      ],
+      "notes": "Equal-offset pure insertions coalesced to declaration-order string; property tests 2-100 carets; undo/redo round-trip."
     },
     {
       "id": "DOC-N04",
@@ -254,9 +270,11 @@
       "severity_raw": "P1",
       "title": "public per-edit undo convenience can partially mutate external state",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift::test_DOC_N04_atomicUndoGroupOnlyNoPartialMutation"
+      ],
+      "notes": "Removed public per-edit undo/redo; only atomic undoGroup/redoGroup remain."
     },
     {
       "id": "DOC-N05",
@@ -264,9 +282,11 @@
       "severity_raw": "P1 for untrusted protocol/extension inputs",
       "title": "UTF-16 range arithmetic can overflow",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N05_utf16RangeArithmeticOverflowSafe"
+      ],
+      "notes": "validatedUTF16Range and utf16EndOffset use addingReportingOverflow."
     },
     {
       "id": "DOC-N06",
@@ -274,9 +294,13 @@
       "severity_raw": "P1 operational risk",
       "title": "`bufferSize <= 0` creates an unbounded event stream",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N06_rejectsUnboundedEventStream",
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N06_eventsCarrySequence",
+        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N06_eventBufferPolicyRejectsNonPositive"
+      ],
+      "notes": "EventBufferPolicy rejects non-positive capacity; sequenced TextDocumentEvent with streamGap markers."
     },
     {
       "id": "DOC-N07",
@@ -284,9 +308,11 @@
       "severity_raw": "P2",
       "title": "document encoding fallback contradicts its contract",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N07_otherEncodingIsUnsupportedNotAliased"
+      ],
+      "notes": "DocumentEncoding.other has no Foundation fallback; DocumentCodec rejects unsupported encodings."
     },
     {
       "id": "DOC-N08",
@@ -294,9 +320,11 @@
       "severity_raw": "P1 for local concurrent writers",
       "title": "conflict check still has a time-of-check/time-of-use window",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N08_identityCheckUnderWritePipeline"
+      ],
+      "notes": "writeAtomicallyComparingIdentity checks identity immediately before replace; CoordinatedDocumentIO under NSFileCoordinator."
     },
     {
       "id": "DOC-N09",
@@ -304,19 +332,24 @@
       "severity_raw": "P2 performance",
       "title": "local read path still doubles peak memory",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn"
+      ],
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync for resourceIdentity."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "severity_raw": "P1 for the “durable” claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N10_durableWriteSurvivesFaultBeforeParentFsync",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N10_successfulDurableWriteIncludesParentFsync"
+      ],
+      "notes": "Durable write: temp fsync, atomic replace, parent directory fsync; symlink refuse; fault points for parent fsync."
     },
     {
       "id": "DOC-N11",
@@ -324,9 +357,12 @@
       "severity_raw": "P1",
       "title": "recovery is a sidecar snapshot, not a durable journal",
       "phase": 1,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N11_versionedRecoveryRecordRoundTrip",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N11_corruptRecordQuarantinesFailClosed"
+      ],
+      "notes": "Schema v2 recovery record with contentState/base identity/encoding; stable createdAt; fail-closed quarantine; discoverRecords."
     },
     {
       "id": "CORE-N02",
@@ -711,7 +747,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "severity_raw": "P1 for “gitignore-compatible” claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "open",
@@ -1062,7 +1098,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "title": "current “real LSP” gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1082,7 +1118,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as \u201cearly\u201d responses",
+      "title": "late responses are retained as “early” responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1222,7 +1258,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "title": "repeated full-string snapshots are O(n²)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1372,7 +1408,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process \u201cargsGlob\u201d is not a glob",
+      "title": "process “argsGlob” is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1442,7 +1478,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "title": "compatibility claims need levels, not one “passing” flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1792,7 +1828,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

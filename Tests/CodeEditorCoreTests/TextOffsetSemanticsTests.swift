@@ -75,6 +75,20 @@ struct TextOffsetSemanticsTests {
         }
     }
 
+    @Test func test_DOC_N05_utf16RangeArithmeticOverflowSafe() {
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.validatedUTF16Range(
+                NSRange(location: Int.max - 1, length: 10),
+                documentUTF16Length: Int.max
+            )
+        }
+        #expect(throws: DocumentStoreError.self) {
+            _ = try TextOffsetSemantics.utf16EndOffset(location: Int.max - 1, length: 5)
+        }
+        let end = try? TextOffsetSemantics.utf16EndOffset(location: 3, length: 2)
+        #expect(end == 5)
+    }
+
     @Test func interiorUTF8OffsetThrowsNotScalarBoundary() {
         // "€" is 3 UTF-8 bytes; offset 1 is mid-scalar.
         let text = "€"
@@ -125,7 +139,7 @@ struct DocumentStoreAtomicityTests {
 
     @Test func equalOffsetInsertionsAreDeterministic() throws {
         let store = DocumentStore(string: "ab")
-        // Two pure insertions at the same offset; declaration order preserved for equal location.
+        // Two pure insertions at the same offset; visible result is declaration order (DOC-N03).
         let t = EditTransaction(
             changes: [
                 TextChange(range: NSRange(location: 1, length: 0), replacement: "1"),
@@ -134,19 +148,37 @@ struct DocumentStoreAtomicityTests {
             origin: .programmatic
         )
         _ = try store.apply(t)
-        // High-to-low with equal location uses ascending original index:
-        // first "1" then "2" at same pre-edit offset applied high→low with stable index order
-        // produces "a12b" when second is applied first (higher index? no - same loc, lower index first
-        // after high-to-low sort with index ascending: both at 1, apply index0 then index1.
-        // Applying "1" first: "a1b", then "2" at location 1: "a21b".
-        // Actually high-to-low with equal location sorts by index ascending, so apply "1" then "2":
-        // After "1": a1b. After "2" at original location 1 (still valid in high-to-low? same location
-        // pure inserts both valid on original). Staging applies in ordered list order.
-        #expect(store.fullString == "a12b" || store.fullString == "a21b")
-        // Pin deterministic result: index-ascending at equal offset under high→low yields "a12b"
-        // when both inserts use pre-edit coordinates and high→low applies both at loc 1:
-        // first applied is index 0 ("1") → "a1b"; then index 1 ("2") at loc 1 → "a21b".
-        #expect(store.fullString == "a21b")
+        #expect(store.fullString == "a12b")
+    }
+
+    @Test func test_DOC_N03_equalOffsetInsertionsDeclarationOrder() throws {
+        let store = DocumentStore(string: "ab")
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 1, length: 0), replacement: "1"),
+                TextChange(range: NSRange(location: 1, length: 0), replacement: "2"),
+            ],
+            origin: .programmatic
+        )
+        let applied = try store.apply(t)
+        #expect(store.fullString == "a12b")
+        _ = try store.apply(applied.inverse, sortHighToLow: false)
+        #expect(store.fullString == "ab")
+        _ = try store.apply(applied.transaction)
+        #expect(store.fullString == "a12b")
+    }
+
+    @Test func test_DOC_N03_equalOffsetPropertyManyCarets() throws {
+        for caretCount in [2, 3, 5, 10, 25, 50, 100] {
+            let store = DocumentStore(string: "xy")
+            let inserts = (0..<caretCount).map { i in
+                TextChange(range: NSRange(location: 1, length: 0), replacement: String(i % 10))
+            }
+            let t = EditTransaction(changes: inserts, origin: .programmatic)
+            _ = try store.apply(t)
+            let expected = "x" + (0..<caretCount).map { String($0 % 10) }.joined() + "y"
+            #expect(store.fullString == expected, "caretCount=\(caretCount)")
+        }
     }
 }
 
@@ -269,9 +301,9 @@ struct Phase2CoreResidualTests {
         }
     }
 
-    @Test func eventStreamIsBoundedNewest() async {
+    @Test func eventStreamIsBoundedNewest() async throws {
         let stream = EditorEventStream()
-        let events = stream.makeEventStream(bufferSize: 2)
+        let events = try stream.makeEventStream(bufferSize: 2)
         // Producer yields many events before consumer starts.
         for _ in 0..<10 {
             stream.yield(.textDidChange)
@@ -284,5 +316,27 @@ struct Phase2CoreResidualTests {
         }
         #expect(count <= 2)
         #expect(stream.droppedEventCount >= 0)
+    }
+
+    @Test func test_DOC_N06_eventBufferPolicyRejectsNonPositive() {
+        #expect(throws: EventBufferPolicyError.self) {
+            _ = try EventBufferPolicy(capacity: 0)
+        }
+        #expect(throws: EventBufferPolicyError.self) {
+            _ = try EventBufferPolicy(capacity: -1)
+        }
+        #expect(throws: EventBufferPolicyError.self) {
+            _ = try EventBufferPolicy(capacity: EventBufferPolicy.maximumCapacity + 1)
+        }
+    }
+
+    @Test func test_CORE_N01_documentStoreIsMainActorOwned() {
+        #expect(DocumentStore.ownershipModel == .mainActor)
+        // Compiles only on MainActor (suite is @MainActor).
+        let store = DocumentStore(string: "x")
+        #expect(store.length == 1)
+        let snap = store.snapshot()
+        #expect(snap.text == "x")
+        #expect(snap.contentState == store.contentState)
     }
 }

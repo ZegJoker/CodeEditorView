@@ -78,9 +78,9 @@ public actor LSPDocumentSynchronizer {
         uri: DocumentURI
     ) async {
         switch event {
-        case .didApply(let applied):
+        case .didApply(let applied, _):
             await scheduleChange(document: document, uri: uri, applied: applied)
-        case .externalContentReplace(let snap):
+        case .externalContentReplace(let snap, _):
             lastSyncedText[uri] = snap.text
             try? await session.didChangeRaw(
                 uri: uri,
@@ -88,7 +88,7 @@ public actor LSPDocumentSynchronizer {
                 contentChanges: [["text": snap.text]],
                 fullText: snap.text
             )
-        case .uriDidChange(let newURI):
+        case .uriDidChange(let newURI, _):
             // Close old, reopen as new.
             let oldURI = uri
             observationTasks[oldURI]?.cancel()
@@ -97,7 +97,7 @@ public actor LSPDocumentSynchronizer {
             lastSyncedText[oldURI] = nil
             await open(document: document, languageID: languageID)
             _ = newURI
-        case .willApply, .dirtyStateDidChange:
+        case .willApply, .dirtyStateDidChange, .streamGap:
             break
         }
     }

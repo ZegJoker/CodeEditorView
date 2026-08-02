@@ -2,15 +2,32 @@ import CodeEditorCore
 import Foundation
 
 /// Events emitted by a shared ``TextDocument``.
-public enum TextDocumentEvent: Sendable {
+///
+/// Every event carries a monotonic sequence. When a bounded stream drops events,
+/// a ``streamGap`` marker is published so consumers resync from a snapshot (DOC-N06).
+public enum TextDocumentEvent: Sendable, Equatable {
     /// Transaction about to apply; snapshot is pre-edit.
-    case willApply(EditTransaction, DocumentSnapshot)
+    case willApply(EditTransaction, DocumentSnapshot, sequence: UInt64)
     /// Transaction applied (content generation advanced).
-    case didApply(AppliedEditTransaction)
-    case dirtyStateDidChange(Bool)
-    case uriDidChange(DocumentURI)
+    case didApply(AppliedEditTransaction, sequence: UInt64)
+    case dirtyStateDidChange(Bool, sequence: UInt64)
+    case uriDidChange(DocumentURI, sequence: UInt64)
     /// Content replaced from an external source (reload / provider).
-    case externalContentReplace(DocumentSnapshot)
+    case externalContentReplace(DocumentSnapshot, sequence: UInt64)
+    /// One or more prior events were dropped from a bounded buffer (DOC-N06).
+    case streamGap(droppedCount: Int, lastSequence: UInt64, sequence: UInt64)
+
+    public var sequence: UInt64 {
+        switch self {
+        case .willApply(_, _, let s),
+            .didApply(_, let s),
+            .dirtyStateDidChange(_, let s),
+            .uriDidChange(_, let s),
+            .externalContentReplace(_, let s),
+            .streamGap(_, _, let s):
+            return s
+        }
+    }
 }
 
 /// Host policy when an external content change is detected.

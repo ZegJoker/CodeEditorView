@@ -32,7 +32,7 @@ extension EditorController {
         switch event {
         case .willApply:
             break
-        case .didApply(let applied):
+        case .didApply(let applied, _):
             // Skip echoes of applies we just performed on this controller.
             if applied.transaction.id == lastLocalTransactionID {
                 lastSeenDocumentVersion = applied.newVersion
@@ -40,9 +40,9 @@ extension EditorController {
             }
             guard applied.newVersion > lastSeenDocumentVersion else { return }
             applyRemoteTransaction(applied)
-        case .externalContentReplace(let snapshot):
+        case .externalContentReplace(let snapshot, _):
             applyRemoteFullReplace(snapshot.text)
-        case .dirtyStateDidChange, .uriDidChange:
+        case .dirtyStateDidChange, .uriDidChange, .streamGap:
             break
         }
     }

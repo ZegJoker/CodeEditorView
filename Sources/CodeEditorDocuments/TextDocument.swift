@@ -16,8 +16,8 @@ public final class TextDocument {
     public private(set) var fileIdentity: DocumentFileIdentity?
     /// Whether the last load observed a BOM.
     public private(set) var hadBOM: Bool = false
-    /// Content generation at last clean/save. Used so undo/redo can restore clean state.
-    public private(set) var savedVersion: DocumentVersion?
+    /// Content-state savepoint for dirty tracking (DOC-N01).
+    public private(set) var savepoint: DocumentSavepoint?
     public var lifecyclePolicy: DocumentLifecyclePolicy
 
     /// Content buffer (plain text + optional attributes for standalone paint).
@@ -28,14 +28,17 @@ public final class TextDocument {
     public let undo: UndoCoordinator
 
     public var version: DocumentVersion { store.version }
+    public var contentState: DocumentContentStateID { store.contentState }
     public var lineEnding: LineEnding { store.lineEnding }
     public var text: String { store.fullString }
     public var length: Int { store.length }
     public var isReadOnly: Bool { lifecyclePolicy.isReadOnly }
 
     private var continuations: [UUID: AsyncStream<TextDocumentEvent>.Continuation] = [:]
-    /// Drops from bounded document event streams (DOC-009).
+    /// Drops from bounded document event streams (DOC-N06).
     public private(set) var droppedEventCount: Int = 0
+    /// Monotonic event sequence (DOC-N06).
+    public private(set) var eventSequence: UInt64 = 0
     /// Generation of the last apply started by this process path (for self-filtering hosts).
     public private(set) var lastAppliedTransactionID: UUID?
 
@@ -54,8 +57,16 @@ public final class TextDocument {
         self.lifecyclePolicy = lifecyclePolicy
         self.store = DocumentStore(string: text)
         self.undo = UndoCoordinator()
-        // Clean documents start at version zero with savedVersion matching.
-        self.savedVersion = isDirty ? nil : self.store.version
+        if !isDirty {
+            self.savepoint = DocumentSavepoint(
+                contentState: store.contentState,
+                fileIdentity: nil,
+                encoding: encoding,
+                lineEnding: store.lineEnding
+            )
+        } else {
+            self.savepoint = nil
+        }
     }
 
     public convenience init(string: String) {
@@ -68,12 +79,12 @@ public final class TextDocument {
         store.snapshot()
     }
 
-    /// Document event stream with bounded buffer (DOC-009). Default keeps newest 32 events.
-    public func makeEventStream(bufferSize: Int = 32) -> AsyncStream<TextDocumentEvent> {
+    /// Document event stream with validated bounded buffer (DOC-N06). Default keeps newest 32 events.
+    public func makeEventStream(
+        policy: EventBufferPolicy = .default
+    ) -> AsyncStream<TextDocumentEvent> {
         let id = UUID()
-        let policy: AsyncStream<TextDocumentEvent>.Continuation.BufferingPolicy =
-            bufferSize <= 0 ? .unbounded : .bufferingNewest(bufferSize)
-        return AsyncStream(bufferingPolicy: policy) { continuation in
+        return AsyncStream(bufferingPolicy: .bufferingNewest(policy.capacity)) { continuation in
             self.continuations[id] = continuation
             continuation.onTermination = { @Sendable [weak self] _ in
                 Task { @MainActor in
@@ -83,10 +94,27 @@ public final class TextDocument {
         }
     }
 
+    /// Convenience that validates `bufferSize` (DOC-N06). Throws when `bufferSize <= 0`.
+    public func makeEventStream(bufferSize: Int) throws -> AsyncStream<TextDocumentEvent> {
+        try makeEventStream(policy: EventBufferPolicy(capacity: bufferSize))
+    }
+
+    private func nextSequence() -> UInt64 {
+        eventSequence &+= 1
+        return eventSequence
+    }
+
     private func yield(_ event: TextDocumentEvent) {
         for continuation in continuations.values {
             if case .dropped = continuation.yield(event) {
                 droppedEventCount += 1
+                let gap = TextDocumentEvent.streamGap(
+                    droppedCount: 1,
+                    lastSequence: event.sequence,
+                    sequence: nextSequence()
+                )
+                // Best-effort gap marker; may itself drop under extreme backpressure.
+                _ = continuation.yield(gap)
             }
         }
     }
@@ -99,35 +127,31 @@ public final class TextDocument {
         _ transaction: EditTransaction,
         sortHighToLow: Bool = true,
         registerUndo: Bool = true,
-        expectedVersion: DocumentVersion? = nil
+        expectedVersion: DocumentVersion? = nil,
+        restoreContentState: DocumentContentStateID? = nil
     ) throws -> AppliedEditTransaction {
         if lifecyclePolicy.isReadOnly {
             throw DocumentProviderError.readOnly
         }
         let pre = store.snapshot()
-        yield(.willApply(transaction, pre))
+        let seqWill = nextSequence()
+        yield(.willApply(transaction, pre, sequence: seqWill))
 
         let applied = try store.apply(
             transaction,
             sortHighToLow: sortHighToLow,
-            expectedVersion: expectedVersion
+            expectedVersion: expectedVersion,
+            restoreContentState: restoreContentState
         )
         lastAppliedTransactionID = applied.transaction.id
 
         if registerUndo {
-            if applied.textEdits.count > 1 {
-                undo.beginGrouping()
-            }
-            for edit in applied.textEdits {
-                undo.register(edit: edit)
-            }
-            if applied.textEdits.count > 1 {
-                undo.endGrouping()
-            }
+            undo.register(applied: applied)
         }
 
-        recomputeDirtyFromSavedVersion()
-        yield(.didApply(applied))
+        recomputeDirtyFromContentState()
+        let seqDid = nextSequence()
+        yield(.didApply(applied, sequence: seqDid))
         return applied
     }
 
@@ -148,17 +172,20 @@ public final class TextDocument {
         if clearUndo {
             undo.clear()
         }
-        // Use store path that preserves single version bump via setFullText for attribute reset,
-        // but still emit transaction events.
         let pre = store.snapshot()
-        yield(.willApply(transaction, pre))
+        let seqWill = nextSequence()
+        yield(.willApply(transaction, pre, sequence: seqWill))
         let oldVersion = store.version
+        let beforeState = store.contentState
         store.setFullText(string)
         let newVersion = store.version
+        let afterState = store.contentState
         let applied = AppliedEditTransaction(
             transaction: transaction,
             oldVersion: oldVersion,
             newVersion: newVersion,
+            beforeState: beforeState,
+            afterState: afterState,
             inverse: EditTransaction.single(
                 range: NSRange(location: 0, length: (string as NSString).length),
                 replacement: pre.text,
@@ -169,52 +196,63 @@ public final class TextDocument {
         lastAppliedTransactionID = transaction.id
         if markDirty {
             setDirty(true)
+        } else {
+            recomputeDirtyFromContentState()
         }
-        yield(.didApply(applied))
+        let seqDid = nextSequence()
+        yield(.didApply(applied, sequence: seqDid))
         return applied
     }
 
     /// Undoes the last document-scoped group (emits ``TextDocumentEvent/didApply``).
     ///
-    /// Throws if the undo application fails; the undo stack is left unchanged (DOC-002).
+    /// Throws if the undo application fails; the undo stack is left unchanged (DOC-002 / DOC-N04).
     public func performUndo() throws {
-        try undo.undoGroup { [weak self] edits in
+        try undo.undoGroup { [weak self] group in
             guard let self else { return }
-            guard !edits.isEmpty else { return }
-            let changes = edits.map {
+            guard !group.edits.isEmpty else { return }
+            let changes = group.edits.map {
                 TextChange(range: $0.inverse.range, replacement: $0.inverse.string)
             }
             let transaction = EditTransaction(changes: changes, origin: .undo)
-            _ = try self.apply(transaction, sortHighToLow: false, registerUndo: false)
-            // Restore clean state when undoing back to the last saved generation.
-            if let saved = self.savedVersion, self.store.version == saved {
-                self.setDirty(false)
-            }
+            _ = try self.apply(
+                transaction,
+                sortHighToLow: false,
+                registerUndo: false,
+                restoreContentState: group.beforeState
+            )
         }
     }
 
     /// Redoes the last undone group (emits ``TextDocumentEvent/didApply``).
     ///
-    /// Throws if the redo application fails; the redo stack is left unchanged (DOC-002).
+    /// Throws if the redo application fails; the redo stack is left unchanged (DOC-002 / DOC-N04).
     public func performRedo() throws {
-        try undo.redoGroup { [weak self] edits in
+        try undo.redoGroup { [weak self] group in
             guard let self else { return }
-            guard !edits.isEmpty else { return }
-            let changes = edits.map {
+            guard !group.edits.isEmpty else { return }
+            let changes = group.edits.map {
                 TextChange(range: $0.mutation.range, replacement: $0.mutation.string)
             }
             let transaction = EditTransaction(changes: changes, origin: .redo)
-            _ = try self.apply(transaction, sortHighToLow: false, registerUndo: false)
-            if let saved = self.savedVersion, self.store.version == saved {
-                self.setDirty(false)
-            }
+            _ = try self.apply(
+                transaction,
+                sortHighToLow: false,
+                registerUndo: false,
+                restoreContentState: group.afterState
+            )
         }
     }
 
     // MARK: - Dirty / URI / external
 
     public func markClean() {
-        savedVersion = store.version
+        savepoint = DocumentSavepoint(
+            contentState: store.contentState,
+            fileIdentity: fileIdentity,
+            encoding: encoding,
+            lineEnding: store.lineEnding
+        )
         setDirty(false)
     }
 
@@ -222,10 +260,10 @@ public final class TextDocument {
         setDirty(true)
     }
 
-    /// Dirty iff content generation differs from last clean/save (DOC-002).
-    public func recomputeDirtyFromSavedVersion() {
-        if let saved = savedVersion {
-            setDirty(store.version != saved)
+    /// Dirty iff content state differs from last clean/save (DOC-N01).
+    public func recomputeDirtyFromContentState() {
+        if let savepoint {
+            setDirty(store.contentState != savepoint.contentState)
         } else {
             setDirty(true)
         }
@@ -234,7 +272,7 @@ public final class TextDocument {
     public func setURI(_ newURI: DocumentURI) {
         guard uri != newURI else { return }
         uri = newURI
-        yield(.uriDidChange(newURI))
+        yield(.uriDidChange(newURI, sequence: nextSequence()))
     }
 
     public func setEncoding(_ newEncoding: DocumentEncoding) {
@@ -268,15 +306,14 @@ public final class TextDocument {
             self.encoding = encoding
         }
         _ = try replaceFullContent(text, origin: .programmatic, clearUndo: true, markDirty: false)
-        savedVersion = store.version
-        setDirty(false)
-        yield(.externalContentReplace(snapshot()))
+        markClean()
+        yield(.externalContentReplace(snapshot(), sequence: nextSequence()))
         return true
     }
 
     private func setDirty(_ value: Bool) {
         guard isDirty != value else { return }
         isDirty = value
-        yield(.dirtyStateDidChange(value))
+        yield(.dirtyStateDidChange(value, sequence: nextSequence()))
     }
 }

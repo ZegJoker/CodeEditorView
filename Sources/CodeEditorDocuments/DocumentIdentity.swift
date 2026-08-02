@@ -87,9 +87,17 @@ public enum DocumentEncoding: Sendable, Hashable, Codable {
         }
     }
 
-    /// Preferred Foundation encoding. Traps misuse of `.other` — use ``stringEncodingOrNil``.
+    /// Preferred Foundation encoding for supported cases.
+    ///
+    /// - Important: `.other` is unsupported and traps (DOC-N07). Use ``stringEncodingOrNil``
+    ///   or handle ``DocumentIOError/unsupportedEncoding`` via ``DocumentCodec``.
     public var stringEncoding: String.Encoding {
-        stringEncodingOrNil ?? .utf8
+        guard let encoding = stringEncodingOrNil else {
+            preconditionFailure(
+                "DocumentEncoding.other has no Foundation mapping; use stringEncodingOrNil / DocumentCodec"
+            )
+        }
+        return encoding
     }
 
     public static func detect(from data: Data) -> DocumentEncoding {

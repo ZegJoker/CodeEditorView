@@ -253,14 +253,32 @@ public final class Workspace {
             return .closed
         case .save:
             do {
-                try await documentProvider.save(
-                    doc.snapshot(),
-                    to: doc.uri,
-                    encoding: doc.encoding
+                // DOC-N02: all save paths use the conflict-aware DocumentSaveRequest API.
+                let outcome = try await documentProvider.save(
+                    DocumentSaveRequest(
+                        snapshot: doc.snapshot(),
+                        target: doc.uri,
+                        encoding: doc.encoding,
+                        expectedIdentity: doc.fileIdentity,
+                        conflictPolicy: .requireHostDecision,
+                        durability: .durable
+                    )
                 )
-                doc.markClean()
-                forceCloseTab(tabID, in: paneID)
-                return .closed
+                switch outcome {
+                case .saved(let identity):
+                    if let identity {
+                        doc.setFileIdentity(identity)
+                    }
+                    doc.markClean()
+                    forceCloseTab(tabID, in: paneID)
+                    return .closed
+                case .conflict:
+                    return .saveFailed(doc.id, "conflict")
+                case .cancelled:
+                    return .cancelled
+                case .unsupportedConflictDetection:
+                    return .saveFailed(doc.id, "unsupportedConflictDetection")
+                }
             } catch {
                 return .saveFailed(doc.id, String(describing: error))
             }

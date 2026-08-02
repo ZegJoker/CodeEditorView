@@ -28,10 +28,17 @@ public struct DocumentSnapshot: Sendable, Hashable {
     public let version: DocumentVersion
     public let text: String
     public let utf16Length: Int
+    /// Content-state identity at snapshot time (DOC-N01).
+    public let contentState: DocumentContentStateID
 
-    public init(version: DocumentVersion, text: String) {
+    public init(
+        version: DocumentVersion,
+        text: String,
+        contentState: DocumentContentStateID = DocumentContentStateID()
+    ) {
         self.version = version
         self.text = text
         self.utf16Length = (text as NSString).length
+        self.contentState = contentState
     }
 }

@@ -10,7 +10,7 @@
 | Phase | Name | Findings | Status |
 |------:|------|---------:|--------|
 | 0 | release-truth | 9 | verified |
-| 1 | documents | 12 | open |
+| 1 | documents | 12 | fixed |
 | 2 | substrate | 3 (+ shared substrate build) | open |
 | 3a | commands | 5 | open |
 | 3b | native editor UI | 10 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: Phase 1 documents — fixed DOC-N01…DOC-N11 + CORE-N01 (content-state savepoints, DocumentSaveRequest CAS API, equal-offset declaration order, atomic undo only, overflow-safe ranges, bounded sequenced events, encoding fail-closed, coordinated identity write, single-buffer/hash-only read, parent fsync durable write, versioned recovery record, DocumentStore main-actor ownership). CodeEditorCoreTests+CodeEditorDocumentsTests: 114 passed.
 - 2026-08-02: batch release-truth verified — PKG-N01, REL-N01…REL-N08 status set to `verified` (all previously fixed with regression tests).
 - 2026-08-02: Phase 0 verifier residual close — REL-N04 live AppKit AX probe (NSHostingController + WorkbenchAccessibilityNSAnchorView; no hardcoded chrome catalog) + Switch Control fail-closed throws with real API invocation; PKG-N01 always executes ARCHIVE_PHASE=smoke clean archive path (CI full suite via FULL_ARCHIVE_TEST=1); 39 Phase-0 regression tests pass.
 - 2026-08-02: Phase 0 REL-N06 — regenerated digester/symbol-graph baselines after MockRemoteTerminalTransport left production (API freeze green; 38 Phase-0 regression tests pass).

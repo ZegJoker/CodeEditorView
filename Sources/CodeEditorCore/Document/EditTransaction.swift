@@ -34,6 +34,8 @@ public struct TextChange: Sendable, Codable, Hashable {
 ///
 /// Multi-range edits should list changes in **high→low** UTF-16 location order so
 /// each range remains valid against the pre-edit document when applied top-down.
+/// Equal-offset pure insertions appear in **declaration order** in the resulting
+/// text (DOC-N03).
 public struct EditTransaction: Sendable, Codable, Hashable {
     public let id: UUID
     public let changes: [TextChange]
@@ -68,20 +70,28 @@ public struct AppliedEditTransaction: Sendable, Equatable {
     public let transaction: EditTransaction
     public let oldVersion: DocumentVersion
     public let newVersion: DocumentVersion
+    /// Content state before the transaction (restored on undo) (DOC-N01).
+    public let beforeState: DocumentContentStateID
+    /// Content state after the transaction (restored on redo) (DOC-N01).
+    public let afterState: DocumentContentStateID
     public let inverse: EditTransaction
-    /// Per-change `TextEdit` records in application order (high→low), for undo registration.
+    /// Per-change `TextEdit` records in application order, for undo registration.
     public let textEdits: [TextEdit]
 
     public init(
         transaction: EditTransaction,
         oldVersion: DocumentVersion,
         newVersion: DocumentVersion,
+        beforeState: DocumentContentStateID,
+        afterState: DocumentContentStateID,
         inverse: EditTransaction,
         textEdits: [TextEdit]
     ) {
         self.transaction = transaction
         self.oldVersion = oldVersion
         self.newVersion = newVersion
+        self.beforeState = beforeState
+        self.afterState = afterState
         self.inverse = inverse
         self.textEdits = textEdits
     }

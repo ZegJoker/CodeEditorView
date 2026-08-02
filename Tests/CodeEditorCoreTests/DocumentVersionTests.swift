@@ -4,6 +4,7 @@ import Testing
 @testable import CodeEditorCore
 
 @Suite("Document versioning")
+@MainActor
 struct DocumentVersionTests {
     @Test func contentMutationBumpsVersionOnce() throws {
         let store = DocumentStore(string: "hello")

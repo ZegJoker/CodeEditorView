@@ -1,10 +1,10 @@
 import Foundation
 
-/// Fan-out broadcaster for editor events using bounded `AsyncStream` policies (DOC-009 / §7.11).
+/// Fan-out broadcaster for editor events using bounded `AsyncStream` policies (DOC-N06 / §7.11).
 ///
 /// | Stream | Policy |
 /// |---|---|
-/// | Events | bounded (newest) + drop counter |
+/// | Events | bounded (newest) + drop counter + gap markers |
 /// | Text snapshots | `bufferingNewest(1)` |
 /// | Selection | `bufferingNewest(1)` |
 @MainActor
@@ -17,17 +17,16 @@ public final class EditorEventStream {
 
     /// Number of event yields dropped due to full buffers (telemetry).
     public private(set) var droppedEventCount: Int = 0
+    /// Monotonic sequence assigned to yielded events (DOC-N06).
+    public private(set) var eventSequence: UInt64 = 0
 
     public init() {}
 
     public func makeEventStream(
-        bufferSize: Int = EditorEventStream.defaultEventBuffer
+        policy: EventBufferPolicy = (try? EventBufferPolicy(capacity: EditorEventStream.defaultEventBuffer))
+            ?? EventBufferPolicy.default
     ) -> AsyncStream<EditorEvent> {
-        let policy: AsyncStream<EditorEvent>.Continuation.BufferingPolicy =
-            bufferSize <= 0
-            ? .unbounded
-            : .bufferingNewest(bufferSize)
-        return AsyncStream(bufferingPolicy: policy) { continuation in
+        return AsyncStream(bufferingPolicy: .bufferingNewest(policy.capacity)) { continuation in
             let id = UUID()
             self.continuations[id] = continuation
             continuation.onTermination = { [weak self] _ in
@@ -36,6 +35,12 @@ public final class EditorEventStream {
                 }
             }
         }
+    }
+
+    /// Legacy entry: rejects non-positive buffer sizes (DOC-N06). Prefer ``makeEventStream(policy:)``.
+    public func makeEventStream(bufferSize: Int) throws -> AsyncStream<EditorEvent> {
+        let policy = try EventBufferPolicy(capacity: bufferSize)
+        return makeEventStream(policy: policy)
     }
 
     public func makeTextStream() -> AsyncStream<String> {
@@ -63,6 +68,7 @@ public final class EditorEventStream {
     }
 
     public func yield(_ event: EditorEvent) {
+        eventSequence &+= 1
         for continuation in continuations.values {
             let result = continuation.yield(event)
             if case .dropped = result {

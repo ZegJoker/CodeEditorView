@@ -28,7 +28,8 @@ public enum TextOffsetSemantics: Sendable {
 
     /// Returns a half-open UTF-16 range, or throws if the range is unusable.
     ///
-    /// Overlong ranges and negative lengths are **rejected** (not truncated).
+    /// Overlong ranges, negative lengths, and arithmetic overflow are **rejected**
+    /// (not truncated) (DOC-N05).
     public static func validatedUTF16Range(
         _ range: NSRange,
         documentUTF16Length length: Int
@@ -40,10 +41,23 @@ public enum TextOffsetSemantics: Sendable {
         guard range.length >= 0 else {
             throw DocumentStoreError.invalidRange(range)
         }
-        guard range.location + range.length <= length else {
+        let (end, overflow) = range.location.addingReportingOverflow(range.length)
+        guard !overflow, end <= length else {
             throw DocumentStoreError.invalidRange(range)
         }
         return range
+    }
+
+    /// Overflow-safe end offset for a UTF-16 range (DOC-N05).
+    public static func utf16EndOffset(location: Int, length: Int) throws -> Int {
+        guard location >= 0, length >= 0 else {
+            throw DocumentStoreError.invalidRange(NSRange(location: location, length: length))
+        }
+        let (end, overflow) = location.addingReportingOverflow(length)
+        guard !overflow else {
+            throw DocumentStoreError.invalidRange(NSRange(location: location, length: length))
+        }
+        return end
     }
 
     /// True when `offset` is a valid caret position in `[0, length]`.

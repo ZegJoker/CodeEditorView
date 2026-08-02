@@ -178,7 +178,7 @@ struct TextDocumentEditorHost: View {
             let stream = document.makeEventStream()
             for await event in stream {
                 switch event {
-                case .didApply, .dirtyStateDidChange(true):
+                case .didApply, .dirtyStateDidChange(true, _):
                     workspace.promotePreviewTabs(for: document.id)
                 default:
                     break
