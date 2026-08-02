@@ -148,10 +148,10 @@ struct SearchTests {
         for try await event in await service.search(SearchQuery(pattern: "Full")) {
             switch event {
             case .match(let m): matches.append(m)
-            case .finished(let files, let count):
-                finishedFiles = files
-                finishedCount = count
-            case .progress: break
+            case .finished(let metrics):
+                finishedFiles = metrics.matched
+                finishedCount = metrics.matchCount
+            case .progress, .skipped: break
             }
         }
         #expect(matches.count == 2)

@@ -15,7 +15,7 @@
 | 3a | commands | 5 | verified |
 | 3b | native editor UI | 10 | verified |
 | 4 | workspace | 10 | verified |
-| 5a | search | 9 | open |
+| 5a | search | 9 | fixed |
 | 5b | tasks | 8 | open |
 | 5c | SCM | 9 | open |
 | 6a | language/Tree-sitter | 7 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: Phase 5a search — fixed SRCH-N01…SRCH-N09: nested `.gitignore` discovery (no skipsHiddenFiles); git-compatible ignore corpus vs `git check-ignore`; separate WorkspaceGlobPattern grammar; bounded worker pool + cancellation; DocumentCodec encoding skip reporting; per-file match/size/time budgets; SearchCompletionMetrics (scanned ≠ matched); full regex replace (`$n`, `${name}`, `$$`, zero-width, exact ranges); snapshot-bound pin/commit multi-file replace. CodeEditorSearchTests 39 passed.
 - 2026-08-03: batch workspace verified — WSP-N01, WSP-N02, WSP-N03, WSP-N04, WSP-N05, WSP-N06, WSP-N07, WSP-N08, WSP-N09, WSP-N10 status set to `verified` (all previously fixed with regression tests; CodeEditorWorkspaceTests WSPNAudit green).
 - 2026-08-03: Phase 4 workspace verifier residual — WSP-N01/N06: canonical journal checksum (JSONEncoder.sortedKeys + millisecondsSince1970) so encode→decode→recompute matches; recoverPendingTransactions on Workspace.activate()/local(); recovery must yield rolledBack not quarantine for valid prepared journals; strengthened N01/N03/N04/N08/N10 tests (no .quarantined accept, no vacuous Bool(true)/listCount OR, package-scoped DocumentRegistry mutations). CodeEditorWorkspaceTests 81 passed; N06 isolated 5× green.
 - 2026-08-03: Phase 4 workspace — fixed WSP-N01…WSP-N10: WorkspaceTransactionCoordinator (prepare/commit/recover, one rollback owner, undo only on success); dirty-descendant delete preflight + trash staging; bulk close decision→save→commit (all-or-nothing default); FS workers with batch streaming + progress hub; honest WorkspaceArchive (symlink no-follow, no false full-POSIX claim); durable journal checksum/quarantine/startup recovery; workspaceEvents snapshot+sequence; DescriptorRelativeIO openat/unlinkat/renameat O_NOFOLLOW; host WorkspaceHiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator. CodeEditorWorkspaceTests 78 passed.

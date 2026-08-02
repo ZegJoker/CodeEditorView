@@ -41,6 +41,8 @@ public struct SearchQuery: Sendable, Hashable {
     public var excludeGlobs: [String]
     public var maxFileBytes: Int
     public var maxResults: Int
+    /// Optional wall-clock budget for the whole search (SRCH-N04 / SRCH-N06).
+    public var timeBudgetNanoseconds: UInt64?
 
     public init(
         pattern: String,
@@ -51,7 +53,8 @@ public struct SearchQuery: Sendable, Hashable {
         includeGlobs: [String] = [],
         excludeGlobs: [String] = SearchQuery.defaultExcludes,
         maxFileBytes: Int = 1_000_000,
-        maxResults: Int = 10_000
+        maxResults: Int = 10_000,
+        timeBudgetNanoseconds: UInt64? = nil
     ) {
         self.pattern = pattern
         // Prefer explicit matchMode; legacy flags upgrade contains when set.
@@ -72,6 +75,7 @@ public struct SearchQuery: Sendable, Hashable {
         self.excludeGlobs = excludeGlobs
         self.maxFileBytes = maxFileBytes
         self.maxResults = maxResults
+        self.timeBudgetNanoseconds = timeBudgetNanoseconds
     }
 
     public static let defaultExcludes: [String] = [
@@ -123,16 +127,92 @@ public struct SearchProgress: Sendable, Hashable {
     }
 }
 
+/// Why a candidate file was not searched (SRCH-N05 / SRCH-N06 / SRCH-N07).
+public enum SearchSkipReason: String, Sendable, Hashable, Codable {
+    case binary
+    case encodingFailed
+    case unsupportedEncoding
+    case tooLarge
+    case excluded
+    case ignored
+    case openFailed
+    case matchLimitExceeded
+    case regexBudgetExceeded
+    case cancelled
+}
+
+public struct SearchSkip: Sendable, Hashable {
+    public var path: String
+    public var reason: SearchSkipReason
+    public var detail: String?
+
+    public init(path: String, reason: SearchSkipReason, detail: String? = nil) {
+        self.path = path
+        self.reason = reason
+        self.detail = detail
+    }
+}
+
+/// Precise completion counters (SRCH-N07).
+///
+/// - ``scanned`` / ``filesScanned``: files whose content was examined for matches
+/// - ``matched``: files that produced ≥1 match (not equal to scanned)
+/// - ``matchCount``: total match events emitted
+public struct SearchCompletionMetrics: Sendable, Hashable {
+    public var discovered: Int
+    public var eligible: Int
+    public var opened: Int
+    public var decoded: Int
+    public var scanned: Int
+    public var matched: Int
+    public var matchCount: Int
+    public var skipped: Int
+    public var failed: Int
+    public var cancelled: Int
+
+    public init(
+        discovered: Int = 0,
+        eligible: Int = 0,
+        opened: Int = 0,
+        decoded: Int = 0,
+        scanned: Int = 0,
+        matched: Int = 0,
+        matchCount: Int = 0,
+        skipped: Int = 0,
+        failed: Int = 0,
+        cancelled: Int = 0
+    ) {
+        self.discovered = discovered
+        self.eligible = eligible
+        self.opened = opened
+        self.decoded = decoded
+        self.scanned = scanned
+        self.matched = matched
+        self.matchCount = matchCount
+        self.skipped = skipped
+        self.failed = failed
+        self.cancelled = cancelled
+    }
+
+    /// Alias of ``scanned`` — never “files with matches” (SRCH-N07).
+    public var filesScanned: Int { scanned }
+
+    /// Files that produced matches.
+    public var filesWithMatches: Int { matched }
+}
+
 public enum SearchEvent: Sendable {
     case progress(SearchProgress)
     case match(SearchMatch)
-    case finished(filesScanned: Int, matchCount: Int)
+    case skipped(SearchSkip)
+    case finished(SearchCompletionMetrics)
 }
 
 public enum SearchError: Error, Sendable, Equatable {
     case emptyPattern
     case invalidRegex(String)
     case cancelled
+    case timeBudgetExceeded
 }
 
 /// Sendable snapshot for searching without holding MainActor Workspace.
@@ -140,14 +220,20 @@ public struct WorkspaceSearchContext: Sendable {
     public var rootDirectories: [URL]
     public var openDocuments: [DocumentURI: String]
     public var openDocumentVersions: [DocumentURI: DocumentVersion]
+    public var openDocumentContentStates: [DocumentURI: DocumentContentStateID]
+    public var openDocumentFileIdentities: [DocumentURI: DocumentFileIdentity]
 
     public init(
         rootDirectories: [URL] = [],
         openDocuments: [DocumentURI: String] = [:],
-        openDocumentVersions: [DocumentURI: DocumentVersion] = [:]
+        openDocumentVersions: [DocumentURI: DocumentVersion] = [:],
+        openDocumentContentStates: [DocumentURI: DocumentContentStateID] = [:],
+        openDocumentFileIdentities: [DocumentURI: DocumentFileIdentity] = [:]
     ) {
         self.rootDirectories = rootDirectories
         self.openDocuments = openDocuments
         self.openDocumentVersions = openDocumentVersions
+        self.openDocumentContentStates = openDocumentContentStates
+        self.openDocumentFileIdentities = openDocumentFileIdentities
     }
 }

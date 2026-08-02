@@ -886,9 +886,12 @@
       "severity_raw": "P1 correctness",
       "title": "nested `.gitignore` files are skipped",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N01_nestedGitIgnoreIsDiscoveredDespiteHiddenName",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N01_searchRespectsNestedGitIgnore"
+      ],
+      "notes": "2026-08-03: GitIgnoreLoader walks without skipsHiddenFiles; nested .gitignore discovery + search honor nested rules."
     },
     {
       "id": "SRCH-N02",
@@ -896,9 +899,16 @@
       "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_escapedHashAndBang",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_trailingSpacesAndEscapedSpace",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_leadingSlashAnchoring",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_directoryOnlyAndNegationUnderParent",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_characterClassesAndDoubleStar",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_matchesGitCheckIgnoreCorpus"
+      ],
+      "notes": "2026-08-03: Git-compatible parser/matcher; fixture corpus compared to git check-ignore --no-index."
     },
     {
       "id": "SRCH-N03",
@@ -906,9 +916,13 @@
       "severity_raw": "P1",
       "title": "workspace glob matching is ad hoc",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N03_globIsSeparateFromGitIgnore",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N03_questionMarkClassesAnchoring",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N03_includeExcludeFilters"
+      ],
+      "notes": "2026-08-03: WorkspaceGlobPattern/Matcher separate from gitignore; *, ?, **, classes, anchoring, case policy."
     },
     {
       "id": "SRCH-N04",
@@ -916,9 +930,12 @@
       "severity_raw": "P1 responsiveness",
       "title": "search performs blocking traversal/regex work on one actor",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N04_searchCancelsWithoutBlocking",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N04_independentSubscriptions"
+      ],
+      "notes": "2026-08-03: bounded worker pool (maxConcurrentWorkers), independent AsyncThrowingStream per call, cancellation checkpoints."
     },
     {
       "id": "SRCH-N05",
@@ -926,9 +943,12 @@
       "severity_raw": "P2",
       "title": "UTF-8-only search silently excludes files",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N05_nonUTF8IsReportedNotSilent",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N05_utf16BOMIsDecoded"
+      ],
+      "notes": "2026-08-03: DocumentCodec decode; SearchSkip encodingFailed/unsupportedEncoding; UTF-16 BOM decoded (codec before binary NUL check)."
     },
     {
       "id": "SRCH-N06",
@@ -936,9 +956,12 @@
       "severity_raw": "P1 denial-of-service/performance",
       "title": "regular expression evaluation is unbounded",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N06_perFileMatchLimit",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N06_rejectsEmptyOrHugeInputPolicy"
+      ],
+      "notes": "2026-08-03: maxMatchesPerFile, maxFileBytes, per-file time budget, zero-width progress, maxResults."
     },
     {
       "id": "SRCH-N07",
@@ -946,9 +969,11 @@
       "severity_raw": "P2",
       "title": "completion metrics are incorrect",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N07_filesScannedCountsAllScannedNotOnlyMatches"
+      ],
+      "notes": "2026-08-03: SearchCompletionMetrics (discovered/eligible/opened/decoded/scanned/matched/matchCount/skipped/failed/cancelled); filesScanned==scanned."
     },
     {
       "id": "SRCH-N08",
@@ -956,9 +981,15 @@
       "severity_raw": "P1",
       "title": "regex replacement is fake/incomplete",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_numberedAndNamedCaptures",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_dollarEscaping",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_zeroWidthMatchProgress",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_noSecondFindFallbackWrongOccurrence",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_requiresPinnedTextForRegexReplace"
+      ],
+      "notes": "2026-08-03: $n/${name}/$$ expansion on exact match ranges; no preview re-find fallback; requires pinned fullText for regex."
     },
     {
       "id": "SRCH-N09",
@@ -966,9 +997,12 @@
       "severity_raw": "P0 for multi-file replacement",
       "title": "replace transaction inherits workspace transaction defects",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N09_previewPinsContentStateAndRejectsStaleCommit",
+        "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N09_commitAppliesExactlyToPinnedStates"
+      ],
+      "notes": "2026-08-03: SearchReplaceService.pin/commit pins contentState+version+fileIdentity+text; stale fails closed; WorkspaceEditService transaction apply."
     },
     {
       "id": "TASK-N01",

@@ -277,7 +277,11 @@ final class HostServices {
                         }
                     case .progress(let p):
                         searchStatus = "\(p.matchesFound) matches…"
-                    case .finished(let filesWithMatches, let count):
+                    case .skipped:
+                        break
+                    case .finished(let metrics):
+                        let filesWithMatches = metrics.matched
+                        let count = metrics.matchCount
                         let fileWord = filesWithMatches == 1 ? "file" : "files"
                         let matchWord = count == 1 ? "result" : "results"
                         searchStatus = "\(count) \(matchWord) in \(filesWithMatches) \(fileWord)"
