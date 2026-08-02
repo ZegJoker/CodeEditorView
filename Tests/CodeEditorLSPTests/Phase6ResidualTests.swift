@@ -57,7 +57,11 @@ struct Phase6ConnectionResidualTests {
             let data = try JSONSerialization.data(withJSONObject: note)
             try await pair.server.send(LSPMessageFraming.encode(data))
         }
-        try await Task.sleep(nanoseconds: 50_000_000)
+        // Poll until ordered delivery completes (50ms is flaky under full-suite load).
+        let deadline = ContinuousClock.now + .seconds(2)
+        while box.methods.count < 5, ContinuousClock.now < deadline {
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
         #expect(box.methods == ["n0", "n1", "n2", "n3", "n4"])
         await conn.close()
     }

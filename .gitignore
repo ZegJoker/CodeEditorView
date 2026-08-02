@@ -22,3 +22,6 @@ Examples/.build
 /Vendor/ghostty/
 /Vendor/ghostty-build.stamp
 /Baselines/evidence/*.log
+# Ephemeral unchecked-Sendable inventory work products (allowlist is tracked)
+/Baselines/unchecked-sendable-current.txt
+/Baselines/unchecked-sendable.diff

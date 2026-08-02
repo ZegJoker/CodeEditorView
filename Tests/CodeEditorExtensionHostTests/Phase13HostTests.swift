@@ -126,6 +126,36 @@ struct Phase13MCPTests {
         await session.stop()
         await mock.stop()
     }
+
+    /// Regression: register-before-send must not leave never-resumed continuations that hang
+    /// the full suite after language-switch MainActor load (observed hang after Suite
+    /// "Language switch highlighting").
+    @Test func rapidSequentialSessionsDoNotHang() async throws {
+        let deadline = ContinuousClock.now + .seconds(10)
+        for i in 0..<8 {
+            #expect(ContinuousClock.now < deadline, "MCP session loop exceeded hang budget at i=\(i)")
+            let pair = MCPTestTransport.makePair()
+            let mock = MockMCPServer(transport: pair.server)
+            await mock.start()
+            let plan = MCPServerLaunchPlan(
+                serverID: "mock-mcp-\(i)",
+                displayName: "Mock \(i)",
+                command: "mock-mcp",
+                binarySource: .testFactory(id: "mcp-f-\(i)")
+            )
+            let pool = MCPServerPool()
+            let client = pair.client
+            await pool.registerTestFactory(id: "mcp-f-\(i)") { client }
+            let session = try await pool.start(plan: plan)
+            #expect(await session.state == .running)
+            let tools = await session.tools
+            #expect(tools.contains { ($0["name"] as? String) == "echo" })
+            _ = try await session.callTool(name: "echo")
+            await session.stop()
+            await mock.stop()
+        }
+        #expect(ContinuousClock.now < deadline)
+    }
 }
 
 @Suite("Phase 13 slash commands")

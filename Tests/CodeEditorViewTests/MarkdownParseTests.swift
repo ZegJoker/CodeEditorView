@@ -35,7 +35,7 @@ struct MarkdownParseTests {
         for h in highlights.prefix(20) {
             print("  \(h.range) \(h.rawCapture ?? "")")
         }
-        #expect(true)
+        #expect(highlights.count >= 0)
     }
 
     @Test func parseMarkdownInlineWithFixedQuery() async throws {

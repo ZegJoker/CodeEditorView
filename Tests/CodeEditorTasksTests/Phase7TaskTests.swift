@@ -144,8 +144,8 @@ struct Phase7ProblemMatcherTests {
     @Test func processSupervisorAliasExists() {
         let a: ProcessSupervisor = ProcessService()
         let b: ProcessService = a
-        _ = b
-        #expect(true)
+        #expect(type(of: a) == type(of: b))
+        #expect(ProcessSupervisor.self == ProcessService.self)
     }
 
     @Test func cancelExclusiveWaitsForProcessDeath() async throws {
@@ -189,7 +189,7 @@ struct Phase7ProblemMatcherTests {
             // ok
         }
         #else
-        #expect(true)
+        #expect(ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 1)
         #endif
     }
 }

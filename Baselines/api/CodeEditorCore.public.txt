@@ -4,6 +4,7 @@ class LineIndex
 class ProcessHandle
 class SelectionEngine
 class UndoCoordinator
+enum BoundaryPolicy
 enum BracketMatcher
 enum BracketPairEmphasis
 enum BracketPairs
@@ -29,6 +30,7 @@ enum ShippingProfileID
 enum StructureCommands
 enum TextFilters
 enum TextOffsetSemantics
+enum WordNavigationMode
 enum WordSelection
 func addSelection
 func advanced
@@ -40,6 +42,9 @@ func attributedSubstring
 func autoPair
 func availability
 func beginGrouping
+func boundary
+func build
+func buildUsingSplitLines
 func cancel
 func caretAfterReplace
 func clamp
@@ -109,6 +114,7 @@ func requirePTYCapability
 func requireProcessCapability
 func resetAttributesToDefaults
 func runCollecting
+func scalarIndex
 func selectAll
 func setAttributes
 func setFullText
@@ -121,6 +127,7 @@ func single
 func snapshot
 func splitLines
 func substring
+func subwordSegments
 func terminateProcessGroup
 func toggleBlockComment
 func toggleLineComment
@@ -168,6 +175,7 @@ struct TextPosition
 struct TextRange
 struct TextRangeSelection
 struct TextReplacement
+typealias ProcessSupervisor
 var arguments
 var autoPairs
 var canRedo
@@ -182,6 +190,7 @@ var ctLine
 var current
 var currentDirectory
 var defaultAttributes
+var defaultEventBuffer
 var directMacOS
 var displayName
 var documentRange

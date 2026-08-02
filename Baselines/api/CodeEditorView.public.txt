@@ -5,6 +5,7 @@ class DefaultInvisibleCharactersDelegate
 class DefinitionProviderJumpAdapter
 class EditorController
 class EditorCoordinatorLifecycleAdapter
+class EditorPerformanceHarness
 class EmphasisManager
 class FindPanelBridge
 class FindSession
@@ -28,6 +29,8 @@ enum AnnotationMetrics
 enum DiagnosticSeverity
 enum DiagnosticsAnnotationMapper
 enum EditorAccessibility
+enum EditorPerformanceBudgets
+enum EditorSignposts
 enum EmphasisGroup
 enum EmphasisStyle
 enum FieldFocusTarget
@@ -35,6 +38,7 @@ enum FindEngine
 enum FindMethod
 enum FindPanelMode
 enum FoldRibbonMetrics
+enum Interval
 enum InvisibleCharacterStyle
 enum LanguageServiceTextGeometry
 enum LayoutInvalidation
@@ -60,6 +64,7 @@ func applyFindStateFromEditorState
 func applyLanguageDiagnostics
 func applyLanguageID
 func applyLinkPopoverSelection
+func applyMarkedText
 func applyTokenMap
 func applyTypeset
 func attach
@@ -70,6 +75,7 @@ func attribute
 func attributedSubstring
 func bandHeight
 func baseWritingDirection
+func begin
 func beginTransaction
 func bubbles
 func buildIndentLineFolds
@@ -89,21 +95,28 @@ func clearAnnotations
 func clearFoldPlaceholderSelection
 func clearLanguageServices
 func clearLinkPopoverState
+func clearMarkedTextSession
 func closestPosition
 func collapseCursors
 func color
+func commitMarkedTextAsNormalEdit
 func compare
 func completionAnchorRect
 func completionOnCursorMove
 func completionSuggestionsRequested
 func completionTriggerCharacters
 func completionWindowApplyCompletion
+func completionWindowDidClose
+func completionWindowDidSelect
 func consumeScrollTarget
 func contentHeight
+func controllerDidAppear
+func controllerDidDisappear
 func cursorPosition
 func deepestFold
 func deleteBackward
 func deleteForward
+func destroy
 func dirtyLineIndexRange
 func dismiss
 func dismissLinkPopover
@@ -123,9 +136,11 @@ func editorDidApply
 func editorDidAttach
 func editorDidDetach
 func editorSelectionDidChange
+func editorWillApply
 func editorY
 func emphases
 func encode
+func end
 func endTransaction
 func executeCommand
 func expandFolds
@@ -157,6 +172,7 @@ func installBuiltInCommandCatalog
 func installBuiltInCommands
 func installLanguageServices
 func invalidateAll
+func invalidateMaxLineWidthCache
 func invalidateTypeset
 func invalidateTypesetForVisibleLines
 func invisibleStyle
@@ -174,6 +190,7 @@ func mapSeverity
 func markNeedsTypeset
 func markedRange
 func matches
+func measure
 func minimapContentHeight
 func minimapSnapshot
 func minimapWidth
@@ -191,6 +208,7 @@ func offset
 func open
 func openLink
 func outdentSelection
+func p95
 func perform
 func performJump
 func performJumpAtCaret
@@ -202,6 +220,7 @@ func queryHighlights
 func queryLinks
 func rangeForCursorPosition
 func rebuild
+func record
 func redo
 func refreshTokens
 func relayout
@@ -225,6 +244,7 @@ func selectCompletionIndex
 func selectIndex
 func selectWord
 func selectedRange
+func selectionDidChange
 func selectionExpandedForCollapsedFolds
 func selectionRects
 func set
@@ -245,6 +265,7 @@ func setHighlights
 func setItems
 func setLanguageID
 func setLifecycleObservers
+func setMarked
 func setMarkedText
 func setMatchCase
 func setMethod
@@ -260,6 +281,7 @@ func setVisible
 func setVisibleUTF16Range
 func setVisibleUTF16RangeForHighlighting
 func setWrapAround
+func shared
 func shift
 func shouldPresent
 func showCompletions
@@ -275,6 +297,7 @@ func syncDocumentLengthOnly
 func syncFromController
 func systemImage
 func text
+func textDidChange
 func textRange
 func themeDidChange
 func toggleBlockComment
@@ -294,6 +317,7 @@ func validAttributesForMarkedText
 func valueText
 func viewportFrame
 func viewportHeight
+func virtualizedValueText
 func width
 func willApplyEdit
 func wordPrefix
@@ -318,6 +342,7 @@ struct DepthStartPair
 struct DocumentHooks
 struct EditorConfiguration
 struct EditorState
+struct EditorTextServicesPolicy
 struct EditorTheme
 struct Emphasis
 struct FindPanelView
@@ -331,6 +356,7 @@ struct LineAnnotation
 struct LineFoldPlaceholderStyle
 struct LineFoldProviderContext
 struct LineFoldStorage
+struct MarkedTextSession
 struct MinimapBubbleRun
 struct MinimapLinePaint
 struct MinimapSnapshot
@@ -347,10 +373,20 @@ typealias PlatformColor
 typealias PlatformFont
 typealias PlatformView
 typealias ProviderID
+var absoluteSelectedRange
 var accessibilityLabelText
 var accessibilityValueText
 var additionalTextEdits
 var allFolds
+var allowsAutocorrection
+var allowsDataDetectors
+var allowsDictation
+var allowsServicesMenu
+var allowsSmartDashes
+var allowsSmartInsertDelete
+var allowsSmartQuotes
+var allowsSpellingCorrections
+var allowsTextReplacement
 var anchorPosition
 var annotations
 var annotationsByLine
@@ -373,10 +409,12 @@ var breakStrategy
 var bubbles
 var capture
 var caretColor
+var category
 var charWidth
 var charWidthScale
 var characterWidth
 var characters
+var codeEditor
 var codeGap
 var collapsedFolds
 var collapsedSymbolName
@@ -469,7 +507,9 @@ var insertionPoint
 var invalidateLayout
 var invisibleCharactersDelegate
 var invisibles
+var isActive
 var isCollapsed
+var isComposingMarkedText
 var isEditable
 var isEmpty
 var isFocused
@@ -485,12 +525,14 @@ var jumpHoveredRange
 var jumpToDefinition
 var jumpToDefinitionDelegate
 var jumpToDefinitionModel
+var keystrokeLayoutSeconds
 var keywordColor
 var keywords
 var label
 var language
 var languageID
 var layout
+var layout1kLinesSeconds
 var leading
 var length
 var letterSpacing
@@ -511,6 +553,7 @@ var matchCount
 var matches
 var matchesEmpty
 var maxValueCharacters
+var maxValueOverheadCharacters
 var maxWidth
 var maxWidthFraction
 var message
@@ -554,6 +597,7 @@ var pathComponents
 var pattern
 var peripherals
 var popupRightSideOffset
+var prose
 var providerID
 var punctuation
 var punctuationColor
@@ -574,6 +618,7 @@ var selectedIndex
 var selectedItem
 var selectedLineIndices
 var selectedRange
+var selectedRangeInMarked
 var selectedRanges
 var selectedTextRange
 var selection
@@ -598,6 +643,7 @@ var stringColor
 var strings
 var style
 var substring
+var subsystem
 var systemImage
 var tabColor
 var tabWidth
@@ -608,6 +654,7 @@ var textChanges
 var textColor
 var textDocument
 var textEdit
+var textServices
 var theme
 var tokenOverrides
 var tokenizer
@@ -628,6 +675,7 @@ var variables
 var version
 var verticalLayoutPadding
 var width
+var wordNavigationMode
 var wrapAround
 var wrapLines
 var y

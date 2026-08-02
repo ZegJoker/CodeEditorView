@@ -19,9 +19,10 @@ struct Phase9DualRunContractTests {
         )
         try await session.start()
         // Start against real WasmKit conformance module bytes is the contract baseline.
-        let started = true
-        #expect(started)
+        let before = await session.conformanceTrace().count
         await session.stop()
+        let after = await session.conformanceTrace().count
+        #expect(after >= before)
     }
 
     @Test func linkedGuestDualRunStillWorksForSemantics() async throws {

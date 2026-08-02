@@ -117,7 +117,8 @@ struct Phase8ExtensionSecurityTests {
         // Overwrite same key with same size must not exhaust quota.
         try await broker.storageSet(handle: h.id, key: "a", value: Data(repeating: 2, count: 12))
         try await broker.storageSet(handle: h.id, key: "a", value: Data(repeating: 3, count: 12))
-        #expect(true)
+        let again = try await broker.storageGet(handle: h.id, key: "a")
+        #expect(again?.count == 12)
         // Path uses directoryKey
         let paths = try FileManager.default.contentsOfDirectory(
             at: tmp.appendingPathComponent("s"), includingPropertiesForKeys: nil)
@@ -228,8 +229,9 @@ struct Phase8ExtensionSecurityTests {
         } catch BrokerError.forgedHandle, BrokerError.staleGeneration, BrokerError.revokedHandle {
             // ok
         } catch {
-            // resolve may throw forgedHandle
-            #expect(String(describing: error).contains("forged") || true)
+            // resolve may throw forgedHandle / other typed denial
+            let desc = String(describing: error).lowercased()
+            #expect(desc.contains("forged") || desc.contains("stale") || desc.contains("revok") || desc.contains("handle"))
         }
     }
 

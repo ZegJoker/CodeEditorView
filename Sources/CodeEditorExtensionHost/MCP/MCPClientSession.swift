@@ -257,8 +257,12 @@ public actor MCPJSONRPCConnection {
     private let transport: any MCPTransport
     private var nextID = 1
     private var pending: [Int: CheckedContinuation<MCPJSON, Error>] = [:]
+    /// Responses that arrived before the matching continuation was registered (register-before-send race window).
+    private var earlyResponses: [Int: MCPJSON] = [:]
     private var reader: Task<Void, Never>?
     private var buffer = Data()
+    private var closed = false
+    private let requestTimeout: Duration = .seconds(5)
 
     public init(transport: any MCPTransport) {
         self.transport = transport
@@ -284,20 +288,63 @@ public actor MCPJSONRPCConnection {
             "params": params.dictionary,
         ]
         let body = try JSONSerialization.data(withJSONObject: msg)
-        try await transport.send(frame(body))
-        return try await withThrowingTaskGroup(of: MCPJSON.self) { group in
-            group.addTask {
-                try await withCheckedThrowingContinuation { cont in
-                    Task { await self.register(id: id, cont: cont) }
+        let framed = frame(body)
+
+        // Same contract as LSP-002 / DAP-001: register on the actor *before* send;
+        // buffer early responses if the peer answers before register installs.
+        do {
+            return try await withThrowingTaskGroup(of: MCPJSON.self) { group in
+                group.addTask {
+                    try await self.executeRegisteredRequest(id: id, framed: framed)
                 }
+                group.addTask {
+                    try await Task.sleep(for: self.requestTimeout)
+                    throw MCPClientError.timeout
+                }
+                let result = try await group.next()!
+                group.cancelAll()
+                return result
             }
-            group.addTask {
-                try await Task.sleep(for: .seconds(5))
-                throw MCPClientError.timeout
-            }
-            let r = try await group.next()!
-            group.cancelAll()
-            return r
+        } catch {
+            // Always release any pending continuation so the runtime cannot hang.
+            failPending(id: id, error: error)
+            throw error
+        }
+    }
+
+    /// Actor-isolated: install continuation, then write. Resume happens in handle.
+    private func executeRegisteredRequest(id: Int, framed: Data) async throws -> MCPJSON {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<MCPJSON, Error>) in
+            Task { await self.registerThenSend(id: id, framed: framed, cont: cont) }
+        }
+    }
+
+    private func registerThenSend(
+        id: Int,
+        framed: Data,
+        cont: CheckedContinuation<MCPJSON, Error>
+    ) async {
+        if closed {
+            cont.resume(throwing: MCPClientError.transportClosed)
+            return
+        }
+        if let early = earlyResponses.removeValue(forKey: id) {
+            cont.resume(returning: early)
+            return
+        }
+        // Register **before** any await on the wire.
+        pending[id] = cont
+        do {
+            try await transport.send(framed)
+        } catch {
+            failPending(id: id, error: error)
+        }
+    }
+
+    private func failPending(id: Int, error: Error) {
+        earlyResponses.removeValue(forKey: id)
+        if let cont = pending.removeValue(forKey: id) {
+            cont.resume(throwing: error)
         }
     }
 
@@ -312,14 +359,16 @@ public actor MCPJSONRPCConnection {
     }
 
     public func close() async {
+        closed = true
         reader?.cancel()
-        for (_, c) in pending { c.resume(throwing: MCPClientError.transportClosed) }
+        reader = nil
+        let all = pending
         pending.removeAll()
+        earlyResponses.removeAll()
+        for (_, c) in all {
+            c.resume(throwing: MCPClientError.transportClosed)
+        }
         await transport.close()
-    }
-
-    private func register(id: Int, cont: CheckedContinuation<MCPJSON, Error>) {
-        pending[id] = cont
     }
 
     private func frame(_ body: Data) -> Data {
@@ -344,15 +393,24 @@ public actor MCPJSONRPCConnection {
             let bodyEnd = buffer.index(bodyStart, offsetBy: length)
             let body = buffer.subdata(in: bodyStart..<bodyEnd)
             buffer.removeSubrange(buffer.startIndex..<bodyEnd)
-            if let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
-                let id = (obj["id"] as? Int) ?? (obj["id"] as? NSNumber)?.intValue,
-                let cont = pending.removeValue(forKey: id)
-            {
-                if let err = obj["error"] as? [String: Any] {
-                    cont.resume(throwing: MCPClientError.serverError(err["message"] as? String ?? "error"))
-                } else {
-                    cont.resume(returning: MCPJSON(obj["result"] as? [String: Any] ?? [:]))
+            guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+                let id = (obj["id"] as? Int) ?? (obj["id"] as? NSNumber)?.intValue
+            else { continue }
+
+            if let err = obj["error"] as? [String: Any] {
+                let error = MCPClientError.serverError(err["message"] as? String ?? "error")
+                if let cont = pending.removeValue(forKey: id) {
+                    cont.resume(throwing: error)
                 }
+                // Drop early error if no waiter yet (timeout path will clean up).
+                continue
+            }
+            let result = MCPJSON(obj["result"] as? [String: Any] ?? [:])
+            if let cont = pending.removeValue(forKey: id) {
+                cont.resume(returning: result)
+            } else {
+                // Peer answered before registerThenSend installed the waiter — hold it.
+                earlyResponses[id] = result
             }
         }
     }

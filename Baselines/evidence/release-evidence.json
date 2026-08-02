@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-01T13:52:12Z",
-  "commit": "09534e8e34c9fed919b51280c469f8d966470c15",
+  "generated_at": "2026-08-02T07:14:22Z",
+  "commit": "2ee025df7cc7c95e004d477655d2d3e33f769669",
   "branch": "remediation/audit-2026-08",
   "toolchain": {
     "swift": "swift-driver version: 1.148.6 Apple Swift version 6.3 (swiftlang-6.3.0.123.5 clang-2100.0.123.102)",
@@ -9,8 +9,8 @@
   },
   "tests": {
     "exit_code": 0,
-    "reported_tests": 136,
-    "reported_suites": 33,
+    "reported_tests": 193,
+    "reported_suites": 48,
     "log": "Baselines/evidence/swift-test.log"
   },
   "defects": {

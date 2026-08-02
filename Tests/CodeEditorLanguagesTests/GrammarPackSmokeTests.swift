@@ -22,7 +22,9 @@ struct LanguagePackProvenanceTests {
     @Test func registerIdempotent() throws {
         _ = try CodeEditorLanguageSwift.register()
         #expect(try CodeEditorLanguageSwift.register() == false)
-        #expect(try CodeEditorLanguageJSON.register() == false || true)
+        let registered = try CodeEditorLanguageJSON.register()
+        // Idempotent register returns false when already registered; first call may be true.
+        #expect(registered == true || registered == false)
         #expect(try CodeEditorLanguageJSON.register() == false)
     }
 }

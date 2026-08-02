@@ -3,3 +3,5 @@ func register
 var grammarCommit
 var grammarParserSHA256
 var grammarSourceURL
+var lastError
+var requiredQueries

@@ -184,7 +184,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
             expectsIncrementalEdit = false
             if configuration != nil {
                 await Task.yield()
-                fullParse(text)
+                await fullParse(text)
             }
             return
         }
@@ -196,7 +196,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
             documentLength = (text as NSString).length
             pendingSource = nil
             await Task.yield()
-            fullParse(text)
+            await fullParse(text)
             return
         }
 
@@ -231,7 +231,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         guard let existingTree = tree else {
             source = newText
             documentLength = (newText as NSString).length
-            fullParse(newText)
+            await fullParse(newText)
             return IndexSet(integersIn: 0..<max(0, documentLength))
         }
 
@@ -328,11 +328,15 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
                 return []  // stale
             }
             highlightGeneration = pub.generation
-            return pub.highlights
+            // If engine has no captures but the local tree was parsed, use legacy path once
+            // (should be rare after fullParse awaits engine.setText).
+            if !pub.highlights.isEmpty || tree == nil {
+                return pub.highlights
+            }
         } catch LanguageDocumentActor.EngineError.queryMissing {
             return []
         } catch LanguageDocumentActor.EngineError.notConfigured {
-            return []
+            // Fall through to main-actor tree path.
         } catch {
             // Fall through to legacy path if engine not configured yet.
         }
@@ -371,16 +375,25 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
 
     // MARK: - Private
 
-    private func fullParse(_ text: String) {
+    /// Full parse on the main-actor mirror **and** await the off-main engine (no fire-and-forget).
+    /// Race-free: ``queryHighlights`` after ``setDocumentText`` must see the same generation/tree.
+    private func fullParse(_ text: String) async {
         guard let configuration else {
             tree = nil
             return
         }
-        // Keep a main-actor mirror for identifierRange; engine is source of truth for highlights.
+        // Main-actor mirror for identifierRange / legacy fallback.
         tree = parser.parse(text)
-        Task {
-            try? await engine.configure(configuration)
-            _ = try? await engine.setText(text)
+        do {
+            _ = try await engine.setText(text)
+        } catch {
+            // Engine may not be configured yet (or was reset); configure then parse.
+            do {
+                try await engine.configure(configuration)
+                _ = try await engine.setText(text)
+            } catch {
+                // Leave main-actor tree; queryHighlights may use legacy path.
+            }
         }
     }
 

@@ -62,7 +62,11 @@ struct Phase7DAPTests {
             let data = try JSONSerialization.data(withJSONObject: msg)
             try await pair.server.send(DAPMessageFraming.encode(data))
         }
-        try await Task.sleep(nanoseconds: 50_000_000)
+        // Poll until ordered delivery completes (50ms is flaky under full-suite load).
+        let deadline = ContinuousClock.now + .seconds(2)
+        while box.events.count < 4, ContinuousClock.now < deadline {
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
         #expect(box.events == ["initialized", "stopped", "continued", "terminated"])
         await conn.close()
     }

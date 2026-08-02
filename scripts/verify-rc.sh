@@ -37,5 +37,12 @@ swift test --filter Phase16
 echo "======== examples resolve ========"
 ./scripts/check-examples.sh
 
+echo "======== Phase 11 vacuous / evidence hooks ========"
+./scripts/check-vacuous-tests.sh
+./scripts/check-perf-budgets.sh
+./scripts/check-unchecked-sendable.sh
+./scripts/check-licenses.sh
+
 echo
-echo "verify-rc: all Phase 16 RC gates passed"
+echo "verify-rc: Phase 16 RC gates + Phase 11 hooks passed"
+echo "For full §26 qualification run: ./scripts/verify-stable.sh"
