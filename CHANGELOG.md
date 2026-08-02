@@ -10,6 +10,11 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 10 complete (WB-010…016 / §10 Xcode-like workbench):**
+  - Navigator inventory (files/symbols/search/issues/tests/debug/SCM/breakpoints) with real models
+  - Scheme/run destination model; activity cancel; status line/col via LineIndex
+  - Open Quickly file/symbol/command modes + `path:line:col`; chrome command IDs
+  - FullWorkbench schemes/tasks/symbols/tests wiring; PHASE10-NOTES rewritten for workbench
 - **Phase 9 complete (WASM-001…009 / §16 real Swift-Wasm execution):**
   - WasmKit executes submitted module bytes (factory ignored); dual abi_version proof
   - Host imports read guest linear memory; wall-time + cancel interrupt for infinite poll

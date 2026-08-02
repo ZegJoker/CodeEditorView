@@ -668,6 +668,55 @@
       "product": "CodeEditorWasmEngine",
       "status": "fixed",
       "summary": "Fixture gate script + session lifecycle"
+    },
+    {
+      "id": "WB-010",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Navigator set complete with models"
+    },
+    {
+      "id": "WB-011",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Tab pin/preview semantics + pane APIs"
+    },
+    {
+      "id": "WB-012",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Scheme/run destination + task routing"
+    },
+    {
+      "id": "WB-013",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Status LineIndex + activity cancel"
+    },
+    {
+      "id": "WB-014",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Chrome command ID matrix"
+    },
+    {
+      "id": "WB-015",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Open Quickly modes + path:line:col"
+    },
+    {
+      "id": "WB-016",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "FullWorkbench schemes/tasks/navigator wiring"
     }
   ]
 }

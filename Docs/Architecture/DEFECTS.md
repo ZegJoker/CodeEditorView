@@ -110,3 +110,10 @@ Updated: 2026-08-02
 | SCM-002 | P1 | CodeEditorSourceControl | fixed | Trust-gated Git; per-op handles; component path check |
 | PROC-001 | P1 | CodeEditorCore | fixed | ProcessSupervisor alias; tasks/Git share ProcessService |
 | WB-007 | P1 | CodeEditorWorkbench | fixed | Problems/SCM/Debug models with unit tests |
+| WB-010 | P1 | CodeEditorWorkbench | fixed | Navigator set: symbols/tests/debug/breakpoints models |
+| WB-011 | P1 | CodeEditorWorkbench | fixed | Tab pin/preview/split restoration semantics |
+| WB-012 | P1 | CodeEditorWorkbench | fixed | Scheme/run destination + build/run/test routing |
+| WB-013 | P1 | CodeEditorWorkbench | fixed | Status line-index + activity model |
+| WB-014 | P1 | CodeEditorWorkbench | fixed | Command matrix for chrome actions |
+| WB-015 | P1 | CodeEditorWorkbench | fixed | Open Quickly modes + path:line:col |
+| WB-016 | P1 | CodeEditorWorkbench | fixed | FullWorkbench E2E surfaces no ContentUnavailable-only |

@@ -1,82 +1,91 @@
-# Phase 10 notes — Native Swift process runtime
+# Phase 10 notes — Xcode-like workbench experience
+
+**Source of truth:** `~/Downloads/CodeEditorView_Deep_Audit_Xcode26_Ghostty.md`  
+- Phase gate: **§ Phase 10**  
+- Findings: **§10.1–10.6**
+
+**Branch:** `remediation/audit-2026-08`  
+**Policy:** TDD; no ContentUnavailable-only supported surfaces.
+
+> Prior `PHASE10-NOTES` described native Swift process runtime (pre-audit numbering). That work lives under extension host phases. **Audit Phase 10 is the workbench shell.**
 
 ## Goal
 
-Run the same Swift extension **in-process** and as a **native helper** over a versioned **CBOR** wire protocol, with process-group teardown, restart/quarantine, capability broker, and signed/dev package trust.
+Compose foundations into an IDE-quality shell: navigators, tabs, schemes, status/activity, commands, search/problems, SCM/terminal/debug/test workflows, Open Quickly modes, dirty close, and FullWorkbench sample wiring.
 
-## Products
+## Navigator inventory (E1)
 
-| Product | Role |
+| ID | Model |
 |---|---|
-| `CodeEditorExtensionProtocol` | CBOR codec, 4-byte framing, method catalog + schema hash, wire connection |
-| `CodeEditorExtensionGuest` | Guest runtime + stdio transport for Swift executables |
-| `ConformanceExtensionGuest` | Fixture executable for dual-run |
-| `CodeEditorExtensionHost` | Drivers, orchestrator, broker, signing, native transport |
+| `workbench.navigator.files` | File tree |
+| `workbench.navigator.symbols` | `WorkbenchSymbolsModel` |
+| `workbench.navigator.search` / `fullworkbench.navigator.find` | Host find + shell search |
+| `workbench.navigator.issues` | `WorkbenchTaskProblemsBridge` |
+| `workbench.navigator.tests` | `WorkbenchTestsModel` |
+| `workbench.navigator.debug` | `WorkbenchDebugModel` |
+| `workbench.navigator.scm` / host SCM | `WorkbenchSCMModel` |
+| `workbench.navigator.breakpoints` | `WorkbenchBreakpointsModel` |
 
-## Wire protocol
+Empty lists use real empty-state chrome (not “coming soon” stubs).
 
-- Canonical framing: **big-endian u32 length + CBOR body**
-- Schema source: `ExtensionMethodCatalog.entries` → `schemaHash` (SHA-256)
-- Handshake carries protocol version, schema hash, package id/version/digest, capabilities, grants, limits, generation
-- JSON remains **diagnostic only** (`JSONDiagnosticRenderer`); legacy Content-Length JSON RPC still exists for older remote adapters
+## Chrome models
 
-## Runtime drivers
+| Model | Role |
+|---|---|
+| `WorkbenchSchemeModel` | Schemes, run destinations, build/test/run task IDs |
+| `WorkbenchActivityModel` | Progress stack + cancel |
+| `WorkbenchStatusMetrics` | Line/col via `LineIndex` (O(log n)) |
+| `OpenQuicklyModel` | file/symbol/command modes + `path:line:col` |
+| `WorkbenchChromeCommand` | Command ID matrix for primary chrome actions |
 
-```text
-RuntimeSelector → BuiltInSwiftRuntimeDriver
-                → NativeProcessRuntimeDriver
-                → swiftWasm (reserved; throws not available)
-```
+## FullWorkbench E2E map
 
-Shared `ExtensionInstance` surface: request/cancel/stop + conformance traces.
+Sample project + `HostServices`:
 
-## Capability broker
-
-Fail-closed handles for:
-
-- worktree (path containment)
-- project
-- settings
-- storage (quota)
-- process (allowlist + process-group kill via `ProcessService`)
-- download (HTTPS host allowlist; fixture path for tests)
-- npm (allowlist, no lifecycle scripts)
-
-Forged / stale generation handles reject.
-
-## Trust
-
-- Ed25519 sign/verify over `checksums.json` + `signature.ed25519` + `publisher.json`
-- Classes: `trustedSigned` / `workspaceDev` / `untrusted`
-- Native launch denied for untrusted under strict policy
-- Notice: native helper is a **reliability** boundary, not a sandbox (`NativeProcessTrustNotice`)
-
-## Guest executable
-
-```bash
-swift build --product ConformanceExtensionGuest
-# Host spawns Artifacts/.../extension or .build/.../ConformanceExtensionGuest
-```
+1. Open workspace / `Main.swift`  
+2. Edit in editor (preview promote / pin APIs in workspace)  
+3. Find navigator search/replace preview  
+4. Scheme tasks: `sample.build` / `sample.test` / `sample.echo`  
+5. Problems from task diagnostics  
+6. Debug/breakpoints/tests navigators (models populated by host)  
+7. Ghostty terminal utility  
+8. SCM status (trusted Git)  
+9. Restore chrome / multi-window registry  
+10. Dirty close via `requestClose*`  
 
 ## Gate evidence
 
-| Check | Result |
-|---|---|
-| Protocol CBOR/framing/catalog tests | Pass |
-| Dual-run built-in trace + native mock guest handshake/activate/echo/completion | Pass |
-| Broker worktree/process/download/npm/storage/forged handles | Pass |
-| Sign/verify + untrusted reject | Pass |
-| Process group terminate (sleep helper) | Pass |
-| Quarantine after crash storm | Pass |
+```text
+swift test --filter 'Phase10Workbench'
+# Phase10 workbench chrome suite — passed
 
-```bash
-swift test --filter CodeEditorExtensionProtocolTests
-swift test --filter 'Phase10DualRun|Phase10Broker|Phase10Signing|Phase10Orchestrator|Phase10Process'
-scripts/check-product-isolation.sh
+./scripts/check-defects.sh
 ```
 
-## Explicitly not Phase 10
+### Exit map
 
-- WasmKit / core-Wasm ABI (Phase 11)
-- Full LS procedural provisioning (Phase 12)
-- Marketplace COSE gallery (later)
+| # | Proof |
+|---|---|
+| E1 | `navigatorInventoryCompleteOnDefaultWorkbench` |
+| E2–E3 | Tab pin helpers + existing lifecycle tests |
+| E4 | `schemeResolvesBuildTestRunTasks`, default schemes |
+| E5 | `statusLineColumnUsesLineIndexNotScanSemantics` |
+| E6 | `activityCancelRemovesItem` |
+| E7 | `chromeCommandsAreDistinctCommandIDs` |
+| E8–E12 | Open Quickly modes/location; problems/SCM models |
+| E13–E15 | Phase 4 close paths; a11y IDs on navigators |
+| E16 | This file + FullWorkbench host wiring |
+
+## Forbidden residuals
+
+- ContentUnavailable as sole body for listed navigators  
+- Full-string status line/col scan  
+- Scheme actions with no task id resolution  
+- PHASE10-NOTES claiming process runtime as Phase 10  
+
+## Related
+
+- Phase 4 dirty close / multi-window  
+- Phase 5 Ghostty terminal  
+- Phase 7 problems/SCM/debug models  
+- Audit Phase 11 stabilization (next)  
