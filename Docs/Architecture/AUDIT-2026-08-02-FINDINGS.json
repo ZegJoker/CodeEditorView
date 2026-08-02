@@ -218,7 +218,7 @@
       "regression_tests": [
         "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_CORE_N01_documentStoreIsMainActorOwned"
       ],
-      "notes": "DocumentOwnershipModel.mainActor; assertOwnership via dispatchPrecondition on mutation entry points; not Sendable."
+      "notes": "DocumentOwnershipModel.mainActor; evaluateOwnership + assertOwnership (dispatchPrecondition); off-main violation path asserted via testOwnershipViolationHandler probe (production default traps); not Sendable."
     },
     {
       "id": "DOC-N01",
@@ -274,7 +274,7 @@
       "regression_tests": [
         "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift::test_DOC_N04_atomicUndoGroupOnlyNoPartialMutation"
       ],
-      "notes": "Removed public per-edit undo/redo; only atomic undoGroup/redoGroup remain."
+      "notes": "Only atomic undoGroup/redoGroup; test pins fail-before-mutation (stack+store unchanged) and single DocumentStore.apply for whole inverse/forward group (one version bump)."
     },
     {
       "id": "DOC-N05",
@@ -300,7 +300,7 @@
         "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift::test_DOC_N06_eventsCarrySequence",
         "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N06_eventBufferPolicyRejectsNonPositive"
       ],
-      "notes": "EventBufferPolicy rejects non-positive capacity; sequenced TextDocumentEvent with streamGap markers."
+      "notes": "EventBufferPolicy rejects non-positive capacity; sequenced TextDocumentEvent; overflow drains stream and asserts streamGap + droppedEventCount."
     },
     {
       "id": "DOC-N07",
@@ -349,7 +349,7 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N10_durableWriteSurvivesFaultBeforeParentFsync",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N10_successfulDurableWriteIncludesParentFsync"
       ],
-      "notes": "Durable write: temp fsync, atomic replace, parent directory fsync; symlink refuse; fault points for parent fsync."
+      "notes": "Durable write: temp fsync, atomic replace, parent directory fsync; parentDirectoryFsyncObserver asserts real fsyncDirectory on success; fault before parent fsync; symlink refuse."
     },
     {
       "id": "DOC-N11",

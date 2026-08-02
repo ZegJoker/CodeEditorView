@@ -102,6 +102,10 @@ public final class UndoCoordinator {
     ///
     /// Stack ownership moves only after `apply` succeeds (DOC-002 / DOC-N04). Failed application
     /// leaves both stacks unchanged. State flags are always cleared via `defer`.
+    ///
+    /// - Important: `apply` must treat the group as **one atomic transaction** (e.g.
+    ///   `DocumentStore.apply` with all inverse ranges). Hosts must not apply edits
+    ///   one-by-one with partial external mutation; there is no public per-edit undo API.
     public func undoGroup(apply: (RegisteredGroup) throws -> Void) throws {
         flushOpenGroup()
         guard let group = undoStack.last else { return }
@@ -121,6 +125,7 @@ public final class UndoCoordinator {
     /// Redoes the last group as a whole. `group.edits` are in original application order.
     ///
     /// Stack ownership moves only after `apply` succeeds (DOC-002 / DOC-N04).
+    /// Same atomicity rules as ``undoGroup(apply:)``.
     public func redoGroup(apply: (RegisteredGroup) throws -> Void) throws {
         flushOpenGroup()
         guard let group = redoStack.last else { return }

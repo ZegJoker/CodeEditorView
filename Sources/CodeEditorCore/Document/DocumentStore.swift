@@ -77,9 +77,36 @@ public final class DocumentStore: TextStoring {
         bumpVersionAndContentState()
     }
 
+    /// Evaluates ownership without trapping (CORE-N01).
+    ///
+    /// Production mutations call ``assertOwnership()``, which traps on violation.
+    public static func evaluateOwnership() -> DocumentOwnershipCheckResult {
+        Thread.isMainThread ? .ok : .violated
+    }
+
+    /// Test-only probe: when set, ownership violations invoke this handler and
+    /// **do not** process-trap, so tests can assert the fail-closed path without
+    /// killing the suite. Production default is `nil` (always trap).
+    ///
+    /// - Important: Never set this in production code paths.
+    /// Access is intentionally unlocked test-only state (single-threaded test setup).
+    nonisolated(unsafe) package static var testOwnershipViolationHandler: (@Sendable () -> Void)?
+
     /// Fail closed if called off the owning isolation (CORE-N01).
+    ///
+    /// Uses `dispatchPrecondition(.onQueue(.main))` unless a test installs
+    /// ``testOwnershipViolationHandler``.
     public func assertOwnership() {
-        dispatchPrecondition(condition: .onQueue(.main))
+        switch Self.evaluateOwnership() {
+        case .ok:
+            return
+        case .violated:
+            if let handler = Self.testOwnershipViolationHandler {
+                handler()
+                return
+            }
+            dispatchPrecondition(condition: .onQueue(.main))
+        }
     }
 
     // MARK: - Convenience

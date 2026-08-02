@@ -167,15 +167,44 @@ struct TextDocumentTests {
         }
     }
 
-    @Test func test_DOC_N06_eventsCarrySequence() throws {
+    @Test func test_DOC_N06_eventsCarrySequence() async throws {
         let doc = TextDocument(text: "a")
-        let stream = doc.makeEventStream(policy: .default)
-        _ = try doc.apply(
-            .single(range: NSRange(location: 1, length: 0), replacement: "b", origin: .typing)
-        )
-        // Stream may buffer; sequence on document advances.
+        // Tiny buffer so overflow is deterministic without concurrent consumer.
+        let policy = try EventBufferPolicy(capacity: 2)
+        let stream = doc.makeEventStream(policy: policy)
+
+        // Each apply yields willApply + didApply (+ dirty); flood past capacity.
+        for _ in 0..<6 {
+            _ = try doc.apply(
+                .single(
+                    range: NSRange(location: doc.length, length: 0),
+                    replacement: "x",
+                    origin: .typing
+                )
+            )
+        }
         #expect(doc.eventSequence >= 2)
-        _ = stream
+        #expect(doc.droppedEventCount > 0)
+
+        // Drain the bounded buffer (buffered elements are available immediately).
+        var drained: [TextDocumentEvent] = []
+        for await event in stream {
+            drained.append(event)
+            if drained.count >= policy.capacity { break }
+        }
+
+        #expect(drained.count == policy.capacity)
+        // Every drained event carries a positive sequence (DOC-N06).
+        for event in drained {
+            #expect(event.sequence > 0)
+        }
+        // Overflow must publish a streamGap marker so consumers resync.
+        let hasGap = drained.contains { event in
+            if case .streamGap = event { return true }
+            return false
+        }
+        #expect(hasGap)
+        #expect(doc.droppedEventCount >= 1)
     }
 }
 

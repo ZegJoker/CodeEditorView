@@ -330,13 +330,53 @@ struct Phase2CoreResidualTests {
         }
     }
 
-    @Test func test_CORE_N01_documentStoreIsMainActorOwned() {
+    @Test func test_CORE_N01_documentStoreIsMainActorOwned() async {
         #expect(DocumentStore.ownershipModel == .mainActor)
-        // Compiles only on MainActor (suite is @MainActor).
+        // On main: ownership is ok and assertOwnership does not trap.
+        #expect(DocumentStore.evaluateOwnership() == .ok)
         let store = DocumentStore(string: "x")
+        store.assertOwnership()
         #expect(store.length == 1)
         let snap = store.snapshot()
         #expect(snap.text == "x")
         #expect(snap.contentState == store.contentState)
+
+        // Off main: evaluateOwnership reports violation (CORE-N01).
+        let offMainEval = await Task.detached {
+            DocumentStore.evaluateOwnership()
+        }.value
+        #expect(offMainEval == .violated)
+
+        // Off-main assertOwnership must hit the fail-closed violation path.
+        // Install test probe so the suite observes the trap without process death;
+        // production default (handler == nil) still uses dispatchPrecondition.
+        final class ViolationBox: @unchecked Sendable {
+            private let lock = NSLock()
+            private var _count = 0
+            var count: Int {
+                lock.lock(); defer { lock.unlock() }
+                return _count
+            }
+            func record() {
+                lock.lock(); defer { lock.unlock() }
+                _count += 1
+            }
+        }
+        let box = ViolationBox()
+        DocumentStore.testOwnershipViolationHandler = { box.record() }
+        defer { DocumentStore.testOwnershipViolationHandler = nil }
+
+        // Construct store off-main so we do not send a main-owned instance across isolation.
+        await Task.detached {
+            let offMainStore = DocumentStore(string: "y")
+            offMainStore.assertOwnership()
+        }.value
+        #expect(box.count == 1)
+
+        // Snapshot remains Sendable for cross-isolation read.
+        let remoteText = await Task.detached {
+            snap.text
+        }.value
+        #expect(remoteText == "x")
     }
 }

@@ -20,3 +20,11 @@ public enum DocumentOwnershipModel: Sendable, Hashable, Codable {
     /// All mutations hop to / run on the main actor.
     case mainActor
 }
+
+/// Result of checking document storage ownership without trapping (CORE-N01).
+public enum DocumentOwnershipCheckResult: Sendable, Hashable, Codable {
+    /// Caller is on the owning isolation (main thread / main queue).
+    case ok
+    /// Caller is off the owning isolation; ``DocumentStore/assertOwnership()`` will trap.
+    case violated
+}

@@ -408,20 +408,29 @@ public struct LocalDocumentIO: DocumentIO {
         return .written(written)
     }
 
+    /// Observability hook invoked immediately before the real parent-directory fsync
+    /// (DOC-N10). Production always performs `fsync`; this never replaces it.
+    ///
+    /// Tests install a counter to prove the durable path reaches parent fsync.
+    /// Default is `nil`. Access is test-setup only (not a production soft fallback).
+    nonisolated(unsafe) package static var parentDirectoryFsyncObserver: (@Sendable (URL) -> Void)?
+
     /// fsync the parent directory so the rename is durable (DOC-N10).
     static func fsyncDirectory(at directory: URL) throws {
+        let standardized = directory.standardizedFileURL
+        parentDirectoryFsyncObserver?(standardized)
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(Linux)
-            let fd = open(directory.path, O_RDONLY | O_DIRECTORY)
+            let fd = open(standardized.path, O_RDONLY | O_DIRECTORY)
             guard fd >= 0 else {
-                // Directory fsync is best-effort on some volumes; surface failure.
+                // Fail closed: durable writes require parent fsync.
                 throw DocumentIOError.ioFailure(
-                    "failed to open directory for fsync: \(directory.path)"
+                    "failed to open directory for fsync: \(standardized.path)"
                 )
             }
             defer { close(fd) }
             if fsync(fd) != 0 {
                 throw DocumentIOError.ioFailure(
-                    "fsync parent directory failed: \(directory.path)"
+                    "fsync parent directory failed: \(standardized.path)"
                 )
             }
         #endif

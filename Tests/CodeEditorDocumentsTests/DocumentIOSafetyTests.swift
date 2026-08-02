@@ -480,11 +480,35 @@ struct Phase2DocumentResidualTests {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         let url = dir.appendingPathComponent("f.txt")
+        let parent = dir.standardizedFileURL
+
+        // Observe real parent-directory fsync (DOC-N10) — not content identity alone.
+        final class FsyncCounter: @unchecked Sendable {
+            private let lock = NSLock()
+            private var _paths: [URL] = []
+            var paths: [URL] {
+                lock.lock(); defer { lock.unlock() }
+                return _paths
+            }
+            func record(_ url: URL) {
+                lock.lock(); defer { lock.unlock() }
+                _paths.append(url)
+            }
+        }
+        let counter = FsyncCounter()
+        LocalDocumentIO.parentDirectoryFsyncObserver = { counter.record($0) }
+        defer { LocalDocumentIO.parentDirectoryFsyncObserver = nil }
+
         let io = LocalDocumentIO()
         try await io.writeAtomically(data: Data("durable-body".utf8), to: url)
+        #expect(counter.paths.contains(where: { $0.standardizedFileURL == parent }))
+        let fsyncAfterCreate = counter.paths.count
+        #expect(fsyncAfterCreate >= 1)
+
         let identity = try #require(await io.resourceIdentity(at: url))
         #expect(identity.contentHash == DocumentFileIdentity.hash(of: Data("durable-body".utf8)))
-        // CAS path also durable.
+
+        // CAS durable path must also fsync the parent directory.
         let result = try await io.writeAtomicallyComparingIdentity(
             data: Data("durable-2".utf8),
             to: url,
@@ -497,6 +521,8 @@ struct Phase2DocumentResidualTests {
             return
         }
         #expect(written?.contentHash == DocumentFileIdentity.hash(of: Data("durable-2".utf8)))
+        #expect(counter.paths.count > fsyncAfterCreate)
+        #expect(counter.paths.filter { $0.standardizedFileURL == parent }.count >= 2)
     }
 
     @Test func test_DOC_N11_versionedRecoveryRecordRoundTrip() async throws {
