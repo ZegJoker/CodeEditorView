@@ -44,8 +44,10 @@ public actor LSPJSONRPCConnection {
     private let log: LSPLog
     private var nextID: Int = 1
     private var pending: [RequestID: CheckedContinuation<Data, Error>] = [:]
-    /// Responses that arrived before the pending continuation was registered.
+    /// Defensive only: under register-before-send this should stay empty (LSP-002).
+    /// Bounded; excess early responses are dropped with a log (never unbounded growth).
     private var earlyResponses: [RequestID: Data] = [:]
+    private let maxEarlyResponses = 8
     private var readerTask: Task<Void, Never>?
     private var notificationHandler: (@Sendable (String, Data) async -> Void)?
     /// Handles server→client requests; return JSON-serializable result or throw.
@@ -53,8 +55,12 @@ public actor LSPJSONRPCConnection {
     private var progressHandler: (@Sendable (ProgressEvent) async -> Void)?
     private let decoder: LSPMessageFraming.Decoder
     private var closed = false
+    /// Serializes inbound protocol handling (LSP-004 / §13.3).
+    private var inboundChain: Task<Void, Never>?
     public var requestTimeout: Duration
     public private(set) var lastFramingError: LSPMessageFraming.DecodeError?
+    /// Test/metrics: count of early responses observed (should stay 0 when healthy).
+    public private(set) var earlyResponseCount: Int = 0
 
     public init(
         transport: any LSPTransport,
@@ -197,6 +203,7 @@ public actor LSPJSONRPCConnection {
 
     // MARK: - Private
 
+    /// LSP-002: register pending **before** send on this actor; no nested registration Task.
     private func requestRaw(_ method: String, paramsObject: Any?) async throws -> Data {
         let id = RequestID.int(nextID)
         nextID += 1
@@ -215,16 +222,7 @@ public actor LSPJSONRPCConnection {
         do {
             return try await withThrowingTaskGroup(of: Data.self) { group in
                 group.addTask {
-                    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-                        Task {
-                            await self.storePending(id: id, cont: cont)
-                            do {
-                                try await self.transport.send(framed)
-                            } catch {
-                                await self.failPending(id: id, error: error)
-                            }
-                        }
-                    }
+                    try await self.executeRegisteredRequest(id: id, framed: framed)
                 }
                 group.addTask {
                     try await Task.sleep(for: self.requestTimeout)
@@ -247,7 +245,18 @@ public actor LSPJSONRPCConnection {
         }
     }
 
-    private func storePending(id: RequestID, cont: CheckedContinuation<Data, Error>) {
+    /// Actor-isolated: install continuation, then write. Resume happens in handleMessage.
+    private func executeRegisteredRequest(id: RequestID, framed: Data) async throws -> Data {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            Task { await self.registerThenSend(id: id, framed: framed, cont: cont) }
+        }
+    }
+
+    private func registerThenSend(
+        id: RequestID,
+        framed: Data,
+        cont: CheckedContinuation<Data, Error>
+    ) async {
         if closed {
             cont.resume(throwing: LSPError.transportClosed)
             return
@@ -256,7 +265,13 @@ public actor LSPJSONRPCConnection {
             cont.resume(returning: early)
             return
         }
+        // Register **before** any await on the wire (LSP-002).
         pending[id] = cont
+        do {
+            try await transport.send(framed)
+        } catch {
+            failPending(id: id, error: error)
+        }
     }
 
     private func failPending(id: RequestID, error: Error) {
@@ -281,12 +296,17 @@ public actor LSPJSONRPCConnection {
             lastFramingError = err
             log.append(level: .warning, message: "Framing error: \(err)")
         }
-        for body in messages {
-            handleMessage(body)
+        // Chain inbound processing so notifications stay ordered (LSP-004).
+        let previous = inboundChain
+        inboundChain = Task {
+            await previous?.value
+            for body in messages {
+                await self.handleMessageOrdered(body)
+            }
         }
     }
 
-    private func handleMessage(_ body: Data) {
+    private func handleMessageOrdered(_ body: Data) async {
         guard
             let obj = try? JSONSerialization.jsonObject(with: body),
             let dict = obj as? [String: Any]
@@ -305,13 +325,18 @@ public actor LSPJSONRPCConnection {
                 if let cont = pending.removeValue(forKey: id) {
                     cont.resume(returning: body)
                 } else {
-                    earlyResponses[id] = body
+                    earlyResponseCount += 1
+                    if earlyResponses.count < maxEarlyResponses {
+                        earlyResponses[id] = body
+                    } else {
+                        log.append(level: .warning, message: "Dropping early response (bound)")
+                    }
                 }
             }
             return
         }
 
-        // Notification or server request
+        // Notification or server request — await handlers in order (no fan-out Task).
         if let method {
             let paramsData: Data
             if let params = dict["params"] {
@@ -320,24 +345,19 @@ public actor LSPJSONRPCConnection {
                 paramsData = Data("{}".utf8)
             }
 
-            // Progress notifications
             if method == "$/progress" {
-                Task { await self.dispatchProgress(paramsData) }
+                await dispatchProgress(paramsData)
                 return
             }
 
             if let idValue, let id = RequestID(json: idValue) {
-                // Server → client request
-                Task { await self.dispatchServerRequest(method: method, id: id, paramsData: paramsData) }
+                await dispatchServerRequest(method: method, id: id, paramsData: paramsData)
                 return
             }
 
-            // Notification
-            let handler = notificationHandler
-            Task {
-                await handler?(method, paramsData)
+            if let handler = notificationHandler {
+                await handler(method, paramsData)
             }
-            return
         }
     }
 

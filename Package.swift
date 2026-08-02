@@ -396,6 +396,10 @@ let package = Package(
             dependencies: ["CodeEditorView", "CodeEditorLanguages", "CodeEditorDocuments", "CodeEditorCommands"]
         ),
         .testTarget(
+            name: "CodeEditorTreeSitterTests",
+            dependencies: ["CodeEditorTreeSitter", "CodeEditorLanguageSupport"]
+        ),
+        .testTarget(
             name: "CodeEditorLanguagesTests",
             dependencies: [
                 "CodeEditorLanguages",

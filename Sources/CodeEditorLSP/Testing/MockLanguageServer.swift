@@ -5,7 +5,8 @@ public actor MockLanguageServer {
     private let transport: LSPTestTransport
     private let decoder = LSPMessageFraming.Decoder()
     private var readerTask: Task<Void, Never>?
-    private var openText: [String: String] = [:]
+    /// Exposed for sync-matrix tests (LSP-001).
+    public private(set) var openText: [String: String] = [:]
     private var changeLog: [(uri: String, version: Int)] = []
 
     public private(set) var initializeCount = 0
@@ -31,6 +32,10 @@ public actor MockLanguageServer {
 
     public var recordedChanges: [(uri: String, version: Int)] {
         changeLog
+    }
+
+    public func currentOpenText(uri: String) -> String? {
+        openText[uri]
     }
 
     public func start() {

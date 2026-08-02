@@ -29,6 +29,12 @@ public actor LanguageServerSession {
     public let snapshotResolver: LSPSnapshotResolverBox
     public private(set) var restartAttempts: Int = 0
     private var dynamicRegistrations: [String: LSPJSONObject] = [:]
+    /// Methods enabled via dynamic registration (LSP-006).
+    public private(set) var dynamicallyEnabledMethods: Set<String> = []
+    /// Negotiated position encoding (LSP-005). Default UTF-16.
+    public private(set) var negotiatedPositionEncoding: String = "utf-16"
+    /// Versioned diagnostics store (LSP-008).
+    public let diagnosticStore = LSPDiagnosticStore()
     /// Host-facing applyEdit handler.
     public var applyEditHandler: (@Sendable (WorkspaceEditPlan) async -> Bool)?
     /// Host-facing showMessageRequest handler (returns selected action title).
@@ -104,6 +110,16 @@ public actor LanguageServerSession {
                 params: LSPJSONObject(makeInitializeParams())
             )
             capabilities = ServerCapabilitiesSnapshot.parse(from: initResult.dictionary)
+            // LSP-005: record negotiated position encoding when server selects one.
+            if let enc = initResult.dictionary["positionEncoding"] as? String {
+                negotiatedPositionEncoding = enc
+            } else if let caps = initResult.dictionary["capabilities"] as? [String: Any],
+                let enc = caps["positionEncoding"] as? String
+            {
+                negotiatedPositionEncoding = enc
+            } else {
+                negotiatedPositionEncoding = "utf-16"
+            }
             try await connection.notifyDictionary("initialized", params: LSPJSONObject([:]))
             state = .running
             log.append(level: .info, message: "Server started", serverID: definition.id.rawValue)
@@ -131,6 +147,9 @@ public actor LanguageServerSession {
         }
         await cleanupConnection()
         openDocuments.removeAll()
+        await diagnosticStore.clearServer(definition.id.rawValue)
+        dynamicallyEnabledMethods.removeAll()
+        dynamicRegistrations.removeAll()
         state = .stopped
         log.append(level: .info, message: "Server stopped", serverID: definition.id.rawValue)
     }
@@ -157,6 +176,11 @@ public actor LanguageServerSession {
                 text: doc.text
             )
         }
+    }
+
+    /// Whether a method was dynamically registered (LSP-006).
+    public func isDynamicallyEnabled(_ method: String) -> Bool {
+        dynamicallyEnabledMethods.contains(method)
     }
 
     private func restartBackoffNanoseconds(attempt: Int) -> UInt64 {
@@ -470,6 +494,23 @@ public actor LanguageServerSession {
                 let uri = DocumentURI(rawValue: params.uri)
                 let text = openDocuments[uri]?.text ?? ""
                 let diags = params.diagnostics.map { LSPConvert.diagnostic($0, in: text) }
+                let stored = params.diagnostics.enumerated().map { idx, d in
+                    LSPStoredDiagnostic(
+                        id: "\(uri.rawValue):\(idx):\(d.range.start.line):\(d.range.start.character)",
+                        message: d.message,
+                        severity: d.severity ?? 1,
+                        line: d.range.start.line,
+                        character: d.range.start.character,
+                        endLine: d.range.end.line,
+                        endCharacter: d.range.end.character
+                    )
+                }
+                await diagnosticStore.publish(
+                    serverID: definition.id.rawValue,
+                    uri: uri,
+                    version: params.version,
+                    items: stored
+                )
                 diagnosticsContinuation?.yield(
                     LSPDiagnosticsEvent(
                         uri: uri, version: params.version.map { DocumentVersion(rawValue: UInt64($0)) },
@@ -534,6 +575,9 @@ public actor LanguageServerSession {
                 for reg in registrations {
                     if let id = reg["id"] as? String {
                         dynamicRegistrations[id] = LSPJSONObject(reg)
+                        if let method = reg["method"] as? String {
+                            dynamicallyEnabledMethods.insert(method)
+                        }
                     }
                 }
             }
@@ -544,6 +588,9 @@ public actor LanguageServerSession {
             {
                 for reg in unregs {
                     if let id = reg["id"] as? String {
+                        if let method = dynamicRegistrations[id]?.dictionary["method"] as? String {
+                            dynamicallyEnabledMethods.remove(method)
+                        }
                         dynamicRegistrations.removeValue(forKey: id)
                     }
                 }
