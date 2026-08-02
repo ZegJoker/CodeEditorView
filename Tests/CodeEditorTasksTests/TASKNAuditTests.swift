@@ -50,14 +50,66 @@ struct TASKNAuditTests {
     }
 
     @Test func test_TASK_N01_eventsUseAsyncBroadcastHubNotSharedIterator() async throws {
-        // Source contract: production TaskRunner must use AsyncBroadcastHub.
+        // Runtime: independent hub subscriptions — late consumer receives replay of prior
+        // events (AsyncBroadcastHub), not a shared iterator that divides chunks.
+        let handle = try TaskExecutionHandle(
+            run: TaskRun(definitionID: "hub", state: .running, startedAt: Date()),
+            processHandle: nil,
+            readinessPattern: nil
+        )
+
+        async let early: [String] = {
+            var lines: [String] = []
+            for await e in handle.events {
+                if case .stdout(let t) = e { lines.append(t) }
+                if case .completed = e { break }
+            }
+            return lines
+        }()
+
+        try await Task.sleep(nanoseconds: 5_000_000)
+        await handle.emitRawStdout(Data("alpha\n".utf8))
+        try await Task.sleep(nanoseconds: 5_000_000)
+
+        // Late subscriber joins after first chunk; hub replay must still deliver alpha.
+        async let late: [String] = {
+            var lines: [String] = []
+            for await e in handle.makeEventStream() {
+                if case .stdout(let t) = e { lines.append(t) }
+                if case .completed = e { break }
+            }
+            return lines
+        }()
+
+        try await Task.sleep(nanoseconds: 5_000_000)
+        await handle.emitRawStdout(Data("beta\n".utf8))
+        var done = handle.run
+        done.state = .succeeded
+        done.exitCode = 0
+        done.endedAt = Date()
+        handle.complete(run: done, stdout: handle.collectedStdout, stderr: "")
+
+        let earlyLines = await early
+        let lateLines = await late
+        let earlyText = earlyLines.joined()
+        let lateText = lateLines.joined()
+        #expect(earlyText.contains("alpha"))
+        #expect(earlyText.contains("beta"))
+        #expect(lateText.contains("alpha"), "late hub subscriber must replay prior events")
+        #expect(lateText.contains("beta"))
+        // Multicast: both consumers see the full stream, not a partitioned half.
+        #expect(earlyLines.count == lateLines.count)
+
+        // Source contract: production handle owns AsyncBroadcastHub (not a single AsyncStream).
         let url = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Sources/CodeEditorTasks/TaskRunner.swift")
         let src = try String(contentsOf: url, encoding: .utf8)
-        #expect(src.contains("AsyncBroadcastHub"))
+        #expect(src.contains("AsyncBroadcastHub<TaskOutputEvent>"))
+        #expect(src.contains("eventHub"))
+        #expect(src.contains("hub.subscribe"))
         #expect(!src.contains("bufferingNewest(512)"))
     }
 
@@ -208,6 +260,53 @@ struct TASKNAuditTests {
         #expect(ch.snapshot.count <= 3)
     }
 
+    @Test func test_TASK_N03_spoolSupportsSequenceRangeViewportReads() async throws {
+        // TASK-N03: sequence-range / UI viewport reads over the bounded spool.
+        let spool = BoundedByteSpool(maxBytes: 16, overflow: .dropOldest)
+        let a = await spool.append(Data("0123456789".utf8))
+        #expect(a.truncated == false)
+        let b = await spool.append(Data("ABCDEFGHIJ".utf8))
+        #expect(b.truncated)
+        let base = await spool.baseOffset
+        let end = await spool.absoluteEndOffset
+        let totalAppended = await spool.totalAppendedBytes
+        #expect(base > 0) // dropOldest advanced the absolute base
+        #expect(end &- base <= 16)
+        #expect(end == totalAppended)
+
+        // Viewport from absolute offset 0 is leading-truncated (bytes dropped).
+        let head = await spool.read(from: 0, maxBytes: 8)
+        #expect(head.leadingTruncated)
+        #expect(head.absoluteOffset == base)
+        #expect(head.data.count == 8)
+        #expect(head.availableStart == base)
+        #expect(head.availableEnd == end)
+
+        // Viewport inside retained window returns exact bytes.
+        let mid = await spool.read(from: base, maxBytes: 4)
+        #expect(!mid.leadingTruncated)
+        #expect(mid.absoluteOffset == base)
+        #expect(mid.data.count == 4)
+
+        // Task handle exposes the same viewport API for binary/UI consumers.
+        let handle = try TaskExecutionHandle(
+            run: TaskRun(definitionID: "vp", state: .running, startedAt: Date()),
+            processHandle: nil,
+            readinessPattern: nil,
+            maxCollectedBytes: 16
+        )
+        await handle.emitRawStdout(Data("0123456789ABCDEFGHIJ".utf8))
+        let viewport = await handle.rawStdoutViewport(from: 0, maxBytes: 8)
+        #expect(viewport.data.count <= 8)
+        #expect(viewport.availableEnd > 0)
+        #expect(viewport.leadingTruncated)
+        handle.complete(
+            run: TaskRun(definitionID: "vp", state: .succeeded, exitCode: 0, endedAt: Date()),
+            stdout: "",
+            stderr: ""
+        )
+    }
+
     // MARK: - TASK-N05 readiness regex validation
 
     @Test func test_TASK_N05_invalidReadinessRegexThrowsConfigurationError() async throws {
@@ -307,7 +406,8 @@ struct TASKNAuditTests {
     }
 
     @Test func test_TASK_N06_exclusiveGroupWaitDoesNotSuppressFailure() async throws {
-        // First exclusive task fails; second must observe failure rather than silent continue.
+        // First exclusive task fails; failure is recorded on the group and the handle —
+        // not swallowed by empty catch — while the exclusive lock still releases for the next run.
         let service = TaskService(
             runner: SequenceFakeTaskRunner(scripts: [
                 .init(stdoutChunks: ["boom\n"], exitCode: 2),
@@ -332,22 +432,26 @@ struct TASKNAuditTests {
                 isExclusive: true
             )
         )
-        // Run first to failure while holding exclusive.
         let first = try await service.start(id: "first")
         do {
             _ = try await first.wait()
         } catch {
-            // may or may not throw — state is failed
+            // wait may surface cancellation/timeout only; failed exits return normally.
         }
-        // Allow release path.
-        try await Task.sleep(nanoseconds: 30_000_000)
-        // Starting second while first failed should still work (lock released on death),
-        // but waiting on a concurrent exclusive holder that failed must not use try? swallow.
+        #expect(first.run.state == .failed)
+        #expect(first.run.exitCode == 2)
+
+        // Allow exclusive-release path to record the holder outcome.
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let released = await service.exclusiveGroupLastOutcome(group: "g")
+        #expect(released == .failed(.exitCode(2)), "exclusive-group failure must be recorded, not suppressed")
+
+        // Next exclusive task may proceed after death (lock released), while first stays failed.
         let second = try await service.start(id: "second")
         let result = try await second.wait()
         #expect(result.run.state == .succeeded)
-        // Graph outcome API must distinguish exclusive conflict from success.
-        #expect(TaskNodeOutcome.failed(.exitCode(2)).isFailureOrSkip)
+        #expect(first.run.state == .failed)
+        #expect(first.run.exitCode == 2)
     }
 
     @Test func test_TASK_N06_backgroundNotReadyYieldsSkippedDependent() async throws {
@@ -367,17 +471,48 @@ struct TASKNAuditTests {
             TaskDefinition(id: "app", label: "App", executable: "x", dependsOn: ["bg"])
         )
         let report = try await service.executeGraph(id: "app")
-        if case .failed = report.outcomes["bg"] {
-            // background completed without ready → failed readiness
-        } else if case .succeeded = report.outcomes["bg"] {
-            Issue.record("bg without READY must not succeed as ready")
+
+        guard case .failed(let failure) = report.outcomes[TaskID("bg")] else {
+            Issue.record("bg without READY must be failed, got \(String(describing: report.outcomes[TaskID("bg")]))")
+            return
         }
-        if case .skippedBecauseDependency = report.outcomes["app"] {
-            // ok
-        } else {
-            // start/run path throws dependencyFailed; graph records skip
-            #expect(report.outcomes["app"] != .succeeded)
+        guard case .notReady(let readyID) = failure else {
+            Issue.record("bg failure must be notReady, got \(failure)")
+            return
         }
+        #expect(readyID == TaskID("bg"))
+
+        guard case .skippedBecauseDependency(let dep) = report.outcomes[TaskID("app")] else {
+            Issue.record(
+                "app must be skippedBecauseDependency(bg), got \(String(describing: report.outcomes[TaskID("app")]))"
+            )
+            return
+        }
+        #expect(dep == TaskID("bg"))
+        #expect(report.rootOutcome == .skippedBecauseDependency(TaskID("bg")))
+        #expect(report.rootOutcome.isFailureOrSkip)
+    }
+
+    @Test func test_TASK_N06_liveTaskStateIsNotSucceededOutcome() async throws {
+        // executeGraph always waits for terminal outcomes; non-terminal states must never
+        // be reported as .succeeded (allowsDependents would incorrectly open dependents).
+        let service = TaskService(
+            runner: FakeTaskRunner(stdoutChunks: ["done\n"], exitCode: 0)
+        )
+        await service.register(TaskDefinition(id: "only", label: "Only", executable: "x"))
+        let report = try await service.executeGraph(id: "only")
+        #expect(report.outcomes[TaskID("only")] == .succeeded)
+        #expect(report.rootOutcome == .succeeded)
+        // start() returns a live handle without inventing provisional success for unfinished deps.
+        let hangService = TaskService(
+            runner: FakeTaskRunner(stdoutChunks: [], exitCode: 0, hangUntilCancelled: true)
+        )
+        await hangService.register(TaskDefinition(id: "live", label: "Live", executable: "x"))
+        let live = try await hangService.start(id: "live")
+        #expect(live.run.state == .running || live.run.state == .starting || live.run.state == .queued)
+        #expect(!live.isFinished)
+        live.cancel()
+        _ = try? await live.wait()
     }
 
     // MARK: - TASK-N07 versioned problem ranges / path normalize

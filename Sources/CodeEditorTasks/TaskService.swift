@@ -11,6 +11,9 @@ public actor TaskService {
     private var matchers: [ProblemMatcherID: ProblemMatcher] = [:]
     private var diagnosticsSink: (any TaskDiagnosticsSink)?
     private var groupLocks: [String: UUID] = [:]
+    /// Last terminal outcome observed for an exclusive concurrency group (TASK-N06).
+    /// Updated on holder wait and on release — never silently discarded.
+    private var exclusiveGroupOutcomes: [String: TaskNodeOutcome] = [:]
     private var extraVariables: [String: String] = [:]
 
     public init(
@@ -45,6 +48,12 @@ public actor TaskService {
         Array(definitions.values).sorted { $0.id.rawValue < $1.id.rawValue }
     }
 
+    /// Last recorded exclusive-group outcome (TASK-N06). Failures are preserved until a later
+    /// holder for the same group completes and overwrites with its terminal outcome.
+    public func exclusiveGroupLastOutcome(group: String) -> TaskNodeOutcome? {
+        exclusiveGroupOutcomes[group]
+    }
+
     /// Topological order of `root` and its dependencies. Throws on cycles.
     public func resolveOrder(_ root: TaskID) throws -> [TaskID] {
         var sorted: [TaskID] = []
@@ -76,6 +85,8 @@ public actor TaskService {
     ///
     /// A dependent is launched only when every dependency has ``TaskNodeOutcome/succeeded``
     /// (background tasks require readiness before they count as succeeded for dependents).
+    /// Every non-skipped node is waited to a terminal outcome — live states are never reported
+    /// as ``TaskNodeOutcome/succeeded``.
     public func executeGraph(id root: TaskID) async throws -> TaskGraphReport {
         let order = try resolveOrder(root)
         var outcomes: [TaskID: TaskNodeOutcome] = [:]
@@ -121,19 +132,10 @@ public actor TaskService {
                     }
                     continue
                 }
-                if taskID == root {
-                    // Root may still be running; outcome finalized by caller via wait, or succeed if already done.
-                    if handle.isFinished {
-                        outcomes[taskID] = outcome(from: handle.run)
-                    } else {
-                        // Leave provisional succeeded for live root handle; wait path refines.
-                        outcomes[taskID] = .succeeded
-                    }
-                    continue
-                }
+                // Wait for terminal outcome — no provisional success for live runs (TASK-N06).
                 do {
                     let result = try await handle.wait()
-                    outcomes[taskID] = outcome(from: result.run)
+                    outcomes[taskID] = Self.terminalOutcome(from: result.run)
                 } catch TaskError.cancelled {
                     outcomes[taskID] = .cancelled
                 } catch TaskError.timedOut {
@@ -157,37 +159,36 @@ public actor TaskService {
         return TaskGraphReport(root: root, order: order, outcomes: outcomes, rootHandle: rootHandle)
     }
 
-    /// Start task graph; returns the root run's handle.
+    /// Start task graph deps to completion, then return a live handle for the root (does not wait on root).
     @discardableResult
     public func start(id: TaskID) async throws -> TaskExecutionHandle {
-        let report = try await executeGraph(id: id)
-        switch report.rootOutcome {
-        case .succeeded:
-            if let handle = report.rootHandle {
-                return handle
+        let order = try resolveOrder(id)
+        var outcomes: [TaskID: TaskNodeOutcome] = [:]
+
+        for taskID in order {
+            if taskID == id {
+                // Launch root without waiting — caller owns live streaming / wait.
+                return try await startSingle(id: taskID)
             }
-            // Root finished inside graph without retained handle.
-            throw TaskError.notFound(id.rawValue)
-        case .failed(let failure):
-            switch failure {
-            case .notReady(let tid):
-                throw TaskError.dependencyFailed(tid.rawValue)
-            case .exitCode:
-                throw TaskError.dependencyFailed(id.rawValue)
-            case .timedOut:
-                throw TaskError.timedOut
-            case .processFailed(let m):
-                throw TaskError.processFailed(m)
-            case .invalidDefinition(let m):
-                throw TaskError.invalidDefinition(m)
-            case .concurrencyConflict(let m):
-                throw TaskError.concurrencyConflict(m)
+
+            if let def = definitions[taskID] {
+                for dep in def.dependsOn {
+                    if let depOutcome = outcomes[dep], !depOutcome.allowsDependents {
+                        outcomes[taskID] = .skippedBecauseDependency(dep)
+                        throw TaskError.dependencyFailed(dep.rawValue)
+                    }
+                }
             }
-        case .cancelled:
-            throw TaskError.cancelled
-        case .skippedBecauseDependency(let dep):
-            throw TaskError.dependencyFailed(dep.rawValue)
+
+            let node = try await runNodeToTerminal(id: taskID)
+            outcomes[taskID] = node
+            if !node.allowsDependents {
+                throw TaskError.dependencyFailed(taskID.rawValue)
+            }
         }
+
+        // Single-node graph (order == [id]) is handled in the loop; defensive fallback:
+        return try await startSingle(id: id)
     }
 
     @discardableResult
@@ -220,7 +221,7 @@ public actor TaskService {
             do {
                 let result = try await handle.wait()
                 last = result.run
-                let node = outcome(from: result.run)
+                let node = Self.terminalOutcome(from: result.run)
                 outcomes[taskID] = node
                 if !node.allowsDependents {
                     return result.run
@@ -255,7 +256,9 @@ public actor TaskService {
 
     // MARK: - Private
 
-    private func outcome(from run: TaskRun) -> TaskNodeOutcome {
+    /// Map a finished `TaskRun` to a terminal DAG outcome.
+    /// Non-terminal states never count as success (TASK-N06) — dependents must not launch.
+    nonisolated static func terminalOutcome(from run: TaskRun) -> TaskNodeOutcome {
         switch run.state {
         case .succeeded:
             return .succeeded
@@ -266,7 +269,25 @@ public actor TaskService {
         case .failed:
             return .failed(.exitCode(run.exitCode ?? 1))
         case .queued, .starting, .running:
-            return .succeeded  // still live
+            return .failed(.processFailed("task not finished (state=\(run.state.rawValue))"))
+        }
+    }
+
+    private func runNodeToTerminal(id: TaskID) async throws -> TaskNodeOutcome {
+        let handle = try await startSingle(id: id)
+        if definitions[id]?.isBackground == true {
+            let ready = await waitForReadyOrCompletion(handle)
+            if ready { return .succeeded }
+            if handle.run.state == .cancelled { return .cancelled }
+            return .failed(.notReady(id))
+        }
+        do {
+            let result = try await handle.wait()
+            return Self.terminalOutcome(from: result.run)
+        } catch TaskError.cancelled {
+            return .cancelled
+        } catch TaskError.timedOut {
+            return .failed(.timedOut)
         }
     }
 
@@ -299,28 +320,17 @@ public actor TaskService {
 
         if let group = def.concurrencyGroup {
             if let holder = groupLocks[group], def.isExclusive || handles[holder]?.run.state == .running {
-                // Wait for exclusive holder — do not suppress outcome (TASK-N06).
+                // Wait for exclusive holder — record outcome explicitly (TASK-N06), then release.
                 if let other = handles[holder] {
-                    do {
-                        let result = try await other.wait()
-                        if result.run.state == .failed || result.run.state == .timedOut {
-                            // Holder finished poorly; still release lock and allow next exclusive.
-                            // Surface is via the holder's own run state; next task may proceed.
-                        }
-                    } catch TaskError.cancelled {
-                        // Holder cancelled — exclusive released on completion path.
-                    } catch {
-                        // Non-suppressing: rethrow only concurrency-hard errors; otherwise proceed after death.
-                    }
+                    let waited = await waitExclusiveHolder(other)
+                    exclusiveGroupOutcomes[group] = waited
                 }
                 groupLocks[group] = nil
             }
         }
 
         let channel = await channels.channel(id: "task.\(id.rawValue)", name: def.label)
-        // Re-open semantics: clear buffer; if previously finished, registry keeps same channel —
-        // finish ownership is per-run via ProcessTaskRunner finishing the channel again only if not finished.
-        // For re-runs, create a fresh channel when prior run finished.
+        // Re-open semantics: clear buffer; if previously finished, use a fresh channel.
         let output: OutputChannel
         if channel.isFinished {
             let fresh = OutputChannel(id: "task.\(id.rawValue).\(UUID().uuidString)", name: def.label)
@@ -376,23 +386,34 @@ public actor TaskService {
             }
         }
 
-        // Release exclusive lock when done (process death / complete)
+        // Release exclusive lock when done (process death / complete); record outcome (TASK-N06).
         if let group = def.concurrencyGroup, def.isExclusive {
             let runID = handle.runID
             Task {
-                do {
-                    _ = try await handle.wait()
-                } catch {
-                    // Outcome recorded on handle; still release exclusive slot on death.
-                }
-                await self.releaseGroup(group, runID: runID)
+                let terminal = await self.waitExclusiveHolder(handle)
+                await self.recordExclusiveRelease(group: group, runID: runID, outcome: terminal)
             }
         }
 
         return handle
     }
 
-    private func releaseGroup(_ group: String, runID: UUID) {
+    /// Wait for an exclusive holder and map to a terminal outcome — no empty catch that hides failure.
+    private func waitExclusiveHolder(_ handle: TaskExecutionHandle) async -> TaskNodeOutcome {
+        do {
+            let result = try await handle.wait()
+            return Self.terminalOutcome(from: result.run)
+        } catch TaskError.cancelled {
+            return .cancelled
+        } catch TaskError.timedOut {
+            return .failed(.timedOut)
+        } catch {
+            return .failed(.processFailed(String(describing: error)))
+        }
+    }
+
+    private func recordExclusiveRelease(group: String, runID: UUID, outcome: TaskNodeOutcome) async {
+        exclusiveGroupOutcomes[group] = outcome
         if groupLocks[group] == runID {
             groupLocks[group] = nil
         }

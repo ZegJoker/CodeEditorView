@@ -1015,7 +1015,7 @@
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N01_taskEventsAreMulticastToIndependentConsumers",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N01_eventsUseAsyncBroadcastHubNotSharedIterator"
       ],
-      "notes": "2026-08-03: TaskExecutionHandle.events via AsyncBroadcastHub; makeEventStream independent subscriptions with replay."
+      "notes": "2026-08-03 verifier residual: N01 hub test asserts late-subscriber replay + equal event counts (runtime multicast) and AsyncBroadcastHub<TaskOutputEvent> source contract."
     },
     {
       "id": "TASK-N02",
@@ -1040,9 +1040,11 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N03_overflowEmitsExplicitTruncationMarkerOnce",
-        "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N03_outputChannelEmitsSingleTruncationAndMetrics"
+        "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N03_outputChannelEmitsSingleTruncationAndMetrics",
+        "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N03_spoolSupportsSequenceRangeViewportReads",
+        "Tests/CodeEditorCoreTests/SubstratePromiseAndRPCTests.swift::test_TASK_N03_boundedByteSpoolViewportSequenceRanges"
       ],
-      "notes": "2026-08-03: BoundedByteSpool + single outputTruncated marker per stream; OutputChannel single truncation + droppedLineCount."
+      "notes": "2026-08-03 verifier residual: BoundedByteSpool baseOffset/totalAppendedBytes + read(from:maxBytes:) viewport; TaskExecutionHandle.rawStdoutViewport; single truncation marker + metrics."
     },
     {
       "id": "TASK-N04",
@@ -1080,9 +1082,10 @@
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_dependencyFailureIsExplicitOutcomeNotSuppressed",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_startThrowsWhenDependencyFailed",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_exclusiveGroupWaitDoesNotSuppressFailure",
-        "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_backgroundNotReadyYieldsSkippedDependent"
+        "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_backgroundNotReadyYieldsSkippedDependent",
+        "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_liveTaskStateIsNotSucceededOutcome"
       ],
-      "notes": "2026-08-03: TaskNodeOutcome DAG + executeGraph; dependents only on allowsDependents; exclusive wait no try? swallow."
+      "notes": "2026-08-03 verifier residual: exclusiveGroupLastOutcome records holder failure; no empty catch; executeGraph waits for terminal outcomes only; start() returns live root without provisional .succeeded; background not-ready hard skip shape."
     },
     {
       "id": "TASK-N07",

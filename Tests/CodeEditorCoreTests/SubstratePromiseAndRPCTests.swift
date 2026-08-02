@@ -153,4 +153,32 @@ struct SubstratePromiseAndRPCTests {
         let dropped = await spool.droppedByteCount
         #expect(dropped > 0)
     }
+
+    @Test func test_TASK_N03_boundedByteSpoolViewportSequenceRanges() async {
+        let spool = BoundedByteSpool(maxBytes: 16, overflow: .dropOldest)
+        _ = await spool.append(Data("0123456789".utf8))
+        let overflow = await spool.append(Data("ABCDEFGHIJ".utf8))
+        #expect(overflow.truncated)
+        let base = await spool.baseOffset
+        #expect(base > 0)
+        let stored = await spool.storedByteCount
+        #expect(stored <= 16)
+        let total = await spool.totalAppendedBytes
+        #expect(total == 20)
+        let end = await spool.absoluteEndOffset
+        #expect(end == total)
+        #expect(end == base + UInt64(stored))
+        let head = await spool.read(from: 0, maxBytes: 8)
+        #expect(head.leadingTruncated)
+        #expect(head.absoluteOffset == base)
+        #expect(head.data.count == 8)
+        #expect(head.availableStart == base)
+        #expect(head.availableEnd == end)
+        let mid = await spool.read(from: base, maxBytes: 4)
+        #expect(!mid.leadingTruncated)
+        #expect(mid.data.count == 4)
+        let past = await spool.read(from: end + 10, maxBytes: 4)
+        #expect(past.data.isEmpty)
+        #expect(past.absoluteOffset == end)
+    }
 }

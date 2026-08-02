@@ -252,6 +252,16 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         await stderrSpool.readAll()
     }
 
+    /// Sequence-range / UI viewport read over the bounded stdout spool (TASK-N03).
+    public func rawStdoutViewport(from offset: UInt64, maxBytes: Int) async -> BoundedByteSpool.ViewportRead {
+        await stdoutSpool.read(from: offset, maxBytes: maxBytes)
+    }
+
+    /// Sequence-range / UI viewport read over the bounded stderr spool (TASK-N03).
+    public func rawStderrViewport(from offset: UInt64, maxBytes: Int) async -> BoundedByteSpool.ViewportRead {
+        await stderrSpool.read(from: offset, maxBytes: maxBytes)
+    }
+
     /// Emit decoded stdout text into the handle (for fake/host runners).
     /// Waits until the text is published so subsequent reads observe the update.
     public func emit(stdout text: String) {
