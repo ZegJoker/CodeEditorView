@@ -93,28 +93,28 @@
       "severity": "P0",
       "product": "CodeEditorExtensionAPI",
       "status": "fixed",
-      "summary": "Validated ExtensionID"
+      "summary": "Validated ExtensionID + directoryKey path roots"
     },
     {
       "id": "EXT-002",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "File-set signature equality"
+      "summary": "File-set equality; reject extra/missing"
     },
     {
       "id": "EXT-003",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Publisher binding"
+      "summary": "Publisher subject bound; subject-swap deny"
     },
     {
       "id": "EXT-004",
       "severity": "P0",
       "product": "CodeEditorExtensions",
       "status": "fixed",
-      "summary": "Fail-closed install"
+      "summary": "Fail-closed install + insecureForTests only for tests"
     },
     {
       "id": "WASM-001",
@@ -535,6 +535,90 @@
       "product": "CodeEditorWorkbench",
       "status": "fixed",
       "summary": "Problems/SCM/Debug models with unit tests"
+    },
+    {
+      "id": "EXT-005",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "Corrupt durable state quarantines store"
+    },
+    {
+      "id": "EXT-006",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "SBOM/broker digests fail closed never length"
+    },
+    {
+      "id": "EXT-007",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Reject symlink/special/key-material package entries"
+    },
+    {
+      "id": "EXT-008",
+      "severity": "P1",
+      "product": "CodeEditorExtensionAPI",
+      "status": "fixed",
+      "summary": "TOML fail-closed api_version + unknown required fields"
+    },
+    {
+      "id": "EXT-009",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "Recover re-verifies package generations"
+    },
+    {
+      "id": "EXT-010",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Storage quota overwrite-correct + directoryKey keys"
+    },
+    {
+      "id": "EXT-011",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Durable settings under storage root"
+    },
+    {
+      "id": "EXT-012",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Streaming download mid-stream caps + redirect guard"
+    },
+    {
+      "id": "EXT-013",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Host-owned npm materializer no soft-stub"
+    },
+    {
+      "id": "EXT-014",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Process allowlist canonical/trusted-dir paths"
+    },
+    {
+      "id": "EXT-015",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Multi-root worktree + read limits + revoke"
+    },
+    {
+      "id": "EXT-016",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "ExtensionSDKConformance kit"
     }
   ]
 }

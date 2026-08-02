@@ -18,10 +18,22 @@ Updated: 2026-08-02
 | DOC-004 | P0 | CodeEditorDocuments | fixed | CAS save with expectedIdentity + revalidate; conflict SaveResult |
 | WSP-001 | P0 | CodeEditorWorkspace | fixed | All UI close paths use requestClose*; leases fail-closed |
 | WSP-002 | P0 | CodeEditorWorkspace | fixed | Fault matrix + duringRollback typed catastrophic |
-| EXT-001 | P0 | CodeEditorExtensionAPI | fixed | Validated ExtensionID |
-| EXT-002 | P0 | CodeEditorExtensionHost | fixed | File-set signature equality |
-| EXT-003 | P0 | CodeEditorExtensionHost | fixed | Publisher binding |
-| EXT-004 | P0 | CodeEditorExtensions | fixed | Fail-closed install |
+| EXT-001 | P0 | CodeEditorExtensionAPI | fixed | Validated ExtensionID + directoryKey path roots |
+| EXT-002 | P0 | CodeEditorExtensionHost | fixed | File-set equality; reject extra/missing |
+| EXT-003 | P0 | CodeEditorExtensionHost | fixed | Publisher subject bound; subject-swap deny |
+| EXT-004 | P0 | CodeEditorExtensions | fixed | Fail-closed install + insecureForTests only for tests |
+| EXT-005 | P0 | CodeEditorExtensions | fixed | Corrupt durable state quarantines store |
+| EXT-006 | P0 | CodeEditorExtensions | fixed | SBOM/broker digests fail closed never length |
+| EXT-007 | P0 | CodeEditorExtensionHost | fixed | Reject symlink/special/key-material package entries |
+| EXT-008 | P1 | CodeEditorExtensionAPI | fixed | TOML fail-closed api_version + unknown required fields |
+| EXT-009 | P0 | CodeEditorExtensions | fixed | Recover re-verifies package generations |
+| EXT-010 | P1 | CodeEditorExtensionHost | fixed | Storage quota overwrite-correct + directoryKey keys |
+| EXT-011 | P1 | CodeEditorExtensionHost | fixed | Durable settings under storage root |
+| EXT-012 | P0 | CodeEditorExtensionHost | fixed | Streaming download mid-stream caps + redirect guard |
+| EXT-013 | P0 | CodeEditorExtensionHost | fixed | Host-owned npm materializer no soft-stub |
+| EXT-014 | P0 | CodeEditorExtensionHost | fixed | Process allowlist canonical/trusted-dir paths |
+| EXT-015 | P1 | CodeEditorExtensionHost | fixed | Multi-root worktree + read limits + revoke |
+| EXT-016 | P1 | CodeEditorExtensionHost | fixed | ExtensionSDKConformance kit |
 | WASM-001 | P0 | CodeEditorWasmEngineWasmKit | fixed | Real WasmKit parse/instantiate/call |
 | WASM-002 | P0 | CodeEditorWasmEngine | fixed | Real module execution tests pass |
 | IOS-001 | P0 | CodeEditorView | fixed | Duplicate a11y removed; iOS example host from Phase 1 |

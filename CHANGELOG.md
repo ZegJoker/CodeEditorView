@@ -10,6 +10,14 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 8 complete (EXT-001…016 / §15 package-store-broker security):**
+  - ExtensionID corpus + `directoryKey` roots for broker storage/download/npm
+  - Sealed package digests; reject symlink/special/key material; publisher subject-swap deny
+  - Corrupt durable state store quarantine; recover re-verify
+  - TOML fail-closed unknown activation/capability/permission and api_version
+  - Storage overwrite-correct quota; durable settings; streaming download + redirect guard
+  - Host-owned npm materializer (local registry, no soft-stub); process path identity allowlist
+  - Multi-root worktree handles + read limits; `ExtensionSDKConformance` kit
 - **Phase 7 complete (TASK-001…005 / DAP-001…003 / SCM-001…002 / PROC-001 / WB-007 / §14, §18–19):**
   - Shared `ProcessSupervisor` (`ProcessService`); cancel waits for process death before exclusive release
   - Snapshot-accurate problem matchers; streaming/multiline chunk tests; no fabricated offsets
