@@ -1550,9 +1550,13 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_endToEndWorkflowMatrix",
-        "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_attachPathAndErrorSurfaces"
+        "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_attachPathAndErrorSurfaces",
+        "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_adapterCrashSurfacesFailedState",
+        "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_malformedFrameDoesNotStallSession",
+        "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_requestCancellationSurfacesCancellationError",
+        "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_reconnectionPolicyRespectsRestartBudget"
       ],
-      "notes": "End-to-end matrix: launch/attach, breakpoints, step/continue, inspect, evaluate, modules, exceptionInfo, restart/disconnect, timeout surface."
+      "notes": "2026-08-03 verifier residual: matrix + attach/timeout; adapter crash→failed/crashed; malformed frame resync; request CancellationError; restart budget fail-closed reconnection."
     },
     {
       "id": "DAP-N10",
@@ -1568,7 +1572,7 @@
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N10_inProcessIntegrationSessionSteps",
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N10_hardFailsWhenRequiredAndMissingAdapter"
       ],
-      "notes": "Tests/Fixtures/DAP/smoke.c + check-real-dap.sh full lifecycle against lldb-dap; hard fail when REQUIRE_REAL_DAP=1 missing adapter."
+      "notes": "2026-08-03 verifier residual: check-real-dap.sh require_success (stackTrace/evaluate success=True), fixture breakpoint hit, variable x=42; no full-session banner on mere response presence; soft mode only when adapter missing."
     },
     {
       "id": "TER-N01",

@@ -13,12 +13,16 @@ public actor DebugAdapterSession {
     public private(set) var state: DebugAdapterState = .idle
     public private(set) var capabilities: DAPCapabilities = .empty
     public private(set) var restartAttempts: Int = 0
+    /// Last hard failure (adapter crash, transport closed). Cleared on successful start.
+    public private(set) var lastFailure: DAPError?
 
     private let log: DAPLog
     private let budgets: DAPServerBudgets
     private var connection: DAPJSONRPCConnection?
     private var transport: (any DAPTransport)?
     private var makeTransport: (@Sendable () async throws -> any DAPTransport)?
+    /// When true, ``start()`` does not clear ``restartAttempts`` (reconnect path).
+    private var preserveRestartBudgetOnStart = false
 
     private var eventContinuation: AsyncStream<(String, DAPJSONObject)>.Continuation?
     public let events: AsyncStream<(String, DAPJSONObject)>
@@ -76,6 +80,11 @@ public actor DebugAdapterSession {
             throw DAPError.alreadyStarted
         }
         state = .starting
+        if !preserveRestartBudgetOnStart {
+            lastFailure = nil
+            restartAttempts = 0
+        }
+        preserveRestartBudgetOnStart = false
         do {
             let transport = try await createTransport()
             self.transport = transport
@@ -94,6 +103,9 @@ public actor DebugAdapterSession {
             await connection.setReverseRequestHandler { [weak self] command, _, args in
                 guard let self else { throw DAPError.notRunning }
                 return try await self.handleReverseRequest(command: command, args: args)
+            }
+            await connection.setTransportClosedHandler { [weak self] in
+                await self?.handleUnexpectedTransportClose()
             }
 
             let initBody = try await connection.requestDictionary(
@@ -118,6 +130,11 @@ public actor DebugAdapterSession {
             log.append(level: .info, message: "Adapter initialized", adapterID: definition.id.rawValue)
         } catch {
             state = .failed
+            if let dap = error as? DAPError {
+                lastFailure = dap
+            } else {
+                lastFailure = .transport(String(describing: error))
+            }
             log.append(level: .error, message: "Start failed: \(error)", adapterID: definition.id.rawValue)
             await cleanupConnection()
             throw error
@@ -173,7 +190,11 @@ public actor DebugAdapterSession {
     }
 
     public func restart(configuration: DAPJSONObject? = nil) async throws {
-        if capabilities.supportsRestartRequest {
+        // In-adapter restart only when still connected and capability advertised.
+        if capabilities.supportsRestartRequest,
+            state == .running || state == .stopped || state == .configured,
+            connection != nil
+        {
             let conn = try requireConnection()
             _ = try await conn.requestDictionary(
                 "restart",
@@ -181,16 +202,19 @@ public actor DebugAdapterSession {
             )
             return
         }
+        // Reconnection policy (DAP-N09): explicit full reconnect with hard budget (no silent loop).
         if restartAttempts >= budgets.restartMaxAttempts {
+            lastFailure = .budgetExceeded("restart attempts exhausted")
             throw DAPError.budgetExceeded("restart attempts exhausted")
         }
         restartAttempts += 1
+        preserveRestartBudgetOnStart = true
         await disconnect()
         try await start()
         if let configuration {
             try await launch(configuration: configuration)
         }
-        restartAttempts = 0
+        // Budget is session-lifetime for crash reconnects; not cleared on success.
     }
 
     public func shutdown() async {
@@ -527,6 +551,22 @@ public actor DebugAdapterSession {
         default:
             break
         }
+    }
+
+    /// Adapter peer died without intentional client disconnect (DAP-N09 crash policy).
+    private func handleUnexpectedTransportClose() {
+        if state == .terminating || state == .terminated || state == .idle {
+            return
+        }
+        state = .failed
+        lastFailure = .crashed
+        connection = nil
+        transport = nil
+        log.append(
+            level: .error,
+            message: "Adapter crashed / transport closed unexpectedly",
+            adapterID: definition.id.rawValue
+        )
     }
 
     private func handleReverseRequest(command: String, args: DAPJSONObject) async throws -> DAPJSONObject {

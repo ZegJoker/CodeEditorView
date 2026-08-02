@@ -46,20 +46,43 @@ public enum DAPMessageFraming {
             }
             var messages: [Data] = []
             while true {
+                // Drop leading non-framed garbage before each extract attempt (DAP-N09).
+                discardLeadingGarbage()
                 do {
                     guard let message = try tryExtract() else { break }
                     messages.append(message)
                 } catch let error as DecodeError {
                     lastError = error
-                    buffer.removeAll(keepingCapacity: false)
-                    break
+                    switch error {
+                    case .bodyTooLarge, .bufferOverflow:
+                        buffer.removeAll(keepingCapacity: false)
+                        return messages
+                    case .invalidHeader, .invalidUTF8Header:
+                        // tryExtract advanced past the bad header; continue scanning.
+                        continue
+                    }
                 } catch {
                     lastError = .invalidHeader
-                    buffer.removeAll(keepingCapacity: false)
-                    break
+                    if !buffer.isEmpty { buffer.removeFirst() }
+                    continue
                 }
             }
             return messages
+        }
+
+        /// Remove bytes before the next `Content-Length:` framing marker (DAP-N09 malformed resync).
+        private func discardLeadingGarbage() {
+            let marker = Data("Content-Length:".utf8)
+            let markerLower = Data("content-length:".utf8)
+            if buffer.isEmpty { return }
+            if buffer.starts(with: marker) || buffer.starts(with: markerLower) {
+                return
+            }
+            if let range = buffer.range(of: marker) ?? buffer.range(of: markerLower) {
+                buffer.removeSubrange(buffer.startIndex..<range.lowerBound)
+                lastError = .invalidHeader
+            }
+            // Leave short prefixes without a marker (may be incomplete header); overflow path clears.
         }
 
         public func reset() {
@@ -74,6 +97,8 @@ public enum DAPMessageFraming {
             guard let sepRange = buffer.range(of: separator) else { return nil }
             let headerData = buffer.subdata(in: buffer.startIndex..<sepRange.lowerBound)
             guard let header = String(data: headerData, encoding: .utf8) else {
+                // Drop one UTF-8-invalid byte cluster and resync.
+                buffer.removeSubrange(buffer.startIndex..<min(buffer.index(after: buffer.startIndex), sepRange.upperBound))
                 throw DecodeError.invalidUTF8Header
             }
             var contentLength: Int?
@@ -86,10 +111,20 @@ public enum DAPMessageFraming {
                 }
             }
             guard let length = contentLength, length >= 0 else {
+                // Skip this separator block only — next loop will discardLeadingGarbage/resync.
                 buffer.removeSubrange(buffer.startIndex..<sepRange.upperBound)
                 throw DecodeError.invalidHeader
             }
             if length > maxBodyBytes {
+                // Skip oversized header+body when body is fully buffered; else wait.
+                let bodyStart = sepRange.upperBound
+                let available = buffer.distance(from: bodyStart, to: buffer.endIndex)
+                if available >= length {
+                    let bodyEnd = buffer.index(bodyStart, offsetBy: length)
+                    buffer.removeSubrange(buffer.startIndex..<bodyEnd)
+                } else {
+                    buffer.removeAll(keepingCapacity: false)
+                }
                 throw DecodeError.bodyTooLarge(length)
             }
             let bodyStart = sepRange.upperBound

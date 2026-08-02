@@ -807,10 +807,9 @@ struct DAPN09WorkflowTests {
         try await session.attach(configuration: DAPJSONObject(["pid": 1]))
         let state = await session.state
         #expect(state == .running || state == .stopped)
-        // Malformed/timeout surfaces as typed errors after close.
+        // Timeout surfaces as typed error (no hang forever).
         await session.disconnect()
         var timedOut = false
-        // Fresh connection that never answers.
         let pair = DAPTestTransport.makePair()
         let conn = DAPJSONRPCConnection(transport: pair.client, requestTimeout: .milliseconds(40))
         await conn.start()
@@ -822,6 +821,177 @@ struct DAPN09WorkflowTests {
         #expect(timedOut)
         await conn.close()
         await mock.stop()
+    }
+
+    /// Adapter process death / peer close → failed state + crashed failure (not stuck running).
+    @Test func test_DAP_N09_adapterCrashSurfacesFailedState() async throws {
+        let pair = DAPTestTransport.makePair()
+        let mock = MockDebugAdapter(transport: pair.server)
+        await mock.start()
+        let session = DebugAdapterSession(
+            definition: DebugAdapterDefinition(
+                id: DebugAdapterID(rawValue: "n09-crash"),
+                displayName: "Mock",
+                languages: ["c"],
+                launch: .test(factoryID: "n09-crash")
+            ),
+            budgets: DAPServerBudgets(requestTimeout: .seconds(2)),
+            transportFactory: { pair.client }
+        )
+        try await session.start()
+        try await session.launch(configuration: DAPJSONObject(["program": "/tmp/a.out"]))
+        let pre = await session.state
+        #expect(pre == .running || pre == .stopped)
+
+        // Simulate adapter crash: server closes peer without orderly disconnect.
+        await mock.stop()
+        try await Task.sleep(nanoseconds: 80_000_000)
+
+        let post = await session.state
+        #expect(post == .failed, "adapter crash must move session to failed, got \(post)")
+        let failure = await session.lastFailure
+        #expect(failure == .crashed || failure == .transportClosed)
+
+        // Public APIs must not force-unwrap; reject with typed invalidState/notRunning.
+        var rejected = false
+        do {
+            _ = try await session.threads()
+        } catch is DAPError {
+            rejected = true
+        }
+        #expect(rejected)
+    }
+
+    /// Malformed Content-Length body is discarded; subsequent valid frames still complete.
+    @Test func test_DAP_N09_malformedFrameDoesNotStallSession() async throws {
+        let pair = DAPTestTransport.makePair()
+        let serverTask = Task {
+            let decoder = DAPMessageFraming.Decoder()
+            for await chunk in pair.server.inbound {
+                let messages = decoder.append(chunk)
+                for body in messages {
+                    guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+                        let seq = obj["seq"] as? Int,
+                        let command = obj["command"] as? String
+                    else { continue }
+                    let response: [String: Any] = [
+                        "seq": seq + 1000,
+                        "type": "response",
+                        "request_seq": seq,
+                        "success": true,
+                        "command": command,
+                        "body": ["ok": true],
+                    ]
+                    let data = try! JSONSerialization.data(withJSONObject: response)
+                    try? await pair.server.send(DAPMessageFraming.encode(data))
+                }
+            }
+        }
+        let conn = DAPJSONRPCConnection(transport: pair.client, requestTimeout: .seconds(2))
+        await conn.start()
+
+        // Inject malformed frame (invalid header + garbage), then a valid orphan is not required —
+        // next real request must still succeed.
+        try await pair.server.send(Data("Content-Length: not-a-number\r\n\r\n".utf8))
+        try await pair.server.send(Data("%%%not-dap%%%".utf8))
+        try await Task.sleep(nanoseconds: 30_000_000)
+
+        let result = try await conn.requestDictionary("ping", arguments: DAPJSONObject([:]))
+        #expect(result.dictionary["ok"] as? Bool == true)
+        // Framing errors are recorded, not fatal to the connection actor.
+        _ = await conn.lastFramingError
+        await conn.close()
+        serverTask.cancel()
+    }
+
+    /// Client Task cancellation must surface CancellationError (not silent hang / empty body).
+    @Test func test_DAP_N09_requestCancellationSurfacesCancellationError() async throws {
+        let pair = DAPTestTransport.makePair()
+        // Server never answers.
+        let conn = DAPJSONRPCConnection(transport: pair.client, requestTimeout: .seconds(30))
+        await conn.start()
+        let requestTask = Task {
+            try await conn.requestDictionary("slow", arguments: nil)
+        }
+        try await Task.sleep(nanoseconds: 20_000_000)
+        requestTask.cancel()
+        var sawCancel = false
+        do {
+            _ = try await requestTask.value
+        } catch is CancellationError {
+            sawCancel = true
+        } catch {
+            // OneShotPromise may surface cancelled as CancellationError only.
+            if String(describing: error).lowercased().contains("cancel") {
+                sawCancel = true
+            }
+        }
+        #expect(sawCancel, "cancelled DAP request must surface CancellationError")
+        await conn.close()
+    }
+
+    /// Reconnection is explicit via restart/start; budget is enforced fail-closed.
+    @Test func test_DAP_N09_reconnectionPolicyRespectsRestartBudget() async throws {
+        final class Factory: @unchecked Sendable {
+            var pairs: [(client: DAPTestTransport, server: DAPTestTransport)] = []
+            var mocks: [MockDebugAdapter] = []
+            func make() async throws -> any DAPTransport {
+                let pair = DAPTestTransport.makePair()
+                let mock = MockDebugAdapter(transport: pair.server)
+                await mock.start()
+                pairs.append(pair)
+                mocks.append(mock)
+                return pair.client
+            }
+        }
+        let factory = Factory()
+        let session = DebugAdapterSession(
+            definition: DebugAdapterDefinition(
+                id: DebugAdapterID(rawValue: "n09-reconnect"),
+                displayName: "Mock",
+                languages: ["c"],
+                launch: .test(factoryID: "n09-reconnect")
+            ),
+            budgets: DAPServerBudgets(
+                requestTimeout: .seconds(2),
+                restartMaxAttempts: 1
+            ),
+            transportFactory: { try await factory.make() }
+        )
+        try await session.start()
+        try await session.launch(configuration: DAPJSONObject(["program": "/tmp/a.out"]))
+
+        // Crash adapter → failed.
+        if let last = factory.mocks.last {
+            await last.stop()
+        }
+        try await Task.sleep(nanoseconds: 80_000_000)
+        #expect(await session.state == .failed)
+
+        // First reconnection via restart (uses budget) succeeds.
+        try await session.restart(configuration: DAPJSONObject(["program": "/tmp/a.out"]))
+        let afterFirst = await session.state
+        #expect(afterFirst == .running || afterFirst == .stopped || afterFirst == .configured)
+
+        // Crash again and exhaust budget.
+        if let last = factory.mocks.last {
+            await last.stop()
+        }
+        try await Task.sleep(nanoseconds: 80_000_000)
+        #expect(await session.state == .failed)
+
+        var exhausted = false
+        do {
+            try await session.restart(configuration: DAPJSONObject(["program": "/tmp/a.out"]))
+        } catch let error as DAPError {
+            if case .budgetExceeded = error { exhausted = true }
+        }
+        #expect(exhausted, "second crash reconnect must fail closed on restart budget")
+
+        for m in factory.mocks {
+            await m.stop()
+        }
+        await session.disconnect()
     }
 }
 
@@ -847,6 +1017,21 @@ struct DAPN10RealDAPGateTests {
         #expect(text.contains("process cleanup") || text.contains("SIGTERM") || text.contains("terminateDebuggee"))
         // Must hard-fail when required and missing adapter.
         #expect(text.contains("FAIL") && text.contains("REQUIRE_REAL_DAP"))
+        // Must assert real success + fixture value — not mere response presence.
+        #expect(text.contains("x=42") || text.contains("\"x\"") && text.contains("42"))
+        #expect(
+            text.contains("require_success")
+                || text.contains("success is not True")
+                || text.contains("success != True")
+                || text.contains("must succeed")
+                || text.contains("require success")
+                || (text.contains("success") && text.contains("FAIL") && text.contains("stackTrace"))
+        )
+        #expect(
+            text.contains("hitBreakpoint")
+                || text.contains("breakpoint hit")
+                || (text.contains("reason") && text.contains("breakpoint"))
+        )
     }
 
     @Test func test_DAP_N10_fixtureFilesPresent() throws {
@@ -857,7 +1042,12 @@ struct DAPN10RealDAPGateTests {
         #expect(FileManager.default.fileExists(atPath: src.path))
         let text = try String(contentsOf: src, encoding: .utf8)
         #expect(text.contains("codeeditor-dap-smoke"))
-        #expect(text.contains("breakpoint_here") || text.contains("int x"))
+        #expect(text.contains("breakpoint_here"))
+        #expect(text.contains("int x = 42") || text.contains("int x=42"))
+        // Breakpoint marker must be AFTER assignment so locals show x=42.
+        if let assign = text.range(of: "int x"), let bp = text.range(of: "breakpoint_here") {
+            #expect(assign.lowerBound < bp.lowerBound, "breakpoint_here must follow int x assignment")
+        }
         let readme = fixture.appendingPathComponent("README.md")
         #expect(FileManager.default.fileExists(atPath: readme.path))
     }
@@ -887,23 +1077,41 @@ struct DAPN10RealDAPGateTests {
             process.terminationStatus == 0,
             "check-real-dap.sh failed status=\(process.terminationStatus) out=\(combined)"
         )
-        let hasFullSession =
-            (combined.contains("full session") || combined.contains("complete lifecycle"))
-            && (
-                combined.contains("initialize")
-                    || combined.contains("launch")
-                    || combined.contains("breakpoint")
-            )
         let hasSoftNoBinaries =
             (combined.contains("no real DAP") || combined.contains("no lldb-dap"))
             && (combined.contains("fixtures present") || combined.contains("soft mode"))
-        #expect(
-            hasFullSession || hasSoftNoBinaries,
-            "expected full session or soft no-binaries OK; got: \(combined)"
-        )
-        if combined.contains("found") && combined.contains("lldb-dap") {
-            #expect(hasFullSession, "lldb-dap present but full session line missing: \(combined)")
+
+        if hasSoftNoBinaries {
+            // Soft mode only when adapter missing — never when lldb-dap was found.
+            #expect(!combined.contains("found") || !combined.contains("lldb-dap") || combined.contains("no lldb-dap"))
+            return
         }
+
+        // Hard success criteria when adapter is present (DAP-N10 acceptance).
+        #expect(
+            combined.contains("full session") || combined.contains("complete lifecycle"),
+            "missing full-session banner: \(combined)"
+        )
+        #expect(
+            combined.contains("stackTrace success=True") || combined.contains("stackTrace success=true"),
+            "stackTrace must succeed: \(combined)"
+        )
+        #expect(
+            combined.contains("evaluate success=True") || combined.contains("evaluate success=true"),
+            "evaluate must succeed: \(combined)"
+        )
+        #expect(
+            combined.contains("x=42") || combined.contains("variable x=42") || combined.contains("OK: variable x = 42"),
+            "fixture variable x=42 required: \(combined)"
+        )
+        #expect(
+            combined.contains("breakpoint hit") || combined.contains("hit breakpoint") || combined.contains("reason=breakpoint"),
+            "must hit fixture breakpoint: \(combined)"
+        )
+        #expect(
+            combined.contains("process cleanup") || combined.contains("SIGTERM"),
+            "process cleanup required: \(combined)"
+        )
     }
 
     @Test func test_DAP_N10_inProcessIntegrationSessionSteps() async throws {
@@ -914,14 +1122,16 @@ struct DAPN10RealDAPGateTests {
             breakpoints: [DAPSourceBreakpoint(line: 5)]
         )
         #expect(bps.count == 1)
+        #expect(bps[0].verified)
         let threads = try await session.threads()
         #expect(!threads.isEmpty)
         let frames = try await session.stackTrace(threadId: 1)
         #expect(!frames.isEmpty)
         let scopes = try await session.scopes(frameId: frames[0].id)
         let vars = try await session.variables(variablesReference: scopes[0].variablesReference)
-        #expect(vars.contains { $0.name == "x" })
-        _ = try await session.evaluate(expression: "x", frameId: frames[0].id)
+        #expect(vars.contains { $0.name == "x" && $0.value == "42" })
+        let eval = try await session.evaluate(expression: "x", frameId: frames[0].id)
+        #expect(eval.value.contains("42") || eval.value == "42" || eval.value.contains("eval(x)"))
         await session.disconnect(terminateDebuggee: true)
         let commands = await mock.receivedCommands
         for required in ["initialize", "launch", "setBreakpoints", "stackTrace", "variables", "evaluate", "disconnect"] {

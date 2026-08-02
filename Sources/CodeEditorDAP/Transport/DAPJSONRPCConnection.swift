@@ -56,8 +56,13 @@ public actor DAPJSONRPCConnection {
     private var readerTask: Task<Void, Never>?
     private var eventHandler: (@Sendable (String, DAPJSONObject) async -> Void)?
     private var reverseRequestHandler: (@Sendable (String, RequestID, DAPJSONObject) async throws -> DAPJSONObject)?
+    /// Fired once when the inbound stream ends without an intentional ``close()`` (adapter crash).
+    private var transportClosedHandler: (@Sendable () async -> Void)?
     private let decoder: DAPMessageFraming.Decoder
     private var closed = false
+    /// True after intentional ``close()``; distinguishes clean teardown from adapter crash.
+    private var closedIntentionally = false
+    public private(set) var unexpectedTransportCloseCount: Int = 0
     /// Serial lane for state-ordered events (DAP-N03).
     private var stateOrderedChain: Task<Void, Never>?
     /// Per-event-name serial chains for independent events.
@@ -94,7 +99,7 @@ public actor DAPJSONRPCConnection {
             for await chunk in stream {
                 await self?.handleInbound(chunk)
             }
-            await self?.failAllPending(DAPError.transportClosed)
+            await self?.handleInboundStreamEnded()
         }
     }
 
@@ -106,6 +111,10 @@ public actor DAPJSONRPCConnection {
         _ handler: @escaping @Sendable (String, RequestID, DAPJSONObject) async throws -> DAPJSONObject
     ) {
         reverseRequestHandler = handler
+    }
+
+    public func setTransportClosedHandler(_ handler: (@Sendable () async -> Void)?) {
+        transportClosedHandler = handler
     }
 
     public func requestDictionary(_ command: String, arguments: DAPJSONObject? = nil) async throws -> DAPJSONObject {
@@ -183,6 +192,7 @@ public actor DAPJSONRPCConnection {
     }
 
     public func close() async {
+        closedIntentionally = true
         closed = true
         readerTask?.cancel()
         readerTask = nil
@@ -194,6 +204,19 @@ public actor DAPJSONRPCConnection {
         reverseRequestTasks.removeAll()
         failAllPending(DAPError.transportClosed)
         await transport.close()
+    }
+
+    private func handleInboundStreamEnded() async {
+        failAllPending(DAPError.transportClosed)
+        if closedIntentionally || closed {
+            return
+        }
+        // Adapter crashed or peer closed without client close (DAP-N09).
+        closed = true
+        unexpectedTransportCloseCount += 1
+        log.append(level: .error, message: "DAP transport closed unexpectedly (adapter crash)")
+        let handler = transportClosedHandler
+        await handler?()
     }
 
     // MARK: - Classification

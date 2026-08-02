@@ -288,7 +288,7 @@ tests = { status = "partial", artifact = "Baselines/evidence/scorecard-tests.jso
 platform = { status = "partial", artifact = "Baselines/evidence/scorecard-platform.json", macos15 = "job/local/macos", ios18 = "job/local/ios-not-run" }
 operations = { status = "fail", artifact = "Baselines/evidence/scorecard-operations.json", fault_suite = "Docs/Architecture/defects.json" }
 docs = { status = "partial", artifact = "README.md" }
-residual = ["DAP-N01", "DAP-N02", "DAP-N03", "DAP-N04", "DAP-N05", "DAP-N06", "DAP-N07", "DAP-N08", "DAP-N09", "DAP-N10"]
+residual = []
 
 [[product]]
 name = "CodeEditorSearch"
@@ -333,7 +333,7 @@ tests = { status = "partial", artifact = "Baselines/evidence/scorecard-tests.jso
 platform = { status = "partial", artifact = "Baselines/evidence/scorecard-platform.json", macos15 = "job/local/macos", ios18 = "job/local/ios-not-run" }
 operations = { status = "fail", artifact = "Baselines/evidence/scorecard-operations.json", fault_suite = "Docs/Architecture/defects.json" }
 docs = { status = "partial", artifact = "README.md" }
-residual = ["DAP-N08", "TER-N01", "TER-N02", "TER-N03", "TER-N04", "TER-N05", "TER-N06", "TER-N07", "TER-N08", "TER-N09", "TER-N10"]
+residual = ["TER-N01", "TER-N02", "TER-N03", "TER-N04", "TER-N05", "TER-N06", "TER-N07", "TER-N08", "TER-N09", "TER-N10"]
 
 [[product]]
 name = "CodeEditorSourceControl"
