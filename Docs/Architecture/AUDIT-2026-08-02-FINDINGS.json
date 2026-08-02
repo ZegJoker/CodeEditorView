@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "title": "defect gate trusts manually marked “fixed” rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "severity_raw": "P1 for the “durable” claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
     },
     {
       "id": "CORE-N03",
@@ -886,7 +886,7 @@
       "severity_raw": "P1 correctness",
       "title": "nested `.gitignore` files are skipped",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N01_nestedGitIgnoreIsDiscoveredDespiteHiddenName",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N01_searchRespectsNestedGitIgnore"
@@ -896,10 +896,10 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "severity_raw": "P1 for “gitignore-compatible” claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_escapedHashAndBang",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N02_trailingSpacesAndEscapedSpace",
@@ -916,7 +916,7 @@
       "severity_raw": "P1",
       "title": "workspace glob matching is ad hoc",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N03_globIsSeparateFromGitIgnore",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N03_questionMarkClassesAnchoring",
@@ -930,7 +930,7 @@
       "severity_raw": "P1 responsiveness",
       "title": "search performs blocking traversal/regex work on one actor",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N04_searchCancelsWithoutBlocking",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N04_independentSubscriptions"
@@ -943,7 +943,7 @@
       "severity_raw": "P2",
       "title": "UTF-8-only search silently excludes files",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N05_nonUTF8IsReportedNotSilent",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N05_utf16BOMIsDecoded"
@@ -956,7 +956,7 @@
       "severity_raw": "P1 denial-of-service/performance",
       "title": "regular expression evaluation is unbounded",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N06_perFileMatchLimit",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N06_rejectsEmptyOrHugeInputPolicy"
@@ -969,7 +969,7 @@
       "severity_raw": "P2",
       "title": "completion metrics are incorrect",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N07_filesScannedCountsAllScannedNotOnlyMatches"
       ],
@@ -981,7 +981,7 @@
       "severity_raw": "P1",
       "title": "regex replacement is fake/incomplete",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_numberedAndNamedCaptures",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N08_dollarEscaping",
@@ -997,7 +997,7 @@
       "severity_raw": "P0 for multi-file replacement",
       "title": "replace transaction inherits workspace transaction defects",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N09_previewPinsContentStateAndRejectsStaleCommit",
         "Tests/CodeEditorSearchTests/SRCHNAuditTests.swift::test_SRCH_N09_commitAppliesExactlyToPinnedStates"
@@ -1278,7 +1278,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "title": "current “real LSP” gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1298,7 +1298,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as \u201cearly\u201d responses",
+      "title": "late responses are retained as “early” responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1438,7 +1438,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "title": "repeated full-string snapshots are O(n²)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1588,7 +1588,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process \u201cargsGlob\u201d is not a glob",
+      "title": "process “argsGlob” is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1658,7 +1658,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "title": "compatibility claims need levels, not one “passing” flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -2008,7 +2008,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

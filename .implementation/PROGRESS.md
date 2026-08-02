@@ -15,7 +15,7 @@
 | 3a | commands | 5 | verified |
 | 3b | native editor UI | 10 | verified |
 | 4 | workspace | 10 | verified |
-| 5a | search | 9 | fixed |
+| 5a | search | 9 | verified |
 | 5b | tasks | 8 | open |
 | 5c | SCM | 9 | open |
 | 6a | language/Tree-sitter | 7 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch search verified — SRCH-N01, SRCH-N02, SRCH-N03, SRCH-N04, SRCH-N05, SRCH-N06, SRCH-N07, SRCH-N08, SRCH-N09 status set to `verified` (all previously fixed with regression tests; CodeEditorSearchTests SRCHN green, 25 passed).
 - 2026-08-03: Phase 5a search — fixed SRCH-N01…SRCH-N09: nested `.gitignore` discovery (no skipsHiddenFiles); git-compatible ignore corpus vs `git check-ignore`; separate WorkspaceGlobPattern grammar; bounded worker pool + cancellation; DocumentCodec encoding skip reporting; per-file match/size/time budgets; SearchCompletionMetrics (scanned ≠ matched); full regex replace (`$n`, `${name}`, `$$`, zero-width, exact ranges); snapshot-bound pin/commit multi-file replace. CodeEditorSearchTests 39 passed.
 - 2026-08-03: batch workspace verified — WSP-N01, WSP-N02, WSP-N03, WSP-N04, WSP-N05, WSP-N06, WSP-N07, WSP-N08, WSP-N09, WSP-N10 status set to `verified` (all previously fixed with regression tests; CodeEditorWorkspaceTests WSPNAudit green).
 - 2026-08-03: Phase 4 workspace verifier residual — WSP-N01/N06: canonical journal checksum (JSONEncoder.sortedKeys + millisecondsSince1970) so encode→decode→recompute matches; recoverPendingTransactions on Workspace.activate()/local(); recovery must yield rolledBack not quarantine for valid prepared journals; strengthened N01/N03/N04/N08/N10 tests (no .quarantined accept, no vacuous Bool(true)/listCount OR, package-scoped DocumentRegistry mutations). CodeEditorWorkspaceTests 81 passed; N06 isolated 5× green.
