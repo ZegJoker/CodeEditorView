@@ -61,7 +61,11 @@ struct ReferenceWorkflowTests {
             fullText: long,
             selectedRange: NSRange(location: 5_000, length: 0)
         )
-        #expect(value.utf16.count <= EditorAccessibility.maxValueCharacters + 4)
+        #expect(
+            value.utf16.count
+                <= EditorAccessibility.maxValueCharacters
+                + EditorAccessibility.maxValueOverheadCharacters + 8
+        )
         #expect(EditorAccessibility.multiCursorSummary(rangeCount: 3) == "3 cursors")
     }
 

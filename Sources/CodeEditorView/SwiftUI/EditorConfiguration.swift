@@ -237,17 +237,25 @@ extension EditorConfiguration {
         public var isSelectable: Bool
         public var indentOption: IndentOption
         public var reformatAtColumn: Int
+        /// Word navigation mode for Option-arrow / double-click (UI-004).
+        public var wordNavigationMode: WordNavigationMode
+        /// Native text services matrix (UI-005).
+        public var textServices: EditorTextServicesPolicy
 
         public init(
             isEditable: Bool = true,
             isSelectable: Bool = true,
             indentOption: IndentOption = .spaces(count: 4),
-            reformatAtColumn: Int = 80
+            reformatAtColumn: Int = 80,
+            wordNavigationMode: WordNavigationMode = .codeSubword,
+            textServices: EditorTextServicesPolicy = .codeEditor
         ) {
             self.isEditable = isEditable
             self.isSelectable = isSelectable
             self.indentOption = indentOption
             self.reformatAtColumn = max(1, reformatAtColumn)
+            self.wordNavigationMode = wordNavigationMode
+            self.textServices = textServices
         }
     }
 }

@@ -30,6 +30,11 @@ public final class LayoutEngine {
     public private(set) var collapsedFolds: [FoldRange] = []
     /// Extra height under lines that show diagnostic annotation bands (Phase 12).
     public private(set) var annotationBandHeights: [Int: CGFloat] = [:]
+    /// Last viewport UTF-16 coverage from ``layoutViewport`` (UI-007 a11y).
+    public private(set) var latestVisibleUTF16Range: NSRange = NSRange(location: 0, length: 0)
+    /// Cached max content width; invalidated on edit/font/wrap (UI-006).
+    private var cachedMaxLineWidth: CGFloat = 0
+    private var maxLineWidthValid = false
 
     private var typesetter = Typesetter()
     private weak var document: DocumentStore?
@@ -85,6 +90,7 @@ public final class LayoutEngine {
     }
 
     public func invalidateAll() {
+        invalidateMaxLineWidthCache()
         if transactionDepth > 0 {
             needsFullRebuild = true
             return
@@ -104,6 +110,7 @@ public final class LayoutEngine {
 
     /// Reacts to a text replacement that already landed in the document store.
     public func documentDidReplace(range: NSRange, delta: Int) {
+        invalidateMaxLineWidthCache()
         attachments.shift(forEditAt: range.location, delta: delta, replacedLength: range.length)
         if transactionDepth > 0 {
             pendingEdits.append((range, delta))
@@ -193,11 +200,27 @@ public final class LayoutEngine {
             }
         }
 
+        // Track visible UTF-16 span for virtualized accessibility (UI-007).
+        if let first = laidOut.first, let last = laidOut.last,
+            let firstLine = lineIndex.line(atIndex: first.lineIndex),
+            let lastLine = lineIndex.line(atIndex: last.lineIndex)
+        {
+            let start = firstLine.utf16Offset + first.fragment.lineRelativeRange.location
+            let end =
+                lastLine.utf16Offset + last.fragment.lineRelativeRange.location
+                + last.fragment.lineRelativeRange.length
+            latestVisibleUTF16Range = NSRange(location: start, length: max(0, end - start))
+        }
+        // Update incremental max-width cache from laid-out fragments (UI-006).
+        if maxContentWidth > cachedMaxLineWidth {
+            cachedMaxLineWidth = maxContentWidth
+            maxLineWidthValid = true
+        }
         // Ensure content size is current after typesetting.
         let width =
             wrapLines
             ? containerWidth
-            : max(containerWidth, maxContentWidth, maxLineWidth())
+            : max(containerWidth, maxContentWidth, cachedMaxLineWidthValue())
         contentSize = CGSize(width: width, height: lineIndex.height)
         return LayoutSnapshot(contentSize: contentSize, fragments: laidOut)
     }
@@ -898,9 +921,18 @@ public final class LayoutEngine {
         #endif
     }
 
-    private func maxLineWidth() -> CGFloat {
+    /// Invalidate cached max width after structural layout changes.
+    public func invalidateMaxLineWidthCache() {
+        maxLineWidthValid = false
+        cachedMaxLineWidth = 0
+    }
+
+    private func cachedMaxLineWidthValue() -> CGFloat {
+        if maxLineWidthValid { return cachedMaxLineWidth }
+        // Recompute once; callers on the hot path should keep the cache warm via viewport layout.
         var maxWidth: CGFloat = 0
-        for index in 0..<lineIndex.count {
+        let sampleLimit = min(lineIndex.count, 512)
+        for index in 0..<sampleLimit {
             guard let position = lineIndex.line(atIndex: index) else { continue }
             for fragment in position.payload.fragments {
                 maxWidth = max(maxWidth, fragment.width + edgeInsets.horizontal)
@@ -909,6 +941,12 @@ public final class LayoutEngine {
                 maxWidth = max(maxWidth, 100)
             }
         }
+        // Prefer last known content width if we only sampled.
+        if lineIndex.count > sampleLimit {
+            maxWidth = max(maxWidth, contentSize.width)
+        }
+        cachedMaxLineWidth = maxWidth
+        maxLineWidthValid = true
         return maxWidth
     }
 }

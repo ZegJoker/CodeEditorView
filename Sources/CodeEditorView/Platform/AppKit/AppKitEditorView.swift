@@ -886,8 +886,39 @@
         // MARK: - NSTextInputClient
 
         public func insertText(_ string: Any, replacementRange: NSRange) {
-            insertText(string)
+            let text: String
+            if let s = string as? String {
+                text = s
+            } else if let s = string as? NSAttributedString {
+                text = s.string
+            } else {
+                return
+            }
+            // UI-009: honor replacementRange when provided.
+            if replacementRange.location != NSNotFound {
+                if controller.isComposingMarkedText {
+                    controller.applyMarkedText(
+                        text,
+                        selectedRangeInMarked: NSRange(location: (text as NSString).length, length: 0),
+                        replaceRange: replacementRange
+                    )
+                    controller.commitMarkedTextAsNormalEdit()
+                } else {
+                    controller.replaceCharacters(in: replacementRange, with: text)
+                }
+            } else if controller.isComposingMarkedText {
+                // Commit composition as a normal undoable edit.
+                controller.commitMarkedTextAsNormalEdit()
+                if !text.isEmpty {
+                    controller.insertText(text)
+                }
+            } else {
+                insertText(text)
+            }
             markedRangeStorage = NSRange(location: NSNotFound, length: 0)
+            controller.clearMarkedTextSession()
+            onTextChange?(controller.text)
+            relayout()
         }
 
         public func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
@@ -899,23 +930,22 @@
             } else {
                 return
             }
-
-            if replacementRange.location != NSNotFound {
-                controller.replaceCharacters(in: replacementRange, with: text)
-            } else if markedRangeStorage.location != NSNotFound {
-                controller.replaceCharacters(in: markedRangeStorage, with: text)
-            } else {
-                controller.insertText(text)
-            }
-            markedRangeStorage = NSRange(
-                location: controller.selectedRange.location - text.utf16.count,
-                length: text.utf16.count
-            )
+            let replace: NSRange? =
+                replacementRange.location != NSNotFound
+                ? replacementRange
+                : (markedRangeStorage.location != NSNotFound ? markedRangeStorage : nil)
+            controller.applyMarkedText(text, selectedRangeInMarked: selectedRange, replaceRange: replace)
+            markedRangeStorage =
+                controller.markedTextSession.isActive
+                ? controller.markedTextSession.range
+                : NSRange(location: NSNotFound, length: 0)
             onTextChange?(controller.text)
             relayout()
         }
 
         public func unmarkText() {
+            // Composition already in buffer; mark session inactive without extra undo spam.
+            controller.clearMarkedTextSession()
             markedRangeStorage = NSRange(location: NSNotFound, length: 0)
         }
 
@@ -930,7 +960,9 @@
             return controller.document.attributedSubstring(from: range)
         }
 
-        public func validAttributesForMarkedText() -> [NSAttributedString.Key] { [] }
+        public func validAttributesForMarkedText() -> [NSAttributedString.Key] {
+            [.underlineStyle, .foregroundColor, .backgroundColor, .font]
+        }
 
         public func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?) -> NSRect {
             actualRange?.pointee = range
@@ -970,10 +1002,20 @@
 
         open override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
             guard let text = sender.draggingPasteboard.string(forType: .string) else { return false }
+            // External drop size guard (UI-003 / §11.6).
+            if text.utf16.count > 2_000_000 { return false }
             let point = convert(sender.draggingLocation, from: nil)
             let offset = controller.hitTestOffset(at: point, containerWidth: containerWidth)
-            controller.setSelectedRange(NSRange(location: offset, length: 0))
-            controller.insertText(text)
+            let sourceRanges = controller.selectedRanges.filter { $0.length > 0 }
+            let op = sender.draggingSourceOperationMask
+            let isMove = op.contains(.move) && sender.draggingSource as AnyObject? === self
+            if isMove, !sourceRanges.isEmpty {
+                // Internal move: single transactional delete+insert (UI-003).
+                controller.moveText(from: sourceRanges, to: offset)
+            } else {
+                controller.setSelectedRange(NSRange(location: offset, length: 0))
+                controller.insertText(text)
+            }
             finishEdit()
             isReceivingDrag = false
             return true

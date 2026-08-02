@@ -597,28 +597,17 @@
         public func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
             inputDelegate?.textWillChange(self)
             let text = markedText ?? ""
-            // Marked text is composition overlay: do not push intermediate IME updates through
-            // the normal undo/LSP typing path as committed content when replacing existing mark.
-            if markedRangeStorage.location != NSNotFound {
-                controller.replaceCharacters(in: markedRangeStorage, with: text)
-            } else {
-                controller.insertText(text)
-            }
+            // UI-002: provisional composition via MarkedTextSession (no undo registration).
+            let replace =
+                markedRangeStorage.location != NSNotFound
+                ? markedRangeStorage
+                : controller.selectedRange
+            controller.applyMarkedText(text, selectedRangeInMarked: selectedRange, replaceRange: replace)
             if text.isEmpty {
                 markedRangeStorage = NSRange(location: NSNotFound, length: 0)
+                controller.clearMarkedTextSession()
             } else {
-                let end = controller.selectedRange.location
-                let start = max(0, end - text.utf16.count)
-                markedRangeStorage = NSRange(location: start, length: text.utf16.count)
-                // Honor IME sub-selection inside the marked range (UI-001).
-                if selectedRange.location != NSNotFound,
-                    selectedRange.location >= 0,
-                    selectedRange.location + selectedRange.length <= text.utf16.count
-                {
-                    let caret = start + selectedRange.location
-                    let len = selectedRange.length
-                    controller.setSelectedRange(NSRange(location: caret, length: len))
-                }
+                markedRangeStorage = controller.markedTextSession.range
             }
             inputDelegate?.textDidChange(self)
             onTextChange?(controller.text)
@@ -626,6 +615,8 @@
         }
 
         public func unmarkText() {
+            // Leave committed text in place; clear composition session only.
+            controller.clearMarkedTextSession()
             markedRangeStorage = NSRange(location: NSNotFound, length: 0)
         }
 

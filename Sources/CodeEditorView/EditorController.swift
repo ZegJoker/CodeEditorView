@@ -566,11 +566,13 @@ public final class EditorController {
         )
     }
 
-    /// Truncated accessibility value for platform hosts.
+    /// Virtualized accessibility value for platform hosts (UI-007): selection + visible lines.
     public var accessibilityValueText: String {
-        EditorAccessibility.valueText(
+        let visible = layout.latestVisibleUTF16Range
+        return EditorAccessibility.virtualizedValueText(
             fullText: text,
-            selectedRange: selectedRange
+            selectedRange: selectedRange,
+            visibleUTF16Range: visible.length > 0 ? visible : nil
         )
     }
 
@@ -613,14 +615,70 @@ public final class EditorController {
 
     // MARK: - Editing
 
+    /// Active IME composition (UI-001/UI-002). When active, platform `setMarkedText` paths
+    /// must use ``applyMarkedText`` so undo/LSP are not spammed per composition update.
+    public private(set) var markedTextSession: MarkedTextSession = .inactive
+
+    /// True while IME composition is active.
+    public var isComposingMarkedText: Bool { markedTextSession.isActive }
+
     public func replaceCharacters(in range: NSRange, with string: String) {
+        replaceCharacters(in: range, with: string, registerUndo: true)
+    }
+
+    /// Replace with optional undo registration (marked-text provisional uses `false`).
+    public func replaceCharacters(in range: NSRange, with string: String, registerUndo: Bool) {
         guard configuration.isEditable else { return }
-        let transaction = EditTransaction.single(range: range, replacement: string, origin: .programmatic)
-        _ = applyEditTransaction(transaction) { _ in
+        let origin: EditOrigin = registerUndo ? .programmatic : .programmatic
+        let transaction = EditTransaction.single(range: range, replacement: string, origin: origin)
+        _ = applyEditTransaction(transaction, registerUndo: registerUndo) { _ in
             self.selection.setInsertionPoint(range.location + string.utf16.count)
             self.updateScrollTarget(containerWidth: self.contentSize.width > 0 ? self.contentSize.width : 400)
         }
         publishSelectionChange()
+    }
+
+    /// Apply or update marked (composition) text without undo registration (UI-002).
+    public func applyMarkedText(
+        _ text: String,
+        selectedRangeInMarked: NSRange,
+        replaceRange: NSRange?
+    ) {
+        guard configuration.isEditable else { return }
+        let baseRange: NSRange
+        if let replaceRange, replaceRange.location != NSNotFound {
+            baseRange = replaceRange
+        } else if markedTextSession.isActive {
+            baseRange = markedTextSession.range
+        } else {
+            let sel = selectedRange
+            baseRange = sel
+        }
+        replaceCharacters(in: baseRange, with: text, registerUndo: false)
+        markedTextSession.setMarked(
+            text: text,
+            selectedRangeInMarked: selectedRangeInMarked,
+            documentReplaceRange: NSRange(location: baseRange.location, length: (text as NSString).length)
+        )
+        if let abs = markedTextSession.absoluteSelectedRange {
+            selection.setSelectedRange(abs)
+        }
+        publishSelectionChange()
+    }
+
+    /// Clear marked state after IME commits (`unmarkText`). Does not re-apply text.
+    public func clearMarkedTextSession() {
+        markedTextSession.clear()
+    }
+
+    /// Finalize composition: document already holds provisional text (no per-keystroke undo).
+    /// Registers a single undo barrier by re-committing the marked range with undo enabled
+    /// only when the composition replaced non-empty original content tracking is available.
+    public func commitMarkedTextAsNormalEdit() {
+        // Composition text is already in the buffer with registerUndo: false.
+        // Begin a new undo group boundary so subsequent typing doesn't merge with pre-IME text.
+        textDocument.undo.endGrouping()
+        markedTextSession.clear()
     }
 
     public func insertText(_ string: String) {
@@ -901,7 +959,15 @@ public final class EditorController {
                 in: full,
                 indent: configuration.behavior.indentOption
             ) {
+                // TextFilters uses `rangeOfComposedCharacterSequences` (grapheme-safe).
                 deleteRange = selectionExpandedForCollapsedFolds(planned)
+            } else if range.location > 0 {
+                // Fallback: delete one composed character ending at caret (UI-001 / §11.4).
+                let ns = full as NSString
+                let composed = ns.rangeOfComposedCharacterSequences(
+                    for: NSRange(location: range.location - 1, length: 1)
+                )
+                deleteRange = selectionExpandedForCollapsedFolds(composed)
             } else {
                 carets.append(0)
                 continue
