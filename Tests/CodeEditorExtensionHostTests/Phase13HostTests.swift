@@ -388,7 +388,7 @@ struct Phase13NoSoftStubTests {
         await instance.stop(reason: .hostShutdown)
     }
 
-    @Test func reverseRunInTerminalUsesTerminalManager() async throws {
+    @Test func reverseRunInTerminalUsesTerminalService() async throws {
         let pair = DAPTestTransport.makePair()
         let mock = MockDebugAdapter(transport: pair.server)
         await mock.setIssueRunInTerminalOnLaunch(true)
@@ -405,12 +405,12 @@ struct Phase13NoSoftStubTests {
         await session.setRunInTerminalHandler(handler)
         try await session.start()
         try await session.launch(configuration: DAPJSONObject(["program": "x"]))
-        // Wait for reverse runInTerminal to invoke the terminal manager handler.
+        // Wait for reverse runInTerminal to invoke the TerminalService-backed handler (DAP-N08).
         for _ in 0..<60 {
             try await Task.sleep(nanoseconds: 50_000_000)
             if handler.counter.count > 0 { break }
         }
-        #expect(handler.counter.count >= 1, "terminal manager must handle runInTerminal")
+        #expect(handler.counter.count >= 1, "TerminalService must handle runInTerminal")
         #expect(handler.counter.lastArgs == ["echo", "debug"])
         await session.disconnect()
         await mock.stop()

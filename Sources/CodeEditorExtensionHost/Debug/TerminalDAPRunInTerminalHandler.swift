@@ -2,17 +2,29 @@ import CodeEditorDAP
 import CodeEditorTerminal
 import Foundation
 
-/// Bridges DAP `runInTerminal` reverse requests to a real ``TerminalSessionManager`` backend.
+/// Bridges DAP `runInTerminal` reverse requests to the stable ``TerminalService`` facade (DAP-N08).
+///
+/// Production path is TerminalService-only; Ghostty-backed sessions are created via
+/// host-injected transport factories (no legacy session-manager coupling).
 public struct TerminalDAPRunInTerminalHandler: DAPRunInTerminalHandler {
-    public let manager: TerminalSessionManager
+    public let service: TerminalService
+    public let transportFactory: @Sendable () -> any TerminalByteTransport
 
-    public init(manager: TerminalSessionManager) {
-        self.manager = manager
+    public init(
+        service: TerminalService,
+        transportFactory: @escaping @Sendable () -> any TerminalByteTransport
+    ) {
+        self.service = service
+        self.transportFactory = transportFactory
     }
 
     public func runInTerminal(args: DAPRunInTerminalArgs) async throws -> DAPRunInTerminalResult {
         guard !args.args.isEmpty else {
             throw DAPError.unsupported("runInTerminal requires args")
+        }
+        let policy = await service.securityPolicy
+        if !policy.workspaceTrusted {
+            throw DAPError.unsupported("runInTerminal denied: workspace untrusted")
         }
         var config = TerminalConfiguration()
         if let cwd = args.cwd {
@@ -25,79 +37,23 @@ public struct TerminalDAPRunInTerminalHandler: DAPRunInTerminalHandler {
         let executable = args.args[0]
         config.shell = URL(fileURLWithPath: executable)
         config.arguments = Array(args.args.dropFirst())
-        let title = args.title ?? "Debug"
-        let session = try await manager.create(title: title, configuration: config)
-        // Process backends expose no public PID on TerminalSession; use 0 when unavailable.
-        // Session id hash as stable stand-in only when process id unknown is not allowed —
-        // require the backend to be running.
-        guard session.isRunning else {
+        let meta = TerminalMetadata(
+            kind: .debuggee,
+            title: args.title ?? "Debug",
+            debugSessionID: "dap"
+        )
+        let transport = transportFactory()
+        let id = try await service.create(
+            metadata: meta,
+            configuration: config,
+            transport: transport
+        )
+        let sessions = await service.allSessions()
+        let pid32 = sessions.first(where: { $0.id == id })?.processId
+        let pid = pid32.map { Int($0) }
+        guard sessions.contains(where: { $0.id == id && $0.isRunning }) else {
             throw DAPError.unsupported("terminal session failed to start")
         }
-        return DAPRunInTerminalResult(processId: nil, shellProcessId: nil)
-    }
-}
-
-/// Shared counter for proving terminal reverse-request invocations.
-public final class TerminalInvokeCounter: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _count = 0
-    private var _lastArgs: [String] = []
-
-    public init() {}
-
-    public var count: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return _count
-    }
-    public var lastArgs: [String] {
-        lock.lock()
-        defer { lock.unlock() }
-        return _lastArgs
-    }
-    public func record(_ args: [String]) {
-        lock.lock()
-        _count += 1
-        _lastArgs = args
-        lock.unlock()
-    }
-}
-
-/// Test/mock backend-backed handler that records invocations and returns a real session start.
-public struct MockTerminalDAPRunInTerminalHandler: DAPRunInTerminalHandler {
-    public let backend: MockTerminalBackend
-    public let manager: TerminalSessionManager
-    public let counter: TerminalInvokeCounter
-
-    public init(
-        backend: MockTerminalBackend, manager: TerminalSessionManager,
-        counter: TerminalInvokeCounter = TerminalInvokeCounter()
-    ) {
-        self.backend = backend
-        self.manager = manager
-        self.counter = counter
-    }
-
-    public static func make() async -> MockTerminalDAPRunInTerminalHandler {
-        let backend = MockTerminalBackend()
-        let manager = TerminalSessionManager()
-        await manager.attach(backend: backend)
-        return MockTerminalDAPRunInTerminalHandler(backend: backend, manager: manager)
-    }
-
-    public func runInTerminal(args: DAPRunInTerminalArgs) async throws -> DAPRunInTerminalResult {
-        guard !args.args.isEmpty else {
-            throw DAPError.unsupported("runInTerminal requires args")
-        }
-        counter.record(args.args)
-        var config = TerminalConfiguration()
-        if let cwd = args.cwd {
-            config.cwd = URL(fileURLWithPath: cwd)
-        }
-        let session = try await manager.create(title: args.title ?? "Debug", configuration: config)
-        // Write command line into the mock terminal so the reverse request is observable.
-        let line = args.args.joined(separator: " ") + "\n"
-        try await manager.write(line, to: session.id)
-        return DAPRunInTerminalResult(processId: 1, shellProcessId: 1)
+        return DAPRunInTerminalResult(processId: pid, shellProcessId: pid)
     }
 }

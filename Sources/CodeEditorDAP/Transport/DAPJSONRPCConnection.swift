@@ -1,6 +1,12 @@
+import CodeEditorCore
 import Foundation
 
-/// Bidirectional JSON-RPC 2.0 over DAP Content-Length framing.
+/// Bidirectional DAP JSON-RPC over Content-Length framing.
+///
+/// Uses ``OneShotPromise`` for pending requests (register **before** any transport await;
+/// DAP-N01). Late/orphan responses are discarded (DAP-N02). Inbound messages are classified
+/// into lanes so responses never wait behind slow events or reverse requests (DAP-N03).
+/// Missing reverse handlers return a failed DAP response, never empty success (DAP-N04).
 public actor DAPJSONRPCConnection {
     public enum RequestID: Hashable, Sendable {
         case int(Int)
@@ -30,29 +36,55 @@ public actor DAPJSONRPCConnection {
         }
     }
 
+    /// Inbound message classification (DAP-N03).
+    public enum MessageLane: Sendable, Hashable {
+        /// Complete pending immediately on the connection actor.
+        case response
+        /// Lifecycle events that must stay ordered (stopped/continued/terminated/…).
+        case stateOrdered
+        /// Independent events (output, progress, custom).
+        case independent
+        /// Adapter→client reverse requests with independent execution.
+        case reverseRequest
+    }
+
     private let transport: any DAPTransport
     private let log: DAPLog
     private var nextID: Int = 1
-    private var pending: [RequestID: CheckedContinuation<Data, Error>] = [:]
-    private var earlyResponses: [RequestID: Data] = [:]
+    /// Pending client requests: installed **before** transport write (DAP-N01).
+    private var pending: [RequestID: OneShotPromise<Data>] = [:]
     private var readerTask: Task<Void, Never>?
     private var eventHandler: (@Sendable (String, DAPJSONObject) async -> Void)?
     private var reverseRequestHandler: (@Sendable (String, RequestID, DAPJSONObject) async throws -> DAPJSONObject)?
     private let decoder: DAPMessageFraming.Decoder
     private var closed = false
+    /// Serial lane for state-ordered events (DAP-N03).
+    private var stateOrderedChain: Task<Void, Never>?
+    /// Per-event-name serial chains for independent events.
+    private var perEventChains: [String: Task<Void, Never>] = [:]
+    /// Concurrent reverse-request tasks.
+    private var reverseRequestTasks: [UUID: Task<Void, Never>] = [:]
+    private let maxConcurrentReverseRequests: Int
     public var requestTimeout: Duration
     public private(set) var lastFramingError: DAPMessageFraming.DecodeError?
+    /// Legacy metric alias — always 0; early response retention was removed (DAP-N01/N02).
+    public private(set) var earlyResponseCount: Int = 0
+    /// Late/orphan responses discarded (IDs are not reused).
+    public private(set) var lateResponseCount: Int = 0
+    public private(set) var duplicateResponseCount: Int = 0
 
     public init(
         transport: any DAPTransport,
         log: DAPLog = DAPLog(),
         requestTimeout: Duration = .seconds(15),
-        maxBodyBytes: Int = DAPMessageFraming.defaultMaxBodyBytes
+        maxBodyBytes: Int = DAPMessageFraming.defaultMaxBodyBytes,
+        maxConcurrentReverseRequests: Int = 16
     ) {
         self.transport = transport
         self.log = log
         self.requestTimeout = requestTimeout
         self.decoder = DAPMessageFraming.Decoder(maxBodyBytes: maxBodyBytes)
+        self.maxConcurrentReverseRequests = max(1, maxConcurrentReverseRequests)
     }
 
     public func start() {
@@ -85,7 +117,10 @@ public actor DAPJSONRPCConnection {
         // DAP response: { seq, type:"response", request_seq, success, command, body?, message? }
         if let success = dict["success"] as? Bool, !success {
             let msg = dict["message"] as? String ?? "adapter error"
-            throw DAPError.adapterError(code: (dict["body"] as? [String: Any])?["error"] as? Int ?? -1, message: msg)
+            throw DAPError.adapterError(
+                code: (dict["body"] as? [String: Any])?["error"] as? Int ?? -1,
+                message: msg
+            )
         }
         if let body = dict["body"] as? [String: Any] {
             return DAPJSONObject(body)
@@ -94,7 +129,9 @@ public actor DAPJSONRPCConnection {
     }
 
     public func requestRaw(command: String, arguments: DAPJSONObject? = nil) async throws -> Data {
-        if closed { throw DAPError.transportClosed }
+        try Task.checkCancellation()
+        guard !closed else { throw DAPError.transportClosed }
+
         let id = RequestID.int(nextID)
         nextID += 1
         var message: [String: Any] = [
@@ -111,88 +148,99 @@ public actor DAPJSONRPCConnection {
         let body = try JSONSerialization.data(withJSONObject: message)
         let framed = DAPMessageFraming.encode(body)
 
-        // DAP-001 / §14.1: register-before-send on this actor (mirrors LSP-002).
-        return try await withThrowingTaskGroup(of: Data.self) { group in
-            group.addTask {
-                try await self.executeRegisteredRequest(id: id, framed: framed)
-            }
-            group.addTask {
-                try await Task.sleep(for: self.requestTimeout)
-                throw DAPError.timeout(method: command)
-            }
-            do {
-                let result = try await group.next()!
-                group.cancelAll()
-                return result
-            } catch {
-                group.cancelAll()
-                await self.failPending(id: id, error: error)
-                throw error
-            }
-        }
-    }
+        // Pending record BEFORE any transport await (substrate §22.5 / DAP-N01).
+        let promise = OneShotPromise<Data>()
+        pending[id] = promise
 
-    /// Actor-isolated: install continuation, then write. Resume happens in dispatchMessage.
-    private func executeRegisteredRequest(id: RequestID, framed: Data) async throws -> Data {
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            Task { await self.registerPendingThenSend(id: id, framed: framed, cont: cont) }
-        }
-    }
-
-    private func registerPendingThenSend(
-        id: RequestID,
-        framed: Data,
-        cont: CheckedContinuation<Data, Error>
-    ) async {
-        if closed {
-            cont.resume(throwing: DAPError.transportClosed)
-            return
-        }
-        if let early = earlyResponses.removeValue(forKey: id) {
-            cont.resume(returning: early)
-            return
-        }
-        // Register **before** any await on the wire (DAP-001).
-        pending[id] = cont
         do {
             try await transport.send(framed)
         } catch {
-            failPending(id: id, error: error)
+            pending[id] = nil
+            _ = promise.fail(error)
+            throw error
         }
-    }
 
-    private func failPending(id: RequestID, error: Error) {
-        if let cont = pending.removeValue(forKey: id) {
-            cont.resume(throwing: error)
+        let deadline = ContinuousClock.now + requestTimeout
+        do {
+            let value = try await promise.wait(until: deadline)
+            pending[id] = nil
+            return value
+        } catch is CancellationError {
+            pending[id] = nil
+            _ = promise.fail(CancellationError())
+            throw CancellationError()
+        } catch OneShotPromiseError.timedOut {
+            pending[id] = nil
+            _ = promise.fail(DAPError.timeout(method: command))
+            throw DAPError.timeout(method: command)
+        } catch OneShotPromiseError.cancelled {
+            pending[id] = nil
+            throw CancellationError()
+        } catch {
+            pending[id] = nil
+            throw error
         }
-        earlyResponses.removeValue(forKey: id)
-    }
-
-    private func removePending(id: RequestID) {
-        pending.removeValue(forKey: id)
-        earlyResponses.removeValue(forKey: id)
     }
 
     public func close() async {
         closed = true
         readerTask?.cancel()
         readerTask = nil
+        stateOrderedChain?.cancel()
+        stateOrderedChain = nil
+        for (_, t) in perEventChains { t.cancel() }
+        perEventChains.removeAll()
+        for (_, t) in reverseRequestTasks { t.cancel() }
+        reverseRequestTasks.removeAll()
         failAllPending(DAPError.transportClosed)
         await transport.close()
     }
 
-    private func failAllPending(_ error: DAPError) {
-        let all = pending
-        pending.removeAll()
-        for (_, cont) in all {
-            cont.resume(throwing: error)
+    // MARK: - Classification
+
+    public static func classify(type: String, event: String?, command: String?) -> MessageLane {
+        switch type {
+        case "response":
+            return .response
+        case "request":
+            return .reverseRequest
+        case "event":
+            if let event, isStateOrdered(event) {
+                return .stateOrdered
+            }
+            return .independent
+        default:
+            return .independent
         }
     }
 
-    /// Serial inbound chain (DAP-002 / §14.2) — preserve event order.
-    private var inboundChain: Task<Void, Never>?
-    private let maxEarlyResponses = 8
-    public private(set) var earlyResponseCount: Int = 0
+    private static func isStateOrdered(_ event: String) -> Bool {
+        switch event {
+        case "initialized", "stopped", "continued", "terminated", "exited",
+            "thread", "process", "module", "loadedSource", "capabilities",
+            "breakpoint", "invalidated":
+            return true
+        default:
+            if event.hasPrefix("ordered/") { return true }
+            return false
+        }
+    }
+
+    // MARK: - Private
+
+    private func failPending(id: RequestID, error: Error) {
+        if let promise = pending.removeValue(forKey: id) {
+            _ = promise.fail(error)
+        }
+    }
+
+    private func failAllPending(_ error: Error) {
+        let all = pending
+        pending.removeAll()
+        for (_, promise) in all {
+            _ = promise.fail(error)
+        }
+    }
 
     private func handleInbound(_ chunk: Data) {
         let messages = decoder.append(chunk)
@@ -200,59 +248,125 @@ public actor DAPJSONRPCConnection {
             lastFramingError = err
             log.append(level: .warning, message: "framing: \(err)")
         }
-        let previous = inboundChain
-        inboundChain = Task {
-            await previous?.value
-            for message in messages {
-                await self.dispatchMessage(message)
-            }
+        for body in messages {
+            dispatchFrame(body)
         }
     }
 
-    private func dispatchMessage(_ body: Data) async {
-        guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+    private func dispatchFrame(_ body: Data) {
+        guard
+            let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
             let type = obj["type"] as? String
-        else { return }
+        else {
+            log.append(level: .warning, message: "Invalid DAP body")
+            return
+        }
 
-        switch type {
-        case "response":
-            let reqSeq =
-                (obj["request_seq"] as? Int)
-                ?? (obj["request_seq"] as? NSNumber)?.intValue
-            guard let reqSeq else { return }
-            let id = RequestID.int(reqSeq)
-            if let cont = pending.removeValue(forKey: id) {
-                cont.resume(returning: body)
-            } else {
-                earlyResponseCount += 1
-                if earlyResponses.count < maxEarlyResponses {
-                    earlyResponses[id] = body
-                }
-            }
-        case "event":
-            let event = obj["event"] as? String ?? ""
-            let bodyDict = obj["body"] as? [String: Any] ?? [:]
-            await eventHandler?(event, DAPJSONObject(bodyDict))
-        case "request":
-            // Reverse request from adapter
-            guard let command = obj["command"] as? String else { return }
-            let seq = (obj["seq"] as? Int) ?? (obj["seq"] as? NSNumber)?.intValue ?? 0
-            guard seq != 0 || obj["seq"] != nil else { return }
-            let id = RequestID.int(seq)
-            let args = DAPJSONObject(obj["arguments"] as? [String: Any] ?? [:])
-            do {
-                let result = try await reverseRequestHandler?(command, id, args) ?? DAPJSONObject([:])
-                try await sendReverseResponse(seq: seq, command: command, success: true, body: result.dictionary)
-            } catch {
-                try? await sendReverseResponse(
-                    seq: seq,
-                    command: command,
-                    success: false,
-                    message: String(describing: error)
-                )
-            }
-        default:
-            break
+        let event = obj["event"] as? String
+        let command = obj["command"] as? String
+        let lane = Self.classify(type: type, event: event, command: command)
+
+        switch lane {
+        case .response:
+            completeResponse(obj: obj, body: body)
+        case .stateOrdered:
+            enqueueStateOrdered(obj: obj)
+        case .independent:
+            enqueueIndependent(obj: obj)
+        case .reverseRequest:
+            enqueueReverseRequest(obj: obj)
+        }
+    }
+
+    private func completeResponse(obj: [String: Any], body: Data) {
+        let reqSeq =
+            (obj["request_seq"] as? Int)
+            ?? (obj["request_seq"] as? NSNumber)?.intValue
+        guard let reqSeq else { return }
+        let id = RequestID.int(reqSeq)
+        guard let promise = pending.removeValue(forKey: id) else {
+            // Late response: discard and count — never retain (DAP-N02).
+            lateResponseCount += 1
+            log.append(level: .debug, message: "Late/orphan response for request_seq=\(reqSeq)")
+            return
+        }
+        let ok = promise.succeed(body)
+        if !ok {
+            duplicateResponseCount += 1
+        }
+    }
+
+    private func enqueueStateOrdered(obj: [String: Any]) {
+        let previous = stateOrderedChain
+        stateOrderedChain = Task {
+            await previous?.value
+            await self.deliverEvent(obj: obj)
+        }
+    }
+
+    private func enqueueIndependent(obj: [String: Any]) {
+        let key = (obj["event"] as? String) ?? "event"
+        let previous = perEventChains[key]
+        perEventChains[key] = Task {
+            await previous?.value
+            await self.deliverEvent(obj: obj)
+        }
+    }
+
+    private func enqueueReverseRequest(obj: [String: Any]) {
+        guard let command = obj["command"] as? String else { return }
+        let seq = (obj["seq"] as? Int) ?? (obj["seq"] as? NSNumber)?.intValue ?? 0
+        guard seq != 0 || obj["seq"] != nil else { return }
+        if reverseRequestTasks.count >= maxConcurrentReverseRequests {
+            log.append(level: .warning, message: "Reverse request backlog: \(command)")
+        }
+        let taskID = UUID()
+        let task = Task {
+            await self.deliverReverseRequest(command: command, seq: seq, obj: obj)
+            await self.finishReverseRequestTask(taskID)
+        }
+        reverseRequestTasks[taskID] = task
+    }
+
+    private func finishReverseRequestTask(_ id: UUID) {
+        reverseRequestTasks[id] = nil
+    }
+
+    private func deliverEvent(obj: [String: Any]) async {
+        let event = obj["event"] as? String ?? ""
+        let bodyDict = obj["body"] as? [String: Any] ?? [:]
+        await eventHandler?(event, DAPJSONObject(bodyDict))
+    }
+
+    private func deliverReverseRequest(command: String, seq: Int, obj: [String: Any]) async {
+        let id = RequestID.int(seq)
+        let args = DAPJSONObject(obj["arguments"] as? [String: Any] ?? [:])
+        guard let handler = reverseRequestHandler else {
+            // DAP-N04: fail closed — never empty success when no handler.
+            log.append(level: .debug, message: "No reverse handler for \(command)")
+            try? await sendReverseResponse(
+                seq: seq,
+                command: command,
+                success: false,
+                message: "Method not found: no reverse handler for \(command)"
+            )
+            return
+        }
+        do {
+            let result = try await handler(command, id, args)
+            try await sendReverseResponse(
+                seq: seq,
+                command: command,
+                success: true,
+                body: result.dictionary
+            )
+        } catch {
+            try? await sendReverseResponse(
+                seq: seq,
+                command: command,
+                success: false,
+                message: String(describing: error)
+            )
         }
     }
 

@@ -55,10 +55,12 @@ public struct DebugAdapterDefinition: Sendable {
 public enum DebugAdapterState: String, Sendable, Hashable, Codable {
     case idle
     case starting
+    case initializing
     case initialized
     case configured
     case running
     case stopped
+    case terminating
     case terminated
     case failed
 }

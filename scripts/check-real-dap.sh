@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
-# REL-N08 — real DAP adapter gate. Hard-fail when REQUIRE_REAL_DAP=1.
-# Exercises initialize / launch / setBreakpoints / stackTrace / variables / evaluate / disconnect
-# against lldb-dap when available. Each post-initialize command must receive a response
-# (success or structured failure) — silent no-op is a hard failure.
+# DAP-N10 / REL-N08 — real DAP adapter gate. Hard-fail when REQUIRE_REAL_DAP=1.
+# Exercises complete lifecycle against lldb-dap with Tests/Fixtures/DAP/smoke.c:
+# initialize / launch / configurationDone / setBreakpoints / stackTrace /
+# variables / evaluate / disconnect + process cleanup.
+# Each post-initialize command must receive a response (success or structured
+# failure) — silent no-op is a hard failure.
 set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REQUIRE="${REQUIRE_REAL_DAP:-0}"
 SEARCH_PATH="${CODEEDITOR_DAP_SEARCH_PATH:-}"
 OVERALL_TIMEOUT="${CODEEDITOR_DAP_TIMEOUT_SEC:-25}"
+FIXTURE_DIR="${CODEEDITOR_DAP_FIXTURE_DIR:-$ROOT/Tests/Fixtures/DAP}"
+FIXTURE_SRC="$FIXTURE_DIR/smoke.c"
+
+if [[ ! -f "$FIXTURE_SRC" ]]; then
+  echo "FAIL: DAP fixture missing at $FIXTURE_SRC"
+  exit 1
+fi
+echo "OK: fixtures present ($FIXTURE_SRC)"
 
 find_bin() {
   local name="$1"
@@ -34,46 +45,65 @@ if [[ -z "$found" ]]; then
     echo "FAIL: REQUIRE_REAL_DAP=1 but no lldb-dap/lldb-vscode on search path"
     exit 1
   fi
-  echo "OK: no real DAP adapter (soft mode REQUIRE_REAL_DAP=0)"
+  echo "OK: no real DAP adapter / no lldb-dap (soft mode REQUIRE_REAL_DAP=0); fixtures present"
   exit 0
 fi
 
 echo "OK: found $found"
 
-python3 - "$found" "$REQUIRE" <<'PY'
-import json, subprocess, sys, time, select, os, signal, tempfile, textwrap
+export CODEEDITOR_DAP_TIMEOUT_SEC="$OVERALL_TIMEOUT"
+python3 - "$found" "$REQUIRE" "$FIXTURE_SRC" <<'PY'
+import json, subprocess, sys, time, select, os, signal, tempfile, shutil
 
 adapter = sys.argv[1]
 require = sys.argv[2] == "1"
+fixture_src = sys.argv[3]
 deadline = time.time() + float(os.environ.get("CODEEDITOR_DAP_TIMEOUT_SEC", "20"))
 
 def frame(obj: dict) -> bytes:
     body = json.dumps(obj).encode()
     return f"Content-Length: {len(body)}\r\n\r\n".encode() + body
 
-# Tiny debuggee for launch/breakpoint surface
+# Compile committed fixture into a temp dir (do not mutate repo).
 dbg_dir = tempfile.mkdtemp(prefix="codeeditor-dap-")
 dbg_src = os.path.join(dbg_dir, "smoke.c")
 dbg_bin = os.path.join(dbg_dir, "smoke")
-with open(dbg_src, "w", encoding="utf-8") as f:
-    f.write(textwrap.dedent("""\
-        #include <stdio.h>
-        int main(void) {
-            int x = 1;
-            printf("codeeditor-dap-smoke %d\\n", x);
-            return 0;
-        }
-    """))
-# Best-effort compile; fall back to /bin/echo if clang missing
+shutil.copy2(fixture_src, dbg_src)
+
 compiled = False
 try:
-    c = subprocess.run(["clang", "-g", "-O0", "-o", dbg_bin, dbg_src], capture_output=True, timeout=15)
+    c = subprocess.run(
+        ["clang", "-g", "-O0", "-o", dbg_bin, dbg_src],
+        capture_output=True,
+        timeout=15,
+    )
     compiled = c.returncode == 0 and os.path.isfile(dbg_bin)
 except Exception:
     compiled = False
-program = dbg_bin if compiled else "/bin/echo"
-program_args = [] if compiled else ["codeeditor-dap-smoke"]
-bp_source = dbg_src if compiled else program
+
+if not compiled:
+    if require:
+        print("FAIL: could not compile Tests/Fixtures/DAP/smoke.c with clang", file=sys.stderr)
+        raise SystemExit(1)
+    print("WARN: fixture compile failed; soft mode falls back to /bin/echo")
+    program = "/bin/echo"
+    program_args = ["codeeditor-dap-smoke"]
+    bp_source = dbg_src
+    bp_line = 1
+else:
+    program = dbg_bin
+    program_args = []
+    bp_source = dbg_src
+    # Prefer the assignment line in smoke.c (int x = 42).
+    bp_line = 5
+    try:
+        with open(dbg_src, "r", encoding="utf-8") as f:
+            for i, line in enumerate(f, 1):
+                if "breakpoint_here" in line or "int x" in line:
+                    bp_line = i
+                    break
+    except Exception:
+        pass
 
 proc = subprocess.Popen(
     [adapter],
@@ -170,9 +200,7 @@ def pump(wait=3.0, want=None):
                     got_initialize = True
                 if want and cmd == want:
                     found = m
-                    # keep brief drain for trailing events
                     end = min(end, time.time() + 0.3)
-        # events extend slightly so we catch late responses (lldb-dap launch after configurationDone)
         elif m.get("type") == "event" and want:
             end = min(end + 0.2, time.time() + max(0.5, remaining()))
     return found if want else True
@@ -197,7 +225,7 @@ required_commands = [
 
 try:
     req_send("initialize", {
-        "clientID": "codeeditor-rel-n08",
+        "clientID": "codeeditor-dap-n10",
         "adapterID": "lldb",
         "pathFormat": "path",
         "linesStartAt1": True,
@@ -222,7 +250,7 @@ try:
         "cwd": dbg_dir,
         "stopOnEntry": True if compiled else False,
     })
-    pump(wait=1.5)  # drain initialized/process events
+    pump(wait=1.5)
     req_send("configurationDone", {})
     pump(wait=4.0, want="launch")
     pump(wait=2.0, want="configurationDone")
@@ -230,12 +258,11 @@ try:
 
     req_send("setBreakpoints", {
         "source": {"path": bp_source},
-        "breakpoints": [{"line": 3 if compiled else 1}],
+        "breakpoints": [{"line": bp_line}],
     })
     pump(wait=3.0, want="setBreakpoints")
     require_response("setBreakpoints")
 
-    # stack/vars/eval must answer (success may be false if not stopped)
     req_send("stackTrace", {"threadId": 1})
     pump(wait=3.0, want="stackTrace")
     st = require_response("stackTrace")
@@ -269,9 +296,13 @@ try:
         print("FAIL: missing DAP responses for: %s" % ", ".join(missing), file=sys.stderr)
         raise SystemExit(1 if require else 0)
 
-    print("OK: lldb-dap initialize/launch/breakpoint/stack/variables/evaluate/disconnect all answered")
+    print(
+        "OK: full session / complete lifecycle "
+        "initialize/launch/breakpoint/stack/variables/evaluate/disconnect all answered"
+    )
     raise SystemExit(0)
 finally:
+    # Process cleanup: ensure adapter (and debuggee) are not left running.
     try:
         if proc.poll() is None:
             proc.send_signal(signal.SIGTERM)
@@ -279,10 +310,14 @@ finally:
                 proc.wait(timeout=2)
             except Exception:
                 proc.kill()
-    except Exception:
-        pass
+                try:
+                    proc.wait(timeout=1)
+                except Exception:
+                    pass
+        print("OK: process cleanup (adapter SIGTERM/kill)")
+    except Exception as e:
+        print("WARN: process cleanup: %s" % e)
     try:
-        import shutil
         shutil.rmtree(dbg_dir, ignore_errors=True)
     except Exception:
         pass

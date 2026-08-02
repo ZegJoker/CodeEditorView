@@ -11,11 +11,23 @@ public actor MockDebugAdapter {
     private var stopped = false
     /// When true, issues reverse `runInTerminal` after launch.
     public var issueRunInTerminalOnLaunch: Bool = false
+    /// Added to requested line when verifying source breakpoints (DAP-N06 fixtures).
+    public var breakpointLineOffset: Int = 0
+    /// When true, all source breakpoints are returned unverified (DAP-N06).
+    public var rejectAllBreakpoints: Bool = false
     public private(set) var receivedCommands: [String] = []
     public private(set) var reverseRunInTerminalResult: DAPJSONObject?
 
     public func setIssueRunInTerminalOnLaunch(_ value: Bool) {
         issueRunInTerminalOnLaunch = value
+    }
+
+    public func setBreakpointLineOffset(_ value: Int) {
+        breakpointLineOffset = value
+    }
+
+    public func setRejectAllBreakpoints(_ value: Bool) {
+        rejectAllBreakpoints = value
     }
 
     public init(transport: any DAPTransport) {
@@ -116,11 +128,20 @@ public actor MockDebugAdapter {
         case "setBreakpoints":
             let bps = (args["breakpoints"] as? [[String: Any]]) ?? []
             let out = bps.enumerated().map { i, bp -> [String: Any] in
-                [
+                let requested = bp["line"] as? Int ?? 1
+                if rejectAllBreakpoints {
+                    return [
+                        "id": i + 1,
+                        "verified": false,
+                        "line": requested,
+                        "message": "rejected by mock adapter",
+                    ] as [String: Any]
+                }
+                return [
                     "id": i + 1,
                     "verified": true,
-                    "line": bp["line"] as? Int ?? 1,
-                ]
+                    "line": requested + breakpointLineOffset,
+                ] as [String: Any]
             }
             try? await respond(requestSeq: requestSeq, command: command, body: ["breakpoints": out])
         case "setFunctionBreakpoints":
@@ -254,6 +275,14 @@ public actor MockDebugAdapter {
                 body: [
                     "targets": [["label": "print", "text": "print", "type": "function"]]
                 ])
+        case "exceptionInfo":
+            try? await respond(
+                requestSeq: requestSeq, command: command,
+                body: [
+                    "exceptionId": "EXC_BAD_ACCESS",
+                    "description": "mock exception",
+                    "breakMode": "always",
+                ])
         default:
             try? await respond(requestSeq: requestSeq, command: command, success: false, message: "unknown \(command)")
         }
@@ -278,6 +307,7 @@ public actor MockDebugAdapter {
             "supportsDisassembleRequest": true,
             "supportsCancelRequest": true,
             "supportsInstructionBreakpoints": true,
+            "supportsExceptionInfoRequest": true,
             "supportTerminateDebuggee": true,
         ]
     }

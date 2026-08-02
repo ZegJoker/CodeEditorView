@@ -20,7 +20,7 @@
 | 5c | SCM | 9 | verified |
 | 6a | language/Tree-sitter | 7 | verified |
 | 6b | LSP | 13 | verified |
-| 7 | DAP | 10 | open |
+| 7 | DAP | 10 | fixed |
 | 8 | terminal/Ghostty | 10 | open |
 | 9a | extension package/signing | 20 | open |
 | 9b | capability broker | 16 | open |
@@ -39,6 +39,8 @@
 7. Commit after each finding or tight related group with message including finding IDs.
 
 ## Log
+
+- 2026-08-03: Phase 7 DAP — fixed DAP-N01…DAP-N10: OneShotPromise pending-before-send (no earlyResponses/unstructured Task); late responses discarded; inbound message lanes (response/state-ordered/independent/reverse-request); reverse missing handler fails closed; session state machine (initializing/terminating, requireConnection, no connection!); requested vs verified breakpoints; MockDebugAdapter only under Tests/; TerminalService-only runInTerminal (host+Ghostty); full workflow matrix + exceptionInfo; check-real-dap.sh + Tests/Fixtures/DAP/smoke.c lldb-dap hard gate. CodeEditorDAPTests 38 passed.
 
 - 2026-08-03: batch lsp verified — LSP-N01, LSP-N02, LSP-N03, LSP-N04, LSP-N05, LSP-N06, LSP-N07, LSP-N08, LSP-N09, LSP-N10, LSP-N11, LSP-N12, LSP-N13 status set to `verified` (all previously fixed with regression tests; CodeEditorLSPTests green, residual closed).
 - 2026-08-03: Phase 6b LSP verifier residual (2) — removed `LanguageServerSession.text(for:)` soft empty fallback entirely (requireText only; digester/symbol baselines updated); N12 hard-requires AsyncBroadcastHub stream delivery of versioned diagnostics (no `latestPublication` soft-OR); N13 requires literal `full session` success when sourcekit-lsp/clangd present (binary-name-only OK rejected). CodeEditorLSPTests 60 passed.
