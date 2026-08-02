@@ -79,6 +79,118 @@ public final class DAPTestTransport: DAPTransport, @unchecked Sendable {
     }
 }
 
+/// TCP client transport for remote debug adapters (`.connect` launch mode).
+public final class DAPTCPConnectTransport: DAPTransport, @unchecked Sendable {
+    private let state = DAPTransportState()
+    public let inbound: AsyncStream<Data>
+    private var input: InputStream?
+    private var output: OutputStream?
+    private var readerThread: Thread?
+    private let host: String
+    private let port: Int
+
+    public init(host: String, port: Int, timeoutSeconds: TimeInterval = 5) throws {
+        self.host = host
+        self.port = port
+        var cont: AsyncStream<Data>.Continuation!
+        self.inbound = AsyncStream { cont = $0 }
+        state.continuation = cont
+
+        var readStream: Unmanaged<CFReadStream>?
+        var writeStream: Unmanaged<CFWriteStream>?
+        CFStreamCreatePairWithSocketToHost(
+            kCFAllocatorDefault,
+            host as CFString,
+            UInt32(port),
+            &readStream,
+            &writeStream
+        )
+        guard let rs = readStream?.takeRetainedValue() as InputStream?,
+            let ws = writeStream?.takeRetainedValue() as OutputStream?
+        else {
+            throw DAPError.transport("TCP connect failed to create streams for \(host):\(port)")
+        }
+        self.input = rs
+        self.output = ws
+        rs.open()
+        ws.open()
+
+        // Brief connect wait
+        let deadline = Date().addingTimeInterval(timeoutSeconds)
+        while rs.streamStatus == .opening || ws.streamStatus == .opening {
+            if Date() > deadline {
+                rs.close()
+                ws.close()
+                throw DAPError.transport("TCP connect timeout \(host):\(port)")
+            }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        if rs.streamStatus == .error || ws.streamStatus == .error {
+            rs.close()
+            ws.close()
+            throw DAPError.transport("TCP connect error \(host):\(port)")
+        }
+
+        let inputRef = rs
+        let stateRef = state
+        readerThread = Thread {
+            var buffer = [UInt8](repeating: 0, count: 16 * 1024)
+            while !stateRef.withLock({ $0.closed }) {
+                let n = inputRef.read(&buffer, maxLength: buffer.count)
+                if n < 0 { break }
+                if n == 0 {
+                    if inputRef.streamStatus == .atEnd { break }
+                    Thread.sleep(forTimeInterval: 0.005)
+                    continue
+                }
+                let data = Data(buffer[0..<n])
+                let cont = stateRef.withLock { $0.closed ? nil : $0.continuation }
+                cont?.yield(data)
+            }
+            let cont = stateRef.withLock { s -> AsyncStream<Data>.Continuation? in
+                s.closed = true
+                let c = s.continuation
+                s.continuation = nil
+                return c
+            }
+            cont?.finish()
+        }
+        readerThread?.name = "DAPTCPConnectTransport.reader"
+        readerThread?.start()
+    }
+
+    public func send(_ data: Data) async throws {
+        let closed = state.withLock { $0.closed }
+        if closed { throw DAPError.transportClosed }
+        guard let output else { throw DAPError.transportClosed }
+        try data.withUnsafeBytes { raw in
+            guard let base = raw.bindMemory(to: UInt8.self).baseAddress else {
+                throw DAPError.transport("empty write")
+            }
+            var written = 0
+            let total = data.count
+            while written < total {
+                let n = output.write(base.advanced(by: written), maxLength: total - written)
+                if n <= 0 { throw DAPError.transport("TCP write failed") }
+                written += n
+            }
+        }
+    }
+
+    public func close() async {
+        let cont = state.withLock { s -> AsyncStream<Data>.Continuation? in
+            if s.closed { return nil }
+            s.closed = true
+            let c = s.continuation
+            s.continuation = nil
+            return c
+        }
+        input?.close()
+        output?.close()
+        cont?.finish()
+    }
+}
+
 /// Stdio process transport for local debug adapters.
 public final class DAPProcessTransport: DAPTransport, @unchecked Sendable {
     private let process: Process

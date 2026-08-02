@@ -16,6 +16,11 @@ public actor GhosttyRunInTerminalHandler: DAPRunInTerminalHandler {
     }
 
     public func runInTerminal(args: DAPRunInTerminalArgs) async throws -> DAPRunInTerminalResult {
+        // DAP-003 / §14.5: fail closed when workspace is not trusted.
+        let policy = await service.securityPolicy
+        if !policy.workspaceTrusted {
+            throw DAPError.unsupported("runInTerminal denied: workspace untrusted")
+        }
         var cfg = TerminalConfiguration()
         if let cwd = args.cwd {
             cfg.cwd = URL(fileURLWithPath: cwd)

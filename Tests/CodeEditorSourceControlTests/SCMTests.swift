@@ -197,7 +197,7 @@ struct SCMTests {
         try run(["add", "hello world.swift"])
         try run(["commit", "-m", "init"])
 
-        let provider = GitCLIProvider(repositoryRoot: root)
+        let provider = GitCLIProvider(repositoryRoot: root, trusted: true)
         let status = try await provider.status()
         #expect(status.isEmpty || status.allSatisfy { $0.state != .conflicted })
 
@@ -237,7 +237,8 @@ struct SCMTests {
     @Test func gitCLIFailsClosedWhenProfileDenies() async {
         let provider = GitCLIProvider(
             repositoryRoot: URL(fileURLWithPath: "/tmp"),
-            platformProfile: .processUnavailable
+            platformProfile: .processUnavailable,
+            trusted: true
         )
         do {
             _ = try await provider.status()

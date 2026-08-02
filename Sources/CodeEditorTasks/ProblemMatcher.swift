@@ -224,6 +224,60 @@ public enum ProblemMatcherEngine {
         return results
     }
 
+    /// Streaming matcher with rolling window for chunk-split lines (TASK-002).
+    public final class StreamingState: @unchecked Sendable {
+        private var buffer = ""
+        private let windowMax = 64 * 1024
+        private var problems: [MatchedProblem] = []
+        private let matchers: [ProblemMatcher]
+        private let cwd: URL?
+        private let workspaceRoot: URL?
+
+        public init(matchers: [ProblemMatcher], cwd: URL?, workspaceRoot: URL? = nil) {
+            self.matchers = matchers
+            self.cwd = cwd
+            self.workspaceRoot = workspaceRoot
+        }
+
+        public var results: [MatchedProblem] { problems }
+
+        public func append(_ chunk: String) {
+            buffer += chunk
+            if buffer.count > windowMax {
+                buffer = String(buffer.suffix(windowMax))
+            }
+            consumeCompleteLines(flush: false)
+        }
+
+        public func flush() {
+            consumeCompleteLines(flush: true)
+        }
+
+        private func consumeCompleteLines(flush: Bool) {
+            var lines = buffer.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+            if !flush {
+                // Keep incomplete last line in buffer.
+                if !buffer.hasSuffix("\n") {
+                    buffer = lines.popLast() ?? ""
+                } else {
+                    buffer = ""
+                    if lines.last == "" { lines.removeLast() }
+                }
+            } else {
+                buffer = ""
+            }
+            let joined = lines.joined(separator: "\n")
+            let more = ProblemMatcherEngine.matchAll(
+                text: joined, matchers: matchers, cwd: cwd, workspaceRoot: workspaceRoot)
+            problems.append(contentsOf: more)
+            if let max = matchers.map(\.maxProblems).min() {
+                if problems.count > max {
+                    problems = Array(problems.prefix(max))
+                }
+            }
+        }
+    }
+
     /// Returns nil when path escapes workspace root.
     public static func normalizePath(
         _ raw: String,

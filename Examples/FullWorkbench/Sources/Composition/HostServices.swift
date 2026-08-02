@@ -141,7 +141,7 @@ final class HostServices {
         }))
 
         // Git provider if repo exists.
-        await scm.setProvider(GitCLIProvider(repositoryRoot: rootURL))
+        await scm.setProvider(GitCLIProvider(repositoryRoot: rootURL, trusted: true))
         await refreshSCM()
 
         // Terminal backend + session.

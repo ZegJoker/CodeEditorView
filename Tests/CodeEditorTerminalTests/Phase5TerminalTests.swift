@@ -161,7 +161,7 @@ struct Phase5GhosttyControllerTests {
 @Suite("Phase5 DAP runInTerminal")
 struct Phase5DAPTerminalTests {
     @Test func runInTerminalCreatesDebuggeeSession() async throws {
-        let service = TerminalService()
+        let service = TerminalService(securityPolicy: .trusted)
         let handler = GhosttyRunInTerminalHandler(service: service) {
             MockByteTransport()
         }
@@ -178,6 +178,30 @@ struct Phase5DAPTerminalTests {
         let sessions = await service.allSessions()
         #expect(sessions.contains { $0.metadata.kind == .debuggee })
         await service.closeAll()
+    }
+
+    @Test func runInTerminalDeniedWhenUntrusted() async throws {
+        let service = TerminalService(securityPolicy: .restricted)
+        let handler = GhosttyRunInTerminalHandler(service: service) {
+            MockByteTransport()
+        }
+        do {
+            _ = try await handler.runInTerminal(
+                args: DAPRunInTerminalArgs(
+                    kind: "integrated",
+                    title: "Debug",
+                    cwd: nil,
+                    args: ["/bin/sh"],
+                    env: nil
+                )
+            )
+            Issue.record("expected untrusted deny")
+        } catch let error as DAPError {
+            guard case .unsupported = error else {
+                Issue.record("wrong \(error)")
+                return
+            }
+        }
     }
 }
 

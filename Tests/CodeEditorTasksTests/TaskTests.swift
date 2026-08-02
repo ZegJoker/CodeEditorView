@@ -150,8 +150,8 @@ struct TaskTests {
         }
     }
 
-    @Test func variableResolution() {
-        let text = TaskVariableResolver.resolve(
+    @Test func variableResolution() throws {
+        let text = try TaskVariableResolver.resolve(
             "${workspaceFolder}/src",
             variables: ["workspaceFolder": "/proj"]
         )

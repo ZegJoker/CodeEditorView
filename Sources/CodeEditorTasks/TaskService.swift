@@ -166,11 +166,9 @@ public actor TaskService {
             run.state = .cancelled
             runs[runID] = run
         }
+        // Signal cancel only — exclusive concurrency groups are released when
+        // the handle completes (process death), not here (TASK-003 / §18.4).
         handles[runID]?.cancel()
-        // Release concurrency locks held by this run
-        for (group, holder) in groupLocks where holder == runID {
-            groupLocks[group] = nil
-        }
     }
 
     public func runSnapshot(id: UUID) -> TaskRun? {
@@ -184,7 +182,7 @@ public actor TaskService {
         guard var def = definitions[id] else {
             throw TaskError.notFound(id.rawValue)
         }
-        def = TaskVariableResolver.resolveDefinition(def, extraVariables: extraVariables)
+        def = try TaskVariableResolver.resolveDefinition(def, extraVariables: extraVariables)
 
         if let group = def.concurrencyGroup {
             if let holder = groupLocks[group], def.isExclusive || handles[holder]?.run.state == .running {

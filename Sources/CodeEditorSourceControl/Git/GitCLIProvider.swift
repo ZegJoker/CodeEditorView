@@ -10,15 +10,16 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
     public var platformProfile: PlatformCapabilityProfile
     public var trusted: Bool
     public var auth: (any SCMAuthCallback)?
-    private let processService: ProcessService
+    private let processService: ProcessSupervisor
     private let lock = NSLock()
-    private var activeHandle: ProcessHandle?
+    /// Per-operation handles (SCM-002 / §19.4) — never a single shared cancel target.
+    private var activeHandles: [UUID: ProcessHandle] = [:]
 
     public init(
         repositoryRoot: URL,
         executable: URL = URL(fileURLWithPath: "/usr/bin/git"),
         platformProfile: PlatformCapabilityProfile = .default(),
-        trusted: Bool = true,
+        trusted: Bool = false,
         auth: (any SCMAuthCallback)? = nil
     ) {
         self.repositoryRoot = repositoryRoot
@@ -26,10 +27,11 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
         self.platformProfile = platformProfile
         self.trusted = trusted
         self.auth = auth
-        self.processService = ProcessService(profile: platformProfile)
+        self.processService = ProcessSupervisor(profile: platformProfile)
     }
 
     public func status() async throws -> [SCMFileStatus] {
+        try requireTrusted(forWrite: false)
         let data = try await runData(["status", "--porcelain=v1", "-z", "-uall"])
         return GitPorcelain.parseStatusZ(data, repositoryRoot: repositoryRoot)
     }
@@ -140,76 +142,76 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
     }
 
     public func stage(uris: [DocumentURI]) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let paths = try uris.map { try relativePath(for: $0) }
         guard !paths.isEmpty else { return }
         _ = try await runString(["add", "--"] + paths)
     }
 
     public func unstage(uris: [DocumentURI]) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let paths = try uris.map { try relativePath(for: $0) }
         guard !paths.isEmpty else { return }
         _ = try await runString(["restore", "--staged", "--"] + paths)
     }
 
     public func discard(uris: [DocumentURI]) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let paths = try uris.map { try relativePath(for: $0) }
         guard !paths.isEmpty else { return }
         _ = try await runString(["checkout", "--"] + paths)
     }
 
     public func stageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let path = try relativePath(for: uri)
         let patch = makePatch(path: path, hunk: hunk)
         try await applyPatch(patch, cached: true, reverse: false)
     }
 
     public func unstageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let path = try relativePath(for: uri)
         let patch = makePatch(path: path, hunk: hunk)
         try await applyPatch(patch, cached: true, reverse: true)
     }
 
     public func discardHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let path = try relativePath(for: uri)
         let patch = makePatch(path: path, hunk: hunk)
         try await applyPatch(patch, cached: false, reverse: true)
     }
 
     public func commit(message: String) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         _ = try await runString(["commit", "-m", message])
     }
 
     public func checkout(branch: String) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         _ = try await runString(["checkout", branch])
     }
 
     public func createBranch(_ name: String) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         _ = try await runString(["branch", name])
     }
 
     public func deleteBranch(_ name: String) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         _ = try await runString(["branch", "-d", name])
     }
 
     public func fetch(remote: String?) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         var args = ["fetch"]
         if let remote { args.append(remote) }
         _ = try await runString(args)
     }
 
     public func pull(remote: String?, branch: String?) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         var args = ["pull"]
         if let remote { args.append(remote) }
         if let branch { args.append(branch) }
@@ -217,7 +219,7 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
     }
 
     public func push(remote: String?, branch: String?) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         var args = ["push"]
         if let remote { args.append(remote) }
         if let branch { args.append(branch) }
@@ -225,7 +227,7 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
     }
 
     public func resolveConflict(uri: DocumentURI, side: SCMConflictSide) async throws {
-        try requireTrusted()
+        try requireTrusted(forWrite: true)
         let path = try relativePath(for: uri)
         switch side {
         case .ours:
@@ -239,42 +241,58 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
     }
 
     public func cancel() async {
-        takeActiveHandle()?.cancel()
+        // NSLock is unavailable in async contexts — snapshot under nonisolated helper.
+        let handles = snapshotActiveHandles()
+        for h in handles { h.cancel() }
     }
 
-    nonisolated private func takeActiveHandle() -> ProcessHandle? {
+    nonisolated private func snapshotActiveHandles() -> [ProcessHandle] {
         lock.lock()
-        let handle = activeHandle
+        defer { lock.unlock() }
+        return Array(activeHandles.values)
+    }
+
+    nonisolated private func trackHandle(_ id: UUID, _ handle: ProcessHandle) {
+        lock.lock()
+        activeHandles[id] = handle
         lock.unlock()
-        return handle
     }
 
-    nonisolated private func setActiveHandle(_ handle: ProcessHandle?) {
+    nonisolated private func untrackHandle(_ id: UUID) {
         lock.lock()
-        activeHandle = handle
+        activeHandles[id] = nil
         lock.unlock()
     }
 
     // MARK: - Private
 
-    private func requireTrusted() throws {
-        if !trusted { throw SCMError.untrusted }
+    private func requireTrusted(forWrite: Bool) throws {
+        // Read-only status may still run when trusted==false for discovery only if policy allows.
+        // Default fail-closed for write ops; reads allowed only when trusted for hooks safety.
+        if !trusted {
+            throw SCMError.untrusted
+        }
+        _ = forWrite
     }
 
     private func relativePath(for uri: DocumentURI) throws -> String {
         guard let path = uri.fileURL?.path else {
-            // Allow inmemory relative raw values for tests
             if !uri.rawValue.hasPrefix("file:") {
                 return try GitRepositoryDiscovery.validateRelativePath(uri.rawValue, root: repositoryRoot)
             }
             throw SCMError.notFound(uri.rawValue)
         }
-        let root = repositoryRoot.standardizedFileURL.path
-        let full = URL(fileURLWithPath: path).standardizedFileURL.path
-        guard full.hasPrefix(root) else {
+        let root = repositoryRoot.standardizedFileURL
+        let full = URL(fileURLWithPath: path).standardizedFileURL
+        // Component-aware containment (SCM §19.5) — not string hasPrefix alone.
+        let rootParts = root.pathComponents
+        let fullParts = full.pathComponents
+        guard fullParts.count >= rootParts.count,
+            Array(fullParts.prefix(rootParts.count)) == rootParts
+        else {
             throw SCMError.pathEscape(path)
         }
-        var rel = String(full.dropFirst(root.count))
+        var rel = String(full.path.dropFirst(root.path.count))
         if rel.hasPrefix("/") { rel = String(rel.dropFirst()) }
         return try GitRepositoryDiscovery.validateRelativePath(rel, root: repositoryRoot)
     }
@@ -316,18 +334,24 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
 
     private func runData(_ arguments: [String]) async throws -> Data {
         try platformProfile.requireLocal(.localGitCLI)
+        try requireTrusted(forWrite: false)
         let request = ProcessLaunchRequest(
             executable: executable.path,
             arguments: arguments,
             mode: .direct,
             currentDirectory: repositoryRoot,
-            environment: [:],
+            environment: [
+                "GIT_TERMINAL_PROMPT": "0",
+                "GIT_OPTIONAL_LOCKS": "0",
+            ],
             mergeEnvironment: true,
             timeout: .seconds(120),
             capabilityKind: .localGitCLI
         )
+        let opID = UUID()
         let handle = try processService.launch(request)
-        setActiveHandle(handle)
+        trackHandle(opID, handle)
+        defer { untrackHandle(opID) }
         var out = Data()
         var err = Data()
         var code: Int32 = -1
@@ -340,7 +364,6 @@ public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
                 code = c
             }
         }
-        setActiveHandle(nil)
         if code != 0 {
             let e = String(data: err, encoding: .utf8) ?? String(decoding: err, as: UTF8.self)
             if e.lowercased().contains("not a git repository") {

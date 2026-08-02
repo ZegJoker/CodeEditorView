@@ -190,10 +190,18 @@ public enum ShellQuoting {
             return (process.terminationStatus, false)
         }
 
+        /// Cancel and **wait for process death** before finishing the event stream
+        /// so exclusive task slots are not released early (TASK-003 / §18.4).
         public func cancel() {
+            if isTerminated { return }
             terminateProcessGroup()
-            // Prefer exit code 143 (SIGTERM) without reading terminationStatus while still running.
-            drainAndFinish(code: 143, timedOut: false)
+            // Block until the OS reaps the process (or it already exited).
+            if process.isRunning {
+                process.waitUntilExit()
+            }
+            let code = process.terminationStatus
+            // Prefer SIGTERM convention when the process had no normal exit code.
+            drainAndFinish(code: code == 0 ? 143 : code, timedOut: false)
         }
 
         /// TERM process group, then KILL after grace.
@@ -295,6 +303,12 @@ public enum ShellQuoting {
 #endif
 
 /// Launches local processes with streaming I/O and process-group lifecycle.
+/// Shared non-PTY process supervisor used by tasks, Git, and helpers (PROC-001 / §18.10).
+///
+/// Provides process-group launch, streaming I/O with byte caps, timeout, and
+/// cancellation that waits for process death before releasing exclusivity.
+public typealias ProcessSupervisor = ProcessService
+
 public struct ProcessService: Sendable {
     public var profile: PlatformCapabilityProfile
 

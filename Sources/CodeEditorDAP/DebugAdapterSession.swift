@@ -433,8 +433,8 @@ public actor DebugAdapterSession {
             )
         case .test(let factoryID):
             throw DAPError.unsupported("test factory \(factoryID) requires pool registration")
-        case .connect:
-            throw DAPError.unsupported("TCP connect transport: use custom factory in host")
+        case .connect(let host, let port):
+            return try DAPTCPConnectTransport(host: host, port: port)
         case .custom(let factory):
             return try await factory()
         }

@@ -109,21 +109,15 @@ public actor DAPJSONRPCConnection {
             message["arguments"] = arguments.dictionary
         }
         let body = try JSONSerialization.data(withJSONObject: message)
+        let framed = DAPMessageFraming.encode(body)
 
-        // DAP-001: register pending continuation **before** transport write so a fast
-        // in-memory adapter cannot race past registration (no earlyResponses path needed
-        // on the happy path).
+        // DAP-001 / §14.1: register-before-send on this actor (mirrors LSP-002).
         return try await withThrowingTaskGroup(of: Data.self) { group in
             group.addTask {
-                try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-                    Task {
-                        await self.registerPendingThenSend(id: id, body: body, cont: cont)
-                    }
-                }
+                try await self.executeRegisteredRequest(id: id, framed: framed)
             }
             group.addTask {
                 try await Task.sleep(for: self.requestTimeout)
-                await self.failPending(id: id, error: DAPError.timeout(method: command))
                 throw DAPError.timeout(method: command)
             }
             do {
@@ -132,27 +126,38 @@ public actor DAPJSONRPCConnection {
                 return result
             } catch {
                 group.cancelAll()
-                await self.removePending(id: id)
+                await self.failPending(id: id, error: error)
                 throw error
             }
         }
     }
 
+    /// Actor-isolated: install continuation, then write. Resume happens in dispatchMessage.
+    private func executeRegisteredRequest(id: RequestID, framed: Data) async throws -> Data {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            Task { await self.registerPendingThenSend(id: id, framed: framed, cont: cont) }
+        }
+    }
+
     private func registerPendingThenSend(
         id: RequestID,
-        body: Data,
+        framed: Data,
         cont: CheckedContinuation<Data, Error>
     ) async {
+        if closed {
+            cont.resume(throwing: DAPError.transportClosed)
+            return
+        }
         if let early = earlyResponses.removeValue(forKey: id) {
             cont.resume(returning: early)
             return
         }
+        // Register **before** any await on the wire (DAP-001).
         pending[id] = cont
         do {
-            try await transport.send(DAPMessageFraming.encode(body))
+            try await transport.send(framed)
         } catch {
-            pending.removeValue(forKey: id)
-            cont.resume(throwing: error)
+            failPending(id: id, error: error)
         }
     }
 
@@ -184,14 +189,23 @@ public actor DAPJSONRPCConnection {
         }
     }
 
+    /// Serial inbound chain (DAP-002 / §14.2) — preserve event order.
+    private var inboundChain: Task<Void, Never>?
+    private let maxEarlyResponses = 8
+    public private(set) var earlyResponseCount: Int = 0
+
     private func handleInbound(_ chunk: Data) {
         let messages = decoder.append(chunk)
         if let err = decoder.lastError {
             lastFramingError = err
             log.append(level: .warning, message: "framing: \(err)")
         }
-        for message in messages {
-            Task { await self.dispatchMessage(message) }
+        let previous = inboundChain
+        inboundChain = Task {
+            await previous?.value
+            for message in messages {
+                await self.dispatchMessage(message)
+            }
         }
     }
 
@@ -210,7 +224,10 @@ public actor DAPJSONRPCConnection {
             if let cont = pending.removeValue(forKey: id) {
                 cont.resume(returning: body)
             } else {
-                earlyResponses[id] = body
+                earlyResponseCount += 1
+                if earlyResponses.count < maxEarlyResponses {
+                    earlyResponses[id] = body
+                }
             }
         case "event":
             let event = obj["event"] as? String ?? ""

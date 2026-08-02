@@ -9,6 +9,7 @@ public enum DAPProtocolVersion {
 
 public enum DAPError: Error, Sendable, Equatable {
     case transportClosed
+    case transport(String)
     case timeout(method: String)
     case adapterError(code: Int, message: String)
     case decode(String)
