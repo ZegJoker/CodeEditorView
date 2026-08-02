@@ -20,7 +20,7 @@
 | 5c | SCM | 9 | verified |
 | 6a | language/Tree-sitter | 7 | verified |
 | 6b | LSP | 13 | verified |
-| 7 | DAP | 10 | fixed |
+| 7 | DAP | 10 | verified |
 | 8 | terminal/Ghostty | 10 | open |
 | 9a | extension package/signing | 20 | open |
 | 9b | capability broker | 16 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch dap verified — DAP-N01, DAP-N02, DAP-N03, DAP-N04, DAP-N05, DAP-N06, DAP-N07, DAP-N08, DAP-N09, DAP-N10 status set to `verified` (all previously fixed with regression tests; CodeEditorDAPTests green, residual closed).
 - 2026-08-03: Phase 7 DAP verifier residual — DAP-N09 crash→failed/crashed + framing resync + cancellation + restart budget reconnection; DAP-N10 check-real-dap.sh require_success (stackTrace/evaluate True), breakpoint hit, x=42 (no success=false green-wash); smoke.c marker after assignment. CodeEditorDAPTests 42 passed.
 - 2026-08-03: Phase 7 DAP — fixed DAP-N01…DAP-N10: OneShotPromise pending-before-send (no earlyResponses/unstructured Task); late responses discarded; inbound message lanes (response/state-ordered/independent/reverse-request); reverse missing handler fails closed; session state machine (initializing/terminating, requireConnection, no connection!); requested vs verified breakpoints; MockDebugAdapter only under Tests/; TerminalService-only runInTerminal (host+Ghostty); full workflow matrix + exceptionInfo; check-real-dap.sh + Tests/Fixtures/DAP/smoke.c lldb-dap hard gate. CodeEditorDAPTests 38 passed.
 
