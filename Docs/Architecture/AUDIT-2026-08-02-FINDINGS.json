@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked “fixed” rows",
+      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the “durable” claim",
+      "severity_raw": "P1 for the \u201cdurable\u201d claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
     },
     {
       "id": "CORE-N03",
@@ -932,7 +932,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for “gitignore-compatible” claim",
+      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "verified",
@@ -1280,7 +1280,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_responseBeforeWaitCompletesWithoutEarlyMap",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_usesOneShotPromiseNotUnstructuredRegistrationTask"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N02",
@@ -1293,7 +1293,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_slowNotificationDoesNotStallResponse",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_stateOrderedNotificationsPreserveOrder"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N03",
@@ -1305,7 +1305,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N03_synchronizeRequiresBaseAndTransaction"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N04",
@@ -1318,7 +1318,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N04_capabilityAndPolicyDriveIncrementalVsFull",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N04_versionGapForcesFullResync"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N05",
@@ -1330,7 +1330,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N05_streamGapTriggersFullResync"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N06",
@@ -1343,7 +1343,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N06_saveFlushesPendingChangeBeforeDidSave",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N06_closeCancelsDebounceAndSendsClose"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N07",
@@ -1356,7 +1356,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateNotCommittedWhenNotifyFails",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateCommittedAfterSuccessfulSend"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N08",
@@ -1368,7 +1368,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N08_decodesChangesDocumentChangesAndResourceOps"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N09",
@@ -1378,9 +1378,10 @@
       "phase": 6,
       "status": "fixed",
       "regression_tests": [
-        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_missingSnapshotThrowsNotEmptyText"
+        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_missingSnapshotThrowsNotEmptyText",
+        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_navigationMissingTargetThrowsNotEmptyRange"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N10",
@@ -1392,7 +1393,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N10_unregisterExactRegistrationIDNotMethodCount"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N11",
@@ -1404,7 +1405,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N11_jsonValuePreservesScalarsArraysObjectsNull"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N12",
@@ -1416,20 +1417,22 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N12_diagnosticsCarryVersionGenerationSequenceAndBound"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current “real LSP” gate is not an integration test",
+      "title": "current \u201creal LSP\u201d gate is not an integration test",
       "phase": 6,
       "status": "fixed",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_checkRealLspIsIntegrationFixtureNotProbeOnly",
-        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_fixtureFilesPresent"
+        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_fixtureFilesPresent",
+        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_executesIntegrationSessionScript",
+        "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_inProcessIntegrationSessionSteps"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
     },
     {
       "id": "DAP-N01",
@@ -1445,7 +1448,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as “early” responses",
+      "title": "late responses are retained as \u201cearly\u201d responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1585,7 +1588,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n²)-prone",
+      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1735,7 +1738,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process “argsGlob” is not a glob",
+      "title": "process \u201cargsGlob\u201d is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1805,7 +1808,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one “passing” flag",
+      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -2155,7 +2158,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution “fault isolation” is not isolation",
+      "title": "contribution \u201cfault isolation\u201d is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

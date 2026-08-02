@@ -151,8 +151,16 @@ struct LSPClientE2ETests {
         let registry = LanguageServiceRegistry()
         _ = await LSPClientProviders.register(session: session, into: registry)
         let host = LanguageServiceHost(registry: registry)
+        let uri = DocumentURI(rawValue: "inmemory:x")
+        // Open target so definition range conversion fail-closes only on true misses (LSP-N09).
+        try await session.didOpen(
+            uri: uri,
+            languageID: "swift",
+            version: DocumentVersion(rawValue: 1),
+            text: "func"
+        )
         let doc = DocumentSnapshot(version: DocumentVersion(rawValue: 1), text: "func")
-        let ctx = LanguageServiceContext(languageID: "swift", uri: DocumentURI(rawValue: "inmemory:x"))
+        let ctx = LanguageServiceContext(languageID: "swift", uri: uri)
         let pos = PositionRequest(
             document: doc,
             position: TextPosition(utf16Offset: 0),

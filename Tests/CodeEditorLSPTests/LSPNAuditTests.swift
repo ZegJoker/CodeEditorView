@@ -259,9 +259,9 @@ struct LSPN03N04SynchronizeTests {
     }
 
     @Test @MainActor func test_LSP_N04_capabilityAndPolicyDriveIncrementalVsFull() async throws {
+        // preferIncremental + server incremental capability → incremental didChange (not full text).
         let (session, mock, _, _) = try await makeMockSession(id: "n04")
         let uri = DocumentURI(rawValue: "file:///n04.swift")
-        // Use session.synchronize without live observation races for policy unit test.
         try await session.didOpen(
             uri: uri,
             languageID: "swift",
@@ -269,6 +269,7 @@ struct LSPN03N04SynchronizeTests {
             text: "abc"
         )
         #expect(await session.capabilities.textDocumentSyncKind == .incremental)
+        #expect(await session.capabilities.incrementalSync == true)
         let old = DocumentSnapshot(version: DocumentVersion(rawValue: 1), text: "abc")
         let applied = AppliedEditTransaction(
             transaction: .single(range: NSRange(location: 3, length: 0), replacement: "d"),
@@ -288,30 +289,34 @@ struct LSPN03N04SynchronizeTests {
             to: new
         )
         try await waitUntil { await mock.changeCount >= 1 }
-        let afterInc = await mock.currentOpenText(uri: uri.rawValue)
-        #expect(afterInc == "abcd")
-        let wasIncFull = await mock.lastChangeWasFullText
-        #expect(wasIncFull == false)
+        #expect(await mock.currentOpenText(uri: uri.rawValue) == "abcd")
+        #expect(await mock.lastChangeWasFullText == false)
+        await session.shutdown()
 
-        // Force full via host policy on a fresh synchronizer lane path.
+        // forceFull host policy on a dedicated session — must send full-text didChange.
+        let (session2, mock2, _, _) = try await makeMockSession(id: "n04full")
+        let uri2 = DocumentURI(rawValue: "file:///n04full.swift")
         let syncFull = LSPDocumentSynchronizer(
-            session: session,
+            session: session2,
             options: LSPSyncOptions(changeDebounceNanoseconds: 0, syncPolicy: .forceFull)
         )
-        let doc = TextDocument(uri: uri, text: "abcd")
-        // Align document version with server after open path.
+        let doc = TextDocument(uri: uri2, text: "abcd")
         await syncFull.open(document: doc, languageID: "swift")
+        try await waitUntil { await mock2.openCount >= 1 }
         let old2 = doc.snapshot()
         let applied2 = try doc.apply(.single(range: NSRange(location: 4, length: 0), replacement: "e"))
         let new2 = doc.snapshot()
-        // Cancel observation races by using forceFull synchronize only after apply settles.
-        try await Task.sleep(nanoseconds: 20_000_000)
+        // Explicit synchronize after observation settles so the asserted change is policy-driven.
+        try await waitUntil { await mock2.changeCount >= 1 }
         try await syncFull.synchronize(document: doc, from: old2, applying: applied2, to: new2)
-        try await waitUntil { await mock.changeCount >= 2 }
-        let wasFull = await mock.lastChangeWasFullText
-        let serverText = await mock.currentOpenText(uri: uri.rawValue)
-        #expect(wasFull == true || serverText == "abcde")
-        await session.shutdown()
+        try await waitUntil {
+            await mock2.currentOpenText(uri: uri2.rawValue) == "abcde"
+        }
+        #expect(await mock2.lastChangeWasFullText == true)
+        #expect(await mock2.currentOpenText(uri: uri2.rawValue) == "abcde")
+        #expect(new2.text == "abcde")
+        _ = applied2
+        await session2.shutdown()
     }
 
     @Test @MainActor func test_LSP_N04_versionGapForcesFullResync() async throws {
@@ -320,24 +325,22 @@ struct LSPN03N04SynchronizeTests {
         let doc = TextDocument(uri: uri, text: "v1")
         let sync = LSPDocumentSynchronizer(
             session: session,
-            options: LSPSyncOptions(changeDebounceNanoseconds: 0, syncPolicy: .preferIncremental)
+            options: LSPSyncOptions(changeDebounceNanoseconds: 50_000_000, syncPolicy: .preferIncremental)
         )
         await sync.open(document: doc, languageID: "swift")
-        // Simulate version gap by applying two edits but only synchronizing the second with stale base.
+        try await waitUntil { await mock.openCount >= 1 }
+        let opensBefore = await mock.openCount
+        // Local edits without waiting for debounce — then force gap recovery full resync.
         _ = try doc.apply(.single(range: NSRange(location: 2, length: 0), replacement: "a"))
-        let mid = doc.snapshot()
-        let applied2 = try doc.apply(.single(range: NSRange(location: 3, length: 0), replacement: "b"))
-        let new = doc.snapshot()
-        // from mid is continuous for applied2 — first force a gap via explicit resync API.
+        _ = try doc.apply(.single(range: NSRange(location: 3, length: 0), replacement: "b"))
+        let expected = doc.text
+        #expect(expected == "v1ab")
         try await sync.handleSequenceGap(document: doc, languageID: "swift")
-        try await waitUntil {
-            let changes = await mock.changeCount
-            let opens = await mock.openCount
-            return changes >= 1 || opens >= 2
-        }
+        // Gap recovery reopens (close+didOpen) with full current text.
+        try await waitUntil { await mock.openCount > opensBefore }
         let serverText = await mock.currentOpenText(uri: uri.rawValue)
-        #expect(serverText == new.text || serverText == mid.text || serverText != nil)
-        _ = applied2
+        #expect(serverText == expected)
+        #expect(await mock.openCount >= opensBefore + 1)
         await session.shutdown()
     }
 }
@@ -383,23 +386,25 @@ struct LSPN06DocumentLaneTests {
             options: LSPSyncOptions(changeDebounceNanoseconds: 200_000_000, syncPolicy: .forceFull)
         )
         await sync.open(document: doc, languageID: "swift")
+        try await waitUntil { await mock.openCount >= 1 }
         _ = try doc.apply(.single(range: NSRange(location: 1, length: 0), replacement: "y"))
-        // Save must flush pending debounced change first.
+        // Save must flush pending debounced change first, then didSave (hard barrier).
         await sync.noteSaved(uri: uri, text: doc.text)
-        try await waitUntil { await mock.changeCount >= 1 }
+        try await waitUntil {
+            let methods = await mock.receivedMethods
+            return methods.contains("textDocument/didChange")
+                && methods.contains("textDocument/didSave")
+        }
         let methods = await mock.receivedMethods
-        // Order among the final save barrier: last didChange must precede last didSave.
         let changeIdx = methods.lastIndex(of: "textDocument/didChange")
         let saveIdx = methods.lastIndex(of: "textDocument/didSave")
-        #expect(changeIdx != nil)
-        if let c = changeIdx, let s = saveIdx {
-            #expect(c < s, "didChange index \(c) should be before didSave \(s); methods=\(methods)")
-        } else if saveIdx == nil {
-            // Save may be omitted by mock tracking; change flush is the critical barrier.
-            #expect(await mock.changeCount >= 1)
-        }
-        let text = await mock.currentOpenText(uri: uri.rawValue)
-        #expect(text == "xy")
+        #expect(changeIdx != nil, "didChange required before save; methods=\(methods)")
+        #expect(saveIdx != nil, "didSave required; methods=\(methods)")
+        #expect(
+            changeIdx! < saveIdx!,
+            "didChange index \(changeIdx!) must be before didSave \(saveIdx!); methods=\(methods)"
+        )
+        #expect(await mock.currentOpenText(uri: uri.rawValue) == "xy")
         await session.shutdown()
     }
 
@@ -597,6 +602,125 @@ struct LSPN09SnapshotTests {
         #expect(source.contains("snapshotUnavailable") || source.contains("throw"))
         await session.shutdown()
     }
+
+    /// Navigation adapters must fail closed when the target URI has no snapshot.
+    /// Soft `text(for:) → ""` would invent incorrect cross-file ranges (LSP-N09 P0).
+    @Test func test_LSP_N09_navigationMissingTargetThrowsNotEmptyRange() async throws {
+        let (session, mock, _, _) = try await makeMockSession(id: "n09nav")
+        let missingURI = "file:///definitely-missing-target.swift"
+        await mock.setNavigationTargetURIOverride(missingURI)
+
+        let openURI = DocumentURI(rawValue: "file:///n09nav-source.swift")
+        try await session.didOpen(
+            uri: openURI,
+            languageID: "swift",
+            version: DocumentVersion(rawValue: 1),
+            text: "func source() {}"
+        )
+        let doc = DocumentSnapshot(version: DocumentVersion(rawValue: 1), text: "func source() {}")
+        let ctx = LanguageServiceContext(languageID: "swift", uri: openURI)
+        let pos = PositionRequest(
+            document: doc,
+            position: TextPosition(utf16Offset: 5),
+            context: ctx
+        )
+
+        let definition = LSPDefinitionAdapter(
+            session: session,
+            id: "n09-def",
+            selector: DocumentSelector.languages("swift"),
+            priority: 0
+        )
+        var defThrew = false
+        do {
+            let links = try await definition.definitions(for: pos)
+            // Must not soft-succeed with empty-text ranges at (0,0) for a missing file.
+            Issue.record("definition should throw for missing target; got \(links)")
+        } catch let error as LSPError {
+            defThrew = true
+            if case .snapshotUnavailable = error {
+                // expected fail-closed
+            } else {
+                // Other typed errors still fail closed (no empty-range success).
+            }
+        } catch {
+            defThrew = true
+        }
+        #expect(defThrew)
+
+        let declaration = LSPDeclarationAdapter(
+            session: session,
+            id: "n09-decl",
+            selector: DocumentSelector.languages("swift"),
+            priority: 0
+        )
+        var declThrew = false
+        do {
+            _ = try await declaration.declarations(for: pos)
+            Issue.record("declaration should throw for missing target")
+        } catch {
+            declThrew = true
+        }
+        #expect(declThrew)
+
+        let implementation = LSPImplementationAdapter(
+            session: session,
+            id: "n09-impl",
+            selector: DocumentSelector.languages("swift"),
+            priority: 0
+        )
+        var implThrew = false
+        do {
+            _ = try await implementation.implementations(for: pos)
+            Issue.record("implementation should throw for missing target")
+        } catch {
+            implThrew = true
+        }
+        #expect(implThrew)
+
+        let references = LSPReferencesAdapter(
+            session: session,
+            id: "n09-ref",
+            selector: DocumentSelector.languages("swift"),
+            priority: 0
+        )
+        var refThrew = false
+        do {
+            _ = try await references.references(for: pos, includeDeclaration: true)
+            Issue.record("references should throw for missing target")
+        } catch {
+            refThrew = true
+        }
+        #expect(refThrew)
+
+        let ws = LSPWorkspaceSymbolAdapter(
+            session: session,
+            id: "n09-ws",
+            selector: DocumentSelector.languages("swift"),
+            priority: 0,
+            labelHook: nil
+        )
+        var wsThrew = false
+        do {
+            _ = try await ws.workspaceSymbols(query: "x", context: ctx)
+            Issue.record("workspaceSymbols should throw for missing target")
+        } catch {
+            wsThrew = true
+        }
+        #expect(wsThrew)
+
+        // Production navigation must not call soft empty-text helper.
+        let adapterSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources/CodeEditorLSP/Adapters/LSPLanguageServiceProviders.swift")
+        let adapterSource = try String(contentsOf: adapterSourceURL, encoding: .utf8)
+        #expect(!adapterSource.contains("session.text(for:"))
+        #expect(adapterSource.contains("requireText(for:"))
+
+        await session.shutdown()
+    }
 }
 
 // MARK: - LSP-N10
@@ -747,6 +871,9 @@ struct LSPN13RealLSPGateTests {
         #expect(text.contains("completion"))
         // Fixture package layout for Swift.
         #expect(text.contains("Package.swift") || text.contains("mktemp"))
+        // Full session steps must be present (not a --version probe).
+        #expect(text.contains("initialize"))
+        #expect(text.contains("rpc_session") || text.contains("full session"))
     }
 
     @Test func test_LSP_N13_fixtureFilesPresent() throws {
@@ -760,5 +887,115 @@ struct LSPN13RealLSPGateTests {
         #expect(FileManager.default.fileExists(atPath: cFixture.path))
         #expect(FileManager.default.fileExists(atPath: swiftFixture.appendingPathComponent("Package.swift").path))
         #expect(FileManager.default.fileExists(atPath: cFixture.appendingPathComponent("main.c").path))
+        let mainSwift = swiftFixture.appendingPathComponent("Sources/App/main.swift")
+        #expect(FileManager.default.fileExists(atPath: mainSwift.path))
+        let mainText = try String(contentsOf: mainSwift, encoding: .utf8)
+        #expect(!mainText.isEmpty)
+    }
+
+    /// Executes the real integration gate (not string-scan only). When sourcekit-lsp/clangd
+    /// are installed the script runs a full initialize→open→change→features→shutdown session;
+    /// when absent and REQUIRE_REAL_LSP≠1 it still validates fixtures and exits 0.
+    @Test func test_LSP_N13_executesIntegrationSessionScript() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let script = root.appendingPathComponent("scripts/check-real-lsp.sh")
+        #expect(FileManager.default.isExecutableFile(atPath: script.path)
+            || FileManager.default.fileExists(atPath: script.path))
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [script.path]
+        process.currentDirectoryURL = root
+        var env = ProcessInfo.processInfo.environment
+        // Do not force REQUIRE_REAL_LSP here — CI hard-gates separately; this proves the
+        // script path executes (session when tools present, fixture gate otherwise).
+        env["REQUIRE_REAL_LSP"] = env["REQUIRE_REAL_LSP"] ?? "0"
+        process.environment = env
+        let out = Pipe()
+        let err = Pipe()
+        process.standardOutput = out
+        process.standardError = err
+        try process.run()
+        process.waitUntilExit()
+        let stdout = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let stderr = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let combined = stdout + stderr
+        #expect(
+            process.terminationStatus == 0,
+            "check-real-lsp.sh failed status=\(process.terminationStatus) out=\(combined)"
+        )
+        // Must not be a vacuous no-op: either full session OK lines or soft fixture OK.
+        let hasSessionOK =
+            combined.contains("full session")
+            || combined.contains("initialize/open/change")
+            || combined.contains("sourcekit-lsp")
+            || combined.contains("clangd")
+        let hasFixtureOK = combined.contains("fixtures present") || combined.contains("OK:")
+        #expect(hasSessionOK || hasFixtureOK, "unexpected gate output: \(combined)")
+    }
+
+    /// In-process mock walks the same integration session steps the gate requires
+    /// (initialize already done by makeMockSession; open→change→features→shutdown).
+    @Test func test_LSP_N13_inProcessIntegrationSessionSteps() async throws {
+        let (session, mock, _, _) = try await makeMockSession(id: "n13session")
+        let uri = DocumentURI(rawValue: "file:///n13/main.swift")
+        try await session.didOpen(
+            uri: uri,
+            languageID: "swift",
+            version: DocumentVersion(rawValue: 1),
+            text: "func hello() {}\n"
+        )
+        try await session.synchronize(
+            document: DocumentID(),
+            uri: uri,
+            from: DocumentSnapshot(version: DocumentVersion(rawValue: 1), text: "func hello() {}\n"),
+            applying: AppliedEditTransaction(
+                transaction: .single(range: NSRange(location: 14, length: 0), replacement: "// touch\n"),
+                oldVersion: DocumentVersion(rawValue: 1),
+                newVersion: DocumentVersion(rawValue: 2),
+                beforeState: DocumentContentStateID(),
+                afterState: DocumentContentStateID(),
+                inverse: .single(range: NSRange(location: 14, length: 8), replacement: ""),
+                textEdits: []
+            ),
+            to: DocumentSnapshot(
+                version: DocumentVersion(rawValue: 2),
+                text: "func hello() {}\n// touch\n"
+            )
+        )
+        try await waitUntil { await mock.changeCount >= 1 }
+
+        let registry = LanguageServiceRegistry()
+        let registration = await LSPClientProviders.register(session: session, into: registry)
+        let host = LanguageServiceHost(registry: registry)
+        let doc = DocumentSnapshot(
+            version: DocumentVersion(rawValue: 2),
+            text: "func hello() {}\n// touch\n"
+        )
+        let ctx = LanguageServiceContext(languageID: "swift", uri: uri)
+        let pos = PositionRequest(document: doc, position: TextPosition(utf16Offset: 5), context: ctx)
+        let full = DocumentRequest(document: doc, context: ctx)
+        let v: @Sendable () -> DocumentVersion = { DocumentVersion(rawValue: 2) }
+
+        #expect(!(try await host.completions(
+            for: CompletionRequest(document: doc, position: TextPosition(utf16Offset: 5), context: ctx),
+            currentVersion: v
+        )).items.isEmpty)
+        #expect(try await host.hover(for: pos, currentVersion: v) != nil)
+        #expect(!(try await host.definitions(for: pos, currentVersion: v)).isEmpty)
+        #expect(!(try await host.documentSymbols(for: full, currentVersion: v)).isEmpty)
+
+        // Diagnostics may arrive via publish; store should accept versioned publish.
+        await session.shutdown()
+        registration.dispose()
+        #expect(await mock.openCount >= 1)
+        #expect(await mock.changeCount >= 1)
+        let methods = await mock.receivedMethods
+        #expect(methods.contains("textDocument/didOpen"))
+        #expect(methods.contains("textDocument/didChange"))
+        #expect(methods.contains("textDocument/completion") || methods.contains("textDocument/hover"))
     }
 }

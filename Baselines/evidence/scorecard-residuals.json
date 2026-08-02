@@ -9,9 +9,7 @@
     "CodeEditorCommands": [
       "CMD/UI residual open \u2014 phase 3"
     ],
-    "CodeEditorWorkspace": [
-      "LSP-N08"
-    ],
+    "CodeEditorWorkspace": [],
     "CodeEditorWorkbench": [
       "WB-N01",
       "WB-N02",
@@ -24,34 +22,8 @@
     "CodeEditorView": [
       "CMD/UI residual open \u2014 phase 3"
     ],
-    "CodeEditorLanguageSupport": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
-    "CodeEditorLanguageServices": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
+    "CodeEditorLanguageSupport": [],
+    "CodeEditorLanguageServices": [],
     "CodeEditorExtensionAPI": [
       "BROKER-N01",
       "BROKER-N02",
@@ -164,20 +136,7 @@
       "BROKER-N11",
       "BROKER-N12"
     ],
-    "CodeEditorLSP": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
+    "CodeEditorLSP": [],
     "CodeEditorDAP": [
       "DAP-N01",
       "DAP-N02",
@@ -212,62 +171,10 @@
     "CodeEditorSourceControl": [
       "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
-    "CodeEditorTreeSitter": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
-    "CodeEditorLanguageSwift": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
-    "CodeEditorLanguageJSON": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
-    "CodeEditorLanguages": [
-      "LANG-N01",
-      "LANG-N02",
-      "LANG-N03",
-      "LANG-N04",
-      "LANG-N05",
-      "LANG-N06",
-      "LANG-N07",
-      "LSP-N01",
-      "LSP-N02",
-      "LSP-N03",
-      "LSP-N04",
-      "LSP-N05"
-    ],
+    "CodeEditorTreeSitter": [],
+    "CodeEditorLanguageSwift": [],
+    "CodeEditorLanguageJSON": [],
+    "CodeEditorLanguages": [],
     "CodeEditorTerminalGhostty": [
       "TER-N01",
       "TER-N02",

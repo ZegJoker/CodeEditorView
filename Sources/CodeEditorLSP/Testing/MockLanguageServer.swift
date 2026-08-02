@@ -27,9 +27,16 @@ public actor MockLanguageServer {
     /// Track cancelled request IDs.
     public private(set) var cancelledIDs: [Any] = []
     public private(set) var receivedMethods: [String] = []
+    /// When set, definition/declaration/implementation/references/workspace-symbol
+    /// locations point at this URI (for fail-closed snapshot tests).
+    public var navigationTargetURIOverride: String?
 
     public init(transport: LSPTestTransport) {
         self.transport = transport
+    }
+
+    public func setNavigationTargetURIOverride(_ uri: String?) {
+        navigationTargetURIOverride = uri
     }
 
     public var recordedChanges: [(uri: String, version: Int)] {
@@ -277,7 +284,8 @@ public actor MockLanguageServer {
             }
         case "textDocument/definition":
             if let id {
-                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                let reqURI = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                let uri = navigationTargetURIOverride ?? reqURI
                 await respond(
                     id: id,
                     result: [
@@ -352,7 +360,8 @@ public actor MockLanguageServer {
             }
         case "textDocument/declaration", "textDocument/implementation":
             if let id {
-                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                let reqURI = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                let uri = navigationTargetURIOverride ?? reqURI
                 await respond(
                     id: id,
                     result: [
@@ -365,7 +374,8 @@ public actor MockLanguageServer {
             }
         case "textDocument/references":
             if let id {
-                let uri = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                let reqURI = (params["textDocument"] as? [String: Any])?["uri"] as? String ?? "inmemory:x"
+                let uri = navigationTargetURIOverride ?? reqURI
                 await respond(
                     id: id,
                     result: [
@@ -542,6 +552,9 @@ public actor MockLanguageServer {
             }
         case "workspace/symbol":
             if let id {
+                // Prefer open-document-friendly default so matrix tests resolve ranges
+                // without soft empty-text; override used for fail-closed coverage.
+                let uri = navigationTargetURIOverride ?? "inmemory:doc"
                 await respond(
                     id: id,
                     result: [
@@ -549,7 +562,7 @@ public actor MockLanguageServer {
                             "name": "mockWS",
                             "kind": 12,
                             "location": [
-                                "uri": "inmemory:x",
+                                "uri": uri,
                                 "range": [
                                     "start": ["line": 0, "character": 0],
                                     "end": ["line": 0, "character": 4],

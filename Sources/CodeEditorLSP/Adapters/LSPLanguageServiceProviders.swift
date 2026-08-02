@@ -301,14 +301,16 @@ private enum LSPRequestHelpers {
         return []
     }
 
+    /// Resolve target text fail-closed (LSP-N09). Must not soft-fallback to empty.
     static func parseLocationLink(
-        from dict: [String: Any], textForURI: (DocumentURI) async -> String
-    ) async -> LocationLink? {
+        from dict: [String: Any],
+        textForURI: (DocumentURI) async throws -> String
+    ) async throws -> LocationLink? {
         if let targetUri = dict["targetUri"] as? String,
             let targetRange = parseLSPRange(dict["targetRange"])
         {
             let uri = DocumentURI(rawValue: targetUri)
-            let text = await textForURI(uri)
+            let text = try await textForURI(uri)
             let sel = parseLSPRange(dict["targetSelectionRange"]) ?? targetRange
             return LocationLink(
                 targetURI: uri,
@@ -318,7 +320,7 @@ private enum LSPRequestHelpers {
         }
         if let uriStr = dict["uri"] as? String, let range = parseLSPRange(dict["range"]) {
             let uri = DocumentURI(rawValue: uriStr)
-            let text = await textForURI(uri)
+            let text = try await textForURI(uri)
             let tr = LSPConvert.textRange(range, in: text)
             return LocationLink(
                 targetURI: uri,
@@ -331,18 +333,18 @@ private enum LSPRequestHelpers {
 
     static func parseLocationLinks(
         _ result: LSPJSONObject,
-        textForURI: (DocumentURI) async -> String
-    ) async -> [LocationLink] {
+        textForURI: (DocumentURI) async throws -> String
+    ) async throws -> [LocationLink] {
         if let arr = result["_value"] as? [[String: Any]] {
             var out: [LocationLink] = []
             for dict in arr {
-                if let link = await parseLocationLink(from: dict, textForURI: textForURI) {
+                if let link = try await parseLocationLink(from: dict, textForURI: textForURI) {
                     out.append(link)
                 }
             }
             return out
         }
-        if let link = await parseLocationLink(from: result.dictionary, textForURI: textForURI) {
+        if let link = try await parseLocationLink(from: result.dictionary, textForURI: textForURI) {
             return [link]
         }
         return []
@@ -350,8 +352,8 @@ private enum LSPRequestHelpers {
 
     static func parseLocations(
         _ result: LSPJSONObject,
-        textForURI: (DocumentURI) async -> String
-    ) async -> [Location] {
+        textForURI: (DocumentURI) async throws -> String
+    ) async throws -> [Location] {
         if let arr = result["_value"] as? [[String: Any]] {
             var out: [Location] = []
             for dict in arr {
@@ -359,7 +361,7 @@ private enum LSPRequestHelpers {
                     continue
                 }
                 let uri = DocumentURI(rawValue: uriStr)
-                let text = await textForURI(uri)
+                let text = try await textForURI(uri)
                 out.append(Location(uri: uri, range: LSPConvert.textRange(range, in: text)))
             }
             return out
@@ -517,7 +519,7 @@ struct LSPImplementationAdapter: ImplementationProvider {
     }
 }
 
-// Shared navigation for definition-like adapters
+// Shared navigation for definition-like adapters (LSP-N09: requireText, never empty soft-fallback)
 extension LSPDefinitionAdapter {
     fileprivate func navigation(method: String, request: PositionRequest) async throws -> [LocationLink] {
         let map = await session.positionMap(uri: request.context.uri ?? DocumentURI(rawValue: ""))
@@ -528,8 +530,8 @@ extension LSPDefinitionAdapter {
             map: map
         )
         let result = try await session.requestDictionary(method, params: LSPJSONObject(params))
-        return await LSPRequestHelpers.parseLocationLinks(result) { uri in
-            await session.text(for: uri)
+        return try await LSPRequestHelpers.parseLocationLinks(result) { uri in
+            try await session.requireText(for: uri)
         }
     }
 }
@@ -544,8 +546,8 @@ extension LSPDeclarationAdapter {
             map: map
         )
         let result = try await session.requestDictionary(method, params: LSPJSONObject(params))
-        return await LSPRequestHelpers.parseLocationLinks(result) { uri in
-            await session.text(for: uri)
+        return try await LSPRequestHelpers.parseLocationLinks(result) { uri in
+            try await session.requireText(for: uri)
         }
     }
 }
@@ -560,8 +562,8 @@ extension LSPImplementationAdapter {
             map: map
         )
         let result = try await session.requestDictionary(method, params: LSPJSONObject(params))
-        return await LSPRequestHelpers.parseLocationLinks(result) { uri in
-            await session.text(for: uri)
+        return try await LSPRequestHelpers.parseLocationLinks(result) { uri in
+            try await session.requireText(for: uri)
         }
     }
 }
@@ -588,8 +590,8 @@ struct LSPReferencesAdapter: ReferencesProvider {
             "textDocument/references",
             params: LSPJSONObject(params)
         )
-        return await LSPRequestHelpers.parseLocations(result) { uri in
-            await session.text(for: uri)
+        return try await LSPRequestHelpers.parseLocations(result) { uri in
+            try await session.requireText(for: uri)
         }
     }
 }
@@ -810,7 +812,8 @@ struct LSPWorkspaceSymbolAdapter: WorkspaceSymbolProvider {
                 finalContainer = t.2
             }
             let documentURI = DocumentURI(rawValue: uri)
-            let text = await session.text(for: documentURI)
+            // LSP-N09: fail closed — never invent ranges from empty soft-fallback text.
+            let text = try await session.requireText(for: documentURI)
             symbols.append(
                 WorkspaceSymbol(
                     name: finalName,
