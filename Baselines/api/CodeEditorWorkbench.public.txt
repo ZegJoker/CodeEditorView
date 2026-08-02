@@ -1,154 +1,270 @@
-class DocumentViewRegistry
-class FileTreeIndexService
-class ImageDocumentViewProvider
-class OpenQuicklyModel
-class PDFDocumentViewProvider
-class TextDocumentViewProvider
-class WorkbenchContributionRegistry
-class WorkbenchEditorClientRegistry
-class WorkbenchHostBuilder
-class WorkbenchModel
-class WorkbenchToolingSurfaceRegistry
-class WorkbenchWindowRegistry
-enum UtilityAreaTab
+class DocumentViewRegistry | isolation=@MainActor
+class FileTreeIndexService | sendable=1
+class ImageDocumentViewProvider | isolation=@MainActor
+class OpenQuicklyModel | isolation=@MainActor
+class PDFDocumentViewProvider | isolation=@MainActor
+class TextDocumentViewProvider | isolation=@MainActor
+class WorkbenchActivityModel | isolation=@MainActor
+class WorkbenchBreakpointsModel | isolation=@MainActor
+class WorkbenchContributionRegistry | isolation=@MainActor
+class WorkbenchDebugModel | isolation=@MainActor
+class WorkbenchEditorClientRegistry | isolation=@MainActor
+class WorkbenchHostBuilder | isolation=@MainActor
+class WorkbenchModel | isolation=@MainActor
+class WorkbenchOutputPanelContribution | isolation=@MainActor
+class WorkbenchOutputPanelModel | isolation=@MainActor
+class WorkbenchProblemsPanelContribution | isolation=@MainActor
+class WorkbenchProblemsPanelModel | isolation=@MainActor
+class WorkbenchSCMModel | isolation=@MainActor
+class WorkbenchSchemeModel | isolation=@MainActor
+class WorkbenchSymbolsModel | isolation=@MainActor
+class WorkbenchTaskProblemsBridge | isolation=@MainActor
+class WorkbenchTerminalPanelContribution | isolation=@MainActor
+class WorkbenchTerminalPanelModel | isolation=@MainActor
+class WorkbenchTestsModel | isolation=@MainActor
+class WorkbenchToolingSurfaceRegistry | isolation=@MainActor
+class WorkbenchWindowRegistry | isolation=@MainActor
+enum OpenQuicklyMode | sendable=1
+enum RotorSurface | sendable=1
+enum SchemeAction | sendable=1
+enum UtilityAreaTab | sendable=1
+enum WorkbenchAccessibilityHierarchy
 enum WorkbenchAccessibilityID
-enum WorkbenchContributionAvailability
-enum WorkbenchContributionRender
+enum WorkbenchChromeCommand | sendable=1
+enum WorkbenchChromeError | sendable=1
+enum WorkbenchContributionAvailability | sendable=1
+enum WorkbenchContributionRender | sendable=1
 enum WorkbenchFocusOrder
-enum WorkbenchFocusTarget
-enum WorkbenchHostBuilderError
+enum WorkbenchFocusTarget | sendable=1
+enum WorkbenchHostBuilderError | sendable=1
 enum WorkbenchL10n
-enum WorkbenchLifecyclePhase
+enum WorkbenchLifecyclePhase | sendable=1
 enum WorkbenchMotion
-enum WorkbenchNavigatorStyle
+enum WorkbenchNavigatorID | sendable=1
+enum WorkbenchNavigatorStyle | sendable=1
 enum WorkbenchRestoration
-enum WorkbenchSlot
-enum WorkbenchToolingKind
-enum WorkbenchToolingStatus
-func activeClient
-func addContribution
-func addDocumentProvider
-func addToolingSurface
-func all
-func allContributions
-func allDescriptors
-func allProviders
-func allWindows
-func apply
-func applyRestoration
-func applyWindowState
-func beginTearDown
-func build
-func capture
-func captureRestorationState
-func captureWindowState
-func clearFault
-func client
-func close
-func closeWindow
-func commandDispatcher
-func configuration
-func contribution
-func contributions
-func create
-func createFile
-func createFolder
-func createWindow
-func cycleFocusForward
-func decode
-func deleteItem
-func descriptors
-func dismissToolingBanner
-func encode
-func encodeRestoration
-func ensureActiveNavigator
-func ensureActiveUtility
-func enterBackground
-func enterForeground
-func extensions
-func failed
-func focus
-func focusWindow
-func focused
-func fuzzyScore
-func indexService
-func isCommandEnabled
-func makeBodyIsolated
-func makeCommandContext
-func makeView
-func markFailed
-func migrate
-func moveSelection
-func navigateBack
-func navigateForward
-func openURI
-func presentCommandPalette
-func presentOpenQuickly
-func provider
-func rebuild
-func recompute
-func register
-func remove
-func renameItem
-func resetPresentation
-func restoration
-func retry
-func retryTooling
-func revealInFinder
-func selectIndex
-func selectNavigator
-func selectUtility
-func setStatus
-func snapshots
-func string
-func surface
-func toSurface
-func unregister
-func update
-func upsert
-func validatedPaletteCommands
-func visibleToolingFailures
-func workspace
-protocol DocumentViewProvider
-protocol WorkbenchContribution
-protocol WorkspaceIndexService
-struct DocumentContentSelector
-struct DocumentViewContext
-struct OpenQuicklyItem
+enum WorkbenchRestorationError | sendable=1
+enum WorkbenchSlot | sendable=1
+enum WorkbenchStatusMetrics
+enum WorkbenchTabSemantics
+enum WorkbenchToolingKind | sendable=1
+enum WorkbenchToolingStatus | sendable=1
+func activeClient(workspace: Workspace) -> (any EditorCommandClient)
+func addContribution(_ contribution: any WorkbenchContribution) | attr=discardableResult
+func addDocumentProvider(_ provider: any DocumentViewProvider) | attr=discardableResult
+func addToolingSurface(_ surface: WorkbenchToolingSurface) | attr=discardableResult
+func all()
+func allContributions()
+func allDescriptors()
+func allProviders()
+func allWindows()
+func append(_ item: Item)
+func append(_ text: String)
+func apply(snapshots: [WorkbenchToolingSurfaceSnapshot])
+func applyRestoration(_ state: WorkbenchRestorationState)
+func applyWindowState(_ state: WorkbenchWindowState)
+func begin(id: String, title: String, cancellable: Bool )
+func beginTearDown()
+func build()
+func cancel(id: String) | attr=discardableResult
+func capture() -> (windows: [WorkbenchWindowState], focused: WorkbenchWindowID?)
+func captureRestorationState()
+func captureWindowState(title: String )
+func clear()
+func clearFault(id: String)
+func client(for sessionID: EditorSessionID) -> (any EditorCommandClient)
+func close(_ id: WorkbenchWindowID)
+func closeWindow(_ id: WorkbenchWindowID)
+func commandDispatcher(_ dispatcher: CommandDispatcher) | attr=discardableResult
+func configuration(_ configuration: WorkbenchConfiguration) | attr=discardableResult
+func contribution(id: String) -> (any WorkbenchContribution)
+func contributions(for slot: WorkbenchSlot)
+func create(title: String , from template: WorkbenchWindowState? ) | attr=discardableResult
+func createFile(named name: String, in parent: WorkspaceItemID? , open: Bool )
+func createFolder(named name: String, in parent: WorkspaceItemID? )
+func createWindow(title: String ) | attr=discardableResult
+func cycleFocusForward()
+func decode(_ data: Data)
+func deleteItem(_ id: WorkspaceItemID)
+func descriptor( availability: WorkbenchContributionAvailability , faultMessage: String? )
+func descriptors(for slot: WorkbenchSlot)
+func dismissToolingBanner(id: String)
+func encode(_ state: WorkbenchRestorationState)
+func encodeRestoration()
+func end(id: String)
+func ensureActiveNavigator()
+func ensureActiveUtility()
+func enterBackground()
+func enterForeground()
+func extensions(_ ext: String...)
+func failed()
+func flatten(_ node: Node )
+func focus(_ id: WorkbenchWindowID)
+func focus(_ target: WorkbenchFocusTarget)
+func focusWindow(_ id: WorkbenchWindowID)
+func focused()
+func fuzzyScore(query: String, name: String, path: String)
+func indexService(_ service: any WorkspaceIndexService) | attr=discardableResult
+func ingest(matched: [MatchedProblem], runID: String)
+func isCommandEnabled(_ id: CommandID)
+func isCovered(by registeredIDs: Set<String>)
+func killSession()
+func label(text: String, utf16Offset: Int)
+func lineColumn(text: String, utf16Offset: Int) -> (line: Int, column: Int)
+func makeBody(context: WorkbenchContributionContext)
+func makeBodyIsolated( id: String, context: WorkbenchContributionContext )
+func makeCommandContext()
+func makeView(context: DocumentViewContext)
+func markFailed(id: String, message: String)
+func markRunning(taskID: String)
+func migrate(_ state: WorkbenchRestorationState)
+func moveSelection(by delta: Int)
+func navigateBack()
+func navigateForward()
+func openURI( _ uri: DocumentURI, preview: Bool , selection: CodeEditorCore.TextRange? )
+func openURI(_ uri: DocumentURI, preview: Bool )
+func parseLocationQuery(_ raw: String) -> (path: String, line: Int?, column: Int?)
+func pin(tab: inout EditorTab)
+func presentCommandPalette()
+func presentOpenQuickly()
+func promotePreviewIfNeeded(tab: inout EditorTab)
+func provider(for pathExtension: String) -> (any DocumentViewProvider)
+func rebuild(workspace: Workspace) | isolation=@MainActor
+func recompute(workspace: Workspace)
+func recordError(_ message: String)
+func refresh(provider: any SourceControlProvider)
+func refreshCommandContextSnapshot()
+func register(_ contribution: any WorkbenchContribution) | attr=discardableResult
+func register(_ provider: any DocumentViewProvider)
+func register(sessionID: EditorSessionID, client: any EditorCommandClient)
+func remove(id: String)
+func renameItem(_ id: WorkspaceItemID, to newName: String)
+func requestClosePane( _ id: EditorPaneID, policy: DirtyTabClosePolicy? ) | attr=discardableResult
+func requestCloseWindow(policy: DirtyTabClosePolicy? ) | attr=discardableResult
+func resetPresentation()
+func restoration(_ state: WorkbenchRestorationState) | attr=discardableResult
+func retainContribution(_ contribution: any WorkbenchContribution) | attr=discardableResult
+func retry(id: String)
+func retryTooling(id: String)
+func revealInFinder(_ id: WorkspaceItemID)
+func selectIndex(_ index: Int)
+func selectNavigator(id: String)
+func selectUtility(id: String)
+func setDestinations(_ destinations: [WorkbenchRunDestination])
+func setEnabled(id: String, enabled: Bool)
+func setError(_ message: String)
+func setItems(_ items: [Item])
+func setSchemes(_ schemes: [WorkbenchScheme])
+func setStatus(id: String, status: WorkbenchToolingStatus)
+func setSymbols(_ symbols: [WorkbenchSymbolItem])
+func setTests(_ tests: [WorkbenchTestItem])
+func snapshots()
+func startIfNeeded()
+func string(_ key: String, default defaultValue: String)
+func surface(id: String)
+func taskID(for action: SchemeAction)
+func toSurface()
+func unregister(id: String)
+func unregister(sessionID: EditorSessionID)
+func update(_ state: WorkbenchWindowState)
+func updateProgress(id: String, progress: Double)
+func upsert(_ item: WorkbenchBreakpointItem)
+func upsert(_ item: WorkbenchTestItem)
+func upsert(_ surface: WorkbenchToolingSurface)
+func upsert(id: String, name: String, state: String)
+func validatedPaletteCommands()
+func visibleToolingFailures()
+func workspace(_ workspace: Workspace) | attr=discardableResult
+func writeKey(_ data: Data)
+init ( id: String )
+init ( id: String, kind: WorkbenchToolingKind, title: String, status: WorkbenchToolingStatus , boundContributionID: String? , canRetry: Bool )
+init ( id: String, name: String, buildTaskID: String? , testTaskID: String? , runTaskID: String? , debugSessionName: String? )
+init ( id: String, slot: WorkbenchSlot, priority: Int, title: String, systemImage: String , providerID: String, availability: WorkbenchContributionAvailability , faultMessage: String? )
+init ( id: String? , uri: DocumentURI?, name: String, path: String, mode: OpenQuicklyMode , line: Int? , column: Int? )
+init ( id: WorkbenchWindowID )
+init ( maxDepth: Int , maxFiles: Int , ignoredDirectoryNames: Set<String> , "node_modules", ".build", "DerivedData", "Pods"] )
+init ( model: OpenQuicklyModel, onSelect: @escaping (DocumentURI)
+init ( schemaVersion: Int , lifecyclePhase: WorkbenchLifecyclePhase , windows: [WorkbenchWindowState] , focusedWindowID: WorkbenchWindowID? , workspace: WorkspaceRestorationState? , registeredContributionIDs: [String] , toolingSurfaces: [WorkbenchToolingSurfaceSnapshot] )
+init ( showsNavigator: Bool , showsInspector: Bool , showsUtilityArea: Bool , showsStatusBar: Bool , showsActivityBar: Bool , showsToolbar: Bool , navigatorStyle: WorkbenchNavigatorStyle , utilityAreaHeight: CGFloat , editorConfiguration: EditorConfiguration )
+init ( workspace: Workspace, configuration: WorkbenchConfiguration , commandDispatcher: CommandDispatcher? )
+init ( workspace: Workspace, document: TextDocument, session: EditorSession, paneID: EditorPaneID, tabID: EditorTabID, commandDispatcher: CommandDispatcher? , editorConfiguration: EditorConfiguration )
+init ()
+init (from surface: WorkbenchToolingSurface)
+init (id: String ).uuidString, name: String, kind: String, path: String, line: Int, column: Int )
+init (id: String, name: String)
+init (id: String, name: String, state: String , message: String? )
+init (id: String, name: String, state: String)
+init (id: String, role: String, children: [Node] )
+init (id: String, title: String, isCancellable: Bool , progress: Double? )
+init (model: WorkbenchModel)
+init (model: WorkbenchOutputPanelModel ))
+init (model: WorkbenchProblemsPanelModel ))
+init (model: WorkbenchTerminalPanelModel ))
+init (pathExtensions: Set<String>, utTypes: [String] )
+init (rawValue: UUID ))
+init (service: TerminalService? )
+init (workspace: Workspace, model: WorkbenchModel)
+protocol DocumentViewProvider | isolation=@MainActor
+protocol WorkbenchContribution | isolation=@MainActor
+protocol WorkspaceIndexService | sendable=1
+struct DocumentContentSelector | sendable=1
+struct DocumentViewContext | isolation=@MainActor
+struct Item
+struct Node | sendable=1
+struct OpenQuicklyItem | sendable=1
 struct OpenQuicklyView
-struct WorkbenchConfiguration
-struct WorkbenchContributionContext
-struct WorkbenchContributionDescriptor
+struct WorkbenchActivityItem | sendable=1
+struct WorkbenchBreakpointItem | sendable=1
+struct WorkbenchConfiguration | sendable=1
+struct WorkbenchContributionContext | isolation=@MainActor
+struct WorkbenchContributionDescriptor | sendable=1
+struct WorkbenchDebugSessionInfo | sendable=1
 struct WorkbenchEditorArea
 struct WorkbenchPaneView
-struct WorkbenchRestorationState
-struct WorkbenchToolingSurface
-struct WorkbenchToolingSurfaceSnapshot
+struct WorkbenchRestorationState | sendable=1
+struct WorkbenchRunDestination | sendable=1
+struct WorkbenchScheme | sendable=1
+struct WorkbenchSymbolItem | sendable=1
+struct WorkbenchTestItem | sendable=1
+struct WorkbenchToolingSurface | sendable=1
+struct WorkbenchToolingSurfaceSnapshot | sendable=1
 struct WorkbenchView
-struct WorkbenchWindowID
-struct WorkbenchWindowState
+struct WorkbenchWindowID | sendable=1
+struct WorkbenchWindowState | sendable=1
 struct WorkspaceFileTreeView
 var activeDocument
 var activeNavigatorID
 var activeSession
 var activeUtilityID
+var activity
 var activityBar
+var aliases
 var availability
 var body
 var boundContributionID
+var breakpoints
+var buildTaskID
 var canNavigateBack
 var canNavigateForward
 var canRetry
+var channelName
+var children
 var chrome
 var clientRegistry
+var column
 var commandDispatcher
+var commandID
+var commandItems
 var commandPalette
+var condition
 var configuration
 var content
 var contributionFailed
 var contributionFault
 var contributionRegistry
 var currentSchemaVersion
+var debugSessionName
+var debugSessions
 var dismiss
 var dismissedToolingBannerIDs
 var document
@@ -157,7 +273,12 @@ var editor
 var editorClientRegistry
 var editorConfiguration
 var editorContent
+var enabled
+var errorMessage
 var faultMessage
+var filter
+var filtered
+var focusRestorationDefault
 var focusedTarget
 var focusedWindowID
 var fold
@@ -167,17 +288,22 @@ var ignoredDirectoryNames
 var indexService
 var inspector
 var inspectorInsert
+var isBusy
+var isCancellable
 var isCommandPalettePresented
 var isHealthy
 var isInspectorVisible
 var isNavigatorVisible
 var isOpenQuicklyPresented
 var isUtilityVisible
+var keyboardOrder
 var kind
 var lifecyclePhase
+var line
 var maxDepth
 var maxFiles
 var message
+var mode
 var model
 var name
 var navigator
@@ -193,20 +319,34 @@ var path
 var pathExtension
 var pathExtensions
 var priority
+var problemsBridge
+var progress
 var providerID
 var query
 var rawValue
 var registeredContributionIDs
+var registrationBag
 var resultLimit
 var retry
-var retryHandler
+var retryHandler | isolation=@MainActor
+var role
 var root
+var rotorSurfaces
+var runTaskID
 var schemaVersion
+var schemes
+var scmModel
+var selectedDestination
+var selectedDestinationID
 var selectedIndex
 var selectedItem
 var selectedNavigatorItem
+var selectedScheme
+var selectedSchemeID
 var selection
+var service
 var session
+var severity
 var showsActivityBar
 var showsInspector
 var showsNavigator
@@ -214,20 +354,26 @@ var showsStatusBar
 var showsToolbar
 var showsUtilityArea
 var slot
+var state
 var status
 var statusBar
 var statusKind
 var statusMessage
 var supportedContentTypes
+var symbolItems
+var symbols
 var systemImage
 var tab
 var tabID
 var tabInsert
+var testTaskID
+var tests
 var title
 var toolbar
 var toolingBanner
 var toolingFailed
 var toolingSurfaces
+var trusted
 var uri
 var utTypes
 var utility

@@ -24,8 +24,9 @@ run ./scripts/check-security-rc.sh
 run ./scripts/check-licenses.sh
 run ./scripts/check-perf-budgets.sh
 run ./scripts/check-unchecked-sendable.sh
-run ./scripts/check-real-lsp.sh
-run ./scripts/check-real-dap.sh
+REQUIRE_REAL_LSP=1 run ./scripts/check-real-lsp.sh
+REQUIRE_REAL_DAP=1 run ./scripts/check-real-dap.sh
+REQUIRE_GHOSTTY=1 run ./scripts/check-ghostty-linked.sh
 
 # Debug + release smoke of core product
 echo

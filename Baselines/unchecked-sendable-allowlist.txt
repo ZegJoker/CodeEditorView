@@ -36,8 +36,6 @@ Sources/CodeEditorExtensionHost/Wasm/CoreWasmABISession.swift:222:final class Me
 Sources/CodeEditorExtensionHost/Wasm/WasmGuestLink.swift:53:final class GuestMemory: WasmMemoryView, @unchecked Sendable {
 Sources/CodeEditorExtensionHost/Wasm/WasmGuestLink.swift:8:public final class WasmGuestLink: LinkedWasmGuest, @unchecked Sendable {
 Sources/CodeEditorExtensionProtocol/CBOR/CBORFraming.swift:18:    public final class Decoder: @unchecked Sendable {
-Sources/CodeEditorExtensionProtocol/MockWireTransport.swift:4:public final class MockWireTransport: ExtensionWireTransport, @unchecked Sendable {
-Sources/CodeEditorExtensionProtocol/MockWireTransport.swift:5:    private final class State: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionRegistrars.swift:10:public final class CommandContributionRegistrar: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionRegistrars.swift:218:public final class PanelContributionRegistrar: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionRegistrars.swift:258:public final class ThemeContributionRegistrar: @unchecked Sendable {

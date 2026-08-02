@@ -1,12 +1,26 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "hardwareClass": "apple-silicon-dev-or-ci",
   "slackFactor": 3.0,
   "units": "milliseconds",
+  "policy": {
+    "p50": "soft smoke budget",
+    "p95": "hard CI budget",
+    "p99": "nightly stress budget"
+  },
+  "percentiles": {
+    "p50": true,
+    "p95": true,
+    "p99": true
+  },
   "budgets": {
+    "core_edit_unit": 8,
     "core_edit_1000_applies_ms": 500,
     "line_index_rebuild_10k_lines_ms": 800,
     "contribution_snapshot_rebuild_ms": 200,
-    "store_install_update_rollback_ms": 2000
+    "store_install_update_rollback_ms": 2000,
+    "keystroke_to_present_p50_ms": 8,
+    "keystroke_to_present_p95_ms": 16,
+    "keystroke_to_present_p99_ms": 32
   }
 }

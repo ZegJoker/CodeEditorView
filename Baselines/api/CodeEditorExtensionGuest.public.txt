@@ -1,34 +1,38 @@
 actor ExtensionGuestRuntime
-class GuestExtensionContext
-class StdioWireTransport
+class GuestExtensionContext | sendable=1
+class StdioWireTransport | sendable=1
 enum ExtensionGuestMain
-func close
-func error
-func hasPermission
-func info
-func requirePermission
-func run
-func send
-func setDebugAdapterProvider
-func setDebugLocatorProvider
-func setDocumentationIndexProvider
-func setLanguageServerProvider
-func setMCPServerProvider
-func setSlashCommandProvider
-func stop
-func teardown
-func track
-func warning
+func close()
+func error(_ message: String)
+func hasPermission(_ permission: ExtensionPermission)
+func info(_ message: String)
+func requirePermission(_ permission: ExtensionPermission)
+func run()
+func run(extension ext: any CodeEditorExtension)
+func send(_ data: Data)
+func setDebugAdapterProvider(_ provider: (any DebugAdapterProvider)?)
+func setDebugLocatorProvider(_ provider: (any DebugLocatorProvider)?)
+func setDocumentationIndexProvider(_ provider: (any DocumentationIndexProvider)?)
+func setLanguageServerProvider(_ provider: (any LanguageServerProvider)?)
+func setMCPServerProvider(_ provider: (any MCPServerProvider)?)
+func setSlashCommandProvider(_ provider: (any SlashCommandProvider)?)
+func stop()
+func teardown()
+func track(_ disposable: any ExtensionDisposable)
+func warning(_ message: String)
+init ( extension ext: any CodeEditorExtension, transport: any ExtensionWireTransport, log: ExtensionLog )
+init ( extensionID: ExtensionID, grantedPermissions: Set<ExtensionPermission>, log: ExtensionLog )
+init (stdin: FileHandle , stdout: FileHandle )
 var childPID
-var completionHandler
+var completionHandler | sendable=1
 var debugAdapterProvider
 var debugLocatorProvider
-var definitionHandler
+var definitionHandler | sendable=1
 var documentationIndexProvider
 var ext
 var extensionID
 var grantedPermissions
-var hoverHandler
+var hoverHandler | sendable=1
 var inbound
 var languageServerProvider
 var log

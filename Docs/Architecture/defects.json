@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "program": "audit-2026-08-remediation",
+  "schema_version": 2,
+  "program": "audit-2026-08-02-deep-remediation",
   "source": "CodeEditorView_Deep_Audit_Xcode26_Ghostty.md",
   "updated": "2026-08-02",
   "defects": [
@@ -9,770 +9,1198 @@
       "severity": "P0",
       "product": "Package",
       "status": "fixed",
-      "summary": "Committed Packages/CodeEditorGrammars; root Package.swift has zero Grammars/ paths; archive rehearsal script"
+      "summary": "Committed Packages/CodeEditorGrammars; root Package.swift has zero Grammars/ paths; archive rehearsal script",
+      "regression_tests": [
+        "scripts/export-source-archive-rehearsal.sh",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "CI-004",
       "severity": "P1",
       "product": "scripts",
       "status": "fixed",
-      "summary": "check-format.sh and check-wasi-sdk.sh are hard gates; CI installs tools"
+      "summary": "check-format.sh and check-wasi-sdk.sh are hard gates; CI installs tools",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        "scripts/check-defects.sh"
+      ]
     },
     {
       "id": "CI-008",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "Examples/iOS/CodeEditoriOSExample + xcodebuild test job"
+      "summary": "Examples/iOS/CodeEditoriOSExample + xcodebuild test job",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "CI-009",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "Docs/Architecture/XCODE.pin + check-xcode-pin.sh"
+      "summary": "Docs/Architecture/XCODE.pin + check-xcode-pin.sh",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "CI-010",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "export-source-archive-rehearsal.sh + CI source-archive-rehearsal"
+      "summary": "export-source-archive-rehearsal.sh + CI source-archive-rehearsal",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "CI-011",
       "severity": "P1",
       "product": "Examples",
       "status": "fixed",
-      "summary": "macOS/iOS example packages with xcodebuild test jobs"
+      "summary": "macOS/iOS example packages with xcodebuild test jobs",
+      "regression_tests": [
+        "scripts/check-examples.sh"
+      ]
     },
     {
       "id": "DOC-001",
       "severity": "P0",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "Atomic multi-edit with staging buffer, overlap reject, equal-offset order, fault/property tests"
+      "summary": "Atomic multi-edit with staging buffer, overlap reject, equal-offset order, fault/property tests",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/DocumentStoreTests.swift",
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift"
+      ]
     },
     {
       "id": "DOC-002",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "Throwing undo/redo; stacks move only after success; dirty from savedVersion; no try? apply"
+      "summary": "Throwing undo/redo; stacks move only after success; dirty from savedVersion; no try? apply",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift"
+      ]
     },
     {
       "id": "DOC-003",
       "severity": "P0",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "Exact offsets; private scalarIndex throws; never EOF fallback"
+      "summary": "Exact offsets; private scalarIndex throws; never EOF fallback",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/DocumentStoreTests.swift",
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift"
+      ]
     },
     {
       "id": "DOC-004",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "CAS save with expectedIdentity + revalidate; conflict SaveResult"
+      "summary": "CAS save with expectedIdentity + revalidate; conflict SaveResult",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift"
+      ]
     },
     {
       "id": "WSP-001",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "All UI close paths use requestClose*; Close Pane wired; leases fail-closed"
+      "summary": "All UI close paths use requestClose*; Close Pane wired; leases fail-closed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "WSP-002",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "Full fault matrix + duringRollback inject surfaces catastrophic/rollbackFailed"
+      "summary": "Full fault matrix + duringRollback inject surfaces catastrophic/rollbackFailed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "EXT-001",
       "severity": "P0",
       "product": "CodeEditorExtensionAPI",
       "status": "fixed",
-      "summary": "Validated ExtensionID + directoryKey path roots"
+      "summary": "Validated ExtensionID + directoryKey path roots",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionAPITests/ExtensionAPITests.swift"
+      ]
     },
     {
       "id": "EXT-002",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "File-set equality; reject extra/missing"
+      "summary": "File-set equality; reject extra/missing",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-003",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Publisher subject bound; subject-swap deny"
+      "summary": "Publisher subject bound; subject-swap deny",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-004",
       "severity": "P0",
       "product": "CodeEditorExtensions",
       "status": "fixed",
-      "summary": "Fail-closed install + insecureForTests only for tests"
+      "summary": "Fail-closed install + insecureForTests only for tests",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionsTests/ExtensionRuntimeTests.swift",
+        "Tests/CodeEditorExtensionsTests/Phase8StoreSecurityTests.swift"
+      ]
     },
     {
       "id": "WASM-001",
       "severity": "P0",
       "product": "CodeEditorWasmEngineWasmKit",
       "status": "fixed",
-      "summary": "WasmKit parse/instantiate/call; bytes determine behavior"
+      "summary": "WasmKit parse/instantiate/call; bytes determine behavior",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/RealWasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WASM-002",
       "severity": "P0",
       "product": "CodeEditorWasmEngine",
       "status": "fixed",
-      "summary": "Real module + interrupt/hostile containment tests"
+      "summary": "Real module + interrupt/hostile containment tests",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WasmEngineTests.swift",
+        "Tests/CodeEditorWasmEngineTests/Phase9WasmExecutionTests.swift"
+      ]
     },
     {
       "id": "IOS-001",
       "severity": "P0",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "Duplicate a11y removed; iOS example host from Phase 1"
+      "summary": "Duplicate a11y removed; iOS example host from Phase 1",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "LSP-001",
       "severity": "P0",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "Full-text debounce + rapid-edit matrix vs mock server"
+      "summary": "Full-text debounce + rapid-edit matrix vs mock server",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "TER-001",
       "severity": "P0",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "GhosttySessionController + TerminalService production path; pin; fail-closed unlinked"
+      "summary": "GhosttySessionController + TerminalService production path; pin; fail-closed unlinked",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "CI-001",
       "severity": "P1",
       "product": "scripts",
       "status": "fixed",
-      "summary": "generate-release-evidence.sh produces artifacts from tests"
+      "summary": "generate-release-evidence.sh produces artifacts from tests",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        "scripts/check-defects.sh"
+      ]
     },
     {
       "id": "CMD-001",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "RegistrationBag host lifetime; contributions survive build"
+      "summary": "RegistrationBag host lifetime; contributions survive build",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "CMD-002",
       "severity": "P1",
       "product": "CodeEditorCommands",
       "status": "fixed",
-      "summary": "Chord prefix wait + timeout short + Escape + layer tests"
+      "summary": "Chord prefix wait + timeout short + Escape + layer tests",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CommandSystemTests.swift",
+        "Tests/CodeEditorCommandsTests/Phase4CommandTests.swift"
+      ]
     },
     {
       "id": "LSP-002",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "Register-before-send actor path; earlyResponses bounded"
+      "summary": "Register-before-send actor path; earlyResponses bounded",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "LSP-003",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "WorkspaceSnapshotResolver; cross-file tests retained"
+      "summary": "WorkspaceSnapshotResolver; cross-file tests retained",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "DAP-001",
       "severity": "P1",
       "product": "CodeEditorDAP",
       "status": "fixed",
-      "summary": "Register-before-send; ordered inbound; earlyResponses bounded"
+      "summary": "Register-before-send; ordered inbound; earlyResponses bounded",
+      "regression_tests": [
+        "Tests/CodeEditorDAPTests/DAPSessionTests.swift",
+        "Tests/CodeEditorDAPTests/Phase7DAPTests.swift"
+      ]
     },
     {
       "id": "TASK-001",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "Snapshot-only range resolve; zero fabricated offsets"
+      "summary": "Snapshot-only range resolve; zero fabricated offsets",
+      "regression_tests": [
+        "Tests/CodeEditorTasksTests/TaskTests.swift",
+        "Tests/CodeEditorTasksTests/Phase7TaskTests.swift"
+      ]
     },
     {
       "id": "TASK-002",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "Streaming matcher across chunks + multiline EOF flush"
+      "summary": "Streaming matcher across chunks + multiline EOF flush",
+      "regression_tests": [
+        "Tests/CodeEditorTasksTests/TaskTests.swift",
+        "Tests/CodeEditorTasksTests/Phase7TaskTests.swift"
+      ]
     },
     {
       "id": "UI-001",
       "severity": "P1",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session"
+      "summary": "Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "SCM-001",
       "severity": "P1",
       "product": "CodeEditorSourceControl",
       "status": "fixed",
-      "summary": "Porcelain -z rename/unicode/conflict/copy fixtures"
+      "summary": "Porcelain -z rename/unicode/conflict/copy fixtures",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMTests.swift",
+        "Tests/CodeEditorSourceControlTests/Phase7SCMTests.swift"
+      ]
     },
     {
       "id": "TS-001",
       "severity": "P1",
       "product": "CodeEditorTreeSitter",
       "status": "fixed",
-      "summary": "LanguageDocumentActor off-main; provider delegates highlights"
+      "summary": "LanguageDocumentActor off-main; provider delegates highlights",
+      "regression_tests": [
+        "Tests/CodeEditorTreeSitterTests/Phase6TreeSitterTests.swift"
+      ]
     },
     {
       "id": "WB-001",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Real utility panels"
+      "summary": "Real utility panels",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "DOC-005",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "Streaming readContentAndIdentity; no Data(contentsOf) identity path"
+      "summary": "Streaming readContentAndIdentity; no Data(contentsOf) identity path",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift"
+      ]
     },
     {
       "id": "DOC-006",
       "severity": "P1",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "CoordinatedFileIO once-resume box; test-proven"
+      "summary": "CoordinatedFileIO once-resume box; test-proven",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift"
+      ]
     },
     {
       "id": "DOC-007",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "DocumentCodec rejects .other; no UTF-8 mojibake fallback; BOM preserve policy"
+      "summary": "DocumentCodec rejects .other; no UTF-8 mojibake fallback; BOM preserve policy",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift"
+      ]
     },
     {
       "id": "DOC-008",
       "severity": "P0",
       "product": "CodeEditorDocuments",
       "status": "fixed",
-      "summary": "Versioned recovery journal with SHA-256 checksum, quotas, 0600, quarantine"
+      "summary": "Versioned recovery journal with SHA-256 checksum, quotas, 0600, quarantine",
+      "regression_tests": [
+        "Tests/CodeEditorDocumentsTests/TextDocumentTests.swift",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift"
+      ]
     },
     {
       "id": "DOC-009",
       "severity": "P1",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "Bounded EditorEventStream/TextDocument streams (bufferingNewest)"
+      "summary": "Bounded EditorEventStream/TextDocument streams (bufferingNewest)",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/DocumentStoreTests.swift",
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift"
+      ]
     },
     {
       "id": "DOC-010",
       "severity": "P1",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "DocumentStore no longer @unchecked Sendable; main-actor-affine documented"
+      "summary": "DocumentStore no longer @unchecked Sendable; main-actor-affine documented",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/DocumentStoreTests.swift",
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift"
+      ]
     },
     {
       "id": "UI-002",
       "severity": "P0",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "MarkedTextSession + applyMarkedText without undo registration"
+      "summary": "MarkedTextSession + applyMarkedText without undo registration",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "UI-003",
       "severity": "P1",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "AppKit internal drag uses moveText transaction; external size guard"
+      "summary": "AppKit internal drag uses moveText transaction; external size guard",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "UI-004",
       "severity": "P1",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "WordNavigationMode codeSubword/camelCase/snake/acronym"
+      "summary": "WordNavigationMode codeSubword/camelCase/snake/acronym",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/DocumentStoreTests.swift",
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift"
+      ]
     },
     {
       "id": "UI-005",
       "severity": "P2",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "EditorTextServicesPolicy code-editor defaults"
+      "summary": "EditorTextServicesPolicy code-editor defaults",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "UI-006",
       "severity": "P1",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "Layout max-width cache; invalidate on edit"
+      "summary": "Layout max-width cache; invalidate on edit",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "UI-007",
       "severity": "P1",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "Virtualized accessibility value (viewport + line/col)"
+      "summary": "Virtualized accessibility value (viewport + line/col)",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "UI-008",
       "severity": "P2",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "EditorSignposts + EditorPerformanceHarness budgets"
+      "summary": "EditorSignposts + EditorPerformanceHarness budgets",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "UI-009",
       "severity": "P0",
       "product": "CodeEditorView",
       "status": "fixed",
-      "summary": "AppKit insertText honors replacementRange"
+      "summary": "AppKit insertText honors replacementRange",
+      "regression_tests": [
+        "Tests/CodeEditorViewTests/EditorControllerTests.swift",
+        "Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift"
+      ]
     },
     {
       "id": "WSP-003",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "RelativeWorkspacePath + symlink/volume corpus"
+      "summary": "RelativeWorkspacePath + symlink/volume corpus",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "WSP-004",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "FS actor + concurrent stress + cancel tests"
+      "summary": "FS actor + concurrent stress + cancel tests",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "WSP-005",
       "severity": "P1",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "FSEvents recursive watcher with overflow/rescan + mock tests"
+      "summary": "FSEvents recursive watcher with overflow/rescan + mock tests",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "WSP-006",
       "severity": "P0",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "DocumentLeaseRegistry ref-count; final release unregisters"
+      "summary": "DocumentLeaseRegistry ref-count; final release unregisters",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "WSP-007",
       "severity": "P1",
       "product": "CodeEditorWorkspace",
       "status": "fixed",
-      "summary": "On-disk golden fixtures v1/v999/corrupt; reject future schema"
+      "summary": "On-disk golden fixtures v1/v999/corrupt; reject future schema",
+      "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WorkspaceTests.swift",
+        "Tests/CodeEditorWorkspaceTests/WorkspaceEditTransactionTests.swift"
+      ]
     },
     {
       "id": "CMD-003",
       "severity": "P1",
       "product": "CodeEditorCommands",
       "status": "fixed",
-      "summary": "CommandContextSnapshot from real focus/document/trust"
+      "summary": "CommandContextSnapshot from real focus/document/trust",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CommandSystemTests.swift",
+        "Tests/CodeEditorCommandsTests/Phase4CommandTests.swift"
+      ]
     },
     {
       "id": "CMD-004",
       "severity": "P1",
       "product": "CodeEditorCommands",
       "status": "fixed",
-      "summary": "Typed notFound/disabled/unsupported; palette-path executeAsync proof"
+      "summary": "Typed notFound/disabled/unsupported; palette-path executeAsync proof",
+      "regression_tests": [
+        "Tests/CodeEditorCommandsTests/CommandSystemTests.swift",
+        "Tests/CodeEditorCommandsTests/Phase4CommandTests.swift"
+      ]
     },
     {
       "id": "TER-002",
       "severity": "P0",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "ce_pty_spawn C helper; LocalPTYTransport exclusive FD; EAGAIN wait"
+      "summary": "ce_pty_spawn C helper; LocalPTYTransport exclusive FD; EAGAIN wait",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "TER-003",
       "severity": "P0",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "TerminalByteTransport ordered events; overflow fatal; no bufferingNewest drops"
+      "summary": "TerminalByteTransport ordered events; overflow fatal; no bufferingNewest drops",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "TER-004",
       "severity": "P0",
       "product": "CodeEditorTerminalGhostty",
       "status": "fixed",
-      "summary": "GhosttySurfaceView/Representable; workbench uses Ghostty surface"
+      "summary": "GhosttySurfaceView/Representable; workbench uses Ghostty surface",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "TER-005",
       "severity": "P1",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "TerminalService create/write/close/closeAll/restoration config-only"
+      "summary": "TerminalService create/write/close/closeAll/restoration config-only",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "TER-006",
       "severity": "P1",
       "product": "CodeEditorDAP",
       "status": "fixed",
-      "summary": "GhosttyRunInTerminalHandler \u2192 TerminalService debuggee sessions"
+      "summary": "GhosttyRunInTerminalHandler \u2192 TerminalService debuggee sessions",
+      "regression_tests": [
+        "Tests/CodeEditorDAPTests/DAPSessionTests.swift",
+        "Tests/CodeEditorDAPTests/Phase7DAPTests.swift"
+      ]
     },
     {
       "id": "TER-007",
       "severity": "P1",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "TerminalSecurityPolicy OSC52 deny; a11y adapter from Ghostty snapshot"
+      "summary": "TerminalSecurityPolicy OSC52 deny; a11y adapter from Ghostty snapshot",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "TER-008",
       "severity": "P0",
       "product": "CodeEditorTerminal",
       "status": "fixed",
-      "summary": "Workbench live path no longer feeds TerminalScreen; custom VT legacy/tests only"
+      "summary": "Workbench live path no longer feeds TerminalScreen; custom VT legacy/tests only",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift"
+      ]
     },
     {
       "id": "LSP-004",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "Ordered inbound notification/request chain"
+      "summary": "Ordered inbound notification/request chain",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "LSP-005",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "negotiatedPositionEncoding stored on session"
+      "summary": "negotiatedPositionEncoding stored on session",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "LSP-006",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "Dynamic registration tracks methods"
+      "summary": "Dynamic registration tracks methods",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "LSP-007",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "applyEdit plan path (WorkspaceEditPlan) retained + tests"
+      "summary": "applyEdit plan path (WorkspaceEditPlan) retained + tests",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "LSP-008",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "LSPDiagnosticStore version-aware clear on empty/server"
+      "summary": "LSPDiagnosticStore version-aware clear on empty/server",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "LSP-009",
       "severity": "P1",
       "product": "CodeEditorLSP",
       "status": "fixed",
-      "summary": "scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1"
+      "summary": "scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1",
+      "regression_tests": [
+        "Tests/CodeEditorLSPTests/LSPClientTests.swift",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift"
+      ]
     },
     {
       "id": "TS-002",
       "severity": "P1",
       "product": "CodeEditorTreeSitter",
       "status": "fixed",
-      "summary": "Generation-tagged highlights; stale discarded"
+      "summary": "Generation-tagged highlights; stale discarded",
+      "regression_tests": [
+        "Tests/CodeEditorTreeSitterTests/Phase6TreeSitterTests.swift"
+      ]
     },
     {
       "id": "TASK-003",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "Cancel waits process death; exclusive slot held until exit"
+      "summary": "Cancel waits process death; exclusive slot held until exit",
+      "regression_tests": [
+        "Tests/CodeEditorTasksTests/TaskTests.swift",
+        "Tests/CodeEditorTasksTests/Phase7TaskTests.swift"
+      ]
     },
     {
       "id": "TASK-004",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "Bounded output single marker; unresolved vars throw"
+      "summary": "Bounded output single marker; unresolved vars throw",
+      "regression_tests": [
+        "Tests/CodeEditorTasksTests/TaskTests.swift",
+        "Tests/CodeEditorTasksTests/Phase7TaskTests.swift"
+      ]
     },
     {
       "id": "TASK-005",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "FakeTaskRunner only in Tests/CodeEditorTasksTests"
+      "summary": "FakeTaskRunner only in Tests/CodeEditorTasksTests",
+      "regression_tests": [
+        "Tests/CodeEditorTasksTests/TaskTests.swift",
+        "Tests/CodeEditorTasksTests/Phase7TaskTests.swift"
+      ]
     },
     {
       "id": "DAP-002",
       "severity": "P1",
       "product": "CodeEditorDAP",
       "status": "fixed",
-      "summary": "Ordered inbound chain + lifecycle failed/terminated"
+      "summary": "Ordered inbound chain + lifecycle failed/terminated",
+      "regression_tests": [
+        "Tests/CodeEditorDAPTests/DAPSessionTests.swift",
+        "Tests/CodeEditorDAPTests/Phase7DAPTests.swift"
+      ]
     },
     {
       "id": "DAP-003",
       "severity": "P1",
       "product": "CodeEditorDAP",
       "status": "fixed",
-      "summary": "runInTerminal Ghostty/TerminalService + trust deny"
+      "summary": "runInTerminal Ghostty/TerminalService + trust deny",
+      "regression_tests": [
+        "Tests/CodeEditorDAPTests/DAPSessionTests.swift",
+        "Tests/CodeEditorDAPTests/Phase7DAPTests.swift"
+      ]
     },
     {
       "id": "SCM-002",
       "severity": "P1",
       "product": "CodeEditorSourceControl",
       "status": "fixed",
-      "summary": "Trust-gated Git; per-op handles; component path check"
+      "summary": "Trust-gated Git; per-op handles; component path check",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMTests.swift",
+        "Tests/CodeEditorSourceControlTests/Phase7SCMTests.swift"
+      ]
     },
     {
       "id": "PROC-001",
       "severity": "P1",
       "product": "CodeEditorCore",
       "status": "fixed",
-      "summary": "ProcessSupervisor alias; tasks/Git share ProcessService"
+      "summary": "ProcessSupervisor alias; tasks/Git share ProcessService",
+      "regression_tests": [
+        "Tests/CodeEditorCoreTests/DocumentStoreTests.swift",
+        "Tests/CodeEditorCoreTests/UndoCoordinatorTests.swift"
+      ]
     },
     {
       "id": "WB-007",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Problems/SCM/Debug models with unit tests"
+      "summary": "Problems/SCM/Debug models with unit tests",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "EXT-005",
       "severity": "P0",
       "product": "CodeEditorExtensions",
       "status": "fixed",
-      "summary": "Corrupt durable state quarantines store"
+      "summary": "Corrupt durable state quarantines store",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionsTests/ExtensionRuntimeTests.swift",
+        "Tests/CodeEditorExtensionsTests/Phase8StoreSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-006",
       "severity": "P0",
       "product": "CodeEditorExtensions",
       "status": "fixed",
-      "summary": "SBOM/broker digests fail closed never length"
+      "summary": "SBOM/broker digests fail closed never length",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionsTests/ExtensionRuntimeTests.swift",
+        "Tests/CodeEditorExtensionsTests/Phase8StoreSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-007",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Reject symlink/special/key-material package entries"
+      "summary": "Reject symlink/special/key-material package entries",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-008",
       "severity": "P1",
       "product": "CodeEditorExtensionAPI",
       "status": "fixed",
-      "summary": "TOML fail-closed api_version + unknown required fields"
+      "summary": "TOML fail-closed api_version + unknown required fields",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionAPITests/ExtensionAPITests.swift"
+      ]
     },
     {
       "id": "EXT-009",
       "severity": "P0",
       "product": "CodeEditorExtensions",
       "status": "fixed",
-      "summary": "Recover re-verifies package generations"
+      "summary": "Recover re-verifies package generations",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionsTests/ExtensionRuntimeTests.swift",
+        "Tests/CodeEditorExtensionsTests/Phase8StoreSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-010",
       "severity": "P1",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Storage quota overwrite-correct + directoryKey keys"
+      "summary": "Storage quota overwrite-correct + directoryKey keys",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-011",
       "severity": "P1",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Durable settings under storage root"
+      "summary": "Durable settings under storage root",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-012",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Streaming download mid-stream caps + redirect guard"
+      "summary": "Streaming download mid-stream caps + redirect guard",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-013",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Host-owned npm materializer no soft-stub"
+      "summary": "Host-owned npm materializer no soft-stub",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-014",
       "severity": "P0",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Process allowlist canonical/trusted-dir paths"
+      "summary": "Process allowlist canonical/trusted-dir paths",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-015",
       "severity": "P1",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Multi-root worktree + read limits + revoke"
+      "summary": "Multi-root worktree + read limits + revoke",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "EXT-016",
       "severity": "P1",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "ExtensionSDKConformance kit"
+      "summary": "ExtensionSDKConformance kit",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "WASM-003",
       "severity": "P0",
       "product": "CodeEditorWasmEngineWasmKit",
       "status": "fixed",
-      "summary": "Host imports read guest linear memory OOB-safe"
+      "summary": "Host imports read guest linear memory OOB-safe",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/RealWasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WASM-004",
       "severity": "P0",
       "product": "CodeEditorWasmEngineWasmKit",
       "status": "fixed",
-      "summary": "Wall-time + cooperative cancel interrupt"
+      "summary": "Wall-time + cooperative cancel interrupt",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/RealWasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WASM-005",
       "severity": "P1",
       "product": "CodeEditorWasmEngine",
       "status": "fixed",
-      "summary": "Memory limit/OOB enforcement"
+      "summary": "Memory limit/OOB enforcement",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WasmEngineTests.swift",
+        "Tests/CodeEditorWasmEngineTests/Phase9WasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WASM-006",
       "severity": "P0",
       "product": "CodeEditorWasmEngineTests",
       "status": "fixed",
-      "summary": "Hostile fixture suite on WasmKit"
+      "summary": "Hostile fixture suite on WasmKit",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/RealWasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WASM-007",
       "severity": "P1",
       "product": "CodeEditorExtensionHost",
       "status": "fixed",
-      "summary": "Dual-run contract LinkedGuest vs WasmKit"
+      "summary": "Dual-run contract LinkedGuest vs WasmKit",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/ExtensionHostTests.swift",
+        "Tests/CodeEditorExtensionHostTests/Phase8ExtensionSecurityTests.swift"
+      ]
     },
     {
       "id": "WASM-008",
       "severity": "P1",
       "product": "CodeEditorWasmEngine",
       "status": "fixed",
-      "summary": "Simulation alias = LinkedGuest; WasmKit is real"
+      "summary": "Simulation alias = LinkedGuest; WasmKit is real",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WasmEngineTests.swift",
+        "Tests/CodeEditorWasmEngineTests/Phase9WasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WASM-009",
       "severity": "P1",
       "product": "CodeEditorWasmEngine",
       "status": "fixed",
-      "summary": "Fixture gate script + session lifecycle"
+      "summary": "Fixture gate script + session lifecycle",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WasmEngineTests.swift",
+        "Tests/CodeEditorWasmEngineTests/Phase9WasmExecutionTests.swift"
+      ]
     },
     {
       "id": "WB-010",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Navigator set complete with models"
+      "summary": "Navigator set complete with models",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "WB-011",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Tab pin/preview semantics + pane APIs"
+      "summary": "Tab pin/preview semantics + pane APIs",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "WB-012",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Scheme/run destination + task routing"
+      "summary": "Scheme/run destination + task routing",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "WB-013",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Status LineIndex + activity cancel"
+      "summary": "Status LineIndex + activity cancel",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "WB-014",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Chrome command ID matrix"
+      "summary": "Chrome command ID matrix",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "WB-015",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "Open Quickly modes + path:line:col"
+      "summary": "Open Quickly modes + path:line:col",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "WB-016",
       "severity": "P1",
       "product": "CodeEditorWorkbench",
       "status": "fixed",
-      "summary": "FullWorkbench schemes/tasks/navigator wiring"
+      "summary": "FullWorkbench schemes/tasks/navigator wiring",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift"
+      ]
     },
     {
       "id": "QUAL-001",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "Vacuous tests banned via check-vacuous-tests.sh"
+      "summary": "Vacuous tests banned via check-vacuous-tests.sh",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "QUAL-002",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "verify-stable.sh \u00a726 master gate"
+      "summary": "verify-stable.sh \u00a726 master gate",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "QUAL-003",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "check-release-evidence.sh validates JSON"
+      "summary": "check-release-evidence.sh validates JSON",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "QUAL-004",
       "severity": "P1",
       "product": "Docs",
       "status": "fixed",
-      "summary": "README/CompatibilityProfile honesty aligned Phases 7\u201310"
+      "summary": "README/CompatibilityProfile honesty aligned Phases 7\u201310",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        "Docs/Architecture/PERF-BUDGETS.md"
+      ]
     },
     {
       "id": "QUAL-005",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "API baselines refreshed; check-api-freeze"
+      "summary": "API baselines refreshed; check-api-freeze",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "QUAL-006",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "PERF-BUDGETS.md + check-perf-budgets.sh"
+      "summary": "PERF-BUDGETS.md + check-perf-budgets.sh",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "QUAL-007",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "Unchecked Sendable inventory + allowlist"
+      "summary": "Unchecked Sendable inventory + allowlist",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     },
     {
       "id": "QUAL-008",
       "severity": "P1",
       "product": "CI",
       "status": "fixed",
-      "summary": "Full swift test in verify-stable with counts"
+      "summary": "Full swift test in verify-stable with counts",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift",
+        ".github/workflows/ci.yml"
+      ]
     }
-  ]
+  ],
+  "policy": {
+    "fixed_requires_regression_tests": true,
+    "markdown_generated_from_json": true
+  }
 }

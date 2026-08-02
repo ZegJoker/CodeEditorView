@@ -1,3 +1,4 @@
+import CodeEditorDAP
 import Foundation
 
 /// Scripted DAP adapter covering the claimed protocol surface for fixtures.

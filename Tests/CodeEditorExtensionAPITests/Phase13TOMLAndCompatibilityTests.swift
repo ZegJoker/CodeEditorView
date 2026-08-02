@@ -42,7 +42,7 @@ struct Phase13TOMLTests {
         #expect(plan.mcpServers.count == 1)
         #expect(plan.mcpServers[0].startupTimeoutMS == 8000)
         #expect(plan.slashCommands.count == 1)
-        #expect(plan.slashCommands[0].compatibility == .stable)
+        #expect(plan.slashCommands[0].compatibility == .experimental)
         #expect(plan.documentationPackages.count == 1)
         #expect(plan.parityProfile == "codeeditor-dap-mcp-s2")
         let seed = plan.debugAdapters[0].makeSeedPlan()
@@ -57,12 +57,13 @@ struct Phase13TOMLTests {
 @Suite("CompatibilityProfile")
 struct CompatibilityProfileTests {
     @Test func phase13DefaultLabels() {
+        // REL-N01: defaults are experimental/pre-alpha honesty, not stable/RC.
         let p = CompatibilityProfile.phase13Default
-        #expect(p.status(for: .debugAdapters) == .stable)
-        #expect(p.status(for: .debugLocators) == .stable)
-        #expect(p.status(for: .mcpServers) == .stable)
-        #expect(p.status(for: .documentationIndexing) == .stable)
-        #expect(p.status(for: .slashCommands) == .stable)
+        #expect(p.status(for: .debugAdapters) == .experimental)
+        #expect(p.status(for: .debugLocators) == .experimental)
+        #expect(p.status(for: .mcpServers) == .experimental)
+        #expect(p.status(for: .documentationIndexing) == .experimental)
+        #expect(p.status(for: .slashCommands) == .experimental)
         #expect(p.status(for: .languageModelProviderMetadata) == .unsupported)
         #expect(p.status(for: .legacyAgentServerHosting) == .unsupported)
     }
@@ -71,12 +72,12 @@ struct CompatibilityProfileTests {
         let text = """
             profile = "test"
             [features]
-            slash_commands = "stable"
-            mcp_servers = "stable"
+            slash_commands = "experimental"
+            mcp_servers = "experimental"
             """
         let p = try CompatibilityProfileLoader.load(toml: text)
-        #expect(p.status(for: .slashCommands) == .stable)
-        #expect(p.status(for: .mcpServers) == .stable)
+        #expect(p.status(for: .slashCommands) == .experimental)
+        #expect(p.status(for: .mcpServers) == .experimental)
     }
 
     @Test func slashSanitize() throws {

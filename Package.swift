@@ -509,6 +509,10 @@ let package = Package(
             ],
             resources: [.copy("../Fixtures/Wasm")]
         ),
+        .testTarget(
+            name: "ReleaseTruthTests",
+            dependencies: []
+        ),
     ],
     swiftLanguageModes: [.v6],
     cLanguageStandard: .c11

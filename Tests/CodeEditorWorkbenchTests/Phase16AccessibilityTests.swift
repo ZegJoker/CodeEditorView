@@ -14,4 +14,26 @@ struct Phase16AccessibilityTests {
         #expect(!WorkbenchAccessibilityID.statusBar.isEmpty)
         #expect(!WorkbenchAccessibilityID.commandPalette.isEmpty)
     }
+
+    @Test func test_REL_N04_accessibilityHierarchyAndRotorSurfaces() {
+        let ids = Set(WorkbenchAccessibilityHierarchy.flatten())
+        for required in [
+            WorkbenchAccessibilityID.root,
+            WorkbenchAccessibilityID.toolbar,
+            WorkbenchAccessibilityID.activityBar,
+            WorkbenchAccessibilityID.navigator,
+            WorkbenchAccessibilityID.editor,
+            WorkbenchAccessibilityID.inspector,
+            WorkbenchAccessibilityID.utility,
+            WorkbenchAccessibilityID.statusBar,
+        ] {
+            #expect(ids.contains(required), "hierarchy missing \(required)")
+        }
+        let rotor = Set(WorkbenchAccessibilityHierarchy.rotorSurfaces.map(\.rawValue))
+        for surface in ["errors", "symbols", "folds", "breakpoints", "search"] {
+            #expect(rotor.contains(surface), "rotor missing \(surface)")
+        }
+        #expect(WorkbenchFocusOrder.keyboardOrder.count >= 5)
+        #expect(WorkbenchAccessibilityHierarchy.focusRestorationDefault == WorkbenchAccessibilityID.editor)
+    }
 }

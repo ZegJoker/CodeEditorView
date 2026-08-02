@@ -9,7 +9,7 @@
 
 | Phase | Name | Findings | Status |
 |------:|------|---------:|--------|
-| 0 | release-truth | 9 | open |
+| 0 | release-truth | 9 | fixed |
 | 1 | documents | 12 | open |
 | 2 | substrate | 3 (+ shared substrate build) | open |
 | 3a | commands | 5 | open |
@@ -40,4 +40,5 @@
 
 ## Log
 
+- 2026-08-02: Phase 0 release-truth — fixed PKG-N01, REL-N01…REL-N08 (honesty gates, CompatibilityProfile pre-alpha, evidence scorecards, defect regression links, a11y hierarchy, perf hard measurements, semantic API freeze, concurrency Werror, hard Ghostty/LSP/DAP; mocks moved to Tests/).
 - 2026-08-02: bootstrap — audit plan + FINDINGS.json (174 open) + tracker present; `swift package dump-package` OK; `swift test --filter Nonexistent` builds (0 tests). All phases open; no findings marked fixed.

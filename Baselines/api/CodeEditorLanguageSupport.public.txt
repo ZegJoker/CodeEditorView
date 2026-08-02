@@ -1,47 +1,61 @@
-class LanguageRegistry
-enum CaptureName
-enum CodeLanguages
-enum HighlightProvidingError
-enum LanguageDetector
-enum LanguagePackError
-enum LanguagePackRegistration
-enum LanguageRegistrationDiagnostic
-enum QueryKind
-enum TreeSitterLanguageID
-func allDefinitions
-func definition
-func detect
-func from
-func hasParser
-func hasQueryProvider
-func hash
-func language
-func parser
-func queryURL
-func record
-func register
-func registerParser
-func registerQueryProvider
-func removeAll
-func resetForTests
-func setDocumentText
-func setUp
-func snapshot
-func unregisterAll
-func unregisterDefinition
-func unregisterParser
-func unregisterQueryProvider
-func validateCompleteness
-func willApplyEdit
-protocol HighlightProviding
-struct CodeLanguage
-struct HighlightRange
-struct LanguageDefinition
-struct LanguageID
-struct LanguageRegistrationResult
-struct LanguageRegistrySnapshot
-typealias ParserFactory
-typealias QueryURLProvider
+class LanguageRegistry | sendable=1
+enum CaptureName | sendable=1
+enum CodeLanguages | sendable=1
+enum HighlightProvidingError | sendable=1
+enum LanguageDetector | sendable=1
+enum LanguagePackError | sendable=1
+enum LanguagePackRegistration | sendable=1
+enum LanguageRegistrationDiagnostic | sendable=1
+enum QueryKind | sendable=1
+enum TreeSitterLanguageID | sendable=1
+func allDefinitions()
+func definition(for id: LanguageID)
+func detect( filename: String, contentPrefix: String? , in registry: LanguageRegistry )
+func from(capture: String)
+func hasParser(for id: LanguageID)
+func hasQueryProvider(for id: LanguageID)
+func hash(into hasher: inout Hasher)
+func language(forFileExtension ext: String)
+func language(id: LanguageID)
+func language(id: String)
+func language(id: TreeSitterLanguageID)
+func parser(for id: LanguageID)
+func queryURL(for id: LanguageID, kind: QueryKind)
+func queryURL(for id: LanguageID, query: String)
+func queryURL(for name: String )
+func record(_ error: LanguagePackError)
+func register(_ definition: LanguageDefinition) | attr=discardableResult
+func registerParser(for id: LanguageID, factory: @escaping ParserFactory)
+func registerQueryProvider(for id: LanguageID, provider: @escaping QueryURLProvider)
+func removeAll()
+func resetForTests()
+func setDocumentText(_ text: String)
+func setUp(documentLength: Int, languageID: String?)
+func snapshot()
+func unregisterAll(for id: LanguageID)
+func unregisterDefinition(for id: LanguageID)
+func unregisterParser(for id: LanguageID)
+func unregisterQueryProvider(for id: LanguageID)
+func validateCompleteness(for id: LanguageID)
+func willApplyEdit(range: NSRange)
+init ( definitions: [LanguageDefinition], languageIDsWithParsers: Set<LanguageID>, languageIDsWithQueries: Set<LanguageID>, generation: UInt64 )
+init ( id: LanguageID, displayName: String, tsName: String, fileExtensions: Set<String> , aliases: Set<String> , filenames: Set<String> , firstLinePatterns: [String] , contentPatterns: [String] , detectionPriority: Int , lineComment: String , blockComment: (String, String) , "")
+init ( id: TreeSitterLanguageID, tsName: String, displayName: String, extensions: Set<String>, lineComment: String , rangeComment: (String, String) , "")
+init ()
+init (_ language: CodeLanguage)
+init (didRegister: Bool, diagnostics: [LanguageRegistrationDiagnostic] )
+init (range: NSRange, capture: CaptureName? , rawCapture: String? )
+init (rawValue: String)
+init (stringLiteral value: String)
+protocol HighlightProviding | isolation=@MainActor
+struct CodeLanguage | sendable=1
+struct HighlightRange | sendable=1
+struct LanguageDefinition | sendable=1
+struct LanguageID | sendable=1
+struct LanguageRegistrationResult | sendable=1
+struct LanguageRegistrySnapshot | sendable=1
+typealias ParserFactory | sendable=1
+typealias QueryURLProvider | sendable=1
 var additionalQueries
 var agda
 var aliases

@@ -114,5 +114,3 @@ public final class NativeHelperProcessTransport: ExtensionWireTransport, @unchec
     }
 }
 
-/// Adapts MockWireTransport already in Protocol module — host alias.
-public typealias HostMockWireTransport = MockWireTransport

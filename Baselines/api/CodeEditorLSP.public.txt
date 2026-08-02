@@ -1,96 +1,141 @@
+actor LSPDiagnosticStore
 actor LSPDocumentSynchronizer
 actor LSPJSONRPCConnection
 actor LSPPositionMapCache
+actor LSPSnapshotResolverBox
 actor LanguageServerPool
 actor LanguageServerSession
-actor MockLanguageServer
-class Decoder
-class LSPLog
-class LSPProcessTransport
-class LSPProviderRegistration
-class LSPTestTransport
-enum DecodeError
+class Decoder | sendable=1
+class LSPLog | sendable=1
+class LSPProcessTransport | sendable=1
+class LSPProviderRegistration | sendable=1
+class LSPTestTransport | sendable=1
+enum DecodeError | sendable=1
 enum LSPClientProviders
-enum LSPError
-enum LSPLogLevel
+enum LSPError | sendable=1
+enum LSPLogLevel | sendable=1
 enum LSPMessageFraming
 enum LSPProtocolVersion
-enum LanguageServerLaunch
-enum LanguageServerState
-enum RequestID
-func allOpenDocuments
-func append
-func cancelRequest
-func close
-func didChange
-func didChangeRaw
-func didClose
-func didOpen
-func didSave
-func dispose
-func dynamicRegistrationIDs
-func encode
-func encodeJSONObject
-func invalidate
-func makePair
-func map
-func markFailed
-func noteSaved
-func notify
-func notifyDictionary
-func open
-func openDocumentState
-func position
-func positionMap
-func register
-func registerTestFactory
-func removeAll
-func request
-func requestDictionary
-func requestJSON
-func requestOptionalJSON
-func reset
-func respond
-func respondError
-func restart
-func send
-func server
-func session
-func sessionMatching
-func setNotificationHandler
-func setProgressHandler
-func setServerRequestHandler
-func shutdown
-func shutdownAll
-func start
-func stop
-func utf16Offset
-protocol LSPTransport
-struct LSPAnyJSON
-struct LSPContentChange
-struct LSPDiagnosticsEvent
-struct LSPJSONObject
-struct LSPLogEvent
-struct LSPOpenDocumentState
-struct LSPPositionMap
-struct LSPServerBudgets
-struct LSPSyncOptions
-struct LanguageServerDefinition
-struct LanguageServerID
-struct ProgressEvent
-struct ServerCapabilitiesSnapshot
-typealias LSPCompletionLabelHook
-typealias LSPSymbolLabelHook
-var applyEditHandler
+enum LanguageServerLaunch | sendable=1
+enum LanguageServerState | sendable=1
+enum RequestID | sendable=1
+func allDiagnostics(uri: DocumentURI)
+func allOpenDocuments()
+func append(_ data: Data)
+func append(level: LSPLogLevel, message: String, serverID: String? )
+func cancelRequest(id: RequestID)
+func clear(uri: DocumentURI)
+func clearAll()
+func clearServer(_ serverID: String)
+func close()
+func close(uri: DocumentURI)
+func diagnostics(serverID: String, uri: DocumentURI)
+func didChange( uri: DocumentURI, version: DocumentVersion, changes: [LSPContentChange], fullText: String )
+func didChangeRaw( uri: DocumentURI, version: DocumentVersion, contentChanges: [[String: Any]], fullText: String )
+func didClose(uri: DocumentURI)
+func didOpen( uri: DocumentURI, languageID: String, version: DocumentVersion, text: String )
+func didSave(uri: DocumentURI, text: String?)
+func dispose()
+func dynamicRegistrationIDs()
+func encode(_ body: Data)
+func encodeJSONObject(_ object: Any)
+func invalidate(uri: DocumentURI)
+func isDynamicallyEnabled(_ method: String)
+func makePair() -> (client: LSPTestTransport, server: LSPTestTransport)
+func map(for uri: DocumentURI, version: DocumentVersion, text: String)
+func markFailed()
+func noteSaved(uri: DocumentURI, text: String?)
+func notify()
+func notifyDictionary(_ method: String, params: LSPJSONObject?)
+func open(document: TextDocument, languageID: String)
+func openDocumentState(uri: DocumentURI)
+func position(utf16Offset: Int) -> (line: Int, character: Int)
+func positionMap(uri: DocumentURI)
+func publish( serverID: String, uri: DocumentURI, version: Int?, items: [LSPStoredDiagnostic] )
+func refreshSnapshotResolver()
+func register( session: LanguageServerSession, into registry: LanguageServiceRegistry, selector: DocumentSelector , priority: Int , completionLabelHook: LSPCompletionLabelHook? , symbolLabelHook: LSPSymbolLabelHook? )
+func registerTestFactory( id: String, factory: @escaping @Sendable ()
+func removeAll()
+func request()
+func requestDictionary( _ method: String, params: LSPJSONObject? )
+func requestJSON()
+func requestOptionalJSON()
+func reset()
+func respond(id: RequestID, result: Any?)
+func respondError(id: RequestID, code: Int, message: String)
+func restart()
+func restart(id: LanguageServerID)
+func send(_ data: Data)
+func server(for definition: LanguageServerDefinition) | attr=discardableResult
+func session(poolKey: String)
+func sessionMatching(id: LanguageServerID)
+func set(_ resolver: any WorkspaceSnapshotResolver)
+func setNotificationHandler( _ handler: @escaping @Sendable (String, Data)
+func setProgressHandler( _ handler: @escaping @Sendable (ProgressEvent)
+func setServerRequestHandler( _ handler: @escaping @Sendable (String, RequestID, Data)
+func shutdown()
+func shutdownAll()
+func snapshot(for uri: DocumentURI)
+func start()
+func text(for uri: DocumentURI)
+func utf16Offset(line: Int, character: Int)
+init ( definition: LanguageServerDefinition, log: LSPLog )
+init ( executable: URL, arguments: [String] , environment: [String: String]? , currentDirectory: URL? , platformProfile: PlatformCapabilityProfile )
+init ( id: LanguageServerID, displayName: String, languages: Set<String> , documentSelector: DocumentSelector , launch: LanguageServerLaunch, workspaceRootURIs: [DocumentURI] , environment: [String: String] , currentDirectory: URL? , initializationOptions: LSPJSONObject? )
+init ( id: String )
+init ( level: LSPLogLevel, message: String, serverID: String? , date: Date )
+init ( maxBodyBytes: Int , maxBufferBytes: Int )
+init ( maxConcurrentRequests: Int , requestTimeout: Duration )
+init ( maxDiskBytes: UInt64 , openDocumentText: @escaping @Sendable (DocumentURI) async -> (String, DocumentVersion?)
+init ( transport: any LSPTransport, log: LSPLog )
+init ()
+init (_ dictionary: [String: Any])
+init (_ resolver: any WorkspaceSnapshotResolver ))
+init (_ value: Any?)
+init (changeDebounceNanoseconds: UInt64 , preferIncremental: Bool )
+init (log: LSPLog ))
+init (maxEvents: Int )
+init (range: CodeEditorCore.TextRange? , text: String)
+init (rawValue: String)
+init (serverID: String, uri: DocumentURI)
+init (session: LanguageServerSession, options: LSPSyncOptions )
+init (stringLiteral value: String)
+init (token: String, kind: String, message: String? , percentage: Int? )
+init (uri: DocumentURI, languageID: String, version: DocumentVersion, text: String)
+init (uri: DocumentURI, text: String, version: DocumentVersion? )
+init (uri: DocumentURI, version: DocumentVersion?, diagnostics: [LanguageDiagnostic])
+init (version: DocumentVersion, text: String)
+protocol LSPTransport | sendable=1
+protocol WorkspaceSnapshotResolver | sendable=1
+struct DefaultWorkspaceSnapshotResolver
+struct Key | sendable=1
+struct LSPAnyJSON | sendable=1
+struct LSPContentChange | sendable=1
+struct LSPDiagnosticsEvent | sendable=1
+struct LSPJSONObject | sendable=1
+struct LSPLogEvent | sendable=1
+struct LSPOpenDocumentState | sendable=1
+struct LSPPositionMap | sendable=1
+struct LSPServerBudgets | sendable=1
+struct LSPStoredDiagnostic | sendable=1
+struct LSPSyncOptions | sendable=1
+struct LanguageServerDefinition | sendable=1
+struct LanguageServerID | sendable=1
+struct ProgressEvent | sendable=1
+struct ServerCapabilitiesSnapshot | sendable=1
+struct TextSnapshot | sendable=1
+typealias LSPCompletionLabelHook | sendable=1
+typealias LSPSymbolLabelHook | sendable=1
+var applyEditHandler | sendable=1
 var budgets
 var callHierarchy
 var changeDebounceNanoseconds
+var character
 var codeAction
 var codeActionResolve
 var completion
-var completionDelayNanoseconds
 var completionResolve
-var configurationHandler
+var configurationHandler | sendable=1
 var currentDirectory
 var date
 var declaration
@@ -98,6 +143,7 @@ var defaultMaxBodyBytes
 var defaultMaxBufferBytes
 var definition
 var description
+var diagnosticStore
 var diagnostics
 var diagnosticsStream
 var dictionary
@@ -108,6 +154,8 @@ var documentLink
 var documentSelector
 var documentSymbol
 var empty
+var endCharacter
+var endLine
 var environment
 var events
 var executeCommand
@@ -126,30 +174,30 @@ var languageID
 var languages
 var launch
 var level
+var line
 var lineStarts
 var log
 var major
 var maxBodyBytes
 var maxBufferBytes
 var maxConcurrentRequests
+var maxDiskBytes
 var maxStderrBytes
 var message
 var minor
 var null
+var openDocumentText | sendable=1
 var percentage
 var poolKey
 var positionMaps
 var preferIncremental
 var progressStream
-var publishDiagnosticsOnChange
 var pullDiagnostics
 var range
 var rangeFormatting
 var rawValue
-var recordedChanges
 var references
 var rename
-var requestApplyEditAfterInit
 var requestTimeout
 var restartInitialBackoff
 var restartMaxAttempts
@@ -157,10 +205,11 @@ var restartMaxBackoff
 var semanticTokens
 var semanticTokensDelta
 var semanticTokensRange
-var sendProgressAfterInit
 var serverID
-var showMessageRequestHandler
+var severity
+var showMessageRequestHandler | sendable=1
 var signatureHelp
+var snapshotResolver
 var stderrBytes
 var supportedCommands
 var text

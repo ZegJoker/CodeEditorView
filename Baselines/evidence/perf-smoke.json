@@ -1,9 +1,9 @@
 {
-  "generated_at" : "2026-08-02T07:19:10Z",
+  "generated_at" : "2026-08-02T09:47:09Z",
   "iterations" : 2000,
   "metric" : "core_edit_unit",
   "p50_budget_ms_reference" : 8,
-  "per_op_us" : 0.1355625,
-  "total_ms" : 0.271125,
+  "per_op_us" : 0.171625,
+  "total_ms" : 0.34325,
   "within_unit_bound" : true
 }

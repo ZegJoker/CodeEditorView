@@ -1,68 +1,96 @@
 actor InMemoryTaskDiagnosticsSink
 actor OutputChannelRegistry
 actor TaskService
-class OutputChannel
-class StreamingProblemMatcherEngine
-class TaskExecutionHandle
+class OutputChannel | sendable=1
+class StreamingProblemMatcherEngine | sendable=1
+class StreamingState | sendable=1
+class TaskExecutionHandle | sendable=1
+enum ColumnEncoding | sendable=1
 enum ProblemMatcherEngine
 enum TaskCommands
-enum TaskError
-enum TaskExecutionKind
-enum TaskGroup
-enum TaskOutputEvent
-enum TaskPresentationReveal
-enum TaskRunState
+enum TaskError | sendable=1
+enum TaskExecutionKind | sendable=1
+enum TaskGroup | sendable=1
+enum TaskOutputEvent | sendable=1
+enum TaskPresentationReveal | sendable=1
+enum TaskRunState | sendable=1
 enum TaskVariableResolver
-func all
-func allDefinitions
-func append
-func cancel
-func channel
-func clear
-func complete
-func completed
-func definition
-func diagnostics
-func emit
-func feed
-func finish
-func match
-func matchAll
-func normalizePath
-func publish
-func register
-func registerMatcher
-func resolve
-func resolveDefinition
-func resolveOrder
-func run
-func runSnapshot
-func setDiagnosticsSink
-func setVariables
-func start
-func swiftCompiler
-func wait
-protocol HostTaskExecuting
-protocol TaskDiagnosticsSink
-protocol TaskRunner
-struct FakeTaskRunner
+func all()
+func allDefinitions()
+func append(_ chunk: String)
+func append(_ line: OutputLine)
+func append(text: String, isError: Bool )
+func cancel()
+func cancel(runID: UUID)
+func channel(id: String, name: String)
+func clear()
+func complete(run: TaskRun, stdout: String, stderr: String)
+func completed( run: TaskRun, stdout: String, stderr: String )
+func definition(id: TaskID)
+func diagnostics(for uri: DocumentURI)
+func emit(stderr text: String)
+func emit(stdout text: String)
+func feed(_ text: String)
+func finish()
+func flush()
+func match( line: String, matcher: ProblemMatcher, cwd: URL?, workspaceRoot: URL? )
+func matchAll( text: String, matchers: [ProblemMatcher], cwd: URL?, workspaceRoot: URL? )
+func normalizePath( _ raw: String, cwd: URL?, workspaceRoot: URL? )
+func publish(uri: DocumentURI, diagnostics: [LanguageDiagnostic], owner: String)
+func register( into registry: CommandRegistry, onRun: @escaping @MainActor () | isolation=@MainActor attr=discardableResult
+func register(_ definition: TaskDefinition)
+func registerMatcher(_ matcher: ProblemMatcher)
+func resolve( _ text: String, variables: [String: String], environment: [String: String] , allowEmpty: Bool )
+func resolveDefinition( _ definition: TaskDefinition, extraVariables: [String: String] )
+func resolveOrder(_ root: TaskID)
+func resolvedRange(in text: String)
+func run(_ definition: TaskDefinition, output: OutputChannel)
+func run(id: TaskID) | attr=discardableResult
+func runSnapshot(id: UUID)
+func setDiagnosticsSink(_ sink: (any TaskDiagnosticsSink)?)
+func setVariables(_ variables: [String: String])
+func start(_ definition: TaskDefinition, output: OutputChannel)
+func start(id: TaskID) | attr=discardableResult
+func swiftCompiler(owner: String )
+func wait()
+init ( id: ProblemMatcherID, owner: String, pattern: NSRegularExpression, fileGroup: Int , lineGroup: Int , columnGroup: Int , severityGroup: Int? , messageGroup: Int , multilineEndPattern: NSRegularExpression? , maxProblems: Int )
+init ( id: TaskID, label: String, executable: String, arguments: [String] , cwd: URL? , environment: [String: String] , dependsOn: [TaskID] , problemMatchers: [ProblemMatcherID] , group: TaskGroup , execution: TaskExecutionKind , presentation: TaskPresentation )
+init ( id: UUID )
+init ( platformProfile: PlatformCapabilityProfile )
+init ( reveal: TaskPresentationReveal , echo: Bool , focus: Bool , panel: String? )
+init ( run: TaskRun, processHandle: ProcessHandle?, readinessPattern: String? )
+init ( runner: any TaskRunner )
+init ( uri: DocumentURI?, path: String, diagnostic: LanguageDiagnostic, position: TaskSourcePosition )
+init ()
+init (executor: any HostTaskExecuting)
+init (id: String, name: String, maxLines: Int )
+init (line: Int, column: Int, encoding: ColumnEncoding )
+init (matchers: [ProblemMatcher], cwd: URL?, workspaceRoot: URL? )
+init (rawValue: String)
+init (run: TaskRun, stdout: String, stderr: String)
+init (stringLiteral value: String)
+init (text: String, isError: Bool , date: Date ))
+protocol HostTaskExecuting | sendable=1
+protocol TaskDiagnosticsSink | sendable=1
+protocol TaskRunner | sendable=1
 struct HostTaskRunner
-struct MatchedProblem
-struct OutputLine
-struct ProblemMatcher
-struct ProblemMatcherID
+struct MatchedProblem | sendable=1
+struct OutputLine | sendable=1
+struct ProblemMatcher | sendable=1
+struct ProblemMatcherID | sendable=1
 struct ProcessTaskRunner
-struct TaskDefinition
-struct TaskID
-struct TaskPresentation
-struct TaskRun
-struct TaskRunResult
+struct TaskDefinition | sendable=1
+struct TaskID | sendable=1
+struct TaskPresentation | sendable=1
+struct TaskRun | sendable=1
+struct TaskRunResult | sendable=1
+struct TaskSourcePosition | sendable=1
 var allProblems
 var arguments
 var cancel
-var chunkDelayNanoseconds
 var collectedStderr
 var collectedStdout
+var column
 var columnGroup
 var concurrencyGroup
 var cwd
@@ -72,6 +100,7 @@ var definitionID
 var dependsOn
 var diagnostic
 var echo
+var encoding
 var endedAt
 var environment
 var events
@@ -82,14 +111,16 @@ var exitCode
 var fileGroup
 var focus
 var group
-var hangUntilCancelled
 var id
 var isBackground
 var isError
 var isExclusive
+var isReady
 var label
+var line
 var lineGroup
 var lines
+var maxLines
 var maxProblems
 var messageGroup
 var multilineEndPattern
@@ -99,11 +130,13 @@ var panel
 var path
 var pattern
 var platformProfile
+var position
 var presentation
 var problemMatchers
 var processService
 var rawValue
 var readinessPattern
+var results
 var reveal
 var run
 var runID
@@ -113,11 +146,10 @@ var snapshot
 var startedAt
 var state
 var stderr
-var stderrChunks
 var stdout
-var stdoutChunks
 var text
 var timeout
 var uri
 var useShell
 var variables
+var wasTruncated

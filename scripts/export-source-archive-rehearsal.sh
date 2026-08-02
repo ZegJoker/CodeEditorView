@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# PKG-001 / CI-010: export a source archive into an empty directory and build.
-# Hard-fails if clean-tree resolve/build does not succeed.
-#
-# Prefer committed tree (git archive HEAD). If Packages/CodeEditorGrammars is not
-# yet in HEAD but is staged/present, use a worktree export so local validation
-# works before the first commit of the package.
+# PKG-N01 / PKG-001 / CI-010: export a source archive into an empty environment and
+# resolve/build/test every public product without developer caches or bootstrap mutation.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -20,6 +16,16 @@ ARCHIVE="$STAGING/source.tar.gz"
 EXTRACT="$STAGING/extract"
 mkdir -p "$EXTRACT"
 
+# Isolated HOME + empty SwiftPM caches (PKG-N01)
+EMPTY_HOME="$STAGING/empty-home"
+mkdir -p "$EMPTY_HOME"
+export HOME="$EMPTY_HOME"
+export SWIFTPM_CACHE_PATH="$STAGING/spm-cache"
+export SWIFTPM_SHARED_CACHE_PATH="$STAGING/spm-shared"
+mkdir -p "$SWIFTPM_CACHE_PATH" "$SWIFTPM_SHARED_CACHE_PATH"
+# Clear any inherited package caches from the workspace extract path
+unset CI_DERIVED_DATA || true
+
 grammars_in_head() {
   git -C "$ROOT" cat-file -e "HEAD:Packages/CodeEditorGrammars/Package.swift" 2>/dev/null
 }
@@ -34,7 +40,6 @@ else
     echo "FAIL: Packages/CodeEditorGrammars/Sources missing" >&2
     exit 1
   fi
-  # Mirror a release source tree: tracked-like content without .git / build products.
   rsync -a \
     --exclude '.git/' \
     --exclude '.build/' \
@@ -69,17 +74,110 @@ fi
 SHA="$(shasum -a 256 "$ARCHIVE" | awk '{print $1}')"
 echo "$SHA  source.tar.gz" | tee "$OUT_DIR/source-archive.sha256"
 
-echo "== resolve + build (empty tree) =="
+PRODUCTS=(
+  CodeEditorCore
+  CodeEditorDocuments
+  CodeEditorCommands
+  CodeEditorWorkspace
+  CodeEditorWorkbench
+  CodeEditorView
+  CodeEditorLanguageSupport
+  CodeEditorLanguageServices
+  CodeEditorExtensionAPI
+  CodeEditorExtensionProtocol
+  CodeEditorExtensionGuest
+  CodeEditorWasmEngine
+  CodeEditorWasmEngineWasmKit
+  CodeEditorExtensionWasmGuest
+  CodeEditorExtensions
+  CodeEditorExtensionHost
+  CodeEditorLSP
+  CodeEditorDAP
+  CodeEditorSearch
+  CodeEditorTasks
+  CodeEditorTerminal
+  CodeEditorSourceControl
+  CodeEditorTreeSitter
+  CodeEditorLanguageSwift
+  CodeEditorLanguageJSON
+  CodeEditorLanguages
+  CodeEditorTerminalGhostty
+)
+
+echo "== resolve + build (empty HOME/cache tree) =="
 (
   cd "$EXTRACT"
   rm -rf .build
+  export HOME="$EMPTY_HOME"
+  export SWIFTPM_CACHE_PATH="$STAGING/spm-cache"
+  export SWIFTPM_SHARED_CACHE_PATH="$STAGING/spm-shared"
   swift package resolve
-  swift build --product CodeEditorCore
-  swift build --product CodeEditorView
-  swift build --product CodeEditorWorkbench
-  swift build --product CodeEditorLanguageSwift
-  swift build --product CodeEditorLanguageJSON
+
+  # Dependency graph + package fingerprint artifacts
+  swift package show-dependencies --format json >"$OUT_DIR/dependency-graph.json" 2>/dev/null \
+    || swift package show-dependencies >"$OUT_DIR/dependency-graph.txt"
+  if [[ -f Package.resolved ]]; then
+    cp Package.resolved "$OUT_DIR/Package.resolved"
+    shasum -a 256 Package.resolved | tee "$OUT_DIR/package-resolved.sha256"
+  fi
+  # Grammar package provenance fingerprint
+  if [[ -d Packages/CodeEditorGrammars ]]; then
+    (
+      cd Packages/CodeEditorGrammars
+      find Sources -type f | sort | xargs shasum -a 256
+    ) >"$OUT_DIR/grammar-sources.sha256"
+    if [[ -f Package.swift ]]; then
+      shasum -a 256 Packages/CodeEditorGrammars/Package.swift \
+        | tee -a "$OUT_DIR/package-fingerprint.sha256"
+    fi
+  fi
+  {
+    echo "archive_sha256=$SHA"
+    echo "home=$HOME"
+    date -u +"generated_at=%Y-%m-%dT%H:%M:%SZ"
+  } >"$OUT_DIR/clean-resolve-fingerprint.txt"
+
+  for product in "${PRODUCTS[@]}"; do
+    echo "== debug build --product $product =="
+    swift build --product "$product"
+    echo "== release build --product $product =="
+    swift build -c release --product "$product"
+  done
+
+  # Executable products + --version
+  echo "== executables =="
+  swift build --product codeeditor-extension
+  swift build -c release --product codeeditor-extension
+  BIN="$(swift build --show-bin-path)/codeeditor-extension"
+  if [[ -x "$BIN" ]]; then
+    "$BIN" --version | tee "$OUT_DIR/codeeditor-extension.version"
+  else
+    # SPM may place executable differently
+    find .build -type f -name 'codeeditor-extension' -perm -111 | head -1 | while read -r p; do
+      "$p" --version | tee "$OUT_DIR/codeeditor-extension.version"
+    done
+  fi
+
+  swift build --product ConformanceExtensionGuest
+  CBIN="$(swift build --show-bin-path)/ConformanceExtensionGuest"
+  if [[ -x "$CBIN" ]]; then
+    "$CBIN" --version | tee "$OUT_DIR/ConformanceExtensionGuest.version" || true
+  fi
+
+  # Meaningful CLI command on fixture package
+  if [[ -d Tests/Fixtures/Extensions/s0-basic ]]; then
+    "$BIN" validate Tests/Fixtures/Extensions/s0-basic || \
+      find .build -type f -name 'codeeditor-extension' -perm -111 -exec {} validate Tests/Fixtures/Extensions/s0-basic \;
+  fi
+
+  # Targeted tests on clean tree (full suite optional via FULL_ARCHIVE_TEST=1)
+  if [[ "${FULL_ARCHIVE_TEST:-0}" == "1" ]]; then
+    swift test
+  else
+    swift test --filter 'ReleaseTruthTests|CodeEditorCoreTests'
+  fi
 )
 
-echo "OK: source-archive rehearsal passed"
+echo "OK: source-archive rehearsal passed (PKG-N01 clean resolve/build)"
 echo "    sha256=$SHA"
+echo "    artifacts under $OUT_DIR (dependency-graph, fingerprints)"

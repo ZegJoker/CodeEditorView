@@ -63,39 +63,42 @@ public struct CompatibilityProfile: Sendable, Hashable, Codable {
         features[key] ?? .unsupported
     }
 
-    /// Phase 16 residual-closed default profile (no experimental/compatibility feature residuals).
+    /// Honest pre-alpha default (REL-N01). Features are experimental unless unsupported.
     public static let phase13Default: CompatibilityProfile = {
         var features: [String: CompatibilityFeatureStatus] = [:]
-        features["languages"] = .stable
-        features["themes"] = .stable
-        features["icon_themes"] = .stable
-        features["snippets"] = .stable
-        features["language_servers"] = .stable
-        features["completion_labels"] = .stable
-        features["symbol_labels"] = .stable
-        features["debug_adapters"] = .stable
-        features["debug_locators"] = .stable
-        features["mcp_servers"] = .stable
-        features["process_exec"] = .stable
-        features["download_file"] = .stable
-        features["npm_install"] = .stable
-        features["worktree"] = .stable
-        features["project"] = .stable
-        features["settings"] = .stable
-        features["kv_store"] = .stable
-        features["documentation_indexing"] = .stable
-        features["slash_commands"] = .stable
+        features["languages"] = .experimental
+        features["themes"] = .experimental
+        features["icon_themes"] = .experimental
+        features["snippets"] = .experimental
+        features["language_servers"] = .experimental
+        features["completion_labels"] = .experimental
+        features["symbol_labels"] = .experimental
+        features["debug_adapters"] = .experimental
+        features["debug_locators"] = .experimental
+        features["mcp_servers"] = .experimental
+        features["process_exec"] = .experimental
+        features["download_file"] = .experimental
+        features["npm_install"] = .experimental
+        features["worktree"] = .experimental
+        features["project"] = .experimental
+        features["settings"] = .experimental
+        features["kv_store"] = .experimental
+        features["documentation_indexing"] = .experimental
+        features["slash_commands"] = .experimental
         features["language_model_provider_metadata"] = .unsupported
         features["legacy_agent_server_hosting"] = .unsupported
         return CompatibilityProfile(
             profile: "codeeditor-swift-first-2026",
-            upstreamCommit: "phase-16",
+            upstreamCommit: "unpinned",
             features: features
         )
     }()
 
-    /// Alias for RC defaults after residual closure.
+    /// Alias for current defaults (pre-alpha; not an RC claim).
     public static let phase16Default: CompatibilityProfile = .phase13Default
+
+    /// Load the repository honesty profile when present.
+    public static var repositoryDefault: CompatibilityProfile { .phase13Default }
 }
 
 public enum CompatibilityProfileLoader {

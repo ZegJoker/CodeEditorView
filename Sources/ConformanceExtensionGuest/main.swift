@@ -30,6 +30,11 @@ public struct ConformanceExtension: CodeEditorExtension {
 @main
 struct ConformanceExtensionGuestMain {
     static func main() async {
+        let args = Array(CommandLine.arguments.dropFirst())
+        if args.first == "--version" || args.first == "version" || args.first == "-v" {
+            print("ConformanceExtensionGuest 0.1.0-pre-alpha")
+            return
+        }
         let ext = ConformanceExtension()
         let transport = StdioWireTransport()
         let runtime = ExtensionGuestRuntime(extension: ext, transport: transport)

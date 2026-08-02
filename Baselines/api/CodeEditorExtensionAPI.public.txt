@@ -1,164 +1,255 @@
-class CompositeExtensionDisposable
-class ExtensionLog
-class ExtensionRegistrationToken
-enum ArtifactRunDecision
+class CompositeExtensionDisposable | sendable=1
+class ExtensionLog | sendable=1
+class ExtensionRegistrationToken | sendable=1
+enum ArtifactRunDecision | sendable=1
 enum ArtifactRunnability
-enum CapabilityAvailabilityDTO
-enum CompatibilityFeatureKey
-enum CompatibilityFeatureStatus
+enum CapabilityAvailabilityDTO | sendable=1
+enum CompatibilityFeatureKey | sendable=1
+enum CompatibilityFeatureStatus | sendable=1
 enum CompatibilityProfileLoader
-enum ContributionPrecedence
-enum DebugAdapterBinarySource
-enum DebugAdapterDiagnosticCode
-enum DebugAdapterLifecycleState
-enum DebugAdapterProviderError
-enum DebugAdapterTransportKind
-enum DebugConfigurationRequest
-enum DebugRequestClassification
-enum DocumentationBuildEvent
-enum DocumentationIndexError
-enum DynamicInstallationPolicy
-enum ExecutableExtensionPolicy
-enum ExtensionActivationEvent
-enum ExtensionArtifactOrigin
-enum ExtensionError
-enum ExtensionInactiveReason
-enum ExtensionLogLevel
+enum ContributionPrecedence | sendable=1
+enum DebugAdapterBinarySource | sendable=1
+enum DebugAdapterDiagnosticCode | sendable=1
+enum DebugAdapterLifecycleState | sendable=1
+enum DebugAdapterProviderError | sendable=1
+enum DebugAdapterTransportKind | sendable=1
+enum DebugConfigurationRequest | sendable=1
+enum DebugRequestClassification | sendable=1
+enum DocumentationBuildEvent | sendable=1
+enum DocumentationIndexError | sendable=1
+enum DynamicInstallationPolicy | sendable=1
+enum ExecutableExtensionPolicy | sendable=1
+enum ExtensionActivationEvent | sendable=1
+enum ExtensionArtifactOrigin | sendable=1
+enum ExtensionError | sendable=1
+enum ExtensionIdentityError | sendable=1
+enum ExtensionInactiveReason | sendable=1
+enum ExtensionLogLevel | sendable=1
 enum ExtensionMigration
 enum ExtensionPackageDigest
 enum ExtensionPackageLoader
-enum ExtensionPermission
-enum ExtensionRuntimeKindDTO
-enum ExtensionState
+enum ExtensionPermission | sendable=1
+enum ExtensionRuntimeKindDTO | sendable=1
+enum ExtensionState | sendable=1
 enum ExtensionTOMLParser
-enum ExtensionTrustClassDTO
-enum HostCapability
+enum ExtensionTrustClassDTO | sendable=1
+enum HostCapability | sendable=1
 enum ImmutableContributionRegistry
-enum LanguageServerBinarySource
-enum LanguageServerDiagnosticCode
-enum LanguageServerLifecycleState
-enum LanguageServerProviderError
-enum LanguageServerTransportKind
-enum MCPBinarySource
-enum MCPLifecycleState
-enum MCPProviderError
-enum MCPTransportKind
-enum PackageInstallState
-enum PackageSourceFormat
-enum Severity
-enum SlashCommandError
+enum LanguageServerBinarySource | sendable=1
+enum LanguageServerDiagnosticCode | sendable=1
+enum LanguageServerLifecycleState | sendable=1
+enum LanguageServerProviderError | sendable=1
+enum LanguageServerTransportKind | sendable=1
+enum MCPBinarySource | sendable=1
+enum MCPLifecycleState | sendable=1
+enum MCPProviderError | sendable=1
+enum MCPTransportKind | sendable=1
+enum PackageInstallState | sendable=1
+enum PackageSourceFormat | sendable=1
+enum Severity | sendable=1
+enum SlashCommandError | sendable=1
 enum SlashCommandSanitize
-enum TrustAction
-func activate
-func activationString
-func add
-func append
-func asPackageDiagnostic
-func asSuggestion
-func build
-func clear
-func compute
-func contains
-func dispose
-func evaluate
-func from
-func fromContributions
-func isPathContained
-func load
-func makeSeedPlan
-func matches
-func migrateJSONToTOML
-func parse
-func parseActivationEvent
-func register
-func sanitizeMarkdown
-func servers
-func shipping
-func status
-func toExtensionManifest
-func validateArguments
-func which
-func writePackageTemplate
-protocol CodeEditorExtension
-protocol DebugAdapterProvider
-protocol DebugLocatorProvider
-protocol DocumentationIndexProvider
-protocol ExtensionAuthorContext
-protocol ExtensionDisposable
-protocol LanguageServerProvider
-protocol MCPServerProvider
-protocol SlashCommandProvider
-struct ArtifactRunnabilityDescriptor
-struct AssetContribution
-struct CompatibilityProfile
-struct CompletionLabelTransform
-struct ContributionCollision
-struct DebugAdapterContribution
-struct DebugAdapterDiagnostic
-struct DebugAdapterLaunchPlan
-struct DebugAdapterStatus
-struct DebugConfiguration
-struct DebugLocatorContext
-struct DebugLocatorMatch
-struct DocumentationIndexEntry
-struct DocumentationIndexProgress
-struct DocumentationPackageContribution
-struct DocumentationPackageSuggestion
-struct ExtensionArtifactRef
-struct ExtensionContributionSnapshot
-struct ExtensionHostProfile
-struct ExtensionID
-struct ExtensionIndexDocument
-struct ExtensionIndexEntry
-struct ExtensionIndexVersion
-struct ExtensionLogEvent
-struct ExtensionManifest
-struct ExtensionPackageDiagnostic
-struct ExtensionPlatformInfo
-struct ExtensionStatus
-struct ExtensionTOMLManifest
-struct ExtensionTrustStatusItem
-struct GrammarContribution
-struct HostEnvironment
-struct IconThemeContribution
-struct KeybindingOverrideDTO
-struct LanguageDefinitionDTO
-struct LanguageServerContribution
-struct LanguageServerDiagnostic
-struct LanguageServerLanguageMap
-struct LanguageServerLaunchPlan
-struct LanguageServerResolveContext
-struct LanguageServerStatus
-struct LoadOptions
-struct MCPServerContribution
-struct MCPServerLaunchPlan
-struct MCPServerStatus
-struct PanelContribution
-struct ProjectHandleID
-struct ProjectMetadataSnapshot
-struct QueryContribution
-struct Result
-struct RevocationEntry
-struct RevocationListDocument
-struct SecretReference
-struct SemanticVersion
-struct SettingsHandleID
-struct ShippingInstallPolicy
-struct SlashCommandChunk
-struct SlashCommandContribution
-struct SlashCommandExecuteContext
-struct SnippetContribution
-struct StorageHandleID
-struct StoreTelemetryEvent
-struct SymbolLabelTransform
-struct ThemeContribution
-struct TrustPromptDescriptor
-struct ValidatedContributionPlan
-struct VariablePresentationHint
-struct VersionRange
-struct WorkspaceConfigurationItem
-struct WorktreeExecutableLocation
-struct WorktreeHandleID
+enum TrustAction | sendable=1
+func activate(in context: any ExtensionAuthorContext)
+func activationString(_ e: ExtensionActivationEvent)
+func add(_ token: any ExtensionDisposable)
+func append( extensionID: ExtensionID? , level: ExtensionLogLevel, message: String )
+func asPackageDiagnostic()
+func asSuggestion()
+func build( packages: [ValidatedContributionPlan], generation: UInt64 )
+func clear()
+func compute(packageRoot: URL)
+func contains(_ version: SemanticVersion)
+func deactivate()
+func dispose()
+func evaluate( packageID: String, origin: ExtensionArtifactOrigin, requestedRuntime: ExtensionRuntimeKindDTO, hostProfile: ExtensionHostProfile, hasRemoteDescriptor: Bool )
+func from( hostProfile: ExtensionHostProfile, platform: PlatformCapabilityProfile )
+func from(_ min: SemanticVersion)
+func from(platformProfile: PlatformCapabilityProfile)
+func fromContributions(_ contributions: [LanguageServerContribution])
+func initializationOptions( serverID: String, context: LanguageServerResolveContext )
+func invalidate(packageID: String?)
+func isPathContained(url: URL, within root: URL)
+func load(directory: URL, options: LoadOptions )
+func load(toml: String)
+func load(url: URL)
+func makeSeedPlan()
+func matches(_ other: ExtensionActivationEvent)
+func matches(packageID: String, version: String)
+func migrateJSONToTOML( directory: URL, writeSwiftTemplate: Bool )
+func parse( data: Data )
+func parse( string: String )
+func parse(_ string: String)
+func parseActivationEvent(_ raw: String)
+func register(serverID: String, languages: [String])
+func requestClassification(adapterID: String, command: String)
+func resolveConfigurations( adapterID: String, context: LanguageServerResolveContext )
+func sanitizeMarkdown(_ text: String)
+func servers(forLanguage languageID: String)
+func shipping(_ id: ShippingProfileID)
+func status(for key: CompatibilityFeatureKey)
+func status(forRaw key: String)
+func toExtensionManifest()
+func transformCompletionLabel(_ item: CompletionLabelTransform)
+func transformSymbolLabel(_ item: SymbolLabelTransform)
+func transformVariablePresentation( name: String, value: String, type: String? )
+func validate(_ raw: String)
+func validateArguments(_ args: String, maxLength: Int)
+func which(_ name: String)
+func workspaceConfiguration( serverID: String, items: [WorkspaceConfigurationItem] )
+func writePackageTemplate( into root: URL, packageID: ExtensionID, displayName: String )
+init ( adapterID: String, displayName: String, languages: [String] , command: String, arguments: [String] , environment: [String: String] , workingDirectoryRelative: String? , transport: DebugAdapterTransportKind , tcpHost: String? , tcpPort: Int? , binarySource: DebugAdapterBinarySource, extensionID: ExtensionID? , preDebugTaskID: String? , postDebugTaskID: String? )
+init ( adapterID: String, displayName: String? , languages: [String] , command: String? , arguments: [String] , downloadURL: String? , downloadDigest: String? , npmPackage: String? , npmVersion: String? , npmBin: String? , extensionID: ExtensionID? )
+init ( adapterID: String, extensionID: ExtensionID, state: DebugAdapterLifecycleState, message: String? , lastError: String? , binaryPath: String? , updatedAt: Date )
+init ( allowLegacyJSON: Bool , computeDigest: Bool , expectedDigest: String? , enforcePathContainment: Bool )
+init ( apiVersion: SemanticVersion , capabilities: Set<HostCapability> )
+init ( code: DebugAdapterDiagnosticCode, message: String, adapterID: String? , extensionID: ExtensionID? )
+init ( code: LanguageServerDiagnosticCode, message: String, serverID: String? , extensionID: ExtensionID? )
+init ( commandID: String, key: String, modifiers: [String] , priority: Int )
+init ( dynamicInstallation: DynamicInstallationPolicy, executableExtensionPolicy: ExecutableExtensionPolicy, allowDownloadableWasm: Bool, allowNativeHelpers: Bool, allowRegistryFetch: Bool, dataOnlyOnly: Bool, shippingProfileID: ShippingProfileID )
+init ( event: String, packageID: String? , fromVersion: String? , toVersion: String? , success: Bool, reason: String? , todos: Int? , timestamp: Date )
+init ( extensionID: ExtensionID, uri: String? , languageID: String? , workspaceRootPaths: [String] )
+init ( extensionID: ExtensionID? , level: ExtensionLogLevel, message: String, date: Date )
+init ( generation: UInt64, packages: [ValidatedContributionPlan], themes: [ThemeContribution], snippets: [SnippetContribution], iconThemes: [IconThemeContribution], languages: [LanguageDefinitionDTO], keybindings: [KeybindingOverrideDTO], grammars: [GrammarContribution] , queries: [QueryContribution] , collisions: [ContributionCollision] )
+init ( id: ExtensionID, displayName: String, state: ExtensionState, grantedPermissions: Set<ExtensionPermission> , lastError: String? )
+init ( id: ExtensionID, displayName: String, version: SemanticVersion )
+init ( id: String )
+init ( id: String, displayName: String, fileIcons: [String: String] , folderIcons: [String: String] , extensionID: ExtensionID? )
+init ( id: String, displayName: String, tokens: [String: String] , extensionID: ExtensionID? )
+init ( id: String, displayName: String, tsName: String , fileExtensions: [String] , aliases: [String] , lineComment: String , blockCommentStart: String , blockCommentEnd: String , configPath: String? , highlightsQuery: String? )
+init ( id: String, languageID: String, grammarPath: String? , repository: String? , commit: String? , extensionID: ExtensionID? )
+init ( id: String, name: String, description: String , requiresWorktree: Bool , maxArgumentLength: Int , extensionID: ExtensionID? , compatibility: CompatibilityFeatureStatus )
+init ( id: String, name: String, description: String? , version: String , schemaVersion: Int , apiVersion: String , authors: [String] , repository: String? , license: String? , activationEvents: [String] , runtimeKind: String? , runtimeEntrypoint: String? , capabilities: [String] , permissions: [String] , languageServers: [LanguageServerContribution] , debugAdapters: [DebugAdapterContribution] , mcpServers: [MCPServerContribution] , slashCommands: [SlashCommandContribution] , documentationPackages: [DocumentationPackageContribution] , unsupportedFields: [String] )
+init ( id: String, name: String, publisher: String? , versions: [ExtensionIndexVersion] , channels: [String] )
+init ( id: String, prefix: String, body: String, languageID: String? , description: String? , extensionID: ExtensionID? )
+init ( id: String, slot: String, title: String, priority: Int , extensionID: ExtensionID )
+init ( id: String, title: String, languages: [String] , sourcePath: String? , downloadURL: String? , downloadDigest: String? )
+init ( id: String, title: String? , languages: [String] , sourcePath: String? , extensionID: ExtensionID? )
+init ( kind: String, contributionID: String, winnerPackageID: ExtensionID, loserPackageID: ExtensionID, rule: String )
+init ( languageID: String, kind: String, relativePath: String, extensionID: ExtensionID? )
+init ( name: String, type: String, request: DebugConfigurationRequest , bodyJSON: Data? )
+init ( os: String, arch: String, isSimulator: Bool , profileName: String , processLaunchAllowed: Bool )
+init ( packageID: ExtensionID, displayName: String, version: SemanticVersion, manifest: ExtensionManifest, packageRoot: URL? , sourceFormat: PackageSourceFormat, digest: String? , themes: [ThemeContribution] , snippets: [SnippetContribution] , iconThemes: [IconThemeContribution] , languages: [LanguageDefinitionDTO] , keybindings: [KeybindingOverrideDTO] , grammars: [GrammarContribution] , queries: [QueryContribution] , languageServers: [LanguageServerContribution] , debugAdapters: [DebugAdapterContribution] , mcpServers: [MCPServerContribution] , slashCommands: [SlashCommandContribution] , documentationPackages: [DocumentationPackageContribution] , assets: [AssetContribution] , diagnostics: [ExtensionPackageDiagnostic] , unsupportedFields: [String] , parityProfile: String , generation: UInt64 )
+init ( packageID: String, version: String, localPath: URL? , remoteURL: URL? , digest: String? )
+init ( packageID: String, version: String, trustClass: ExtensionTrustClassDTO, enabled: Bool, quarantined: Bool, lastError: String? , publisher: String? )
+init ( platform: ExtensionPlatformInfo , extensionID: ExtensionID, worktree: WorktreeHandleID? , project: ProjectHandleID? , settings: SettingsHandleID? , storage: StorageHandleID? , settingsValues: [String: String] , workspaceRootPaths: [String] , environmentValues: [String: String] , whichResults: [String: String] , projectMetadata: ProjectMetadataSnapshot )
+init ( profile: String , upstreamCommit: String , manifestSchema: Int , swiftExtensionAPI: String , features: [String: CompatibilityFeatureStatus] )
+init ( serverID: String, displayName: String, command: String, arguments: [String] , environment: [String: String] , secretEnvironment: [String: SecretReference] , workingDirectoryRelative: String? , transport: MCPTransportKind , binarySource: MCPBinarySource, startupTimeoutMS: Int , extensionID: ExtensionID? )
+init ( serverID: String, displayName: String, languages: [String] , command: String, arguments: [String] , environment: [String: String] , workingDirectoryRelative: String? , transport: LanguageServerTransportKind , initializationOptionsJSON: Data? , binarySource: LanguageServerBinarySource, extensionID: ExtensionID? )
+init ( serverID: String, displayName: String? , command: String? , arguments: [String] , transport: MCPTransportKind , startupTimeoutMS: Int , downloadURL: String? , downloadDigest: String? , npmPackage: String? , npmVersion: String? , npmBin: String? , extensionID: ExtensionID? )
+init ( serverID: String, displayName: String? , languages: [String] , command: String? , arguments: [String] , downloadURL: String? , downloadDigest: String? , npmPackage: String? , npmVersion: String? , npmBin: String? , extensionID: ExtensionID? )
+init ( serverID: String, extensionID: ExtensionID, state: LanguageServerLifecycleState, message: String? , progress: Double? , lastError: String? , binaryPath: String? , updatedAt: Date )
+init ( serverID: String, extensionID: ExtensionID, state: MCPLifecycleState, message: String? , lastError: String? , updatedAt: Date )
+init ( shippingProfileID: ShippingProfileID, platform: HostPlatform, allowedRuntimes: Set<ExtensionRuntimeKindDTO>, dynamicInstallation: DynamicInstallationPolicy, executableExtensionPolicy: ExecutableExtensionPolicy, localProcessSupport: CapabilityAvailabilityDTO, localPTYSupport: CapabilityAvailabilityDTO, remoteFallbackAvailable: Bool, enterpriseOptions: EnterpriseProfileOptions? )
+init ()
+init (_ tokens: [any ExtensionDisposable] )
+init (_ value: CapabilityAvailability)
+init (adapterID: String, configuration: DebugConfiguration, confidence: Double )
+init (code: String, severity: Severity, message: String, path: String? )
+init (extensionID: ExtensionID, worktreeRoot: String? , projectName: String? )
+init (id: String, title: String, uri: String, snippet: String, packageID: String)
+init (kind: String? , attributes: [String] , visibility: String? )
+init (label: String, detail: String? , insertText: String? , filterText: String? )
+init (major: Int, minor: Int , patch: Int )
+init (markdown: String, isFinal: Bool )
+init (maxEvents: Int )
+init (min: SemanticVersion, maxExclusive: SemanticVersion? )
+init (name: String , rootPaths: [String] )
+init (name: String)
+init (name: String, absolutePath: String)
+init (name: String, detail: String? , containerName: String? )
+init (onDispose: @escaping () -> Void)
+init (packageID: String, fraction: Double, message: String? )
+init (packageID: String? , version: String? , keyID: String? , reason: String)
+init (rawValue: String)
+init (relativePath: String, absoluteURL: URL? )
+init (schemaVersion: Int , packages: [ExtensionIndexEntry] )
+init (section: String? , scopeURI: String? )
+init (serversByLanguage: [String: [String]] )
+init (stringLiteral value: String)
+init (validating raw: String)
+init (version: Int , updatedAt: Date ), entries: [RevocationEntry] )
+init (version: String, artifactPath: String, digest: String? , channel: String )
+protocol CodeEditorExtension | sendable=1
+protocol DebugAdapterProvider | sendable=1
+protocol DebugLocatorProvider | sendable=1
+protocol DocumentationIndexProvider | sendable=1
+protocol ExtensionAuthorContext | sendable=1
+protocol ExtensionDisposable | sendable=1
+protocol LanguageServerProvider | sendable=1
+protocol MCPServerProvider | sendable=1
+protocol SlashCommandProvider | sendable=1
+struct ArtifactRunnabilityDescriptor | sendable=1
+struct AssetContribution | sendable=1
+struct CompatibilityProfile | sendable=1
+struct CompletionLabelTransform | sendable=1
+struct ContributionCollision | sendable=1
+struct DebugAdapterContribution | sendable=1
+struct DebugAdapterDiagnostic | sendable=1
+struct DebugAdapterLaunchPlan | sendable=1
+struct DebugAdapterStatus | sendable=1
+struct DebugConfiguration | sendable=1
+struct DebugLocatorContext | sendable=1
+struct DebugLocatorMatch | sendable=1
+struct DocumentationIndexEntry | sendable=1
+struct DocumentationIndexProgress | sendable=1
+struct DocumentationPackageContribution | sendable=1
+struct DocumentationPackageSuggestion | sendable=1
+struct ExtensionArtifactRef | sendable=1
+struct ExtensionContributionSnapshot | sendable=1
+struct ExtensionHostProfile | sendable=1
+struct ExtensionID | sendable=1
+struct ExtensionIndexDocument | sendable=1
+struct ExtensionIndexEntry | sendable=1
+struct ExtensionIndexVersion | sendable=1
+struct ExtensionLogEvent | sendable=1
+struct ExtensionManifest | sendable=1
+struct ExtensionPackageDiagnostic | sendable=1
+struct ExtensionPlatformInfo | sendable=1
+struct ExtensionStatus | sendable=1
+struct ExtensionTOMLManifest | sendable=1
+struct ExtensionTrustStatusItem | sendable=1
+struct GrammarContribution | sendable=1
+struct HostEnvironment | sendable=1
+struct IconThemeContribution | sendable=1
+struct KeybindingOverrideDTO | sendable=1
+struct LanguageDefinitionDTO | sendable=1
+struct LanguageServerContribution | sendable=1
+struct LanguageServerDiagnostic | sendable=1
+struct LanguageServerLanguageMap | sendable=1
+struct LanguageServerLaunchPlan | sendable=1
+struct LanguageServerResolveContext | sendable=1
+struct LanguageServerStatus | sendable=1
+struct LoadOptions | sendable=1
+struct MCPServerContribution | sendable=1
+struct MCPServerLaunchPlan | sendable=1
+struct MCPServerStatus | sendable=1
+struct PanelContribution | sendable=1
+struct ProjectHandleID | sendable=1
+struct ProjectMetadataSnapshot | sendable=1
+struct QueryContribution | sendable=1
+struct Result | sendable=1
+struct RevocationEntry | sendable=1
+struct RevocationListDocument | sendable=1
+struct SecretReference | sendable=1
+struct SemanticVersion | sendable=1
+struct SettingsHandleID | sendable=1
+struct ShippingInstallPolicy | sendable=1
+struct SlashCommandChunk | sendable=1
+struct SlashCommandContribution | sendable=1
+struct SlashCommandExecuteContext | sendable=1
+struct SnippetContribution | sendable=1
+struct StorageHandleID | sendable=1
+struct StoreTelemetryEvent | sendable=1
+struct SymbolLabelTransform | sendable=1
+struct ThemeContribution | sendable=1
+struct TrustPromptDescriptor | sendable=1
+struct ValidatedContributionPlan | sendable=1
+struct VariablePresentationHint | sendable=1
+struct VersionRange | sendable=1
+struct WorkspaceConfigurationItem | sendable=1
+struct WorktreeExecutableLocation | sendable=1
+struct WorktreeHandleID | sendable=1
 typealias EditorExtension
 var absolutePath
 var absoluteURL
@@ -208,6 +299,7 @@ var description
 var detail
 var diagnostics
 var digest
+var directoryKey
 var displayName
 var documentationPackages
 var downloadDigest
@@ -315,6 +407,7 @@ var remoteFallbackAvailable
 var remoteURL
 var report
 var repository
+var repositoryDefault
 var request
 var requestedPermissions
 var requestedRuntime

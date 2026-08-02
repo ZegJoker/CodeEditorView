@@ -1,3 +1,4 @@
+import CodeEditorExtensionProtocol
 import Foundation
 
 /// In-process duplex transport for protocol tests and local peers.

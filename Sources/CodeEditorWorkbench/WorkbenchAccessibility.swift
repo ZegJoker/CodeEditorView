@@ -52,4 +52,68 @@ public enum WorkbenchFocusOrder {
     public static let utility = 50
     public static let statusBar = 60
     public static let toolbar = 5
+
+    /// Keyboard-only traversal order for primary chrome (REL-N04).
+    public static var keyboardOrder: [String] {
+        [
+            WorkbenchAccessibilityID.toolbar,
+            WorkbenchAccessibilityID.activityBar,
+            WorkbenchAccessibilityID.navigator,
+            WorkbenchAccessibilityID.editor,
+            WorkbenchAccessibilityID.inspector,
+            WorkbenchAccessibilityID.utility,
+            WorkbenchAccessibilityID.statusBar,
+        ]
+    }
+}
+
+/// VoiceOver-relevant accessibility hierarchy and rotor surfaces (REL-N04).
+public enum WorkbenchAccessibilityHierarchy {
+    public struct Node: Sendable, Hashable {
+        public var id: String
+        public var role: String
+        public var children: [Node]
+
+        public init(id: String, role: String, children: [Node] = []) {
+            self.id = id
+            self.role = role
+            self.children = children
+        }
+    }
+
+    /// Rotor categories hosts should expose for editor workbench content.
+    public enum RotorSurface: String, Sendable, CaseIterable {
+        case errors
+        case symbols
+        case folds
+        case breakpoints
+        case search
+    }
+
+    /// Canonical chrome hierarchy used by tests and documentation.
+    public static var root: Node {
+        Node(
+            id: WorkbenchAccessibilityID.root,
+            role: "application",
+            children: [
+                Node(id: WorkbenchAccessibilityID.toolbar, role: "toolbar"),
+                Node(id: WorkbenchAccessibilityID.activityBar, role: "tablist"),
+                Node(id: WorkbenchAccessibilityID.navigator, role: "navigation"),
+                Node(id: WorkbenchAccessibilityID.editor, role: "textbox"),
+                Node(id: WorkbenchAccessibilityID.inspector, role: "complementary"),
+                Node(id: WorkbenchAccessibilityID.utility, role: "group"),
+                Node(id: WorkbenchAccessibilityID.statusBar, role: "status"),
+                Node(id: WorkbenchAccessibilityID.commandPalette, role: "dialog"),
+            ]
+        )
+    }
+
+    public static func flatten(_ node: Node = root) -> [String] {
+        [node.id] + node.children.flatMap { flatten($0) }
+    }
+
+    public static var rotorSurfaces: [RotorSurface] { RotorSurface.allCases }
+
+    /// Focus restoration target after transient UI (palette / open quickly) dismisses.
+    public static let focusRestorationDefault = WorkbenchAccessibilityID.editor
 }

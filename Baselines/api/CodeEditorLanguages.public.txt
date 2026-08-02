@@ -1,6 +1,6 @@
-enum CodeEditorLanguages
-enum LanguageLoadError
-func bootstrap
-func installOnDemandBootstrapHook
-func resetBootstrapForTesting
+enum CodeEditorLanguages | sendable=1
+enum LanguageLoadError | sendable=1
+func bootstrap() | attr=discardableResult
+func installOnDemandBootstrapHook()
+func resetBootstrapForTesting()
 var codeEditorLanguagesModule

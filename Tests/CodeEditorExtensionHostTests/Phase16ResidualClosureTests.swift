@@ -114,14 +114,15 @@ struct Phase16SlashResidualClosureTests {
             }
         }
         let contrib = SlashCommandContribution(id: "explain", name: "explain")
-        #expect(contrib.compatibility == .stable)
-        #expect(CompatibilityProfile.phase16Default.status(for: .slashCommands) == .stable)
+        // REL-N01: pre-alpha defaults are experimental (not phase-16-rc stable claims).
+        #expect(contrib.compatibility == .experimental)
+        #expect(CompatibilityProfile.phase16Default.status(for: .slashCommands) == .experimental)
 
         let svc = SlashCommandService()
         let ext: ExtensionID = "ext.slash.stable"
         await svc.registerContribution(contrib)
         await svc.registerProvider(Prov(), extensionID: ext)
-        #expect(await svc.compatibilityStatus(for: "explain") == .stable)
+        #expect(await svc.compatibilityStatus(for: "explain") == .experimental)
         var last = ""
         for try await c in await svc.execute(commandID: "explain", arguments: "a", extensionID: ext) {
             last = c.markdown

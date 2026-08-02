@@ -438,7 +438,7 @@ public enum ExtensionTOMLParser {
                     description: table["description"]?.string ?? "",
                     requiresWorktree: table["requires_worktree"]?.bool ?? false,
                     maxArgumentLength: table["max_argument_length"]?.int ?? 4_096,
-                    compatibility: .stable
+                    compatibility: .experimental
                 ))
         }
         slashCommands.sort { $0.id < $1.id }

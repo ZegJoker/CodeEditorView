@@ -1,56 +1,91 @@
-class CommandDependencies
-class CommandDispatcher
-class CommandPaletteModel
-class CommandRegistry
-class CommandServiceLocator
-class KeybindingRegistry
+class CommandDependencies | isolation=@MainActor
+class CommandDispatcher | isolation=@MainActor
+class CommandPaletteModel | isolation=@MainActor
+class CommandRegistry | isolation=@MainActor
+class CommandServiceLocator | isolation=@MainActor
+class KeybindingRegistry | isolation=@MainActor
+class RegistrationBag | isolation=@MainActor
 class RegistrationToken
 enum BuiltInCommandID
-enum CommandError
-enum CommandResult
-enum ContextExpression
+enum CommandError | sendable=1
+enum CommandIdentityError | sendable=1
+enum CommandResult | sendable=1
+enum ContextExpression | sendable=1
 enum ContextExpressionEvaluator
-enum EditorCommandAction
-enum KeybindingSource
+enum EditorCommandAction | sendable=1
+enum KeybindingSource | sendable=1
 enum WhenClauseParser
-func action
-func allBindings
-func allCommands
-func applyOverrides
-func bind
-func command
-func conflicts
-func dispose
-func enabledCommands
-func evaluate
-func execute
-func executeAsync
-func filteredCommands
-func handleKeyPress
-func hasPrefix
-func make
-func parse
-func register
-func resetChordBuffer
-func resolve
-func set
-func unregister
-func value
+func action( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , action: EditorCommandAction )
+func allBindings() -> [(commandID: CommandID, keybinding: Keybinding, source: KeybindingSource)
+func allCommands()
+func applyOverrides(_ overrides: [KeybindingOverride]) | attr=discardableResult
+func bind( _ keybinding: Keybinding, to command: CommandID, source: KeybindingSource, priority: Int ) | attr=discardableResult
+func clearChordOnContextChange()
+func command(_ key: String, when: ContextExpression )
+func command(id: CommandID)
+func conflicts(in input: ContextEvaluationInput)
+func dispose()
+func disposeAll()
+func enabledCommands(in context: CommandContext)
+func evaluate(_ expression: ContextExpression, in input: ContextEvaluationInput)
+func execute(_ id: CommandID, context: CommandContext)
+func executeAsync(_ id: CommandID, context: CommandContext) | attr=discardableResult
+func filteredCommands( from registry: CommandRegistry, context: CommandContext )
+func from(error: CommandError)
+func handleKeyPress(_ press: KeyPress, context: CommandContext) | attr=discardableResult
+func hasLongerPrefix(presses: [KeyPress], input: ContextEvaluationInput)
+func hasPrefix(presses: [KeyPress], input: ContextEvaluationInput)
+func isValid(_ raw: String)
+func make( from editor: any EditorCommandClient, services: CommandServiceLocator )
+func make( from editor: any EditorCommandClient, snapshot: CommandContextSnapshot, services: CommandServiceLocator )
+func parse(_ source: String)
+func register(_ command: EditorCommand) | attr=discardableResult
+func register(_ command: EditorCommand, replaceExisting: Bool ) | attr=discardableResult
+func resetChordBuffer()
+func resolve(presses: [KeyPress], input: ContextEvaluationInput)
+func resolvePendingChordTimeout()
+func retain(_ token: any CommandDisposable) | attr=discardableResult
+func set()
+func unregister(id: CommandID)
+func value()
+init ( activePart: String , documentURI: DocumentURI? , documentID: DocumentID? , sessionID: EditorSessionID? , languageID: String? , isEditable: Bool , isFocused: Bool , isDirty: Bool , hasSelection: Bool , hasDocument: Bool , workspaceTrust: String , isDebugActive: Bool , isTaskRunning: Bool , flags: [String: Bool] , selections: [CodeEditorCore.TextRange] )
+init ( commandID: CommandID, keybinding: Keybinding, source: KeybindingSource , priority: Int )
+init ( commands: CommandRegistry )
+init ( documentID: DocumentID?, sessionID: EditorSessionID?, documentSnapshot: DocumentSnapshot?, selections: [CodeEditorCore.TextRange], languageID: String?, isEditable: Bool, isFocused: Bool, services: CommandServiceLocator )
+init ( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , asyncHandler: @escaping (CommandContext)
+init ( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , handler: @escaping (CommandContext)
+init ( isEditable: Bool , isFocused: Bool , hasSelection: Bool , hasDocument: Bool , languageID: String? , flags: [String: Bool] )
+init ( menuPath: [String]? , toolbarGroup: String? , paletteHidden: Bool )
+init ()
+init (chord: [KeyPress], when: ContextExpression )
+init (documentRegistry: DocumentRegistry? )
+init (expression: ContextExpression, diagnostics: [WhenClauseDiagnostic] )
+init (key: String, modifiers: KeyModifier )
+init (key: String, modifiers: KeyModifier , when: ContextExpression )
+init (message: String, offset: Int, length: Int )
+init (onDispose: @escaping () -> Void)
+init (query: String )
+init (rawValue: Int)
+init (rawValue: String)
+init (stringLiteral value: String)
+init (validating raw: String)
 protocol CommandDisposable
-protocol EditorCommandClient
-struct CommandCategory
-struct CommandContext
-struct CommandID
-struct CommandPlacement
-struct ContextEvaluationInput
-struct EditorCommand
-struct KeyModifier
-struct KeyPress
-struct Keybinding
-struct KeybindingConflict
-struct KeybindingOverride
-struct WhenClauseDiagnostic
-struct WhenClauseParseResult
+protocol EditorCommandClient | isolation=@MainActor
+struct CommandCategory | sendable=1
+struct CommandContext | isolation=@MainActor
+struct CommandContextSnapshot | sendable=1
+struct CommandID | sendable=1
+struct CommandPlacement | sendable=1
+struct ContextEvaluationInput | sendable=1
+struct EditorCommand | isolation=@MainActor
+struct KeyModifier | sendable=1
+struct KeyPress | sendable=1
+struct Keybinding | sendable=1
+struct KeybindingConflict | sendable=1
+struct KeybindingOverride | sendable=1
+struct WhenClauseDiagnostic | sendable=1
+struct WhenClauseParseResult | sendable=1
+var activePart
 var asyncHandler
 var cancel
 var category
@@ -65,6 +100,8 @@ var completionHide
 var completionShow
 var completionUp
 var control
+var count
+var currentChordBuffer
 var defaultKeybindings
 var deleteBackward
 var deleteForward
@@ -74,8 +111,10 @@ var diagnostics
 var documentID
 var documentRegistry
 var documentSnapshot
+var documentURI
 var edit
 var editor
+var empty
 var enablement
 var evaluationInput
 var expression
@@ -99,8 +138,13 @@ var indent
 var insertBacktab
 var insertNewline
 var insertTab
+var isChordPending
+var isDebugActive
+var isDirty
+var isDisposed
 var isEditable
 var isFocused
+var isTaskRunning
 var jumpToDefinition
 var key
 var keybinding
@@ -114,6 +158,7 @@ var moveLinesDown
 var moveLinesUp
 var navigate
 var offset
+var onChordStateChange
 var onUndoGroup
 var option
 var outdent
@@ -139,3 +184,4 @@ var unfoldAll
 var view
 var when
 var winnerCommandID
+var workspaceTrust

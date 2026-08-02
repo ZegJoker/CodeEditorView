@@ -1,498 +1,413 @@
-# Phase 16 product scorecards (machine-readable)
-schema_version = 1
-program = "pre-alpha-audit-2026-08"
+# Product scorecards — honesty register (REL-N02)
+# certification=pre-alpha: dimensions may be fail/unproven; residual must list open work.
+# RELEASE_CERTIFY=1 rejects any non-pass. Artifacts required for status=pass.
+schema_version = 2
+certification = "pre-alpha"
+program = "audit-2026-08-02-deep-remediation"
+source = "Docs/Architecture/AUDIT-2026-08-02-Deep-Audit-and-Stable-Plan.md"
 
 [[product]]
 name = "CodeEditorCore"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorCore.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["CORE-N01", "DOC-N01", "DOC-N03"]
 
 [[product]]
 name = "CodeEditorDocuments"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorDocuments.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["DOC-N01", "DOC-N02", "DOC-N04"]
 
 [[product]]
 name = "CodeEditorCommands"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorCommands.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["CMD residual open — phase 3a"]
 
 [[product]]
 name = "CodeEditorWorkspace"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorSearch"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorLanguageSupport"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorTreeSitter"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorLanguageSwift"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorLanguageJSON"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorLanguages"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorView"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorLanguageServices"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorLSP"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorTasks"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorTerminal"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorSourceControl"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorWorkspace.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["WSP residual open — phase 4"]
 
 [[product]]
 name = "CodeEditorWorkbench"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorWorkbench.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["WB residual open — phase 10"]
+
+[[product]]
+name = "CodeEditorView"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorView.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["UI residual open — phase 3b"]
+
+[[product]]
+name = "CodeEditorLanguageSupport"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorLanguageSupport.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["LANG residual open — phase 6a"]
+
+[[product]]
+name = "CodeEditorLanguageServices"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorLanguageServices.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["LANG residual open — phase 6a"]
 
 [[product]]
 name = "CodeEditorExtensionAPI"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorExtensions"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorExtensionAPI.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9a"]
 
 [[product]]
 name = "CodeEditorExtensionProtocol"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorExtensionProtocol.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9a"]
 
 [[product]]
 name = "CodeEditorExtensionGuest"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
-
-[[product]]
-name = "CodeEditorExtensionHost"
-tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorExtensionGuest.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9a"]
 
 [[product]]
 name = "CodeEditorWasmEngine"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorWasmEngine.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["WASM residual open — phase 9c"]
 
 [[product]]
 name = "CodeEditorWasmEngineWasmKit"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorWasmEngineWasmKit.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["WASM residual open — phase 9c"]
 
 [[product]]
 name = "CodeEditorExtensionWasmGuest"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorExtensionWasmGuest.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["WASM residual open — phase 9c"]
+
+[[product]]
+name = "CodeEditorExtensions"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorExtensions.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9a"]
+
+[[product]]
+name = "CodeEditorExtensionHost"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorExtensionHost.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9b"]
+
+[[product]]
+name = "CodeEditorLSP"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorLSP.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["LSP residual open — phase 6b"]
 
 [[product]]
 name = "CodeEditorDAP"
 tier = "Pre-alpha"
-api = "fail"
-api_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-correctness = "fail"
-correctness_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-concurrency = "fail"
-concurrency_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-tests = "fail"
-tests_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-platform = "fail"
-platform_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-operations = "fail"
-operations_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-docs = "fail"
-docs_evidence = "audit-2026-08 pre-alpha; see Docs/Architecture/DEFECTS.md"
-residual = []
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorDAP.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["DAP residual open — phase 7"]
 
+[[product]]
+name = "CodeEditorSearch"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorSearch.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["SEARCH residual open — phase 5a"]
+
+[[product]]
+name = "CodeEditorTasks"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorTasks.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["TASK residual open — phase 5b"]
+
+[[product]]
+name = "CodeEditorTerminal"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorTerminal.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["TERM residual open — phase 8"]
+
+[[product]]
+name = "CodeEditorSourceControl"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorSourceControl.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["SCM residual open — phase 5c"]
+
+[[product]]
+name = "CodeEditorTreeSitter"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorTreeSitter.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["TS residual open — phase 6a"]
+
+[[product]]
+name = "CodeEditorLanguageSwift"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorLanguageSwift.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["LANG residual open — phase 6a"]
+
+[[product]]
+name = "CodeEditorLanguageJSON"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorLanguageJSON.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["LANG residual open — phase 6a"]
+
+[[product]]
+name = "CodeEditorLanguages"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/CodeEditorLanguages.public.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["LANG residual open — phase 6a"]
+
+[[product]]
+name = "CodeEditorTerminalGhostty"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/PRODUCTS.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["TERM residual open — phase 8", "REL-N08"]
+
+[[product]]
+name = "codeeditor-extension"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/PRODUCTS.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9a"]
+
+[[product]]
+name = "ConformanceExtensionGuest"
+tier = "Pre-alpha"
+open_p0 = 1
+open_p1 = 1
+api = { status = "fail", artifact = "Baselines/api/PRODUCTS.txt" }
+correctness = { status = "fail", artifact = "Docs/Architecture/AUDIT-2026-08-02-FINDINGS.json" }
+concurrency = { status = "fail", artifact = "Baselines/unchecked-sendable-allowlist.txt" }
+tests = { status = "fail", artifact = "Package.swift" }
+platform = { status = "fail", artifact = "Docs/Architecture/TOOLCHAIN.md" }
+operations = { status = "fail", artifact = "Docs/Architecture/defects.json" }
+docs = { status = "fail", artifact = "README.md" }
+residual = ["EXT residual open — phase 9a"]

@@ -78,9 +78,12 @@
       "severity_raw": "P1 until CI proves it",
       "title": "package structure is fixed, but clean-resolution evidence is not yet produced",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_cleanArchiveRehearsalRequiresEmptyCacheAndAllProducts",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N01",
@@ -88,9 +91,12 @@
       "severity_raw": "P1 release-truth defect",
       "title": "README and compatibility profile conflict",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_compatibilityProfileIsPreAlphaNotPhase16RC",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_readmeAndProfileAgreeOnMaturity"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N02",
@@ -98,9 +104,13 @@
       "severity_raw": "P0 release-certification defect",
       "title": "product scorecards can pass while every dimension fails",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_scorecardGateRejectsFailWithEmptyResidual",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_scorecardGateFailsOnAuthoredPassWithoutArtifact",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_liveScorecardsPassStructuralHonestyGate"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N03",
@@ -108,9 +118,13 @@
       "severity_raw": "P0",
       "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_defectGateRequiresRegressionTestsForFixed",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_defectGateRejectsFixedWithoutRegressionTests",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_liveDefectsLinkRegressionTests"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N04",
@@ -118,9 +132,13 @@
       "severity_raw": "P1",
       "title": "accessibility gate is a source-token check",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_accessibilityGateIsMoreThanTokenGrep",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_workbenchAccessibilityHierarchyModel",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_accessibilityHierarchyAndRotorSurfaces"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N05",
@@ -128,9 +146,12 @@
       "severity_raw": "P1",
       "title": "performance gate validates a document and one loose sample",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_perfGateRequiresMeasurementsNotDocsAlone",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_livePerfGatePassesWithCommittedSample"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N06",
@@ -138,9 +159,12 @@
       "severity_raw": "P1",
       "title": "API freeze is not semantic API validation",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeIsSemanticNotNameOnlySubset",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeScriptRuns"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N07",
@@ -148,9 +172,11 @@
       "severity_raw": "P1",
       "title": "strict concurrency is not warnings-as-errors",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N07_strictConcurrencyIsWarningsAsErrors"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "REL-N08",
@@ -158,9 +184,13 @@
       "severity_raw": "P0 for Ghostty, P1 for LSP/DAP",
       "title": "optional production integrations are allowed to fail",
       "phase": 0,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_ghosttyLspDapAreHardGates",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_realLspScriptHardFailsWhenRequiredAndMissing",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_productionMocksNotDefaultInProtocolDAPModules"
+      ],
+      "notes": "Phase 0 release-truth remediation 2026-08-02"
     },
     {
       "id": "CORE-N01",

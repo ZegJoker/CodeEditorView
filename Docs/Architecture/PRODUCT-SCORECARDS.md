@@ -1,27 +1,26 @@
-# Product scorecards (Phase 16)
+# Product scorecards
 
 Machine-readable source: [`scorecards/products.toml`](scorecards/products.toml)
 
-Checked by: `./scripts/check-product-scorecards.sh`
+Checked by: `./scripts/check-product-scorecards.sh` (REL-N02)
 
-## Summary
+## Policy
 
-All **26** public library products listed in `scripts/smoke-products.sh` (+ DAP) have scorecard rows against ADR-013 dimensions:
+- `certification = "pre-alpha"`: dimensions may be `fail`/`unproven`; **residual must be non-empty** when any dimension is non-pass.
+- `status = "pass"` requires a real filesystem **artifact** path (not prose alone).
+- `RELEASE_CERTIFY=1` rejects any non-pass, residual, or open P0/P1.
+- Product set includes all public libraries plus `CodeEditorTerminalGhostty`, `codeeditor-extension`, and `ConformanceExtensionGuest`.
+
+## Dimensions
 
 | Dimension | Meaning |
 |---|---|
-| api | Inventory + freeze policy |
-| correctness | Phase evidence + tests |
-| concurrency | Swift 6 package mode |
-| tests | Suite coverage |
-| platform | Capability profiles |
-| operations | Recovery / store / soak |
+| api | Inventory + freeze evidence |
+| correctness | Tests / audit residuals |
+| concurrency | Swift 6 / unchecked dossier |
+| tests | Suite coverage evidence |
+| platform | Toolchain / profile evidence |
+| operations | Recovery / store / soak evidence |
 | docs | DocC + guides |
 
-**Zero residual policy:** every product has `residual = []`. See [DEFECTS.md](DEFECTS.md) (no open rows).
-
-## How to re-score
-
-1. Update `scorecards/products.toml` evidence strings.
-2. Run `./scripts/check-product-scorecards.sh`.
-3. Update this summary if product set changes.
+Do not claim residual-empty release readiness while dimensions fail.

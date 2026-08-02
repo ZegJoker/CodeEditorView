@@ -17,7 +17,7 @@ public struct SlashCommandContribution: Sendable, Hashable, Codable, Identifiabl
         requiresWorktree: Bool = false,
         maxArgumentLength: Int = 4_096,
         extensionID: ExtensionID? = nil,
-        compatibility: CompatibilityFeatureStatus = .stable
+        compatibility: CompatibilityFeatureStatus = .experimental
     ) {
         self.id = id
         self.name = name

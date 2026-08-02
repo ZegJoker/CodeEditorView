@@ -1,45 +1,58 @@
 # CodeEditor Swift-first extension compatibility profile.
 # Status values: stable | compatibility | experimental | deprecated | unsupported | registry-replacement
+#
+# REL-N01: This file is honesty-first. Do not author "passing" or release-candidate status.
+# Qualification axes are separate from schema support and must come from CI evidence.
 
 profile = "codeeditor-swift-first-2026"
-upstream_commit = "phase-16"
+upstream_commit = "unpinned"
 manifest_schema = 1
 swift_extension_api = "1.0"
-status = "phase-16-rc"
+status = "pre-alpha"
+maturity = "experimental"
+
+# Split qualification (REL-N01). Values are evidence labels, never hand-authored "passing".
+[qualification]
+schema_support = "declared"           # TOML/schema accepted by loaders
+source_compatibility = "unproven"     # API surface not release-frozen as stable
+behavioral_conformance = "unproven"   # No CI-generated S0–S4 pass artifacts
+security_qualification = "unproven"   # Threat model exists; not security-qualified
+operational_qualification = "unproven"
 
 [features]
-languages = "stable"
-themes = "stable"
-icon_themes = "stable"
-snippets = "stable"
-language_servers = "stable"
-completion_labels = "stable"
-symbol_labels = "stable"
-debug_adapters = "stable"
-debug_locators = "stable"
-mcp_servers = "stable"
-process_exec = "compatibility"
-download_file = "compatibility"
-npm_install = "experimental"  # host-owned materializer (local registry); not full npm lifecycle
-worktree = "compatibility"
-project = "compatibility"
-settings = "compatibility"
-kv_store = "compatibility"
-documentation_indexing = "stable"
-slash_commands = "stable"
+languages = "experimental"
+themes = "experimental"
+icon_themes = "experimental"
+snippets = "experimental"
+language_servers = "experimental"
+completion_labels = "experimental"
+symbol_labels = "experimental"
+debug_adapters = "experimental"
+debug_locators = "experimental"
+mcp_servers = "experimental"
+process_exec = "experimental"
+download_file = "experimental"
+npm_install = "experimental"
+worktree = "experimental"
+project = "experimental"
+settings = "experimental"
+kv_store = "experimental"
+documentation_indexing = "experimental"
+slash_commands = "experimental"
 language_model_provider_metadata = "unsupported"
 legacy_agent_server_hosting = "unsupported"
 
 [runtimes]
-builtin_swift = "stable"
-data_only = "stable"
-native_process = "compatibility"
-swift_wasm = "experimental"  # WasmKit executes modules; product still pre-alpha
+builtin_swift = "experimental"
+data_only = "experimental"
+native_process = "experimental"
+swift_wasm = "experimental"
 remote_provider = "experimental"
 
+# Compatibility levels are NOT "passing" until CI writes evidence artifacts.
 [compatibility_levels]
-S0_package = "passing"
-S1_data = "passing"
-S2_swift_api_parity = "passing"
-S3_behavioral = "passing"
-S4_operational = "passing"
+S0_package = "unproven"
+S1_data = "unproven"
+S2_swift_api_parity = "unproven"
+S3_behavioral = "unproven"
+S4_operational = "unproven"

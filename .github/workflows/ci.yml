@@ -29,8 +29,10 @@ jobs:
         run: ./scripts/check-feature-profiles.sh
       - name: Product scorecards (Phase 16)
         run: ./scripts/check-product-scorecards.sh
-      - name: Defects no open P0/P1 (Phase 16)
-        run: ./scripts/check-defects.sh
+      - name: Defects regression-link integrity (REL-N03)
+        # Pre-alpha: allow open P0/P1 while verifying fixed rows link to real regression tests.
+        # Release/verify-stable runs without DEFECTS_ALLOW_OPEN.
+        run: DEFECTS_ALLOW_OPEN=1 ./scripts/check-defects.sh
       - name: API freeze Stable products (Phase 16)
         run: ./scripts/check-api-freeze.sh
       - name: Accessibility surface (Phase 16)
@@ -82,17 +84,11 @@ jobs:
           grep -E '^GHOSTTY_REPO=https://' Docs/Architecture/GHOSTTY.pin
           echo "Ghostty pin OK:"
           cat Docs/Architecture/GHOSTTY.pin
-      - name: Optional libghostty-vt build
-        # Best-effort: Ghostty dep CDN can fail; pin verification is required, library build is optional.
-        continue-on-error: true
+      - name: Linked Ghostty build/test (REL-N08 hard)
         run: |
           set -euo pipefail
-          chmod +x scripts/build-ghostty.sh scripts/link-ghostty-flags.sh
-          ./scripts/build-ghostty.sh vt
-          eval "$(./scripts/link-ghostty-flags.sh)"
-          if [[ "${CODEEDITOR_GHOSTTY_LINKED:-}" == "1" ]]; then
-            CODEEDITOR_GHOSTTY_LINKED=1 swift build --product CodeEditorTerminalGhostty
-          fi
+          chmod +x scripts/check-ghostty-linked.sh scripts/build-ghostty.sh scripts/link-ghostty-flags.sh
+          REQUIRE_GHOSTTY=1 ./scripts/check-ghostty-linked.sh
 
   macos-release:
     name: macOS release test
@@ -111,10 +107,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
-      - name: Build with complete concurrency checking
-        # Package already uses Swift 6 language mode; reinforce via frontend flags.
-        # (warnings-as-errors deferred until Phase 2+ clears residual concurrency warnings)
-        run: swift build -Xswiftc -strict-concurrency=complete
+      - name: Build with complete concurrency checking (REL-N07 warnings-as-errors)
+        # Package uses Swift 6 language mode; concurrency warnings are errors.
+        run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
 
   ios-simulator:
     name: iOS Simulator build
@@ -142,15 +137,25 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
-      - name: Clear SwiftPM / build caches
+      - name: Clear SwiftPM / build caches (PKG-N01)
         run: |
           rm -rf .build
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf .swiftpm/configuration
-      - name: Resolve from empty cache
-        run: swift package resolve
+      - name: Resolve from empty cache + empty HOME
+        run: |
+          set -euo pipefail
+          EMPTY_HOME="$(mktemp -d)"
+          export HOME="$EMPTY_HOME"
+          export SWIFTPM_CACHE_PATH="$EMPTY_HOME/spm-cache"
+          mkdir -p "$SWIFTPM_CACHE_PATH"
+          swift package resolve
       - name: Build
-        run: swift build
+        run: |
+          set -euo pipefail
+          EMPTY_HOME="$(mktemp -d)"
+          export HOME="$EMPTY_HOME"
+          swift build
 
   product-smoke:
     name: Independent product smoke builds
@@ -173,23 +178,11 @@ jobs:
         run: swift test --filter CodeEditorLanguageServices
       - name: LSP mock matrix tests
         run: swift test --filter CodeEditorLSP
-      - name: Real language server probe
+      - name: Real language server session (REL-N08 hard)
         run: |
           set -euo pipefail
-          if command -v sourcekit-lsp >/dev/null 2>&1; then
-            echo "sourcekit-lsp present: $(command -v sourcekit-lsp)"
-            sourcekit-lsp --help >/dev/null 2>&1 || true
-            echo "REAL_SERVER=sourcekit-lsp" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "sourcekit-lsp not on PATH — mock matrix remains the required gate"
-            echo "REAL_SERVER=skipped (sourcekit-lsp missing)" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          if command -v clangd >/dev/null 2>&1; then
-            echo "clangd present: $(command -v clangd)"
-            echo "SECOND_SERVER=clangd" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "SECOND_SERVER=skipped (clangd missing)" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          REQUIRE_REAL_LSP=1 ./scripts/check-real-lsp.sh
+          echo "REAL_SERVER=required" >> "$GITHUB_STEP_SUMMARY"
 
   tooling-matrix:
     name: Tasks Terminal SourceControl matrix
@@ -205,6 +198,14 @@ jobs:
           set -euo pipefail
           echo "git=$(command -v git || true)" >> "$GITHUB_STEP_SUMMARY"
           echo "shell=$(command -v sh || true)" >> "$GITHUB_STEP_SUMMARY"
+
+  dap-real:
+    name: Real DAP adapter session (REL-N08)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: lldb-dap initialize/launch/breakpoint session
+        run: REQUIRE_REAL_DAP=1 ./scripts/check-real-dap.sh
 
   coverage:
     name: Test with coverage

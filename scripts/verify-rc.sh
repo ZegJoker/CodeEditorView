@@ -31,6 +31,12 @@ for f in Docs/Architecture/SECURITY-RC.md Docs/Guides/APP-REVIEW.md Docs/Archite
 done
 echo "OK:   security docs present"
 
+
+echo "======== real LSP / DAP / Ghostty (REL-N08) ========"
+REQUIRE_REAL_LSP=1 ./scripts/check-real-lsp.sh
+REQUIRE_REAL_DAP=1 ./scripts/check-real-dap.sh
+REQUIRE_GHOSTTY=1 ./scripts/check-ghostty-linked.sh
+
 echo "======== Phase16 tests ========"
 swift test --filter Phase16
 

@@ -1,64 +1,172 @@
 actor LanguageServiceRegistry
-enum CompletionItemKind
-enum CompletionTriggerKind
-enum DocumentHighlightKind
-enum InlayHintKind
-enum LanguageDiagnosticSeverity
-enum LanguageServiceError
+enum CompletionItemKind | sendable=1
+enum CompletionTriggerKind | sendable=1
+enum DocumentHighlightKind | sendable=1
+enum InlayHintKind | sendable=1
+enum LanguageDiagnosticSeverity | sendable=1
+enum LanguageServiceError | sendable=1
 enum LanguageServiceMerge
 enum LanguageServiceSanitize
 enum LanguageServiceVersioning
-enum MarkupKind
-enum MergePolicy
-enum SymbolKind
-func allHealthSnapshots
-func callHierarchyItems
-func capped
-func clampRange
-func codeActions
-func completions
-func declarations
-func definitions
-func diagnostics
-func documentColors
-func documentHighlights
-func documentLinks
-func documentSymbols
-func ensureCurrent
-func execute
-func executeCommand
-func foldingRanges
-func format
-func formatRange
-func healthSnapshot
-func hierarchyItems
-func hover
-func hoverSections
-func implementations
-func inlayHints
-func languages
-func locationLinks
-func locations
-func markdown
-func matches
-func plain
-func prepareCallHierarchy
-func prepareTypeHierarchy
-func pullDiagnostics
-func recordCancel
-func recordFailure
-func recordSuccess
-func recordTimeout
-func references
-func register
-func rename
-func sanitizeEdit
-func sanitizeEdits
-func semanticTokens
-func signatureHelp
-func truncateMarkup
-func unregister
-func workspaceSymbols
+enum MarkupKind | sendable=1
+enum MergePolicy | sendable=1
+enum SymbolKind | sendable=1
+func allHealthSnapshots()
+func callHierarchyItems(_ batches: [[CallHierarchyItem]])
+func capped()
+func clampRange( _ range: CodeEditorCore.TextRange, documentLength: Int )
+func codeActions( for request: RangeRequest, diagnostics: [LanguageDiagnostic] )
+func codeActions( for request: RangeRequest, diagnostics: [LanguageDiagnostic] , currentVersion: @escaping @Sendable ()
+func codeActions(_ batches: [[CodeAction]])
+func completions( for request: CompletionRequest, currentVersion: @escaping @Sendable ()
+func completions( from batches: [(priority: Int, list: CompletionList)
+func completions(for request: CompletionRequest)
+func declarations( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func declarations(for request: PositionRequest)
+func definitions( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func definitions(for request: PositionRequest)
+func diagnostics( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func diagnostics(_ batches: [[LanguageDiagnostic]])
+func diagnostics(for request: DocumentRequest)
+func documentColors( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func documentColors(_ batches: [[ColorInformation]])
+func documentColors(for request: DocumentRequest)
+func documentHighlights( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func documentHighlights(_ batches: [[DocumentHighlight]])
+func documentHighlights(for request: PositionRequest)
+func documentLinks( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func documentLinks(_ batches: [[DocumentLink]])
+func documentLinks(for request: DocumentRequest)
+func documentSymbols( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func documentSymbols(_ batches: [[DocumentSymbol]])
+func documentSymbols(for request: DocumentRequest)
+func ensureCurrent( requestVersion: DocumentVersion, current: ()
+func execute(_ request: ExecuteCommandRequest)
+func executeCommand( _ request: ExecuteCommandRequest )
+func foldingRanges( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func foldingRanges(_ batches: [[FoldingRange]])
+func foldingRanges(for request: DocumentRequest)
+func format( _ request: DocumentRequest, options: FormattingOptions )
+func formatRange( _ request: RangeRequest, options: FormattingOptions )
+func healthSnapshot(for id: ProviderID)
+func hierarchyItems(_ batches: [[HierarchyItem]])
+func hover( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func hover(for request: PositionRequest)
+func hoverSections( _ batches: [Hover], max: Int )
+func implementations( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func implementations(for request: PositionRequest)
+func incomingCalls( of item: CallHierarchyItem, context: LanguageServiceContext )
+func inlayHints( for request: RangeRequest, currentVersion: @escaping @Sendable ()
+func inlayHints(_ batches: [[InlayHint]])
+func inlayHints(for request: RangeRequest)
+func languages(_ ids: String...)
+func locationLinks(_ batches: [[LocationLink]])
+func locations(_ batches: [[Location]])
+func markdown(_ value: String)
+func matches(languageID: String?, uri: DocumentURI?)
+func outgoingCalls( of item: CallHierarchyItem, context: LanguageServiceContext )
+func plain(_ value: String)
+func prepareCallHierarchy( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func prepareCallHierarchy(for request: PositionRequest)
+func prepareTypeHierarchy( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func prepareTypeHierarchy(for request: PositionRequest)
+func pullDiagnostics( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func pullDiagnostics(for request: DocumentRequest)
+func recordCancel(id: ProviderID)
+func recordFailure(id: ProviderID, message: String)
+func recordSuccess(id: ProviderID)
+func recordTimeout(id: ProviderID)
+func references( for request: PositionRequest, includeDeclaration: Bool )
+func references( for request: PositionRequest, includeDeclaration: Bool , currentVersion: @escaping @Sendable ()
+func register(_ provider: any CallHierarchyProvider)
+func register(_ provider: any CodeActionProvider)
+func register(_ provider: any CompletionProvider)
+func register(_ provider: any DeclarationProvider)
+func register(_ provider: any DefinitionProvider)
+func register(_ provider: any DiagnosticsProvider)
+func register(_ provider: any DocumentColorProvider)
+func register(_ provider: any DocumentHighlightProvider)
+func register(_ provider: any DocumentLinkProvider)
+func register(_ provider: any DocumentSymbolProvider)
+func register(_ provider: any ExecuteCommandProvider)
+func register(_ provider: any FoldingRangeProvider)
+func register(_ provider: any FormattingProvider)
+func register(_ provider: any HoverProvider)
+func register(_ provider: any ImplementationProvider)
+func register(_ provider: any InlayHintProvider)
+func register(_ provider: any PullDiagnosticsProvider)
+func register(_ provider: any ReferencesProvider)
+func register(_ provider: any RenameProvider)
+func register(_ provider: any SemanticTokensProvider)
+func register(_ provider: any SignatureHelpProvider)
+func register(_ provider: any TypeHierarchyProvider)
+func register(_ provider: any WorkspaceSymbolProvider)
+func register(in registry: LanguageServiceRegistry)
+func rename( _ request: PositionRequest, newName: String )
+func rename( _ request: PositionRequest, newName: String, currentVersion: @escaping @Sendable ()
+func sample( uri: DocumentURI )
+func sanitizeEdit( _ edit: TextEditPlan, documentLength: Int )
+func sanitizeEdits( _ edits: [TextEditPlan], documentLength: Int )
+func semanticTokens( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
+func semanticTokens( for request: RangeRequest, currentVersion: @escaping @Sendable ()
+func semanticTokens(_ batches: [[SemanticTokenSpan]])
+func semanticTokens(for request: DocumentRequest)
+func semanticTokens(for request: RangeRequest)
+func signatureHelp( for request: PositionRequest, currentVersion: @escaping @Sendable ()
+func signatureHelp(for request: PositionRequest)
+func subtypes(of item: HierarchyItem, context: LanguageServiceContext)
+func supertypes(of item: HierarchyItem, context: LanguageServiceContext)
+func truncateMarkup( _ content: MarkupContent, maxCharacters: Int )
+func unregister(id: ProviderID)
+func workspaceSymbols( query: String, context: LanguageServiceContext )
+func workspaceSymbols(_ batches: [[WorkspaceSymbol]])
+init ( command: String, argumentsJSON: String? , context: LanguageServiceContext )
+init ( document: DocumentSnapshot, context: LanguageServiceContext )
+init ( document: DocumentSnapshot, position: TextPosition, context: LanguageServiceContext )
+init ( document: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger , context: LanguageServiceContext )
+init ( document: DocumentSnapshot, range: CodeEditorCore.TextRange, context: LanguageServiceContext )
+init ( id: ProviderID , selector: DocumentSelector , priority: Int , completionItems: [CompletionItem] , hover: Hover? , definitions: [LocationLink] , declarations: [LocationLink] , implementations: [LocationLink] , references: [Location] , diagnostics: [LanguageDiagnostic] , documentSymbols: [DocumentSymbol] , workspaceSymbols: [WorkspaceSymbol] , formatEdits: [TextEditPlan] , renamePlan: WorkspaceEditPlan )
+init ( label: String, documentation: MarkupContent? , parameters: [ParameterInformation] )
+init ( label: String, kind: CompletionItemKind? , detail: String? , documentation: MarkupContent? , insertText: String? , textEdit: TextEditPlan? , additionalTextEdits: [TextEditPlan] , sortText: String? , filterText: String? , commandID: String? )
+init ( languageID: String? , uri: DocumentURI? , workspaceRootURIs: [DocumentURI] , flags: [String: String] )
+init ( languageIDs: Set<String> , schemePatterns: [String] , pathGlobs: [String] )
+init ( name: String, detail: String? , kind: SymbolKind, range: CodeEditorCore.TextRange, selectionRange: CodeEditorCore.TextRange, children: [DocumentSymbol] )
+init ( name: String, kind: SymbolKind, detail: String? , uri: DocumentURI, range: CodeEditorCore.TextRange, selectionRange: CodeEditorCore.TextRange )
+init ( name: String, kind: SymbolKind, detail: String? , uri: DocumentURI, range: CodeEditorCore.TextRange, selectionRange: CodeEditorCore.TextRange, tags: [String] )
+init ( providerID: ProviderID, successCount: UInt64 , failureCount: UInt64 , timeoutCount: UInt64 , cancelCount: UInt64 , lastErrorDescription: String? , lastUpdated: Date? )
+init ( providerTimeout: Duration )
+init ( range: CodeEditorCore.TextRange, capture: CaptureName? , rawType: String? , providerID: String? )
+init ( range: CodeEditorCore.TextRange, severity: LanguageDiagnosticSeverity, message: String, code: String? , source: String? )
+init ( registry: LanguageServiceRegistry, limits: LanguageServiceLimits , maxHoverSections: Int? )
+init ( signatures: [SignatureInformation], activeSignature: Int , activeParameter: Int )
+init ( startLine: Int, endLine: Int, startCharacter: Int? , endCharacter: Int? , kind: String? )
+init ( targetURI: DocumentURI, targetRange: CodeEditorCore.TextRange, targetSelectionRange: CodeEditorCore.TextRange? , originSelectionRange: CodeEditorCore.TextRange? )
+init ( title: String, kind: String? , edit: WorkspaceEditPlan? , commandID: String? , isPreferred: Bool )
+init ()
+init (appliedEdit: WorkspaceEditPlan? , message: String? )
+init (content: MarkupContent, range: CodeEditorCore.TextRange? )
+init (documentEdits: [DocumentEditPlan] )
+init (from: CallHierarchyItem, fromRanges: [CodeEditorCore.TextRange])
+init (isIncomplete: Bool , items: [CompletionItem])
+init (kind: CompletionTriggerKind , character: String? )
+init (kind: MarkupKind , value: String)
+init (kind: String , resultID: String? , items: [LanguageDiagnostic])
+init (label: String, documentation: MarkupContent? )
+init (name: String, kind: SymbolKind, location: Location, containerName: String? )
+init (nsRange: NSRange, newText: String)
+init (position: TextPosition, label: String, kind: InlayHintKind? )
+init (range: CodeEditorCore.TextRange, color: ColorValue)
+init (range: CodeEditorCore.TextRange, kind: DocumentHighlightKind )
+init (range: CodeEditorCore.TextRange, newText: String)
+init (range: CodeEditorCore.TextRange, target: DocumentURI? )
+init (rawValue: String)
+init (red: Double, green: Double, blue: Double, alpha: Double )
+init (sections: [HoverSection])
+init (stringLiteral value: String)
+init (tabSize: Int , insertSpaces: Bool )
+init (to: CallHierarchyItem, fromRanges: [CodeEditorCore.TextRange])
+init (uri: DocumentURI, edits: [TextEditPlan])
+init (uri: DocumentURI, range: CodeEditorCore.TextRange)
 protocol CallHierarchyProvider
 protocol CodeActionProvider
 protocol CompletionProvider
@@ -75,7 +183,7 @@ protocol FormattingProvider
 protocol HoverProvider
 protocol ImplementationProvider
 protocol InlayHintProvider
-protocol LanguageServiceProvider
+protocol LanguageServiceProvider | sendable=1
 protocol PullDiagnosticsProvider
 protocol ReferencesProvider
 protocol RenameProvider
@@ -83,50 +191,50 @@ protocol SemanticTokensProvider
 protocol SignatureHelpProvider
 protocol TypeHierarchyProvider
 protocol WorkspaceSymbolProvider
-struct CallHierarchyIncomingCall
-struct CallHierarchyItem
-struct CallHierarchyOutgoingCall
-struct CodeAction
-struct ColorInformation
-struct ColorValue
-struct CompletionItem
-struct CompletionList
-struct CompletionRequest
-struct CompletionTrigger
-struct DocumentEditPlan
-struct DocumentHighlight
-struct DocumentLink
-struct DocumentRequest
-struct DocumentSelector
-struct DocumentSymbol
-struct ExecuteCommandRequest
-struct ExecuteCommandResult
-struct FoldingRange
-struct FormattingOptions
-struct HierarchyItem
-struct Hover
-struct HoverSection
-struct InlayHint
-struct LanguageDiagnostic
-struct LanguageServiceContext
-struct LanguageServiceHost
-struct LanguageServiceLimits
-struct Location
-struct LocationLink
-struct MarkupContent
-struct MockLanguageSuite
-struct ParameterInformation
-struct PositionRequest
-struct ProviderHealthSnapshot
-struct ProviderID
-struct PullDiagnosticsResult
-struct RangeRequest
-struct SemanticTokenSpan
-struct SignatureHelp
-struct SignatureInformation
-struct TextEditPlan
-struct WorkspaceEditPlan
-struct WorkspaceSymbol
+struct CallHierarchyIncomingCall | sendable=1
+struct CallHierarchyItem | sendable=1
+struct CallHierarchyOutgoingCall | sendable=1
+struct CodeAction | sendable=1
+struct ColorInformation | sendable=1
+struct ColorValue | sendable=1
+struct CompletionItem | sendable=1
+struct CompletionList | sendable=1
+struct CompletionRequest | sendable=1
+struct CompletionTrigger | sendable=1
+struct DocumentEditPlan | sendable=1
+struct DocumentHighlight | sendable=1
+struct DocumentLink | sendable=1
+struct DocumentRequest | sendable=1
+struct DocumentSelector | sendable=1
+struct DocumentSymbol | sendable=1
+struct ExecuteCommandRequest | sendable=1
+struct ExecuteCommandResult | sendable=1
+struct FoldingRange | sendable=1
+struct FormattingOptions | sendable=1
+struct HierarchyItem | sendable=1
+struct Hover | sendable=1
+struct HoverSection | sendable=1
+struct InlayHint | sendable=1
+struct LanguageDiagnostic | sendable=1
+struct LanguageServiceContext | sendable=1
+struct LanguageServiceHost | sendable=1
+struct LanguageServiceLimits | sendable=1
+struct Location | sendable=1
+struct LocationLink | sendable=1
+struct MarkupContent | sendable=1
+struct MockLanguageSuite | sendable=1
+struct ParameterInformation | sendable=1
+struct PositionRequest | sendable=1
+struct ProviderHealthSnapshot | sendable=1
+struct ProviderID | sendable=1
+struct PullDiagnosticsResult | sendable=1
+struct RangeRequest | sendable=1
+struct SemanticTokenSpan | sendable=1
+struct SignatureHelp | sendable=1
+struct SignatureInformation | sendable=1
+struct TextEditPlan | sendable=1
+struct WorkspaceEditPlan | sendable=1
+struct WorkspaceSymbol | sendable=1
 var activeParameter
 var activeSignature
 var additionalTextEdits

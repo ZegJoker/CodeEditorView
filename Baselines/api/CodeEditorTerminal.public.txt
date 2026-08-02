@@ -1,52 +1,106 @@
+actor LocalPTYTransport
+actor MockByteTransport
 actor MockRemoteTerminalTransport
 actor MockTerminalBackend
 actor ProcessTerminalBackend
 actor RemoteTerminalBackend
+actor TerminalService
 actor TerminalSessionManager
-class PTYTerminalBackend
-class TerminalScreen
-class VTParser
-enum RemoteTerminalEvent
-enum State
-enum TerminalError
-enum TerminalOutputEvent
+class PTYTerminalBackend | sendable=1
+class TerminalScreen | sendable=1
+class VTParser | sendable=1
+enum ClipboardPolicy | sendable=1
+enum RemoteTerminalEvent | sendable=1
+enum State | sendable=1
+enum TerminalError | sendable=1
+enum TerminalOutputEvent | sendable=1
 enum TerminalPaste
+enum TerminalSessionKind | sendable=1
+enum TerminalTerminationReason | sendable=1
+enum TerminalTransportEvent | sendable=1
 enum UnicodeWidth
-enum VTAction
-func accessibilityText
-func allSessions
-func attach
-func cell
-func close
-func connect
-func create
-func detectedURLs
-func disconnect
-func displayWidth
-func encode
-func feed
-func panelDescriptor
-func push
-func reset
-func resize
-func restorationSnapshots
-func screen
-func selectionText
-func simulateDisconnect
-func simulateReconnect
-func start
-func terminate
-func viewportText
-func write
-protocol RemoteTerminalTransport
-protocol TerminalBackend
-struct TerminalCell
-struct TerminalConfiguration
-struct TerminalHyperlink
-struct TerminalPanelDescriptor
-struct TerminalSession
-struct TerminalSessionHandle
-struct TerminalSessionID
+enum VTAction | sendable=1
+func accessibilityText(includeScrollback: Bool )
+func activeSessionID()
+func allSessions()
+func allowsOSC52Write()
+func allowsShellIntegrationInjection()
+func attach(backend: any TerminalBackend)
+func cell(row: Int, col: Int)
+func close(_ id: TerminalSessionID)
+func close(_ id: TerminalSessionID, reason: TerminalTerminationReason )
+func closeAll(reason: TerminalTerminationReason )
+func configureOverflow(_ message: String?)
+func connect(configuration: TerminalConfiguration)
+func create( metadata: TerminalMetadata , configuration: TerminalConfiguration ) | attr=discardableResult
+func create( title: String , configuration: TerminalConfiguration )
+func detectedURLs()
+func disconnect()
+func displayWidth(_ ch: Character)
+func encode(_ text: String, bracketed: Bool)
+func feed(_ data: Data)
+func feed(_ text: String)
+func panelDescriptor(for id: TerminalSessionID)
+func push(_ data: Data)
+func push(_ string: String)
+func reset()
+func resize(cols newCols: Int, rows newRows: Int)
+func resize(cols: Int, rows: Int)
+func resize(cols: Int, rows: Int, session id: TerminalSessionID)
+func resize(cols: Int, rows: Int, session: TerminalSessionID)
+func resize(cols: Int, rows: Int, widthPx: Int, heightPx: Int)
+func restorationSnapshots()
+func screen(for id: TerminalSessionID)
+func selectionText(row0: Int, col0: Int, row1: Int, col1: Int)
+func setActive(_ id: TerminalSessionID?)
+func simulateDisconnect(reason: String )
+func simulateReconnect()
+func snapshot(for id: TerminalSessionID)
+func start(_ request: TerminalLaunchRequest)
+func start(configuration: TerminalConfiguration)
+func terminate(_ reason: TerminalTerminationReason)
+func terminate(session: TerminalSessionID)
+func updateSnapshot(_ text: String, for id: TerminalSessionID)
+func viewportText()
+func write(_ bytes: Data)
+func write(_ data: Data)
+func write(_ data: Data, to id: TerminalSessionID)
+func write(_ data: Data, to session: TerminalSessionID)
+func write(_ text: String, to id: TerminalSessionID)
+init ( allowLocalPTY: Bool , allowShellIntegrationInjection: Bool , osc52Clipboard: ClipboardPolicy , allowHyperlinkOpen: Bool , workspaceTrusted: Bool )
+init ( character: Character, fg: Int? , bg: Int? , bold: Bool , underline: Bool , inverse: Bool )
+init ( configuration: TerminalConfiguration )
+init ( id: TerminalSessionID )
+init ( kind: TerminalSessionKind , title: String , taskID: String? , debugSessionID: String? )
+init ( platformProfile: PlatformCapabilityProfile )
+init ( securityPolicy: TerminalSecurityPolicy , requireGhosttyLinked: Bool , isGhosttyLinked: @escaping @Sendable ()
+init ( shell: URL? )
+init ()
+init (cols: Int , rows: Int , maxScrollback: Int )
+init (id: String, title: String, sessionID: TerminalSessionID)
+init (id: TerminalSessionID ))
+init (maxOSCLength: Int , maxParams: Int )
+init (platformProfile: PlatformCapabilityProfile ))
+init (processId: Int32, masterFD: Int32 )
+init (rawValue: UUID ))
+protocol RemoteTerminalTransport | sendable=1
+protocol TerminalBackend | sendable=1
+protocol TerminalByteTransport | sendable=1
+struct SessionState | sendable=1
+struct TerminalCell | sendable=1
+struct TerminalConfiguration | sendable=1
+struct TerminalHyperlink | sendable=1
+struct TerminalLaunchRequest | sendable=1
+struct TerminalMetadata | sendable=1
+struct TerminalPanelDescriptor | sendable=1
+struct TerminalProcessInfo | sendable=1
+struct TerminalSecurityPolicy | sendable=1
+struct TerminalSession | sendable=1
+struct TerminalSessionHandle | sendable=1
+struct TerminalSessionID | sendable=1
+var allowHyperlinkOpen
+var allowLocalPTY
+var allowShellIntegrationInjection
 var applicationCursor
 var arguments
 var autoWrap
@@ -59,25 +113,40 @@ var colStart
 var cols
 var configuration
 var cwd
+var debugSessionID
 var echo
 var empty
 var environment
 var events
+var failNextWriteWithOverflow
 var fg
 var id
 var inverse
+var isGhosttyLinked | sendable=1
 var isRunning
+var kind
+var masterFD
 var maxOSCLength
 var maxParams
 var maxScrollback
+var metadata
+var osc52Clipboard
 var output
 var platformProfile
+var processId
 var rawValue
+var requireGhosttyLinked
+var restricted
 var row
 var rows
 var scrollbackLineCount
+var securityPolicy
 var sessionID
 var shell
+var snapshotUTF8
+var taskID
 var title
+var trusted
 var underline
 var uri
+var workspaceTrusted

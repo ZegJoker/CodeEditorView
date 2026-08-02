@@ -49,6 +49,8 @@ struct CodeEditorExtensionCLI {
                 try testPackage(args: Array(args.dropFirst()))
             case "help", "-h", "--help":
                 printUsage()
+            case "version", "--version", "-v":
+                print("codeeditor-extension 0.1.0-pre-alpha")
             default:
                 fail("unknown command \(command)")
             }
