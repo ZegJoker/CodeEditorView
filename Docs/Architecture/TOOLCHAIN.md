@@ -29,7 +29,7 @@ Install: `brew install swift-format`
 
 ## Swift WASI SDK (hard gate)
 
-Pinned for CI presence validation (Phase 1). Full Wasm guest builds are Phase 11.
+Pinned for CI presence validation (Phase 1). Real Wasm execution is Phase 9 / ADR-017; Phase 11 is §26 qualification.
 
 | Item | Value |
 |---|---|

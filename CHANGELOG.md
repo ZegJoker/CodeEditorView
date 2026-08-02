@@ -10,6 +10,18 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 11 complete (QUAL-001…008 / §26 stabilization qualification):**
+  - `verify-stable.sh` **hard** master gate (no soft-skip): isolation, docs, defects, vacuous ban,
+    Xcode pin, API freeze, wasm fixture, a11y, security RC, full license map, perf budgets,
+    unchecked Sendable allowlist, real LSP/DAP probes, Core debug+release, full `swift test`,
+    ASan+TSan builds, fuzz/soak/mutation smokes, release evidence, source-archive rehearsal
+  - `Phase11QualificationTests` + `Phase11PerfSmokeTests` (measured `perf-smoke.json`)
+  - PERF budgets, unchecked Sendable inventory/allowlist, mutation smoke (isolated mutant kills Core)
+  - Tree-sitter `fullParse` awaits off-main engine (no fire-and-forget highlight race)
+  - MCP JSON-RPC register-before-send + early-response buffer (fixes full-suite hang; hang regression test)
+  - Hang-prone debug language-switch dump tests bounded/asserting
+  - README/CompatibilityProfile honesty (WasmKit real experimental; npm experimental)
+  - API freeze baselines refreshed; PHASE11-NOTES rewritten for qualification (not Wasm)
 - **Phase 10 complete (WB-010…016 / §10 Xcode-like workbench):**
   - Navigator inventory (files/symbols/search/issues/tests/debug/SCM/breakpoints) with real models
   - Scheme/run destination model; activity cancel; status line/col via LineIndex

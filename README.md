@@ -66,15 +66,15 @@ dependencies: [
 | **CodeEditorLanguages** | Pre-alpha* | All grammars + `bootstrap()` |
 | **CodeEditorCommands** | Pre-alpha | Commands & keybindings |
 | **CodeEditorWorkspace** | Pre-alpha | Multi-root workspace & edits |
-| **CodeEditorWorkbench** | Pre-alpha | Optional SwiftUI shell (placeholders remain) |
+| **CodeEditorWorkbench** | Pre-alpha | Optional SwiftUI shell (navigators/schemes/models; not 1.0 Stable) |
 | **CodeEditorLanguageServices** | Pre-alpha | Provider contracts & host |
 | **CodeEditorSearch** | Pre-alpha | Workspace search/replace |
 | **CodeEditorTasks** | Pre-alpha | Tasks & problem matchers |
 | **CodeEditorExtensionAPI** | Experimental | Author SDK (`extension.toml`, protocols) |
 | **CodeEditorExtensionProtocol** | Experimental | CBOR wire protocol for host ↔ guest |
 | **CodeEditorExtensionGuest** | Experimental | Native helper guest runtime |
-| **CodeEditorWasmEngine** | Experimental | Portable Wasm engine protocol + limits |
-| **CodeEditorWasmEngineWasmKit** | Simulation only | **Does not execute Wasm bytecode** (WASM-001) |
+| **CodeEditorWasmEngine** | Experimental | Portable Wasm engine protocol + limits (+ LinkedGuest simulation path) |
+| **CodeEditorWasmEngineWasmKit** | Experimental | Real WasmKit parse/instantiate/call (module bytes determine behavior) |
 | **CodeEditorExtensionWasmGuest** | Experimental | Cooperative core-Wasm guest glue |
 | **CodeEditorExtensions** | Experimental | In-process runtime / package manager |
 | **CodeEditorExtensionHost** | Experimental | Multi-driver host, broker, signing, Wasm |

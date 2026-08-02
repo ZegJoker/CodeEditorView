@@ -717,6 +717,62 @@
       "product": "CodeEditorWorkbench",
       "status": "fixed",
       "summary": "FullWorkbench schemes/tasks/navigator wiring"
+    },
+    {
+      "id": "QUAL-001",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Vacuous tests banned via check-vacuous-tests.sh"
+    },
+    {
+      "id": "QUAL-002",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "verify-stable.sh \u00a726 master gate"
+    },
+    {
+      "id": "QUAL-003",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "check-release-evidence.sh validates JSON"
+    },
+    {
+      "id": "QUAL-004",
+      "severity": "P1",
+      "product": "Docs",
+      "status": "fixed",
+      "summary": "README/CompatibilityProfile honesty aligned Phases 7\u201310"
+    },
+    {
+      "id": "QUAL-005",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "API baselines refreshed; check-api-freeze"
+    },
+    {
+      "id": "QUAL-006",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "PERF-BUDGETS.md + check-perf-budgets.sh"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Unchecked Sendable inventory + allowlist"
+    },
+    {
+      "id": "QUAL-008",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Full swift test in verify-stable with counts"
     }
   ]
 }

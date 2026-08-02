@@ -117,3 +117,11 @@ Updated: 2026-08-02
 | WB-014 | P1 | CodeEditorWorkbench | fixed | Command matrix for chrome actions |
 | WB-015 | P1 | CodeEditorWorkbench | fixed | Open Quickly modes + path:line:col |
 | WB-016 | P1 | CodeEditorWorkbench | fixed | FullWorkbench E2E surfaces no ContentUnavailable-only |
+| QUAL-001 | P1 | CI | fixed | Vacuous tests ban |
+| QUAL-002 | P1 | CI | fixed | verify-stable §26 master gate incomplete |
+| QUAL-003 | P1 | CI | fixed | Release evidence not validated |
+| QUAL-004 | P1 | Docs | fixed | README/CompatibilityProfile honesty |
+| QUAL-005 | P1 | CI | fixed | API baseline freeze incomplete |
+| QUAL-006 | P1 | CI | fixed | Performance budgets missing |
+| QUAL-007 | P1 | CI | fixed | Unchecked Sendable inventory |
+| QUAL-008 | P1 | CI | fixed | Full suite counts in RC |
