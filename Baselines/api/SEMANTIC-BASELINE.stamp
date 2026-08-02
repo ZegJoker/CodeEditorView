@@ -1,5 +1,5 @@
 # Digester / symbol-graph baseline stamp
-# 2026-08-02T12:51:53Z
+# 2026-08-02T14:01:23Z
 digester=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-api-digester
 graph_dir=Baselines/api/symbol-graphs
 digest_dir=Baselines/api/digester

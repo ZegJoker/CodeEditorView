@@ -176,7 +176,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeScriptRuns",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_digesterToolIsAvailableAndBaselineScriptUsesIt"
       ],
-      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
+      "notes": "Semantic digester+symbol-graph freeze for 27 products; baselines regenerated 2026-08-02 after MockRemote moved to Tests (no production mock surface)."
     },
     {
       "id": "REL-N07",

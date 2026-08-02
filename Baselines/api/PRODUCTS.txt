@@ -19,7 +19,7 @@ CodeEditorLSP	224
 CodeEditorDAP	195
 CodeEditorSearch	71
 CodeEditorTasks	155
-CodeEditorTerminal	152
+CodeEditorTerminal	144
 CodeEditorSourceControl	121
 CodeEditorTreeSitter	61
 CodeEditorLanguageSwift	7

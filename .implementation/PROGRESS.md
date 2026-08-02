@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: Phase 0 REL-N06 — regenerated digester/symbol-graph baselines after MockRemoteTerminalTransport left production (API freeze green; 38 Phase-0 regression tests pass).
 - 2026-08-02: Phase 0 verifier rework — PKG-N01 hard suite exit + no soft --version; REL-N02 generate-product-scorecards evidence; REL-N04 content-sourced a11y + fail-closed Switch Control; REL-N05 DocumentStore/LineIndex fixed datasets; REL-N06 real digester/symbol-graph (no public seed); REL-N08 DAP post-init responses + DAPTestTransport/MockRemote moved to Tests/.
 
 - 2026-08-02: Phase 0 verifier remediation — PKG-N01 full-archive default + execution test; REL-N01 CI generate-compatibility-profile; REL-N04 WorkbenchAccessibilitySession keyboard/rotor/Switch Control; REL-N05 p50/p95/p99+memory/cpu/allocs producer; REL-N06 digester/symbol-graph freeze; REL-N07 TSan executes tests + per-site dossier; REL-N08 production requireLinked/requireGhosttyLinked defaults true.

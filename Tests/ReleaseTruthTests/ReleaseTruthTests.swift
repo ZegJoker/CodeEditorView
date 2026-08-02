@@ -744,6 +744,18 @@ struct ReleaseTruthTests {
                 || Self.exists("Tests/CodeEditorExtensionHostTests/MockRemoteExtensionTransport.swift"),
             "MockRemoteExtensionTransport must live under Tests/"
         )
+        // REL-N08 residual: terminal mock must not ship as production public API
+        let remoteTerminal = try Self.read("Sources/CodeEditorTerminal/RemoteTerminalBackend.swift")
+        #expect(
+            !remoteTerminal.contains("actor MockRemoteTerminalTransport")
+                && !remoteTerminal.contains("class MockRemoteTerminalTransport"),
+            "MockRemoteTerminalTransport must not be production API"
+        )
+        #expect(
+            Self.exists("Tests/CodeEditorTerminalTests/Support/MockRemoteTerminalTransport.swift")
+                || Self.exists("Tests/CodeEditorTerminalTests/MockRemoteTerminalTransport.swift"),
+            "MockRemoteTerminalTransport must live under Tests/"
+        )
         if let mockWire {
             #expect(
                 mockWire.contains("#if") && mockWire.contains("TEST"),

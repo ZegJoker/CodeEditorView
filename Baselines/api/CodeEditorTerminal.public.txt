@@ -1,6 +1,5 @@
 actor LocalPTYTransport
 actor MockByteTransport
-actor MockRemoteTerminalTransport
 actor MockTerminalBackend
 actor ProcessTerminalBackend
 actor RemoteTerminalBackend
@@ -31,11 +30,9 @@ func close(_ id: TerminalSessionID)
 func close(_ id: TerminalSessionID, reason: TerminalTerminationReason )
 func closeAll(reason: TerminalTerminationReason )
 func configureOverflow(_ message: String?)
-func connect(configuration: TerminalConfiguration)
 func create( metadata: TerminalMetadata , configuration: TerminalConfiguration ) | attr=discardableResult
 func create( title: String , configuration: TerminalConfiguration )
 func detectedURLs()
-func disconnect()
 func displayWidth(_ ch: Character)
 func encode(_ text: String, bracketed: Bool)
 func feed(_ data: Data)
@@ -45,7 +42,6 @@ func push(_ data: Data)
 func push(_ string: String)
 func reset()
 func resize(cols newCols: Int, rows newRows: Int)
-func resize(cols: Int, rows: Int)
 func resize(cols: Int, rows: Int, session id: TerminalSessionID)
 func resize(cols: Int, rows: Int, session: TerminalSessionID)
 func resize(cols: Int, rows: Int, widthPx: Int, heightPx: Int)
@@ -53,8 +49,6 @@ func restorationSnapshots()
 func screen(for id: TerminalSessionID)
 func selectionText(row0: Int, col0: Int, row1: Int, col1: Int)
 func setActive(_ id: TerminalSessionID?)
-func simulateDisconnect(reason: String )
-func simulateReconnect()
 func snapshot(for id: TerminalSessionID)
 func start(_ request: TerminalLaunchRequest)
 func start(configuration: TerminalConfiguration)
@@ -63,7 +57,6 @@ func terminate(session: TerminalSessionID)
 func updateSnapshot(_ text: String, for id: TerminalSessionID)
 func viewportText()
 func write(_ bytes: Data)
-func write(_ data: Data)
 func write(_ data: Data, to id: TerminalSessionID)
 func write(_ data: Data, to session: TerminalSessionID)
 func write(_ text: String, to id: TerminalSessionID)
@@ -114,7 +107,6 @@ var cols
 var configuration
 var cwd
 var debugSessionID
-var echo
 var empty
 var environment
 var events
