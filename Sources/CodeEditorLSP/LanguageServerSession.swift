@@ -534,16 +534,12 @@ public actor LanguageServerSession {
 
     // MARK: - Snapshots (LSP-N09)
 
-    /// Text for URI: open document first, else snapshot resolver. Throws if unavailable.
+    /// Text for URI: open document first, else snapshot resolver.
+    /// Throws ``LSPError/snapshotUnavailable`` — never fabricates empty text (LSP-N09).
     public func requireText(for uri: DocumentURI) async throws -> String {
         if let doc = openDocuments[uri] { return doc.text }
         let snap = try await snapshotResolver.snapshot(for: uri)
         return snap.text
-    }
-
-    /// Soft helper for display-only paths; prefer ``requireText(for:)`` for edits/navigation.
-    public func text(for uri: DocumentURI) async -> String {
-        (try? await requireText(for: uri)) ?? ""
     }
 
     public func positionMap(uri: DocumentURI) async -> LSPPositionMap? {

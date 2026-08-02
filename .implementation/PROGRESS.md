@@ -40,6 +40,8 @@
 
 ## Log
 
+- 2026-08-03: Phase 6b LSP verifier residual (2) — removed `LanguageServerSession.text(for:)` soft empty fallback entirely (requireText only; digester/symbol baselines updated); N12 hard-requires AsyncBroadcastHub stream delivery of versioned diagnostics (no `latestPublication` soft-OR); N13 requires literal `full session` success when sourcekit-lsp/clangd present (binary-name-only OK rejected). CodeEditorLSPTests 60 passed.
+
 - 2026-08-03: Phase 6b LSP verifier residual — LSP-N09 navigation/workspace-symbol use `requireText` fail-closed (removed production `session.text(for:)` empty soft path); hardened N04 (incremental vs forceFull, gap reopen text), N06 (didChange before didSave hard), N13 (executes check-real-lsp.sh + in-process session steps); cleared LSP residuals from scorecard inventory. CodeEditorLSPTests green.
 
 - 2026-08-03: Phase 6b LSP — fixed LSP-N01…LSP-N13: OneShotPromise pending-before-send (no earlyResponses/unstructured Task); inbound message lanes (response/state-ordered/independent/server-request); safe `synchronize(from:applying:to:)`; capability+policy sync (preferIncremental/forceFull/none) with version-gap full resync; per-document `LSPDocumentLane` (save flushes change, close barrier); open state after successful send; complete WorkspaceEdit (changes/documentChanges/resource ops/annotations → WorkspaceEdit); snapshot miss fail-closed; registration-by-id; JSONValue; versioned bounded diagnostics via AsyncBroadcastHub; check-real-lsp.sh full fixture + Tests/Fixtures/LSP. CodeEditorLSPTests 57 passed.

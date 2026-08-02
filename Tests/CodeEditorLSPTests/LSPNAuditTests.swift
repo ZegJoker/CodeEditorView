@@ -591,15 +591,28 @@ struct LSPN09SnapshotTests {
         } catch {
             // fail closed
         }
-        // Soft empty text helper must not be used for edit conversion paths.
-        let sourceURL = URL(fileURLWithPath: #filePath)
+        // Soft empty text helper must not exist on production session (LSP-N09 P0).
+        let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-            .appendingPathComponent("Sources/CodeEditorLSP/WorkspaceSnapshotResolver.swift")
-        let source = try String(contentsOf: sourceURL, encoding: .utf8)
-        #expect(!source.contains("empty text so line/character"))
-        #expect(source.contains("snapshotUnavailable") || source.contains("throw"))
+        let resolverSource = try String(
+            contentsOf: root.appendingPathComponent("Sources/CodeEditorLSP/WorkspaceSnapshotResolver.swift"),
+            encoding: .utf8
+        )
+        #expect(!resolverSource.contains("empty text so line/character"))
+        #expect(resolverSource.contains("snapshotUnavailable") || resolverSource.contains("throw"))
+        let sessionSource = try String(
+            contentsOf: root.appendingPathComponent("Sources/CodeEditorLSP/LanguageServerSession.swift"),
+            encoding: .utf8
+        )
+        // Fail closed: no soft empty-string helper that masks snapshot miss.
+        #expect(!sessionSource.contains("func text(for"))
+        #expect(!sessionSource.contains("(try? await requireText"))
+        #expect(!sessionSource.contains("prefer ``requireText"))
+        #expect(!sessionSource.contains("Soft helper for display-only"))
+        #expect(sessionSource.contains("func requireText(for"))
+        #expect(sessionSource.contains("never fabricates empty text") || sessionSource.contains("snapshotUnavailable"))
         await session.shutdown()
     }
 
@@ -799,6 +812,7 @@ struct LSPN12DiagnosticsTests {
         #expect(pub?.serverGeneration == 1)
         #expect(pub?.sequence ?? 0 >= 1)
         #expect(pub?.source == "s1" || pub?.serverID == "s1")
+        let firstSequence = pub!.sequence
 
         // Stale version discarded.
         await store.publish(
@@ -821,7 +835,8 @@ struct LSPN12DiagnosticsTests {
         )
         #expect(await store.diagnostics(serverID: "s1", uri: uri).first?.message == "newgen")
 
-        // Bounded stream via hub — subscribe with replay so publish is visible.
+        // Bounded stream via hub — subscribe first, then publish; hard-require stream delivery
+        // (must not soft-OR on latestPublication alone; LSP-N12).
         let stream = await store.events()
         await store.publish(
             serverID: "s1",
@@ -830,19 +845,37 @@ struct LSPN12DiagnosticsTests {
             version: 3,
             items: [LSPStoredDiagnostic(message: "streamed", line: 0, character: 0)]
         )
-        var sawValue = false
+        var sawVersion3FromStream = false
+        var streamHubSequence: UInt64 = 0
+        var streamMessage: String?
+        var streamPubSequence: UInt64 = 0
         let deadline = ContinuousClock.now + .seconds(2)
         for await item in stream {
             if case .value(let env) = item {
-                if env.event.documentVersion == 3 {
-                    sawValue = true
+                if env.event.documentVersion == 3,
+                    env.event.items.first?.message == "streamed"
+                {
+                    sawVersion3FromStream = true
+                    streamHubSequence = env.sequence
+                    streamPubSequence = env.event.sequence
+                    streamMessage = env.event.items.first?.message
                     break
                 }
             }
             if ContinuousClock.now >= deadline { break }
         }
+        #expect(
+            sawVersion3FromStream,
+            "diagnostics stream must deliver version=3 publication (not latestPublication soft-OR)"
+        )
+        #expect(streamMessage == "streamed")
+        #expect(streamHubSequence >= 1)
+        #expect(streamPubSequence >= 1)
         let latest = await store.latestPublication(serverID: "s1", uri: uri)
-        #expect(sawValue || latest?.documentVersion == 3)
+        #expect(latest?.documentVersion == 3)
+        #expect(latest?.sequence ?? 0 > firstSequence)
+        #expect(latest?.sequence == streamPubSequence)
+        #expect(latest?.items.first?.message == "streamed")
     }
 }
 
@@ -927,14 +960,28 @@ struct LSPN13RealLSPGateTests {
             process.terminationStatus == 0,
             "check-real-lsp.sh failed status=\(process.terminationStatus) out=\(combined)"
         )
-        // Must not be a vacuous no-op: either full session OK lines or soft fixture OK.
-        let hasSessionOK =
+        // Hard gate (LSP-N13): success must be a real full session line, not merely the
+        // binary name ("found sourcekit-lsp") or a generic "OK:" prefix.
+        let hasFullSession =
             combined.contains("full session")
-            || combined.contains("initialize/open/change")
-            || combined.contains("sourcekit-lsp")
-            || combined.contains("clangd")
-        let hasFixtureOK = combined.contains("fixtures present") || combined.contains("OK:")
-        #expect(hasSessionOK || hasFixtureOK, "unexpected gate output: \(combined)")
+            && (
+                combined.contains("initialize/open/change")
+                    || combined.contains("completion/hover/definition")
+            )
+        let hasSoftNoBinaries =
+            combined.contains("no real LSP binaries")
+            && combined.contains("fixtures present")
+        #expect(
+            hasFullSession || hasSoftNoBinaries,
+            "expected 'full session' success or soft no-binaries fixture OK; got: \(combined)"
+        )
+        // Binary-name-only "OK: found sourcekit-lsp" is not a session proof.
+        if combined.contains("found sourcekit-lsp") || combined.contains("found clangd") {
+            #expect(
+                hasFullSession,
+                "binary present but full session line missing: \(combined)"
+            )
+        }
     }
 
     /// In-process mock walks the same integration session steps the gate requires

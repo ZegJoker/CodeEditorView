@@ -9909,30 +9909,6 @@
           },
           {
             "kind": "Function",
-            "name": "text",
-            "printedName": "text(for:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
-                "usr": "s:SS"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "DocumentURI",
-                "printedName": "CodeEditorDocuments.DocumentURI",
-                "usr": "s:19CodeEditorDocuments11DocumentURIV"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:13CodeEditorLSP21LanguageServerSessionC4text3forSS0aB9Documents11DocumentURIV_tYaF",
-            "mangledName": "$s13CodeEditorLSP21LanguageServerSessionC4text3forSS0aB9Documents11DocumentURIV_tYaF",
-            "moduleName": "CodeEditorLSP",
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
             "name": "refreshSnapshotResolver",
             "printedName": "refreshSnapshotResolver()",
             "children": [

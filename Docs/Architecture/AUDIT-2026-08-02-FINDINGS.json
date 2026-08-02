@@ -1280,7 +1280,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_responseBeforeWaitCompletesWithoutEarlyMap",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_usesOneShotPromiseNotUnstructuredRegistrationTask"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N02",
@@ -1293,7 +1293,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_slowNotificationDoesNotStallResponse",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_stateOrderedNotificationsPreserveOrder"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N03",
@@ -1305,7 +1305,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N03_synchronizeRequiresBaseAndTransaction"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N04",
@@ -1318,7 +1318,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N04_capabilityAndPolicyDriveIncrementalVsFull",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N04_versionGapForcesFullResync"
       ],
-      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N05",
@@ -1330,7 +1330,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N05_streamGapTriggersFullResync"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N06",
@@ -1343,7 +1343,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N06_saveFlushesPendingChangeBeforeDidSave",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N06_closeCancelsDebounceAndSendsClose"
       ],
-      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N07",
@@ -1356,7 +1356,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateNotCommittedWhenNotifyFails",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateCommittedAfterSuccessfulSend"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N08",
@@ -1368,7 +1368,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N08_decodesChangesDocumentChangesAndResourceOps"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N09",
@@ -1381,7 +1381,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_missingSnapshotThrowsNotEmptyText",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_navigationMissingTargetThrowsNotEmptyRange"
       ],
-      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N10",
@@ -1393,7 +1393,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N10_unregisterExactRegistrationIDNotMethodCount"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N11",
@@ -1405,7 +1405,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N11_jsonValuePreservesScalarsArraysObjectsNull"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N12",
@@ -1417,7 +1417,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N12_diagnosticsCarryVersionGenerationSequenceAndBound"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N13",
@@ -1432,7 +1432,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_executesIntegrationSessionScript",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_inProcessIntegrationSessionSteps"
       ],
-      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session."
+      "notes": "2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "DAP-N01",
