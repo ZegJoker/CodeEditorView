@@ -44,6 +44,9 @@ import TreeSitterZigGrammar
 
 /// Umbrella product entry: registers every built-in grammar + query bundle and
 /// installs the Tree-sitter configuration provider.
+///
+/// Prefer ``bootstrap(into:)`` with a host-owned ``LanguageRegistry`` (LANG-N07).
+/// ``bootstrap()`` targets ``LanguageRegistry/shared`` for compatibility.
 public enum CodeEditorLanguages: Sendable {
     private enum Phase {
         case idle
@@ -53,36 +56,71 @@ public enum CodeEditorLanguages: Sendable {
 
     private final class State: @unchecked Sendable {
         let condition = NSCondition()
+        /// Tracks process-wide shared bootstrap only.
         var phase: Phase = .idle
+        /// Host-owned registries already bootstrapped (object identity).
+        var bootstrappedRegistryIDs: Set<ObjectIdentifier> = []
     }
 
     private static let state = State()
 
-    /// Registers all parsers, query providers, and the configuration provider.
-    /// Safe to call repeatedly (subsequent calls wait for an in-flight bootstrap, then no-op).
+    /// Registers all parsers, query providers, and the configuration provider into
+    /// ``LanguageRegistry/shared``. Safe to call repeatedly.
     @discardableResult
     public static func bootstrap() -> Bool {
-        state.condition.lock()
-        while state.phase == .inProgress {
-            state.condition.wait()
-        }
-        if state.phase == .complete {
+        bootstrap(into: .shared, installEnvironment: true)
+    }
+
+    /// Registers all built-in grammars into a host-owned registry (LANG-N07).
+    ///
+    /// Does **not** mutate global environment when `installEnvironment` is false,
+    /// so multiple workspaces can own isolated registries.
+    @discardableResult
+    public static func bootstrap(
+        into registry: LanguageRegistry,
+        installEnvironment: Bool = false
+    ) -> Bool {
+        let isShared = registry === LanguageRegistry.shared
+        if isShared {
+            state.condition.lock()
+            while state.phase == .inProgress {
+                state.condition.wait()
+            }
+            if state.phase == .complete {
+                state.condition.unlock()
+                return false
+            }
+            state.phase = .inProgress
             state.condition.unlock()
-            return false
+        } else {
+            state.condition.lock()
+            let oid = ObjectIdentifier(registry)
+            if state.bootstrappedRegistryIDs.contains(oid) {
+                state.condition.unlock()
+                return false
+            }
+            state.bootstrappedRegistryIDs.insert(oid)
+            state.condition.unlock()
         }
-        state.phase = .inProgress
-        state.condition.unlock()
 
         _ = codeEditorLanguagesModule
-        installOnDemandBootstrapHook()
-        registerAllParsers()
-        registerAllQueryProvidersAndDefinitions()
-        TreeSitterLanguageEnvironment.install(UmbrellaConfigurationProvider())
+        if installEnvironment || isShared {
+            installOnDemandBootstrapHook()
+        }
+        registerAllParsers(into: registry)
+        registerAllQueryProvidersAndDefinitions(into: registry)
+        if installEnvironment || isShared {
+            TreeSitterLanguageEnvironment.install(
+                RegistryTreeSitterConfigurationProvider(registry: registry)
+            )
+        }
 
-        state.condition.lock()
-        state.phase = .complete
-        state.condition.broadcast()
-        state.condition.unlock()
+        if isShared {
+            state.condition.lock()
+            state.phase = .complete
+            state.condition.broadcast()
+            state.condition.unlock()
+        }
         return true
     }
 
@@ -98,28 +136,15 @@ public enum CodeEditorLanguages: Sendable {
     public static func resetBootstrapForTesting() {
         state.condition.lock()
         state.phase = .idle
+        state.bootstrappedRegistryIDs.removeAll()
         state.condition.broadcast()
         state.condition.unlock()
     }
 }
 
-// MARK: - Configuration provider
-
-private struct UmbrellaConfigurationProvider: TreeSitterConfigurationProviding {
-    func codeLanguage(id: String) -> CodeLanguage? {
-        CodeLanguages.language(id: id)
-    }
-
-    func languageConfiguration(for languageID: String) throws -> LanguageConfiguration? {
-        try CodeLanguages.languageConfiguration(id: languageID)
-    }
-}
-
 // MARK: - Parser registration
 
-private func registerAllParsers() {
-    let registry = LanguageRegistry.shared
-
+private func registerAllParsers(into registry: LanguageRegistry) {
     let pairs: [(LanguageID, @Sendable () -> OpaquePointer?)] = [
         (.agda, { tree_sitter_agda() }),
         (.bash, { tree_sitter_bash() }),
@@ -164,16 +189,23 @@ private func registerAllParsers() {
     ]
 
     for (id, factory) in pairs {
+        // Owned built-in registration with static grammar symbol (LANG-N01 / N04 / N07).
+        if registry.definition(for: id) == nil {
+            // Definition registered in registerAllQueryProvidersAndDefinitions.
+        }
         registry.registerParser(for: id, factory: factory)
     }
 }
 
 // MARK: - Query + definition registration
 
-private func registerAllQueryProvidersAndDefinitions() {
-    let registry = LanguageRegistry.shared
+private func registerAllQueryProvidersAndDefinitions(into registry: LanguageRegistry) {
     for language in CodeLanguage.allLanguages {
-        registry.register(LanguageDefinition(language))
+        _ = registry.register(
+            LanguageDefinition(language),
+            owner: .builtIn,
+            priority: LanguageDefinition(language).detectionPriority
+        )
         let tsName = language.tsName
         let languageID = language.languageID
         registry.registerQueryProvider(for: languageID) { queryName in

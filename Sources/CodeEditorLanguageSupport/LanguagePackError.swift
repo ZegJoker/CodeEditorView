@@ -8,6 +8,10 @@ public enum LanguagePackError: Error, Sendable, Equatable, CustomStringConvertib
     case missingQuery(language: LanguageID, query: String, searchedPaths: [String])
     /// Grammar / pack artifact missing or unreadable.
     case missingGrammarArtifact(language: LanguageID, detail: String)
+    /// A present query file is malformed / failed to compile (LANG-N02). Fail closed.
+    case malformedQuery(language: LanguageID, query: String, path: String?, detail: String)
+    /// A present query file could not be read as UTF-8 (LANG-N02).
+    case unreadableQuery(language: LanguageID, query: String, path: String)
 
     public var description: String {
         switch self {
@@ -16,6 +20,11 @@ public enum LanguagePackError: Error, Sendable, Equatable, CustomStringConvertib
             return "Language pack \(language.rawValue): missing query '\(query).scm'. Searched: \(paths)"
         case .missingGrammarArtifact(let language, let detail):
             return "Language pack \(language.rawValue): missing grammar artifact — \(detail)"
+        case .malformedQuery(let language, let query, let path, let detail):
+            let loc = path.map { " at \($0)" } ?? ""
+            return "Language pack \(language.rawValue): malformed query '\(query)'\(loc): \(detail)"
+        case .unreadableQuery(let language, let query, let path):
+            return "Language pack \(language.rawValue): unreadable query '\(query)' at \(path)"
         }
     }
 }

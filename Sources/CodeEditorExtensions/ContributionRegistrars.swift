@@ -73,17 +73,31 @@ public final class KeybindingContributionRegistrar: @unchecked Sendable {
 
 public final class LanguageContributionRegistrar: @unchecked Sendable {
     private let registry: LanguageRegistry
+    private let owner: ContributionOwner
+    private let priority: Int
 
-    public init(registry: LanguageRegistry = .shared) {
+    public init(
+        registry: LanguageRegistry = .shared,
+        owner: ContributionOwner = .host,
+        priority: Int = 100
+    ) {
         self.registry = registry
+        self.owner = owner
+        self.priority = priority
     }
 
+    /// Registers under this registrar's owner; dispose removes **only** this token (LANG-N01).
     @discardableResult
     public func register(_ definition: LanguageDefinition) -> any ExtensionDisposable {
-        registry.register(definition)
-        let id = definition.id
-        return ExtensionRegistrationToken { [registry] in
-            registry.unregisterDefinition(for: id)
+        let result = registry.register(
+            definition,
+            owner: owner,
+            priority: priority,
+            policy: .retainByPriority
+        )
+        let token = result.token
+        return ExtensionRegistrationToken {
+            token.dispose()
         }
     }
 

@@ -1158,9 +1158,15 @@
       "severity_raw": "P1 extension correctness",
       "title": "duplicate language registration overwrites ownership",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_unregisterOneOwnerDoesNotRemoveOtherReplacement",
+        "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_disposeWinnerPromotesRemainingOwner",
+        "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_registrationRecordHasOwnerGenerationToken",
+        "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_unregisterByOwnerRemovesOnlyThatOwner",
+        "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_parserFactoryBoundToTokenSurvivesOtherUnregister"
+      ],
+      "notes": "2026-08-03: LanguageRegistrationRecord with owner/generation/priority/token; dispose removes only that record; extension registrar token-based."
     },
     {
       "id": "LANG-N02",
@@ -1168,9 +1174,15 @@
       "severity_raw": "P1",
       "title": "malformed queries can be silently omitted",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_presentUnreadableQueryThrows",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_malformedHighlightsQueryThrowsTypedError",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_querySetErrorMapsToLanguagePackError",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_missingOptionalQueryIsDiagnosticNotThrow",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_factoryFailsClosedOnBrokenQueryWithRealGrammar"
+      ],
+      "notes": "2026-08-03: QuerySetError fail-closed; present unreadable/malformed/oversized throw; no silent try? omit on compile."
     },
     {
       "id": "LANG-N03",
@@ -1178,9 +1190,14 @@
       "severity_raw": "P1",
       "title": "dual parser/tree state paths can diverge",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_parseSessionIsSoleStateOwner",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_staleHighlightSnapshotDiscarded",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_highlightProviderUsesParseSessionOnly",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_languageDocumentActorIsParseSession"
+      ],
+      "notes": "2026-08-03: ParseSession single actor path; TreeSitterHighlightProvider no dual main-actor tree; LanguageDocumentActor=ParseSession."
     },
     {
       "id": "LANG-N04",
@@ -1188,9 +1205,14 @@
       "severity_raw": "P1 memory safety",
       "title": "parser/language pointer lifetime is unclear",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_languageRefDocumentsStaticOwnership",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_registryLanguageRefNilWithoutParser",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_sessionRetainsLanguageRefAcrossEdits",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_deallocationStressRepeatedSessionCycle"
+      ],
+      "notes": "2026-08-03: TSLanguageRef ownership enum (staticGrammarSymbol); session retains languageRef; stress reset cycle."
     },
     {
       "id": "LANG-N05",
@@ -1198,9 +1220,17 @@
       "severity_raw": "P1",
       "title": "Tree-sitter direct test ownership is inadequate",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_incrementalEditBeforeInsideAfterMultibyte",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_malformedSourceDoesNotCrashSession",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_cancellationAndStaleGenerationDiscard",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_allQueryKindsHaveBasenames",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_duplicateRegistrationAndUnload",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_largeFileRepeatedEdits",
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_queryCaptureValidationEmptyWithoutConfig"
+      ],
+      "notes": "2026-08-03: Expanded CodeEditorTreeSitterTests coverage for edits/unicode/stale/query kinds/reload/large files."
     },
     {
       "id": "LANG-N06",
@@ -1208,9 +1238,17 @@
       "severity_raw": "P1 before Stable",
       "title": "language packs need generated conformance fixtures",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_allShippedParsersLoad",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_highlightQueriesPresentAndReadable",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_representativeSourceParsesWithoutCrash",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_optionalShippedQueriesCompileWhenPresent",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_inventoryProvenancePresentForSwiftAndJSON",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_hostOwnedBootstrapDoesNotRequireSharedMutation",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_malformedFixtureDoesNotCrashHighlightProvider"
+      ],
+      "notes": "2026-08-03: 39-grammar conformance matrix (parser load, representative parse, highlights, optional queries, provenance inventory, host bootstrap)."
     },
     {
       "id": "LANG-N07",
@@ -1218,9 +1256,14 @@
       "severity_raw": "P2",
       "title": "global bootstrap side effects are not ideal Stable API",
       "phase": 6,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_hostRegistryIsolatedFromShared",
+        "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_twoHostRegistriesAreIndependent",
+        "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_explicitInitDoesNotUseGlobalSideEffect",
+        "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_hostOwnedBootstrapDoesNotRequireSharedMutation"
+      ],
+      "notes": "2026-08-03: bootstrap(into:installEnvironment:); RegistryTreeSitterConfigurationProvider(registry:); host-owned LanguageRegistry instances."
     },
     {
       "id": "LSP-N01",

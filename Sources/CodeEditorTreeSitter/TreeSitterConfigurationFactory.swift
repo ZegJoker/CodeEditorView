@@ -9,18 +9,23 @@ import SwiftTreeSitter
 /// need the full grammar set to highlight a single language.
 public enum TreeSitterConfigurationFactory: Sendable {
     /// Errors while resolving a registered language into a Tree-sitter configuration.
-    public enum Error: Swift.Error, Sendable {
+    public enum Error: Swift.Error, Sendable, Equatable {
         case queriesNotFound(String)
         case parserUnavailable(String)
+        case malformedQuery(language: String, detail: String, path: String?)
     }
 
     /// Builds a `LanguageConfiguration` with **highlight** queries only.
+    ///
+    /// Malformed present queries fail closed with ``Error/malformedQuery`` (LANG-N02).
+    /// No silent `try?` fallback that omits a broken query.
     ///
     /// - Important: Only `highlights.scm` / `highlights-*.scm` (and parent highlights)
     ///   are compiled. Folds, indents, tags, locals, and injections are not merged
     ///   into the highlight query.
     public nonisolated static func languageConfiguration(
-        for language: CodeLanguage
+        for language: CodeLanguage,
+        registry: LanguageRegistry = .shared
     ) throws -> LanguageConfiguration? {
         guard language.id != .plainText else { return nil }
 
@@ -28,11 +33,39 @@ public enum TreeSitterConfigurationFactory: Sendable {
             return cached
         }
 
-        guard let tsLanguage = language.tsLanguage else {
+        guard let tsLanguage = language.tsLanguage(registry: registry) else {
             throw Error.parserUnavailable(language.displayName)
         }
 
-        let combinedText = try QuerySetLoader.combinedHighlightsSource(language: language)
+        let combinedText: String
+        do {
+            combinedText = try QuerySetLoader.combinedHighlightsSource(
+                language: language, registry: registry)
+        } catch let error as QuerySetError {
+            switch error {
+            case .missingRequired:
+                throw Error.queriesNotFound(language.displayName)
+            case .malformed(_, _, let path, let detail):
+                throw Error.malformedQuery(
+                    language: language.displayName,
+                    detail: detail,
+                    path: path
+                )
+            case .unreadable(_, _, let path):
+                throw Error.malformedQuery(
+                    language: language.displayName,
+                    detail: error.description,
+                    path: path
+                )
+            case .oversized:
+                throw Error.malformedQuery(
+                    language: language.displayName,
+                    detail: error.description,
+                    path: nil
+                )
+            }
+        }
+
         guard let combined = combinedText.data(using: .utf8), !combined.isEmpty else {
             throw Error.queriesNotFound(language.displayName)
         }
@@ -41,15 +74,13 @@ public enum TreeSitterConfigurationFactory: Sendable {
         do {
             query = try Query(language: tsLanguage, data: combined)
         } catch {
-            // Fallback: own highlights only (no parent merge).
-            if let own = language.queryURL(for: "highlights"),
-                let ownText = try? String(contentsOf: own, encoding: .utf8),
-                let ownData = ownText.data(using: .utf8)
-            {
-                query = try Query(language: tsLanguage, data: ownData)
-            } else {
-                throw error
-            }
+            // Fail closed: do not silently fall back to omitting parent merges
+            // when the combined query is malformed (LANG-N02).
+            throw Error.malformedQuery(
+                language: language.displayName,
+                detail: String(describing: error),
+                path: registry.queryURL(for: language.languageID, kind: .highlights)?.path
+            )
         }
 
         let config = LanguageConfiguration(
@@ -63,30 +94,19 @@ public enum TreeSitterConfigurationFactory: Sendable {
     }
 
     public nonisolated static func languageConfiguration(
-        id: String
+        id: String,
+        registry: LanguageRegistry = .shared
     ) throws -> LanguageConfiguration? {
         guard let language = CodeLanguages.language(id: id) else { return nil }
-        return try languageConfiguration(for: language)
+        return try languageConfiguration(for: language, registry: registry)
     }
 
-    // MARK: - Helpers
-
-    private nonisolated static func isHighlightQueryName(_ name: String) -> Bool {
-        name == "highlights" || name.hasPrefix("highlights-") || name.hasPrefix("highlights_")
+    /// Clears the process-wide configuration cache (tests / grammar reload).
+    public nonisolated static func clearCache() {
+        Cache.shared.clear()
     }
 
-    private nonisolated static func combinedQueryData(urls: [URL]) throws -> Data {
-        var parts: [String] = []
-        parts.reserveCapacity(urls.count)
-        for url in urls {
-            parts.append(try String(contentsOf: url, encoding: .utf8))
-        }
-        let joined = parts.joined(separator: "\n")
-        guard let data = joined.data(using: .utf8), !data.isEmpty else {
-            throw Error.queriesNotFound("combined")
-        }
-        return data
-    }
+    // MARK: - Cache
 
     private final class Cache: @unchecked Sendable {
         static let shared = Cache()
@@ -110,22 +130,32 @@ public enum TreeSitterConfigurationFactory: Sendable {
             defer { lock.unlock() }
             return storage[id]?.identity
         }
+
+        func clear() {
+            lock.lock()
+            defer { lock.unlock() }
+            storage.removeAll()
+        }
     }
 }
 
-/// ``TreeSitterConfigurationProviding`` backed by the shared ``LanguageRegistry``
-/// and the static ``CodeLanguages`` catalog.
+/// ``TreeSitterConfigurationProviding`` backed by an explicit ``LanguageRegistry``
+/// and the static ``CodeLanguages`` catalog (LANG-N07 host-owned registry).
 ///
 /// Safe for hosts that only link a subset of language packs: unregistered languages
 /// simply fail to resolve parsers/queries.
 public struct RegistryTreeSitterConfigurationProvider: TreeSitterConfigurationProviding {
-    public init() {}
+    public let registry: LanguageRegistry
+
+    public init(registry: LanguageRegistry = .shared) {
+        self.registry = registry
+    }
 
     public func codeLanguage(id: String) -> CodeLanguage? {
         CodeLanguages.language(id: id)
     }
 
     public func languageConfiguration(for languageID: String) throws -> LanguageConfiguration? {
-        try TreeSitterConfigurationFactory.languageConfiguration(id: languageID)
+        try TreeSitterConfigurationFactory.languageConfiguration(id: languageID, registry: registry)
     }
 }

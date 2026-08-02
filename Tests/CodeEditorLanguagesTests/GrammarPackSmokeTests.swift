@@ -68,9 +68,10 @@ struct LanguageBootstrapSmokeTests {
 
     @Test func querySetLoaderFindsHighlights() throws {
         _ = try CodeEditorLanguageSwift.register()
-        let (sources, diags) = QuerySetLoader.loadSources(
+        let (sources, diags) = try QuerySetLoader.loadSources(
             languageID: .swift,
-            kinds: [.highlights, .folds]
+            kinds: [.highlights, .folds],
+            required: [.highlights]
         )
         #expect(sources[.highlights] != nil)
         #expect(!sources[.highlights]!.isEmpty)
