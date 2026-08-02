@@ -1,4 +1,8 @@
 # Digester / symbol-graph baseline stamp
-# 2026-08-02T10:18:59Z
-seeded_from=public_inventory
-note=CI check-api-baseline.sh refreshes real symbol graphs
+# 2026-08-02T12:51:53Z
+digester=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-api-digester
+graph_dir=Baselines/api/symbol-graphs
+digest_dir=Baselines/api/digester
+graph_products=27
+digester_products=27
+source=swift-symbolgraph+api-digester

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # REL-N08 — real DAP adapter gate. Hard-fail when REQUIRE_REAL_DAP=1.
 # Exercises initialize / launch / setBreakpoints / stackTrace / variables / evaluate / disconnect
-# against lldb-dap when available. Soft mode only when REQUIRE_REAL_DAP=0.
-# Always time-bounded (no hang).
+# against lldb-dap when available. Each post-initialize command must receive a response
+# (success or structured failure) — silent no-op is a hard failure.
 set -euo pipefail
 REQUIRE="${REQUIRE_REAL_DAP:-0}"
 SEARCH_PATH="${CODEEDITOR_DAP_SEARCH_PATH:-}"
@@ -40,9 +40,8 @@ fi
 
 echo "OK: found $found"
 
-# Bound the whole session so a stuck adapter cannot hang CI.
 python3 - "$found" "$REQUIRE" <<'PY'
-import json, subprocess, sys, time, select, os, signal
+import json, subprocess, sys, time, select, os, signal, tempfile, textwrap
 
 adapter = sys.argv[1]
 require = sys.argv[2] == "1"
@@ -51,6 +50,30 @@ deadline = time.time() + float(os.environ.get("CODEEDITOR_DAP_TIMEOUT_SEC", "20"
 def frame(obj: dict) -> bytes:
     body = json.dumps(obj).encode()
     return f"Content-Length: {len(body)}\r\n\r\n".encode() + body
+
+# Tiny debuggee for launch/breakpoint surface
+dbg_dir = tempfile.mkdtemp(prefix="codeeditor-dap-")
+dbg_src = os.path.join(dbg_dir, "smoke.c")
+dbg_bin = os.path.join(dbg_dir, "smoke")
+with open(dbg_src, "w", encoding="utf-8") as f:
+    f.write(textwrap.dedent("""\
+        #include <stdio.h>
+        int main(void) {
+            int x = 1;
+            printf("codeeditor-dap-smoke %d\\n", x);
+            return 0;
+        }
+    """))
+# Best-effort compile; fall back to /bin/echo if clang missing
+compiled = False
+try:
+    c = subprocess.run(["clang", "-g", "-O0", "-o", dbg_bin, dbg_src], capture_output=True, timeout=15)
+    compiled = c.returncode == 0 and os.path.isfile(dbg_bin)
+except Exception:
+    compiled = False
+program = dbg_bin if compiled else "/bin/echo"
+program_args = [] if compiled else ["codeeditor-dap-smoke"]
+bp_source = dbg_src if compiled else program
 
 proc = subprocess.Popen(
     [adapter],
@@ -62,7 +85,7 @@ proc = subprocess.Popen(
 assert proc.stdin and proc.stdout
 buf = b""
 got_initialize = False
-commands_seen = set()
+responses = {}
 
 def remaining():
     return max(0.05, deadline - time.time())
@@ -78,7 +101,6 @@ def read_msg(timeout):
     global buf
     end = time.time() + timeout
     while time.time() < end and time.time() < deadline:
-        # Use select to avoid blocking forever on read(1)
         ready, _, _ = select.select([proc.stdout], [], [], min(0.2, end - time.time()))
         if ready:
             chunk = proc.stdout.read(1)
@@ -118,29 +140,63 @@ def read_msg(timeout):
     return None
 
 seq = 1
+pending = set()
 
-def req(command, arguments=None, wait=3.0):
-    global seq, got_initialize
+def req_send(command, arguments=None):
+    global seq
     msg = {"seq": seq, "type": "request", "command": command}
     if arguments is not None:
         msg["arguments"] = arguments
     seq += 1
     send(msg)
-    commands_seen.add(command)
+    pending.add(command)
+    return command
+
+def pump(wait=3.0, want=None):
+    """Drain messages; capture responses. want=command to return when that response arrives."""
+    global got_initialize
     end = time.time() + min(wait, remaining())
+    found = None
     while time.time() < end and time.time() < deadline:
         m = read_msg(min(0.5, end - time.time()))
         if not m:
             continue
-        if m.get("type") == "response" and m.get("command") == command:
-            if command == "initialize":
-                got_initialize = True
-            return m
-        # ignore events
-    return None
+        if m.get("type") == "response":
+            cmd = m.get("command")
+            if cmd:
+                responses[cmd] = m
+                pending.discard(cmd)
+                if cmd == "initialize":
+                    got_initialize = True
+                if want and cmd == want:
+                    found = m
+                    # keep brief drain for trailing events
+                    end = min(end, time.time() + 0.3)
+        # events extend slightly so we catch late responses (lldb-dap launch after configurationDone)
+        elif m.get("type") == "event" and want:
+            end = min(end + 0.2, time.time() + max(0.5, remaining()))
+    return found if want else True
+
+def require_response(command, soft_ok=False):
+    if command not in responses:
+        print("FAIL: %s produced no response (silent no-op forbidden)" % command, file=sys.stderr)
+        raise SystemExit(1 if require else 0)
+    m = responses[command]
+    print("OK: %s response success=%s" % (command, m.get("success")))
+    return m
+
+required_commands = [
+    "initialize",
+    "launch",
+    "setBreakpoints",
+    "stackTrace",
+    "variables",
+    "evaluate",
+    "disconnect",
+]
 
 try:
-    init = req("initialize", {
+    req_send("initialize", {
         "clientID": "codeeditor-rel-n08",
         "adapterID": "lldb",
         "pathFormat": "path",
@@ -148,7 +204,8 @@ try:
         "columnsStartAt1": True,
         "supportsVariableType": True,
         "supportsRunInTerminalRequest": True,
-    }, wait=6.0)
+    })
+    init = pump(wait=6.0, want="initialize")
     if not init:
         print("FAIL: initialize produced no response within timeout", file=sys.stderr)
         raise SystemExit(1 if require else 0)
@@ -157,14 +214,62 @@ try:
         raise SystemExit(1 if require else 0)
     print("OK: initialize")
 
-    # Best-effort exercise of remaining surface; timeouts are short.
-    req("launch", {"program": "/bin/echo", "args": ["codeeditor-dap-smoke"], "name": "smoke"}, wait=2.0)
-    req("setBreakpoints", {"source": {"path": "/bin/echo"}, "breakpoints": [{"line": 1}]}, wait=2.0)
-    req("stackTrace", {"threadId": 1}, wait=1.5)
-    req("variables", {"variablesReference": 1}, wait=1.5)
-    req("evaluate", {"expression": "1+1", "context": "repl"}, wait=1.5)
-    req("disconnect", {"terminateDebuggee": True}, wait=2.0)
-    print("OK: lldb-dap initialize/launch/breakpoint/stack/variables/evaluate/disconnect session exercised")
+    # lldb-dap: launch may complete only after configurationDone
+    req_send("launch", {
+        "program": program,
+        "args": program_args,
+        "name": "smoke",
+        "cwd": dbg_dir,
+        "stopOnEntry": True if compiled else False,
+    })
+    pump(wait=1.5)  # drain initialized/process events
+    req_send("configurationDone", {})
+    pump(wait=4.0, want="launch")
+    pump(wait=2.0, want="configurationDone")
+    require_response("launch")
+
+    req_send("setBreakpoints", {
+        "source": {"path": bp_source},
+        "breakpoints": [{"line": 3 if compiled else 1}],
+    })
+    pump(wait=3.0, want="setBreakpoints")
+    require_response("setBreakpoints")
+
+    # stack/vars/eval must answer (success may be false if not stopped)
+    req_send("stackTrace", {"threadId": 1})
+    pump(wait=3.0, want="stackTrace")
+    st = require_response("stackTrace")
+
+    var_ref = 1
+    if st.get("success") and isinstance(st.get("body"), dict):
+        frames = st["body"].get("stackFrames") or []
+        if frames and isinstance(frames[0], dict):
+            req_send("scopes", {"frameId": frames[0].get("id", 0)})
+            pump(wait=2.0, want="scopes")
+            scopes = responses.get("scopes")
+            if scopes and scopes.get("success") and isinstance(scopes.get("body"), dict):
+                sc = scopes["body"].get("scopes") or []
+                if sc and isinstance(sc[0], dict):
+                    var_ref = sc[0].get("variablesReference") or 1
+
+    req_send("variables", {"variablesReference": var_ref})
+    pump(wait=3.0, want="variables")
+    require_response("variables")
+
+    req_send("evaluate", {"expression": "1+1", "context": "repl"})
+    pump(wait=3.0, want="evaluate")
+    require_response("evaluate")
+
+    req_send("disconnect", {"terminateDebuggee": True})
+    pump(wait=3.0, want="disconnect")
+    require_response("disconnect")
+
+    missing = [c for c in required_commands if c not in responses]
+    if missing:
+        print("FAIL: missing DAP responses for: %s" % ", ".join(missing), file=sys.stderr)
+        raise SystemExit(1 if require else 0)
+
+    print("OK: lldb-dap initialize/launch/breakpoint/stack/variables/evaluate/disconnect all answered")
     raise SystemExit(0)
 finally:
     try:
@@ -174,6 +279,11 @@ finally:
                 proc.wait(timeout=2)
             except Exception:
                 proc.kill()
+    except Exception:
+        pass
+    try:
+        import shutil
+        shutil.rmtree(dbg_dir, ignore_errors=True)
     except Exception:
         pass
 PY

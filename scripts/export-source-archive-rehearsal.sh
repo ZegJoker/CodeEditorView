@@ -167,9 +167,15 @@ echo "== resolve + build (empty HOME/cache tree) =="
 
   swift build --product ConformanceExtensionGuest
   CBIN="$(swift build --show-bin-path)/ConformanceExtensionGuest"
-  if [[ -x "$CBIN" ]]; then
-    "$CBIN" --version | tee "$OUT_DIR/ConformanceExtensionGuest.version" || true
+  if [[ ! -x "$CBIN" ]]; then
+    CBIN="$(find .build -type f -name 'ConformanceExtensionGuest' -perm -111 | head -1 || true)"
   fi
+  if [[ -z "${CBIN:-}" || ! -x "$CBIN" ]]; then
+    echo "FAIL: ConformanceExtensionGuest binary missing after build" >&2
+    exit 1
+  fi
+  # Hard-fail on --version (PKG-N01; no soft || true)
+  "$CBIN" --version | tee "$OUT_DIR/ConformanceExtensionGuest.version"
 
   # Meaningful CLI command on fixture package
   if [[ -d Tests/Fixtures/Extensions/s0-basic ]]; then

@@ -1,312 +1,793 @@
-class DocumentStore
-class EditorEventStream | isolation=@MainActor
-class LineIndex
-class ProcessHandle | sendable=1
-class SelectionEngine | isolation=@MainActor
-class UndoCoordinator | isolation=@MainActor
-enum BoundaryPolicy | sendable=1
-enum BracketMatcher
-enum BracketPairEmphasis | sendable=1
-enum BracketPairs | sendable=1
-enum CapabilityAvailability | sendable=1
-enum CodeEditorPlatformError | sendable=1
-enum ColumnSelectionBuilder
-enum DocumentStoreError | sendable=1
-enum EditOrigin | sendable=1
-enum EditorEvent | sendable=1
-enum HostPlatform | sendable=1
-enum IndentOption | sendable=1
-enum LineEnding | sendable=1
-enum MultiRangeEdit
-enum NavigationDirection | sendable=1
-enum NavigationGranularity | sendable=1
-enum PlatformCapabilityKind | sendable=1
-enum ProcessLaunchMode | sendable=1
-enum ProcessOutputEvent | sendable=1
-enum ProcessServiceError | sendable=1
-enum SelectionMode | sendable=1
-enum ShellQuoting
-enum ShippingProfileID | sendable=1
-enum StructureCommands | sendable=1
-enum TextFilters | sendable=1
-enum TextOffsetSemantics | sendable=1
-enum WordNavigationMode | sendable=1
-enum WordSelection | sendable=1
-func addSelection(_ range: NSRange, preferredX: CGFloat? )
-func advanced(by delta: UInt64 )
-func apply( _ transaction: EditTransaction, sortHighToLow: Bool , expectedVersion: DocumentVersion? ) | attr=discardableResult
-func applyMutation(_ mutation: TextMutation)
-func asTransaction(origin: EditOrigin , id: UUID ))
-func attach(document: DocumentStore, layout: some CaretLayoutQuerying)
-func attributedSubstring(from range: NSRange)
-func autoPair( inserted: String, nextCharacter: Character? )
-func availability(for kind: PlatformCapabilityKind)
-func beginGrouping()
-func boundary( fromUTF16Offset offset: Int, in document: String, direction: Int, mode: WordNavigationMode )
-func build( from string: String, estimatedLineHeight: CGFloat, makePayload: (Int)
-func buildUsingSplitLines( from string: String, estimatedLineHeight: CGFloat, makePayload: (Int)
-func cancel()
-func caretAfterReplace(range: NSRange, replacementUTF16Count: Int)
-func clamp(_ range: NSRange, documentLength: Int)
-func clear()
-func collapseToPrimary()
-func deleteBackwardRange( caret: Int, in document: String, indent: IndentOption )
-func detect(in string: String, sampleLimit: Int )
-func disable()
-func enable()
-func encodeAvailability(_ a: CapabilityAvailability)
-func endGrouping()
-func enumerateLines(inYRange minY: CGFloat, maxY: CGFloat, body: (LinePosition<Payload>) -> Void)
-func expandTab(indent: IndentOption)
-func forEach(_ body: (LinePosition<Payload>) -> Void)
-func graphemeBoundaryAfter( utf16Offset: Int, in text: String )
-func graphemeBoundaryBefore( utf16Offset: Int, in text: String )
-func indentLine(_ line: String, indent: IndentOption)
-func indentLines( selections: [NSRange], document: String, indent: IndentOption )
-func indentPrefix(forNewlineAfter lineText: String, indent: IndentOption)
-func insert(payload: Payload, metrics: LineMetrics, atIndex index: Int)
-func insertionPoint(_ location: Int)
-func isAtLineStart(location: Int, in document: String)
-func isClosing(_ character: Character)
-func isClosingPair(_ ch: Character)
-func isOpening(_ character: Character)
-func isOpening(_ character: Character, mate: Character)
-func isValidUTF16Offset(_ offset: Int, documentUTF16Length length: Int)
-func joinCommand(executable: String, arguments: [String])
-func launch(_ request: ProcessLaunchRequest)
-func leadingWhitespace(ofLine line: String)
-func leadingWhitespaceRange( containing location: Int, in document: String )
-func line(atIndex index: Int)
-func line(atUTF16Offset offset: Int)
-func line(atY y: CGFloat)
-func lineContent(range: NSRange, in document: String)
-func lineEndingRangeBefore( location: Int, in document: String )
-func lineRanges( intersecting selections: [NSRange], in document: String )
-func makeEdit(in range: NSRange, replacement: String)
-func makeEventStream( bufferSize: Int )
-func makeSelectionStream()
-func makeTextStream()
-func match(aroundUTF16Offset offset: Int, in string: String)
-func mate(for character: Character)
-func matrixSnapshot()
-func move( direction: NavigationDirection, granularity: NavigationGranularity , extending: Bool , containerWidth: CGFloat )
-func moveLines( selections: [NSRange], document: String, up: Bool )
-func newlineInsertion( lineTextBeforeCaret: String, nextCharacter: Character?, indent: IndentOption )
-func normalize(_ ranges: [NSRange], documentLength: Int)
-func normalizeLineEndings(_ text: String, to ending: LineEnding)
-func outdentLine(_ line: String, indent: IndentOption)
-func outdentLines( selections: [NSRange], document: String, indent: IndentOption )
-func pairOpen(for close: Character)
-func quote(_ argument: String)
-func range( atUTF16Offset offset: Int, in document: String, mode: WordNavigationMode )
-func range(atUTF16Offset offset: Int, in document: String)
-func ranges( in rect: CGRect, fragments: [ColumnSelectionFragment], documentLength: Int )
-func rebuild(lines: [(Payload, LineMetrics)])
-func redo(apply: (TextEdit) throws -> Void)
-func redoGroup(apply: ([TextEdit]) throws -> Void)
-func register(edit: TextEdit)
-func remap(range: NSRange, editLocation: Int, delta: Int)
-func remap(ranges: [NSRange], editLocation: Int, delta: Int)
-func remove(atIndex index: Int)
-func removeAll()
-func replaceAllSelections(with string: String) | attr=discardableResult
-func replaceCharacters(in range: NSRange, with replacement: String) | attr=discardableResult
-func replaceSelection(with string: String)
-func requireFilesystemCapability()
-func requireLocal(_ kind: PlatformCapabilityKind)
-func requireNetworkCapability()
-func requirePTYCapability()
-func requireProcessCapability()
-func resetAttributesToDefaults()
-func runCollecting( _ request: ProcessLaunchRequest )
-func scalarIndex( atUTF16Offset offset: Int, in text: String, policy: BoundaryPolicy )
-func selectAll()
-func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange)
-func setFullText(_ string: String)
-func setInsertionPoint(_ location: Int, preferredX: CGFloat? )
-func setPreferredLineEnding(_ ending: LineEnding)
-func setSelectedRange(_ range: NSRange, preferredX: CGFloat? )
-func setSelectedRanges(_ ranges: [NSRange], preferredX: CGFloat? )
-func shipping(_ id: ShippingProfileID)
-func single( range: NSRange, replacement: String, origin: EditOrigin , id: UUID )
-func snapshot()
-func splitLines( in string: String, estimatedHeight: CGFloat, includeTrailingEmptyLine: Bool )
-func substring(from range: NSRange)
-func subwordSegments(_ identifier: String)
-func terminateProcessGroup()
-func toggleBlockComment( selection: NSRange, document: String, open: String, close: String )
-func toggleLineComment( selections: [NSRange], document: String, lineComment: String )
-func undo(apply: (TextEdit) throws -> Void)
-func undoGroup(apply: ([TextEdit]) throws -> Void)
-func updateMetrics(atIndex index: Int, metrics: LineMetrics)
-func updatePayload(atIndex index: Int, payload: Payload)
-func utf16Offset( fromUTF8Offset utf8Offset: Int, in text: String, policy: BoundaryPolicy )
-func utf8Offset( fromUTF16Offset utf16Offset: Int, in text: String, policy: BoundaryPolicy )
-func validatedUTF16Range( _ range: NSRange, documentUTF16Length length: Int )
-func waitUntilExit() async -> (code: Int32, timedOut: Bool)
-func yield(_ event: EditorEvent)
-func yieldSelection(_ ranges: [NSRange])
-func yieldText(_ text: String)
-init ( executable: String, arguments: [String] , mode: ProcessLaunchMode , currentDirectory: URL? , environment: [String: String] , mergeEnvironment: Bool , timeout: Duration? , maxStdoutBytes: Int , maxStderrBytes: Int , capabilityKind: PlatformCapabilityKind )
-init ( id: UUID )
-init ( managedRegistryOnly: Bool , publisherAllowlistRequired: Bool , requireSignedNativeHelpers: Bool )
-init ( platform: HostPlatform, name: String, shippingProfileID: ShippingProfileID? , capabilities: [PlatformCapabilityKind: CapabilityAvailability], enterpriseOptions: EnterpriseProfileOptions? )
-init ( profile: PlatformCapabilityProfile )
-init ( string: String , attributes: [NSAttributedString.Key: Any] )
-init ( transaction: EditTransaction, oldVersion: DocumentVersion, newVersion: DocumentVersion, inverse: EditTransaction, textEdits: [TextEdit] )
-init ()
-init (_ nsRange: NSRange)
-init (documentVersion: DocumentVersion)
-init (frame: CGRect, documentRange: NSRange, ctLine: CTLine?)
-init (insert: String, placeCaretInside: Bool, skipOver: Bool )
-init (location: Int, length: Int)
-init (mutation: TextMutation, inverse: TextMutation)
-init (nsRanges: [NSRange], version: DocumentVersion)
-init (open: NSRange, close: NSRange)
-init (payload: String, caretOffsetInPayload: Int)
-init (profile: PlatformCapabilityProfile ))
-init (range: NSRange, preferredX: CGFloat? )
-init (range: NSRange, replacement: String)
-init (range: NSRange, string: String)
-init (rawValue: UInt64)
-init (replacedRange: TextRange, replacement: String)
-init (selection: TextRangeSelection ))
-init (selections: [TextRange], version: DocumentVersion)
-init (start: TextPosition, end: TextPosition)
-init (utf16Length: Int, height: CGFloat)
-init (utf16Offset: Int)
-init (version: DocumentVersion, text: String)
-protocol CaretLayoutQuerying | isolation=@MainActor
-protocol FileSystemAccess | sendable=1
-protocol LinePayload
-protocol NetworkAccess | sendable=1
-protocol PTYAccess | sendable=1
-protocol ProcessLaunching | sendable=1
-struct AppliedEditTransaction | sendable=1
-struct AutoPairResult | sendable=1
-struct ColumnSelectionFragment | sendable=1
-struct DocumentSnapshot | sendable=1
-struct DocumentVersion | sendable=1
-struct EditTransaction | sendable=1
-struct EditorContext | sendable=1
-struct EnterpriseProfileOptions | sendable=1
-struct LineMetrics | sendable=1
-struct LinePosition | sendable=1
-struct Match | sendable=1
-struct NewlineInsertion | sendable=1
-struct PlatformCapabilityProfile | sendable=1
-struct PlatformServices | sendable=1
-struct ProcessLaunchRequest | sendable=1
-struct ProcessService | sendable=1
-struct ProfileFileSystemAccess | sendable=1
-struct ProfileNetworkAccess | sendable=1
-struct ProfilePTYAccess | sendable=1
-struct ProfileProcessLauncher | sendable=1
-struct SelectionChangeEvent | sendable=1
-struct TextChange | sendable=1
-struct TextEdit | sendable=1
-struct TextPosition | sendable=1
-struct TextRange | sendable=1
-struct TextRangeSelection | sendable=1
-struct TextReplacement | sendable=1
-typealias ProcessSupervisor
-var arguments
-var autoPairs
-var canRedo
-var canUndo
-var capabilities
-var capabilityKind
-var caretOffsetInPayload
-var changes
-var close
-var closing
-var ctLine
-var current
-var currentDirectory
-var defaultAttributes
-var defaultEventBuffer
-var directMacOS
-var displayName
-var documentRange
-var documentVersion
-var end
-var enterprise
-var enterpriseOptions
-var environment
-var events
-var executable
-var filesystem
-var first
-var frame
-var fullString
-var groupingEnabled
-var height
-var hostPlatform
-var iOS
-var id
-var index
-var insert
-var inverse
-var isEmpty
-var isEnabled
-var isInsertionPoint
-var isLocallyAvailable
-var isTerminated
-var kind
-var last
-var length
-var localizedDescription
-var location
-var macAppStore
-var managedRegistryOnly
-var maxStderrBytes
-var maxStdoutBytes
-var maxY
-var mergeEnvironment
-var metrics
-var mode
-var mutation
-var name
-var network
-var newVersion
-var nsRange
-var oldVersion
-var open
-var opening
-var origin
-var pairs
-var payload
-var placeCaretInside
-var platform
-var preferredX
-var primarySelection
-var process
-var processUnavailable
-var profile
-var pty
-var publisherAllowlistRequired
-var range
-var rawValue
-var remoteToolingAvailable
-var replacedRange
-var replacement
-var requireSignedNativeHelpers
-var selectedRange
-var selectedRanges
-var selections
-var shippingProfileID
-var skipOver
-var start
-var string
-var test
-var text
-var textEdits
-var timeout
-var transaction
-var utf16Length
-var utf16Offset
-var utf16Range
-var version
-var visualWidth
-var yOffset
-var zero
+swift.associatedtype Bound | precise={'precise': 's:9Rearrange7BoundedP5BoundQa', 'interfaceLanguage': 'swift'} | decl=associatedtype Bound |
+swift.associatedtype TextRange | precise={'precise': 's:9Rearrange20TextRangeCalculatingP0bC0Qa', 'interfaceLanguage': 'swift'} | decl=associatedtype TextRange : Bounded |
+swift.class BufferingTextStorage | precise={'precise': 'c:@M@TextStory@objc(cs)BufferingTextStorage', 'interfaceLanguage': 'swift'} | decl=class BufferingTextStorage |
+swift.class DocumentStore | precise={'precise': 's:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=final class DocumentStore |
+swift.class EditorEventStream | precise={'precise': 's:14CodeEditorCore0B11EventStreamC', 'interfaceLanguage': 'swift'} | decl=@MainActor final class EditorEventStream | actor=1
+swift.class LazyTextStoringMonitor | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC', 'interfaceLanguage': 'swift'} | decl=final class LazyTextStoringMonitor |
+swift.class LineIndex | precise={'precise': 's:14CodeEditorCore9LineIndexC', 'interfaceLanguage': 'swift'} | decl=final class LineIndex<Payload> where Payload : LinePayload |
+swift.class ProcessHandle | precise={'precise': 's:14CodeEditorCore13ProcessHandleC', 'interfaceLanguage': 'swift'} | decl=final class ProcessHandle |
+swift.class SelectionEngine | precise={'precise': 's:14CodeEditorCore15SelectionEngineC', 'interfaceLanguage': 'swift'} | decl=@MainActor final class SelectionEngine | actor=1
+swift.class TextMutationEventRouter | precise={'precise': 'c:@M@TextStory@objc(cs)TextMutationEventRouter', 'interfaceLanguage': 'swift'} | decl=final class TextMutationEventRouter |
+swift.class UndoCoordinator | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC', 'interfaceLanguage': 'swift'} | decl=@MainActor final class UndoCoordinator | actor=1
+swift.enum BracketMatcher | precise={'precise': 's:14CodeEditorCore14BracketMatcherO', 'interfaceLanguage': 'swift'} | decl=enum BracketMatcher |
+swift.enum BracketPairEmphasis | precise={'precise': 's:14CodeEditorCore19BracketPairEmphasisO', 'interfaceLanguage': 'swift'} | decl=enum BracketPairEmphasis |
+swift.enum BracketPairs | precise={'precise': 's:14CodeEditorCore12BracketPairsO', 'interfaceLanguage': 'swift'} | decl=enum BracketPairs |
+swift.enum CapabilityAvailability | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO', 'interfaceLanguage': 'swift'} | decl=enum CapabilityAvailability |
+swift.enum CodeEditorPlatformError | precise={'precise': 's:14CodeEditorCore0aB13PlatformErrorO', 'interfaceLanguage': 'swift'} | decl=enum CodeEditorPlatformError |
+swift.enum ColumnSelectionBuilder | precise={'precise': 's:14CodeEditorCore22ColumnSelectionBuilderO', 'interfaceLanguage': 'swift'} | decl=enum ColumnSelectionBuilder |
+swift.enum DocumentStoreError | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO', 'interfaceLanguage': 'swift'} | decl=enum DocumentStoreError |
+swift.enum EditOrigin | precise={'precise': 's:14CodeEditorCore10EditOriginO', 'interfaceLanguage': 'swift'} | decl=enum EditOrigin |
+swift.enum EditorEvent | precise={'precise': 's:14CodeEditorCore0B5EventO', 'interfaceLanguage': 'swift'} | decl=enum EditorEvent |
+swift.enum HostPlatform | precise={'precise': 's:14CodeEditorCore12HostPlatformO', 'interfaceLanguage': 'swift'} | decl=enum HostPlatform |
+swift.enum IndentOption | precise={'precise': 's:14CodeEditorCore12IndentOptionO', 'interfaceLanguage': 'swift'} | decl=enum IndentOption |
+swift.enum LineEnding | precise={'precise': 's:14CodeEditorCore10LineEndingO', 'interfaceLanguage': 'swift'} | decl=enum LineEnding |
+swift.enum MultiRangeEdit | precise={'precise': 's:14CodeEditorCore14MultiRangeEditO', 'interfaceLanguage': 'swift'} | decl=enum MultiRangeEdit |
+swift.enum NavigationDirection | precise={'precise': 's:14CodeEditorCore19NavigationDirectionO', 'interfaceLanguage': 'swift'} | decl=enum NavigationDirection |
+swift.enum NavigationGranularity | precise={'precise': 's:14CodeEditorCore21NavigationGranularityO', 'interfaceLanguage': 'swift'} | decl=enum NavigationGranularity |
+swift.enum PlatformCapabilityKind | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO', 'interfaceLanguage': 'swift'} | decl=enum PlatformCapabilityKind |
+swift.enum ProcessLaunchMode | precise={'precise': 's:14CodeEditorCore17ProcessLaunchModeO', 'interfaceLanguage': 'swift'} | decl=enum ProcessLaunchMode |
+swift.enum ProcessOutputEvent | precise={'precise': 's:14CodeEditorCore18ProcessOutputEventO', 'interfaceLanguage': 'swift'} | decl=enum ProcessOutputEvent |
+swift.enum ProcessServiceError | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO', 'interfaceLanguage': 'swift'} | decl=enum ProcessServiceError |
+swift.enum SelectionMode | precise={'precise': 's:14CodeEditorCore13SelectionModeO', 'interfaceLanguage': 'swift'} | decl=enum SelectionMode |
+swift.enum ShellQuoting | precise={'precise': 's:14CodeEditorCore12ShellQuotingO', 'interfaceLanguage': 'swift'} | decl=enum ShellQuoting |
+swift.enum ShippingProfileID | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO', 'interfaceLanguage': 'swift'} | decl=enum ShippingProfileID |
+swift.enum StructureCommands | precise={'precise': 's:14CodeEditorCore17StructureCommandsO', 'interfaceLanguage': 'swift'} | decl=enum StructureCommands |
+swift.enum TextFilters | precise={'precise': 's:14CodeEditorCore11TextFiltersO', 'interfaceLanguage': 'swift'} | decl=enum TextFilters |
+swift.enum TextOffsetSemantics | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO', 'interfaceLanguage': 'swift'} | decl=enum TextOffsetSemantics |
+swift.enum TextOffsetSemantics.BoundaryPolicy | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO14BoundaryPolicyO', 'interfaceLanguage': 'swift'} | decl=enum BoundaryPolicy |
+swift.enum WordNavigationMode | precise={'precise': 's:14CodeEditorCore18WordNavigationModeO', 'interfaceLanguage': 'swift'} | decl=enum WordNavigationMode |
+swift.enum WordSelection | precise={'precise': 's:14CodeEditorCore13WordSelectionO', 'interfaceLanguage': 'swift'} | decl=enum WordSelection |
+swift.enum.case BracketPairEmphasis.bordered | precise={'precise': 's:14CodeEditorCore19BracketPairEmphasisO8borderedyA2CmF', 'interfaceLanguage': 'swift'} | decl=case bordered |
+swift.enum.case BracketPairEmphasis.flash | precise={'precise': 's:14CodeEditorCore19BracketPairEmphasisO5flashyA2CmF', 'interfaceLanguage': 'swift'} | decl=case flash |
+swift.enum.case BracketPairEmphasis.underline | precise={'precise': 's:14CodeEditorCore19BracketPairEmphasisO9underlineyA2CmF', 'interfaceLanguage': 'swift'} | decl=case underline |
+swift.enum.case CapabilityAvailability.dataOnly | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO8dataOnlyyA2CmF', 'interfaceLanguage': 'swift'} | decl=case dataOnly |
+swift.enum.case CapabilityAvailability.hostProvided | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO12hostProvidedyA2CmF', 'interfaceLanguage': 'swift'} | decl=case hostProvided |
+swift.enum.case CapabilityAvailability.local | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO5localyA2CmF', 'interfaceLanguage': 'swift'} | decl=case local |
+swift.enum.case CapabilityAvailability.remote | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO6remoteyA2CmF', 'interfaceLanguage': 'swift'} | decl=case remote |
+swift.enum.case CapabilityAvailability.unavailable(reason:) | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO11unavailableyACSS_tcACmF', 'interfaceLanguage': 'swift'} | decl=case unavailable(reason: String) |
+swift.enum.case CodeEditorPlatformError.unsupportedCapability(kind:reason:) | precise={'precise': 's:14CodeEditorCore0aB13PlatformErrorO21unsupportedCapabilityyAcA0dG4KindO_SStcACmF', 'interfaceLanguage': 'swift'} | decl=case unsupportedCapability(kind: PlatformCapabilityKind, reason: String) |
+swift.enum.case DocumentStoreError.emptyTransaction | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO16emptyTransactionyA2CmF', 'interfaceLanguage': 'swift'} | decl=case emptyTransaction |
+swift.enum.case DocumentStoreError.invalidOffset(_:) | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO13invalidOffsetyACSicACmF', 'interfaceLanguage': 'swift'} | decl=case invalidOffset(Int) |
+swift.enum.case DocumentStoreError.invalidRange(_:) | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO12invalidRangeyACSo8_NSRangeVcACmF', 'interfaceLanguage': 'swift'} | decl=case invalidRange(NSRange) |
+swift.enum.case DocumentStoreError.notGraphemeBoundary(_:) | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO19notGraphemeBoundaryyACSicACmF', 'interfaceLanguage': 'swift'} | decl=case notGraphemeBoundary(Int) |
+swift.enum.case DocumentStoreError.notScalarBoundary(_:) | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO17notScalarBoundaryyACSicACmF', 'interfaceLanguage': 'swift'} | decl=case notScalarBoundary(Int) |
+swift.enum.case DocumentStoreError.overlappingRanges(_:) | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO17overlappingRangesyACSaySo8_NSRangeVGcACmF', 'interfaceLanguage': 'swift'} | decl=case overlappingRanges([NSRange]) |
+swift.enum.case DocumentStoreError.staleVersion(expected:actual:) | precise={'precise': 's:14CodeEditorCore18DocumentStoreErrorO12staleVersionyAcA0dH0V_AFtcACmF', 'interfaceLanguage': 'swift'} | decl=case staleVersion(expected: DocumentVersion, actual: DocumentVersion) |
+swift.enum.case EditOrigin.drop | precise={'precise': 's:14CodeEditorCore10EditOriginO4dropyA2CmF', 'interfaceLanguage': 'swift'} | decl=case drop |
+swift.enum.case EditOrigin.formation | precise={'precise': 's:14CodeEditorCore10EditOriginO9formationyA2CmF', 'interfaceLanguage': 'swift'} | decl=case formation |
+swift.enum.case EditOrigin.paste | precise={'precise': 's:14CodeEditorCore10EditOriginO5pasteyA2CmF', 'interfaceLanguage': 'swift'} | decl=case paste |
+swift.enum.case EditOrigin.programmatic | precise={'precise': 's:14CodeEditorCore10EditOriginO12programmaticyA2CmF', 'interfaceLanguage': 'swift'} | decl=case programmatic |
+swift.enum.case EditOrigin.redo | precise={'precise': 's:14CodeEditorCore10EditOriginO4redoyA2CmF', 'interfaceLanguage': 'swift'} | decl=case redo |
+swift.enum.case EditOrigin.structure | precise={'precise': 's:14CodeEditorCore10EditOriginO9structureyA2CmF', 'interfaceLanguage': 'swift'} | decl=case structure |
+swift.enum.case EditOrigin.typing | precise={'precise': 's:14CodeEditorCore10EditOriginO6typingyA2CmF', 'interfaceLanguage': 'swift'} | decl=case typing |
+swift.enum.case EditOrigin.undo | precise={'precise': 's:14CodeEditorCore10EditOriginO4undoyA2CmF', 'interfaceLanguage': 'swift'} | decl=case undo |
+swift.enum.case EditOrigin.unknown | precise={'precise': 's:14CodeEditorCore10EditOriginO7unknownyA2CmF', 'interfaceLanguage': 'swift'} | decl=case unknown |
+swift.enum.case EditorEvent.didApplyEdit(_:) | precise={'precise': 's:14CodeEditorCore0B5EventO12didApplyEdityAcA07AppliedG11TransactionVcACmF', 'interfaceLanguage': 'swift'} | decl=case didApplyEdit(AppliedEditTransaction) |
+swift.enum.case EditorEvent.selectionDidChange | precise={'precise': 's:14CodeEditorCore0B5EventO18selectionDidChangeyA2CmF', 'interfaceLanguage': 'swift'} | decl=case selectionDidChange |
+swift.enum.case EditorEvent.selectionDidChangeDetailed(_:) | precise={'precise': 's:14CodeEditorCore0B5EventO26selectionDidChangeDetailedyAcA09SelectiongD0VcACmF', 'interfaceLanguage': 'swift'} | decl=case selectionDidChangeDetailed(SelectionChangeEvent) |
+swift.enum.case EditorEvent.textDidChange | precise={'precise': 's:14CodeEditorCore0B5EventO13textDidChangeyA2CmF', 'interfaceLanguage': 'swift'} | decl=case textDidChange |
+swift.enum.case EditorEvent.willApplyEdit(_:_:) | precise={'precise': 's:14CodeEditorCore0B5EventO13willApplyEdityAcA0G11TransactionV_AA16DocumentSnapshotVtcACmF', 'interfaceLanguage': 'swift'} | decl=case willApplyEdit(EditTransaction, DocumentSnapshot) |
+swift.enum.case EditorEvent.willChangeText | precise={'precise': 's:14CodeEditorCore0B5EventO14willChangeTextyA2CmF', 'interfaceLanguage': 'swift'} | decl=case willChangeText |
+swift.enum.case HostPlatform.iOS | precise={'precise': 's:14CodeEditorCore12HostPlatformO3iOSyA2CmF', 'interfaceLanguage': 'swift'} | decl=case iOS |
+swift.enum.case HostPlatform.macOS | precise={'precise': 's:14CodeEditorCore12HostPlatformO5macOSyA2CmF', 'interfaceLanguage': 'swift'} | decl=case macOS |
+swift.enum.case HostPlatform.other | precise={'precise': 's:14CodeEditorCore12HostPlatformO5otheryA2CmF', 'interfaceLanguage': 'swift'} | decl=case other |
+swift.enum.case IndentOption.spaces(count:) | precise={'precise': 's:14CodeEditorCore12IndentOptionO6spacesyACSi_tcACmF', 'interfaceLanguage': 'swift'} | decl=case spaces(count: Int) |
+swift.enum.case IndentOption.tab | precise={'precise': 's:14CodeEditorCore12IndentOptionO3tabyA2CmF', 'interfaceLanguage': 'swift'} | decl=case tab |
+swift.enum.case LineEnding.carriageReturn | precise={'precise': 's:14CodeEditorCore10LineEndingO14carriageReturnyA2CmF', 'interfaceLanguage': 'swift'} | decl=case carriageReturn |
+swift.enum.case LineEnding.carriageReturnLineFeed | precise={'precise': 's:14CodeEditorCore10LineEndingO014carriageReturnD4FeedyA2CmF', 'interfaceLanguage': 'swift'} | decl=case carriageReturnLineFeed |
+swift.enum.case LineEnding.lineFeed | precise={'precise': 's:14CodeEditorCore10LineEndingO8lineFeedyA2CmF', 'interfaceLanguage': 'swift'} | decl=case lineFeed |
+swift.enum.case NavigationDirection.down | precise={'precise': 's:14CodeEditorCore19NavigationDirectionO4downyA2CmF', 'interfaceLanguage': 'swift'} | decl=case down |
+swift.enum.case NavigationDirection.left | precise={'precise': 's:14CodeEditorCore19NavigationDirectionO4leftyA2CmF', 'interfaceLanguage': 'swift'} | decl=case left |
+swift.enum.case NavigationDirection.right | precise={'precise': 's:14CodeEditorCore19NavigationDirectionO5rightyA2CmF', 'interfaceLanguage': 'swift'} | decl=case right |
+swift.enum.case NavigationDirection.up | precise={'precise': 's:14CodeEditorCore19NavigationDirectionO2upyA2CmF', 'interfaceLanguage': 'swift'} | decl=case up |
+swift.enum.case NavigationGranularity.character | precise={'precise': 's:14CodeEditorCore21NavigationGranularityO9characteryA2CmF', 'interfaceLanguage': 'swift'} | decl=case character |
+swift.enum.case NavigationGranularity.document | precise={'precise': 's:14CodeEditorCore21NavigationGranularityO8documentyA2CmF', 'interfaceLanguage': 'swift'} | decl=case document |
+swift.enum.case NavigationGranularity.line | precise={'precise': 's:14CodeEditorCore21NavigationGranularityO4lineyA2CmF', 'interfaceLanguage': 'swift'} | decl=case line |
+swift.enum.case NavigationGranularity.paragraph | precise={'precise': 's:14CodeEditorCore21NavigationGranularityO9paragraphyA2CmF', 'interfaceLanguage': 'swift'} | decl=case paragraph |
+swift.enum.case NavigationGranularity.word | precise={'precise': 's:14CodeEditorCore21NavigationGranularityO4wordyA2CmF', 'interfaceLanguage': 'swift'} | decl=case word |
+swift.enum.case PlatformCapabilityKind.bundledWasm | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO11bundledWasmyA2CmF', 'interfaceLanguage': 'swift'} | decl=case bundledWasm |
+swift.enum.case PlatformCapabilityKind.downloadableWasm | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO16downloadableWasmyA2CmF', 'interfaceLanguage': 'swift'} | decl=case downloadableWasm |
+swift.enum.case PlatformCapabilityKind.dynamicExtensionInstall | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO23dynamicExtensionInstallyA2CmF', 'interfaceLanguage': 'swift'} | decl=case dynamicExtensionInstall |
+swift.enum.case PlatformCapabilityKind.extensionRegistry | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO17extensionRegistryyA2CmF', 'interfaceLanguage': 'swift'} | decl=case extensionRegistry |
+swift.enum.case PlatformCapabilityKind.localGitCLI | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO11localGitCLIyA2CmF', 'interfaceLanguage': 'swift'} | decl=case localGitCLI |
+swift.enum.case PlatformCapabilityKind.localLanguageServerProcess | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO26localLanguageServerProcessyA2CmF', 'interfaceLanguage': 'swift'} | decl=case localLanguageServerProcess |
+swift.enum.case PlatformCapabilityKind.localPTY | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO8localPTYyA2CmF', 'interfaceLanguage': 'swift'} | decl=case localPTY |
+swift.enum.case PlatformCapabilityKind.localProcess | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO12localProcessyA2CmF', 'interfaceLanguage': 'swift'} | decl=case localProcess |
+swift.enum.case PlatformCapabilityKind.nativeExtensionProcess | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO22nativeExtensionProcessyA2CmF', 'interfaceLanguage': 'swift'} | decl=case nativeExtensionProcess |
+swift.enum.case PlatformCapabilityKind.networkClient | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO13networkClientyA2CmF', 'interfaceLanguage': 'swift'} | decl=case networkClient |
+swift.enum.case PlatformCapabilityKind.remoteTooling | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO13remoteToolingyA2CmF', 'interfaceLanguage': 'swift'} | decl=case remoteTooling |
+swift.enum.case PlatformCapabilityKind.workspaceFilesystem | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO19workspaceFilesystemyA2CmF', 'interfaceLanguage': 'swift'} | decl=case workspaceFilesystem |
+swift.enum.case ProcessLaunchMode.direct | precise={'precise': 's:14CodeEditorCore17ProcessLaunchModeO6directyA2CmF', 'interfaceLanguage': 'swift'} | decl=case direct |
+swift.enum.case ProcessLaunchMode.shell | precise={'precise': 's:14CodeEditorCore17ProcessLaunchModeO5shellyA2CmF', 'interfaceLanguage': 'swift'} | decl=case shell |
+swift.enum.case ProcessOutputEvent.exited(code:timedOut:) | precise={'precise': 's:14CodeEditorCore18ProcessOutputEventO6exitedyACs5Int32V_SbtcACmF', 'interfaceLanguage': 'swift'} | decl=case exited(code: Int32, timedOut: Bool) |
+swift.enum.case ProcessOutputEvent.stderr(_:) | precise={'precise': 's:14CodeEditorCore18ProcessOutputEventO6stderryAC10Foundation4DataVcACmF', 'interfaceLanguage': 'swift'} | decl=case stderr(Data) |
+swift.enum.case ProcessOutputEvent.stdout(_:) | precise={'precise': 's:14CodeEditorCore18ProcessOutputEventO6stdoutyAC10Foundation4DataVcACmF', 'interfaceLanguage': 'swift'} | decl=case stdout(Data) |
+swift.enum.case ProcessServiceError.alreadyExited | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO13alreadyExitedyA2CmF', 'interfaceLanguage': 'swift'} | decl=case alreadyExited |
+swift.enum.case ProcessServiceError.cancelled | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO9cancelledyA2CmF', 'interfaceLanguage': 'swift'} | decl=case cancelled |
+swift.enum.case ProcessServiceError.invalidWorkingDirectory(_:) | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO23invalidWorkingDirectoryyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case invalidWorkingDirectory(String) |
+swift.enum.case ProcessServiceError.launchFailed(_:) | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO12launchFailedyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case launchFailed(String) |
+swift.enum.case ProcessServiceError.timedOut | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO8timedOutyA2CmF', 'interfaceLanguage': 'swift'} | decl=case timedOut |
+swift.enum.case ProcessServiceError.unavailableOnPlatform | precise={'precise': 's:14CodeEditorCore19ProcessServiceErrorO21unavailableOnPlatformyA2CmF', 'interfaceLanguage': 'swift'} | decl=case unavailableOnPlatform |
+swift.enum.case SelectionMode.character | precise={'precise': 's:14CodeEditorCore13SelectionModeO9characteryA2CmF', 'interfaceLanguage': 'swift'} | decl=case character |
+swift.enum.case SelectionMode.column | precise={'precise': 's:14CodeEditorCore13SelectionModeO6columnyA2CmF', 'interfaceLanguage': 'swift'} | decl=case column |
+swift.enum.case ShippingProfileID.directMacOS | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO11directMacOSyA2CmF', 'interfaceLanguage': 'swift'} | decl=case directMacOS |
+swift.enum.case ShippingProfileID.enterprise | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO10enterpriseyA2CmF', 'interfaceLanguage': 'swift'} | decl=case enterprise |
+swift.enum.case ShippingProfileID.iOS | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO3iOSyA2CmF', 'interfaceLanguage': 'swift'} | decl=case iOS |
+swift.enum.case ShippingProfileID.macAppStore | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO11macAppStoreyA2CmF', 'interfaceLanguage': 'swift'} | decl=case macAppStore |
+swift.enum.case ShippingProfileID.test | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO4testyA2CmF', 'interfaceLanguage': 'swift'} | decl=case test |
+swift.enum.case TextOffsetSemantics.BoundaryPolicy.exact | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO14BoundaryPolicyO5exactyA2EmF', 'interfaceLanguage': 'swift'} | decl=case exact |
+swift.enum.case TextOffsetSemantics.BoundaryPolicy.roundDownToScalar | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO14BoundaryPolicyO17roundDownToScalaryA2EmF', 'interfaceLanguage': 'swift'} | decl=case roundDownToScalar |
+swift.enum.case TextOffsetSemantics.BoundaryPolicy.roundToGrapheme | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO14BoundaryPolicyO15roundToGraphemeyA2EmF', 'interfaceLanguage': 'swift'} | decl=case roundToGrapheme |
+swift.enum.case TextOffsetSemantics.BoundaryPolicy.roundUpToScalar | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO14BoundaryPolicyO15roundUpToScalaryA2EmF', 'interfaceLanguage': 'swift'} | decl=case roundUpToScalar |
+swift.enum.case WordNavigationMode.codeIdentifier | precise={'precise': 's:14CodeEditorCore18WordNavigationModeO14codeIdentifieryA2CmF', 'interfaceLanguage': 'swift'} | decl=case codeIdentifier |
+swift.enum.case WordNavigationMode.codeSubword | precise={'precise': 's:14CodeEditorCore18WordNavigationModeO11codeSubwordyA2CmF', 'interfaceLanguage': 'swift'} | decl=case codeSubword |
+swift.enum.case WordNavigationMode.unicodeWord | precise={'precise': 's:14CodeEditorCore18WordNavigationModeO07unicodeD0yA2CmF', 'interfaceLanguage': 'swift'} | decl=case unicodeWord |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore0B5EventO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore0B7ContextV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore0aB13PlatformErrorO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore10EditOriginO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore10LineEndingO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore10TextChangeV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore11LineMetricsV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore11TextFiltersO14AutoPairResultV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore11TextFiltersO16NewlineInsertionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12HostPlatformO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12IndentOptionO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore13SelectionModeO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore14BracketMatcherO5MatchV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15EditTransactionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15TextReplacementV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore16DocumentSnapshotV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore17ProcessLaunchModeO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore17ShippingProfileIDO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore18DocumentStoreErrorO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore18ProcessOutputEventO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore18TextRangeSelectionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore18WordNavigationModeO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore19BracketPairEmphasisO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore19NavigationDirectionO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore19ProcessServiceErrorO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore19TextOffsetSemanticsO14BoundaryPolicyO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore20SelectionChangeEventV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore21NavigationGranularityO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore22AppliedEditTransactionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore22CapabilityAvailabilityO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore22PlatformCapabilityKindO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore24EnterpriseProfileOptionsV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore25PlatformCapabilityProfileV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore8TextEditV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore9TextRangeV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange13RangeMutationV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:9TextStory0A8MutationV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzoPys16PartialRangeFromVyxGxFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self) -> PartialRangeFrom<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzoPys16PartialRangeFromVyxGxFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self) -> PartialRangeFrom<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzoPys16PartialRangeFromVyxGxFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self) -> PartialRangeFrom<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzoPys16PartialRangeFromVyxGxFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self) -> PartialRangeFrom<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzopys19PartialRangeThroughVyxGxFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func ... (maximum: Self) -> PartialRangeThrough<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzopys19PartialRangeThroughVyxGxFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func ... (maximum: Self) -> PartialRangeThrough<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzopys19PartialRangeThroughVyxGxFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func ... (maximum: Self) -> PartialRangeThrough<Self> |
+swift.func.op ...(_:) | precise={'precise': 's:SLsE3zzzopys19PartialRangeThroughVyxGxFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func ... (maximum: Self) -> PartialRangeThrough<Self> |
+swift.func.op ...(_:_:) | precise={'precise': 's:SLsE3zzzoiySNyxGx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self, maximum: Self) -> ClosedRange<Self> |
+swift.func.op ...(_:_:) | precise={'precise': 's:SLsE3zzzoiySNyxGx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self, maximum: Self) -> ClosedRange<Self> |
+swift.func.op ...(_:_:) | precise={'precise': 's:SLsE3zzzoiySNyxGx_xtFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self, maximum: Self) -> ClosedRange<Self> |
+swift.func.op ...(_:_:) | precise={'precise': 's:SLsE3zzzoiySNyxGx_xtFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func ... (minimum: Self, maximum: Self) -> ClosedRange<Self> |
+swift.func.op ..<(_:) | precise={'precise': 's:SLsE3zzlopys16PartialRangeUpToVyxGxFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func ..< (maximum: Self) -> PartialRangeUpTo<Self> |
+swift.func.op ..<(_:) | precise={'precise': 's:SLsE3zzlopys16PartialRangeUpToVyxGxFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func ..< (maximum: Self) -> PartialRangeUpTo<Self> |
+swift.func.op ..<(_:) | precise={'precise': 's:SLsE3zzlopys16PartialRangeUpToVyxGxFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func ..< (maximum: Self) -> PartialRangeUpTo<Self> |
+swift.func.op ..<(_:) | precise={'precise': 's:SLsE3zzlopys16PartialRangeUpToVyxGxFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func ..< (maximum: Self) -> PartialRangeUpTo<Self> |
+swift.func.op ..<(_:_:) | precise={'precise': 's:SLsE3zzloiySnyxGx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func ..< (minimum: Self, maximum: Self) -> Range<Self> |
+swift.func.op ..<(_:_:) | precise={'precise': 's:SLsE3zzloiySnyxGx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func ..< (minimum: Self, maximum: Self) -> Range<Self> |
+swift.func.op ..<(_:_:) | precise={'precise': 's:SLsE3zzloiySnyxGx_xtFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func ..< (minimum: Self, maximum: Self) -> Range<Self> |
+swift.func.op ..<(_:_:) | precise={'precise': 's:SLsE3zzloiySnyxGx_xtFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func ..< (minimum: Self, maximum: Self) -> Range<Self> |
+swift.func.op <(_:_:) | precise={'precise': 's:14CodeEditorCore12TextPositionV1loiySbAC_ACtFZ', 'interfaceLanguage': 'swift'} | decl=static func < (lhs: TextPosition, rhs: TextPosition) -> Bool |
+swift.func.op <(_:_:) | precise={'precise': 's:14CodeEditorCore15DocumentVersionV1loiySbAC_ACtFZ', 'interfaceLanguage': 'swift'} | decl=static func < (lhs: DocumentVersion, rhs: DocumentVersion) -> Bool |
+swift.func.op <(_:_:) | precise={'precise': 's:9Rearrange15CalculatedRangeVAARlzCSQ04TextC0RpzrlE1loiySbACyxG_AGtFZ', 'interfaceLanguage': 'swift'} | decl=static func < (lhs: `Self`, rhs: `Self`) -> Bool |
+swift.func.op <(_:_:) | precise={'precise': 's:9Rearrange18CalculatedPositionVAARlzCrlE1loiySbACyxG_AEtFZ', 'interfaceLanguage': 'swift'} | decl=static func < (lhs: `Self`, rhs: `Self`) -> Bool |
+swift.func.op <=(_:_:) | precise={'precise': 's:SLsE2leoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func <= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op <=(_:_:) | precise={'precise': 's:SLsE2leoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func <= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op <=(_:_:) | precise={'precise': 's:SLsE2leoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func <= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op <=(_:_:) | precise={'precise': 's:SLsE2leoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func <= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op ==(_:_:) | precise={'precise': 's:9Rearrange15CalculatedRangeVAARlzCSQ04TextC0RpzrlE2eeoiySbACyxG_AGtFZ', 'interfaceLanguage': 'swift'} | decl=static func == (lhs: CalculatedRange<Calculator>, rhs: CalculatedRange<Calculator>) -> Bool |
+swift.func.op ==(_:_:) | precise={'precise': 's:9Rearrange18CalculatedPositionVAARlzCrlE2eeoiySbACyxG_AEtFZ', 'interfaceLanguage': 'swift'} | decl=static func == (lhs: CalculatedPosition<Calculator>, rhs: CalculatedPosition<Calculator>) -> Bool |
+swift.func.op >(_:_:) | precise={'precise': 's:SLsE1goiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func > (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >(_:_:) | precise={'precise': 's:SLsE1goiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func > (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >(_:_:) | precise={'precise': 's:SLsE1goiySbx_xtFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func > (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >(_:_:) | precise={'precise': 's:SLsE1goiySbx_xtFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func > (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >=(_:_:) | precise={'precise': 's:SLsE2geoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=static func >= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >=(_:_:) | precise={'precise': 's:SLsE2geoiySbx_xtFZ::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=static func >= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >=(_:_:) | precise={'precise': 's:SLsE2geoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=static func >= (lhs: Self, rhs: Self) -> Bool |
+swift.func.op >=(_:_:) | precise={'precise': 's:SLsE2geoiySbx_xtFZ::SYNTHESIZED::s:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=static func >= (lhs: Self, rhs: Self) -> Bool |
+swift.init init() | precise={'precise': 'c:@M@TextStory@objc(cs)TextMutationEventRouter(im)init', 'interfaceLanguage': 'swift'} | decl=override init() |
+swift.init init() | precise={'precise': 's:14CodeEditorCore0B11EventStreamCACycfc', 'interfaceLanguage': 'swift'} | decl=@MainActor init() | actor=1
+swift.init init() | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorCACycfc', 'interfaceLanguage': 'swift'} | decl=@MainActor init() | actor=1
+swift.init init() | precise={'precise': 's:14CodeEditorCore9LineIndexCACyxGycfc', 'interfaceLanguage': 'swift'} | decl=init() |
+swift.init init(_:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeEyACSo8_NSRangeVcfc', 'interfaceLanguage': 'swift'} | decl=init(_ range: NSRange) |
+swift.init init(_:) | precise={'precise': 's:14CodeEditorCore9TextRangeVyACSo8_NSRangeVcfc', 'interfaceLanguage': 'swift'} | decl=init(_ nsRange: NSRange) |
+swift.init init(_:calculator:) | precise={'precise': 's:9Rearrange15CalculatedRangeV_10calculatorACyxG04TextC0Qz_xtcfc', 'interfaceLanguage': 'swift'} | decl=init(_ range: Calculator.TextRange, calculator: Calculator) |
+swift.init init(_:calculator:) | precise={'precise': 's:9Rearrange18CalculatedPositionV_10calculatorACyxG9TextRange_5BoundQZ_xtcfc', 'interfaceLanguage': 'swift'} | decl=init(_ value: Position, calculator: Calculator) |
+swift.init init(_:provider:) | precise={'precise': 's:So11NSTextRangeC9RearrangeE_8providerABSgSi_So0A15ElementProvider_ptcfc', 'interfaceLanguage': 'swift'} | decl=convenience init?(_ offset: Int, provider: NSTextElementProvider) |
+swift.init init(_:provider:) | precise={'precise': 's:So11NSTextRangeC9RearrangeE_8providerABSgSo8_NSRangeV_So0A15ElementProvider_ptcfc', 'interfaceLanguage': 'swift'} | decl=convenience init?(_ range: NSRange, provider: NSTextElementProvider) |
+swift.init init(delete:limit:) | precise={'precise': 's:9TextStory0A8MutationV6delete5limitACSo8_NSRangeV_Sitcfc', 'interfaceLanguage': 'swift'} | decl=init(delete range: NSRange, limit: Int) |
+swift.init init(documentVersion:) | precise={'precise': 's:14CodeEditorCore0B7ContextV15documentVersionAcA08DocumentF0V_tcfc', 'interfaceLanguage': 'swift'} | decl=init(documentVersion: DocumentVersion) |
+swift.init init(executable:arguments:mode:currentDirectory:environment:mergeEnvironment:timeout:maxStdoutBytes:maxStderrBytes:capabilityKind:) | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV10executable9arguments4mode16currentDirectory11environment16mergeEnvironment7timeout14maxStdoutBytes0p6StderrR014capabilityKindACSS_SaySSGAA0dE4ModeO10Foundation3URLVSgSDyS2SGSbs8DurationVSgS2iAA018PlatformCapabilityU0Otcfc', 'interfaceLanguage': 'swift'} | decl=init(executable: String, arguments: [String] = [], mode: ProcessLaunchMode = .direct, currentDirectory: URL? = nil, environment: [String : String] = [:], mergeEnvironment: Bool = true, timeout: Durati |
+swift.init init(frame:documentRange:ctLine:) | precise={'precise': 's:14CodeEditorCore23ColumnSelectionFragmentV5frame13documentRange6ctLineACSo6CGRectV_So8_NSRangeVSo9CTLineRefaSgtcfc', 'interfaceLanguage': 'swift'} | decl=init(frame: CGRect, documentRange: NSRange, ctLine: CTLine?) |
+swift.init init(from:) | precise={'precise': 's:14CodeEditorCore10TextChangeV4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:14CodeEditorCore12TextPositionV4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:14CodeEditorCore15EditTransactionV4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:14CodeEditorCore9TextRangeV4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore10EditOriginO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore10LineEndingO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore12HostPlatformO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore17ShippingProfileIDO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore18WordNavigationModeO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore22PlatformCapabilityKindO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzs6UInt64V8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(id:changes:origin:) | precise={'precise': 's:14CodeEditorCore15EditTransactionV2id7changes6originAC10Foundation4UUIDV_SayAA10TextChangeVGAA0D6OriginOtcfc', 'interfaceLanguage': 'swift'} | decl=init(id: UUID = UUID(), changes: [TextChange], origin: EditOrigin = .unknown) |
+swift.init init(insert:at:limit:) | precise={'precise': 's:9TextStory0A8MutationV6insert2at5limitACSS_S2itcfc', 'interfaceLanguage': 'swift'} | decl=init(insert string: String, at location: Int, limit: Int) |
+swift.init init(insert:placeCaretInside:skipOver:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO14AutoPairResultV6insert16placeCaretInside8skipOverAESS_S2btcfc', 'interfaceLanguage': 'swift'} | decl=init(insert: String, placeCaretInside: Bool, skipOver: Bool = false) |
+swift.init init(integersIn:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE10integersInACSo8_NSRangeV_tcfc', 'interfaceLanguage': 'swift'} | decl=init(integersIn range: NSRange) |
+swift.init init(location:length:) | precise={'precise': 's:14CodeEditorCore9TextRangeV8location6lengthACSi_Sitcfc', 'interfaceLanguage': 'swift'} | decl=init(location: Int, length: Int) |
+swift.init init(managedRegistryOnly:publisherAllowlistRequired:requireSignedNativeHelpers:) | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV19managedRegistryOnly26publisherAllowlistRequired26requireSignedNativeHelpersACSb_S2btcfc', 'interfaceLanguage': 'swift'} | decl=init(managedRegistryOnly: Bool = true, publisherAllowlistRequired: Bool = true, requireSignedNativeHelpers: Bool = true) |
+swift.init init(monitors:) | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV8monitorsACSayAA0adE0_pG_tcfc', 'interfaceLanguage': 'swift'} | decl=init(monitors: [TextStoringMonitor]) |
+swift.init init(mutation:inverse:) | precise={'precise': 's:14CodeEditorCore8TextEditV8mutation7inverseAC0D5Story0D8MutationV_AHtcfc', 'interfaceLanguage': 'swift'} | decl=init(mutation: TextMutation, inverse: TextMutation) |
+swift.init init(nsRanges:version:) | precise={'precise': 's:14CodeEditorCore20SelectionChangeEventV8nsRanges7versionACSaySo8_NSRangeVG_AA15DocumentVersionVtcfc', 'interfaceLanguage': 'swift'} | decl=init(nsRanges: [NSRange], version: DocumentVersion) |
+swift.init init(open:close:) | precise={'precise': 's:14CodeEditorCore14BracketMatcherO5MatchV4open5closeAESo8_NSRangeV_AItcfc', 'interfaceLanguage': 'swift'} | decl=init(open: NSRange, close: NSRange) |
+swift.init init(payload:caretOffsetInPayload:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO16NewlineInsertionV7payload20caretOffsetInPayloadAESS_Sitcfc', 'interfaceLanguage': 'swift'} | decl=init(payload: String, caretOffsetInPayload: Int) |
+swift.init init(platform:name:shippingProfileID:capabilities:enterpriseOptions:) | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV8platform4name08shippingF2ID12capabilities17enterpriseOptionsAcA04HostD0O_SSAA08ShippingfJ0OSgSDyAA0dE4KindOAA0E12AvailabilityOGAA010EnterprisefM0VSgtcfc', 'interfaceLanguage': 'swift'} | decl=init(platform: HostPlatform, name: String, shippingProfileID: ShippingProfileID? = nil, capabilities: [PlatformCapabilityKind : CapabilityAvailability], enterpriseOptions: EnterpriseProfileOptions? = |
+swift.init init(profile:) | precise={'precise': 's:14CodeEditorCore14ProcessServiceV7profileAcA25PlatformCapabilityProfileV_tcfc', 'interfaceLanguage': 'swift'} | decl=init(profile: PlatformCapabilityProfile = .default()) |
+swift.init init(profile:) | precise={'precise': 's:14CodeEditorCore16ProfilePTYAccessV7profileAcA018PlatformCapabilityD0V_tcfc', 'interfaceLanguage': 'swift'} | decl=init(profile: PlatformCapabilityProfile = .default()) |
+swift.init init(profile:) | precise={'precise': 's:14CodeEditorCore20ProfileNetworkAccessV7profileAcA018PlatformCapabilityD0V_tcfc', 'interfaceLanguage': 'swift'} | decl=init(profile: PlatformCapabilityProfile = .default()) |
+swift.init init(profile:) | precise={'precise': 's:14CodeEditorCore23ProfileFileSystemAccessV7profileAcA018PlatformCapabilityD0V_tcfc', 'interfaceLanguage': 'swift'} | decl=init(profile: PlatformCapabilityProfile = .default()) |
+swift.init init(profile:kind:) | precise={'precise': 's:14CodeEditorCore22ProfileProcessLauncherV7profile4kindAcA018PlatformCapabilityD0V_AA0iJ4KindOtcfc', 'interfaceLanguage': 'swift'} | decl=init(profile: PlatformCapabilityProfile = .default(), kind: PlatformCapabilityKind = .localProcess) |
+swift.init init(profile:process:pty:filesystem:network:) | precise={'precise': 's:14CodeEditorCore16PlatformServicesV7profile7process3pty10filesystem7networkAcA0D17CapabilityProfileV_AA16ProcessLaunching_pSgAA9PTYAccess_pSgAA16FileSystemAccess_pSgAA07NetworkR0_pSgtcfc', 'interfaceLanguage': 'swift'} | decl=init(profile: PlatformCapabilityProfile = .default(), process: (any ProcessLaunching)? = nil, pty: (any PTYAccess)? = nil, filesystem: (any FileSystemAccess)? = nil, network: (any NetworkAccess)? = ni |
+swift.init init(range:delta:limit:) | precise={'precise': 's:9Rearrange13RangeMutationV5range5delta5limitACSo8_NSRangeV_S2iSgtcfc', 'interfaceLanguage': 'swift'} | decl=init(range: NSRange, delta: Int, limit: Int? = nil) |
+swift.init init(range:preferredX:) | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV5range10preferredXACSo8_NSRangeV_0C10Foundation7CGFloatVSgtcfc', 'interfaceLanguage': 'swift'} | decl=init(range: NSRange, preferredX: CGFloat? = nil) |
+swift.init init(range:replacement:) | precise={'precise': 's:14CodeEditorCore10TextChangeV5range11replacementACSo8_NSRangeV_SStcfc', 'interfaceLanguage': 'swift'} | decl=init(range: NSRange, replacement: String) |
+swift.init init(range:string:) | precise={'precise': 's:14CodeEditorCore15TextReplacementV5range6stringACSo8_NSRangeV_SStcfc', 'interfaceLanguage': 'swift'} | decl=init(range: NSRange, string: String) |
+swift.init init(ranges:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE6rangesACSaySo8_NSRangeVG_tcfc', 'interfaceLanguage': 'swift'} | decl=init(ranges: [NSRange]) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore10EditOriginO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore10LineEndingO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore12HostPlatformO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore15DocumentVersionV8rawValueACs6UInt64V_tcfc', 'interfaceLanguage': 'swift'} | decl=init(rawValue: UInt64) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore18WordNavigationModeO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:14CodeEditorCore22PlatformCapabilityKindO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(replacedRange:replacement:) | precise={'precise': 's:14CodeEditorCore10TextChangeV13replacedRange11replacementAcA0dG0V_SStcfc', 'interfaceLanguage': 'swift'} | decl=init(replacedRange: TextRange, replacement: String) |
+swift.init init(selection:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC9selectionAcA09TextRangeD0V_tcfc', 'interfaceLanguage': 'swift'} | decl=@MainActor init(selection: TextRangeSelection = .insertionPoint(0)) | actor=1
+swift.init init(selections:version:) | precise={'precise': 's:14CodeEditorCore20SelectionChangeEventV10selections7versionACSayAA9TextRangeVG_AA15DocumentVersionVtcfc', 'interfaceLanguage': 'swift'} | decl=init(selections: [TextRange], version: DocumentVersion) |
+swift.init init(start:end:) | precise={'precise': 's:14CodeEditorCore9TextRangeV5start3endAcA0D8PositionV_AGtcfc', 'interfaceLanguage': 'swift'} | decl=init(start: TextPosition, end: TextPosition) |
+swift.init init(storingMonitor:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC07storingE0AcA0adE0_p_tcfc', 'interfaceLanguage': 'swift'} | decl=init(storingMonitor: TextStoringMonitor) |
+swift.init init(string:attributes:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC6string10attributesACSS_SDySo21NSAttributedStringKeyaypGtcfc', 'interfaceLanguage': 'swift'} | decl=init(string: String = "", attributes: [NSAttributedString.Key : Any] = [:]) |
+swift.init init(string:range:limit:) | precise={'precise': 's:9TextStory0A8MutationV6string5range5limitACSS_So8_NSRangeVSitcfc', 'interfaceLanguage': 'swift'} | decl=init(string: String, range: NSRange, limit: Int) |
+swift.init init(stringContents:) | precise={'precise': 's:9Rearrange13RangeMutationV14stringContentsACSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init(stringContents string: String) |
+swift.init init(transaction:oldVersion:newVersion:inverse:textEdits:) | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV11transaction10oldVersion03newI07inverse9textEditsAcA0eF0V_AA08DocumentI0VAlJSayAA04TextE0VGtcfc', 'interfaceLanguage': 'swift'} | decl=init(transaction: EditTransaction, oldVersion: DocumentVersion, newVersion: DocumentVersion, inverse: EditTransaction, textEdits: [TextEdit]) |
+swift.init init(utf16Length:height:) | precise={'precise': 's:14CodeEditorCore11LineMetricsV11utf16Length6heightACSi_0C10Foundation7CGFloatVtcfc', 'interfaceLanguage': 'swift'} | decl=init(utf16Length: Int, height: CGFloat) |
+swift.init init(utf16Offset:) | precise={'precise': 's:14CodeEditorCore12TextPositionV11utf16OffsetACSi_tcfc', 'interfaceLanguage': 'swift'} | decl=init(utf16Offset: Int) |
+swift.init init(version:text:) | precise={'precise': 's:14CodeEditorCore16DocumentSnapshotV7version4textAcA0D7VersionV_SStcfc', 'interfaceLanguage': 'swift'} | decl=init(version: DocumentVersion, text: String) |
+swift.method addSelection(_:preferredX:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC03addD0_10preferredXySo8_NSRangeV_0C10Foundation7CGFloatVSgtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func addSelection(_ range: NSRange, preferredX: CGFloat? = nil) | actor=1
+swift.method advanced(by:) | precise={'precise': 's:14CodeEditorCore15DocumentVersionV8advanced2byACs6UInt64V_tF', 'interfaceLanguage': 'swift'} | decl=func advanced(by delta: UInt64 = 1) -> DocumentVersion |
+swift.method affects(_:) | precise={'precise': 's:9Rearrange13RangeMutationV7affectsySbSo8_NSRangeVF', 'interfaceLanguage': 'swift'} | decl=func affects(_ r: NSRange) -> Bool |
+swift.method apply(_:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE5applyyACSayAD13RangeMutationVGF', 'interfaceLanguage': 'swift'} | decl=func apply(_ mutations: [RangeMutation]) -> IndexSet |
+swift.method apply(_:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE5applyyAcD13RangeMutationVF', 'interfaceLanguage': 'swift'} | decl=func apply(_ mutation: RangeMutation) -> IndexSet |
+swift.method apply(_:sortHighToLow:expectedVersion:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC5apply_13sortHighToLow15expectedVersionAA22AppliedEditTransactionVAA0nO0V_SbAA0dL0VSgtKF', 'interfaceLanguage': 'swift'} | decl=@discardableResult func apply(_ transaction: EditTransaction, sortHighToLow: Bool = true, expectedVersion: DocumentVersion? = nil) throws -> AppliedEditTransaction |
+swift.method applyMutation(_:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC13applyMutationyy9TextStory0hG0VF', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation) |
+swift.method applyMutation(_:) | precise={'precise': 's:9TextStory0A7StoringP13applyMutationyyAA0aE0VF', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation) |
+swift.method applyMutation(_:) | precise={'precise': 's:So10NSTextViewC9TextStoryE13applyMutationyyAC0cF0VF', 'interfaceLanguage': 'swift'} | decl=nonisolated func applyMutation(_ mutation: TextMutation) |
+swift.method applyMutation(_:) | precise={'precise': 's:So13NSTextStorageC9TextStoryE13applyMutationyyAC0cF0VF', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation) |
+swift.method applyMutation(_:) | precise={'precise': 's:So20NSTextContentStorageC9TextStoryE13applyMutationyyAC0dG0VF', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation) |
+swift.method applyMutation(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE13applyMutation_2toyAA0aF0V_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method applyMutation(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE13applyMutation_2toyAA0aF0V_AA0aC0_ptF::SYNTHESIZED::s:9TextStory04LazyA14StoringMonitorC', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method applyMutation(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE13applyMutation_2toyAA0aF0V_AA0aC0_ptF::SYNTHESIZED::s:9TextStory09CompositeA14StoringMonitorV', 'interfaceLanguage': 'swift'} | decl=func applyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method applyMutations(_:) | precise={'precise': 's:9TextStory0A7StoringPAAE14applyMutationsyySayAA0A8MutationVGF', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation]) |
+swift.method applyMutations(_:) | precise={'precise': 's:9TextStory0A7StoringPAAE14applyMutationsyySayAA0A8MutationVGF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation]) |
+swift.method applyMutations(_:) | precise={'precise': 's:9TextStory0A7StoringPAAE14applyMutationsyySayAA0A8MutationVGF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation]) |
+swift.method applyMutations(_:) | precise={'precise': 's:9TextStory0A7StoringPAAE14applyMutationsyySayAA0A8MutationVGF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation]) |
+swift.method applyMutations(_:) | precise={'precise': 's:9TextStory0A7StoringPAAE14applyMutationsyySayAA0A8MutationVGF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation]) |
+swift.method applyMutations(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE14applyMutations_2toySayAA0A8MutationVG_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation], to storage: TextStoring) |
+swift.method applyMutations(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE14applyMutations_2toySayAA0A8MutationVG_AA0aC0_ptF::SYNTHESIZED::s:9TextStory04LazyA14StoringMonitorC', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation], to storage: TextStoring) |
+swift.method applyMutations(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE14applyMutations_2toySayAA0A8MutationVG_AA0aC0_ptF::SYNTHESIZED::s:9TextStory09CompositeA14StoringMonitorV', 'interfaceLanguage': 'swift'} | decl=func applyMutations(_ mutations: [TextMutation], to storage: TextStoring) |
+swift.method applyNextChange() | precise={'precise': 's:9TextStory09BufferingA7StorageC15applyNextChangeyyF', 'interfaceLanguage': 'swift'} | decl=func applyNextChange() |
+swift.method applying(_:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE8applyingyyAD13RangeMutationVF', 'interfaceLanguage': 'swift'} | decl=mutating func applying(_ mutation: RangeMutation) |
+swift.method applying(_:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE8applyingyySayAD13RangeMutationVGF', 'interfaceLanguage': 'swift'} | decl=mutating func applying(_ mutations: [RangeMutation]) |
+swift.method asTransaction(origin:id:) | precise={'precise': 's:14CodeEditorCore8TextEditV13asTransaction6origin2idAA0eG0VAA0E6OriginO_10Foundation4UUIDVtF', 'interfaceLanguage': 'swift'} | decl=func asTransaction(origin: EditOrigin = .unknown, id: UUID = UUID()) -> EditTransaction |
+swift.method attach(document:layout:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC6attach8document6layoutyAA13DocumentStoreC_xtAA19CaretLayoutQueryingRzlF', 'interfaceLanguage': 'swift'} | decl=@MainActor func attach(document: DocumentStore, layout: some CaretLayoutQuerying) | actor=1
+swift.method attributedSubstring(from:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC19attributedSubstring4fromSo18NSAttributedStringCSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func attributedSubstring(from range: NSRange) -> NSAttributedString |
+swift.method availability(for:) | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV12availability3forAA0E12AvailabilityOAA0dE4KindO_tF', 'interfaceLanguage': 'swift'} | decl=func availability(for kind: PlatformCapabilityKind) -> CapabilityAvailability |
+swift.method beginGrouping() | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC13beginGroupingyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func beginGrouping() | actor=1
+swift.method bufferedSubstring(from:) | precise={'precise': 's:9TextStory09BufferingA7StorageC17bufferedSubstring4fromSSSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func bufferedSubstring(from range: NSRange) -> String |
+swift.method cancel() | precise={'precise': 's:14CodeEditorCore13ProcessHandleC6cancelyyF', 'interfaceLanguage': 'swift'} | decl=func cancel() |
+swift.method caretRect(atUTF16Offset:containerWidth:) | precise={'precise': 's:14CodeEditorCore19CaretLayoutQueryingP9caretRect13atUTF16Offset14containerWidthSo6CGRectVSgSi_0C10Foundation7CGFloatVtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func caretRect(atUTF16Offset offset: Int, containerWidth: CGFloat) -> CGRect? | actor=1
+swift.method clear() | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC5clearyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func clear() | actor=1
+swift.method clearBuffer() | precise={'precise': 's:9TextStory09BufferingA7StorageC11clearBufferyyF', 'interfaceLanguage': 'swift'} | decl=func clearBuffer() |
+swift.method collapseToPrimary() | precise={'precise': 's:14CodeEditorCore15SelectionEngineC17collapseToPrimaryyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func collapseToPrimary() | actor=1
+swift.method compare(_:to:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingP7compare_2toSo18NSComparisonResultV0bC0_5BoundQZ_AJtF', 'interfaceLanguage': 'swift'} | decl=func compare(_ position: Position, to other: Position) -> ComparisonResult |
+swift.method compare(_:to:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAASi0bC0_5BoundRTzrlE7compare_2toSo18NSComparisonResultVSi_SitF', 'interfaceLanguage': 'swift'} | decl=func compare(_ position: Position, to other: Position) -> ComparisonResult |
+swift.method contains(integersIn:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE8contains10integersInSbSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func contains(integersIn range: NSRange) -> Bool |
+swift.method didApplyMutation(_:to:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC16didApplyMutation_2toyAA0aH0V_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func didApplyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method didApplyMutation(_:to:) | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV16didApplyMutation_2toyAA0aH0V_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func didApplyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method didApplyMutation(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorP16didApplyMutation_2toyAA0aG0V_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func didApplyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method didCompleteChangeProcessing(of:in:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC27didCompleteChangeProcessing2of2inyAA0A8MutationVSg_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func didCompleteChangeProcessing(of mutation: TextMutation?, in storage: TextStoring) |
+swift.method didCompleteChangeProcessing(of:in:) | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV27didCompleteChangeProcessing2of2inyAA0A8MutationVSg_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func didCompleteChangeProcessing(of mutation: TextMutation?, in storage: TextStoring) |
+swift.method didCompleteChangeProcessing(of:in:) | precise={'precise': 's:9TextStory0A14StoringMonitorP27didCompleteChangeProcessing2of2inyAA0A8MutationVSg_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func didCompleteChangeProcessing(of mutation: TextMutation?, in storage: TextStoring) |
+swift.method disable() | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC7disableyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func disable() | actor=1
+swift.method enable() | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC6enableyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func enable() | actor=1
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore10EditOriginO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore10LineEndingO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore12HostPlatformO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore17ShippingProfileIDO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore18WordNavigationModeO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore22PlatformCapabilityKindO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzs6UInt64V8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method endGrouping() | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC11endGroupingyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func endGrouping() | actor=1
+swift.method ensureAllTextProcessed(for:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC09ensureAllA9Processed3foryAA0aD0_p_tF', 'interfaceLanguage': 'swift'} | decl=func ensureAllTextProcessed(for storage: TextStoring) |
+swift.method ensureTextProcessed(including:in:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC06ensureA9Processed9including2inySi_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func ensureTextProcessed(including location: Int, in storage: TextStoring) |
+swift.method ensureTextProcessed(upTo:in:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC06ensureA9Processed4upTo2inySi_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func ensureTextProcessed(upTo location: Int, in storage: TextStoring) |
+swift.method enumerateLines(inYRange:maxY:body:) | precise={'precise': 's:14CodeEditorCore9LineIndexC14enumerateLines8inYRange4maxY4bodyy0C10Foundation7CGFloatV_AJyAA0D8PositionVyxGXEtF', 'interfaceLanguage': 'swift'} | decl=func enumerateLines(inYRange minY: CGFloat, maxY: CGFloat, body: (LinePosition<Payload>) -> Void) |
+swift.method findEndOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE13findEndOfLine10containingS2i_tF', 'interfaceLanguage': 'swift'} | decl=func findEndOfLine(containing location: Int) -> Int |
+swift.method findEndOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE13findEndOfLine10containingS2i_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func findEndOfLine(containing location: Int) -> Int |
+swift.method findEndOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE13findEndOfLine10containingS2i_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func findEndOfLine(containing location: Int) -> Int |
+swift.method findEndOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE13findEndOfLine10containingS2i_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func findEndOfLine(containing location: Int) -> Int |
+swift.method findEndOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE13findEndOfLine10containingS2i_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func findEndOfLine(containing location: Int) -> Int |
+swift.method findNextOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE29findNextOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF', 'interfaceLanguage': 'swift'} | decl=func findNextOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findNextOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE29findNextOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func findNextOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findNextOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE29findNextOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func findNextOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findNextOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE29findNextOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func findNextOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findNextOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE29findNextOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func findNextOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPrecedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE34findPrecedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF', 'interfaceLanguage': 'swift'} | decl=func findPrecedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPrecedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE34findPrecedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func findPrecedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPrecedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE34findPrecedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func findPrecedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPrecedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE34findPrecedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func findPrecedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPrecedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE34findPrecedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func findPrecedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPreceedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE35findPreceedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF', 'interfaceLanguage': 'swift'} | decl=func findPreceedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPreceedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE35findPreceedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func findPreceedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPreceedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE35findPreceedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func findPreceedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPreceedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE35findPreceedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func findPreceedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findPreceedingOccurrenceOfCharacter(in:from:) | precise={'precise': 's:9TextStory0A7StoringPAAE35findPreceedingOccurrenceOfCharacter2in4fromSiSg10Foundation0H3SetV_SitF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func findPreceedingOccurrenceOfCharacter(in set: CharacterSet, from location: Int) -> Int? |
+swift.method findStartOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE15findStartOfLine10containingS2i_tF', 'interfaceLanguage': 'swift'} | decl=func findStartOfLine(containing location: Int) -> Int |
+swift.method findStartOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE15findStartOfLine10containingS2i_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func findStartOfLine(containing location: Int) -> Int |
+swift.method findStartOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE15findStartOfLine10containingS2i_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func findStartOfLine(containing location: Int) -> Int |
+swift.method findStartOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE15findStartOfLine10containingS2i_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func findStartOfLine(containing location: Int) -> Int |
+swift.method findStartOfLine(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE15findStartOfLine10containingS2i_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func findStartOfLine(containing location: Int) -> Int |
+swift.method forEach(_:) | precise={'precise': 's:14CodeEditorCore9LineIndexC7forEachyyyAA0D8PositionVyxGXEF', 'interfaceLanguage': 'swift'} | decl=func forEach(_ body: (LinePosition<Payload>) -> Void) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore10EditOriginO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore10LineEndingO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore12HostPlatformO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore17ShippingProfileIDO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore18WordNavigationModeO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:14CodeEditorCore22PlatformCapabilityKindO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method insert(payload:metrics:atIndex:) | precise={'precise': 's:14CodeEditorCore9LineIndexC6insert7payload7metrics02atE0yx_AA0D7MetricsVSitF', 'interfaceLanguage': 'swift'} | decl=func insert(payload: Payload, metrics: LineMetrics, atIndex index: Int) |
+swift.method insert(range:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE6insert5rangeySo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=mutating func insert(range: NSRange) |
+swift.method insert(ranges:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE6insert6rangesySaySo8_NSRangeVG_tF', 'interfaceLanguage': 'swift'} | decl=mutating func insert(ranges: [NSRange]) |
+swift.method insertString(_:at:) | precise={'precise': 's:9TextStory0A7StoringPAAE12insertString_2atySS_SitF', 'interfaceLanguage': 'swift'} | decl=func insertString(_ string: String, at location: Int) |
+swift.method insertString(_:at:) | precise={'precise': 's:9TextStory0A7StoringPAAE12insertString_2atySS_SitF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func insertString(_ string: String, at location: Int) |
+swift.method insertString(_:at:) | precise={'precise': 's:9TextStory0A7StoringPAAE12insertString_2atySS_SitF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func insertString(_ string: String, at location: Int) |
+swift.method insertString(_:at:) | precise={'precise': 's:9TextStory0A7StoringPAAE12insertString_2atySS_SitF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func insertString(_ string: String, at location: Int) |
+swift.method insertString(_:at:) | precise={'precise': 's:9TextStory0A7StoringPAAE12insertString_2atySS_SitF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func insertString(_ string: String, at location: Int) |
+swift.method intersection(with:) | precise={'precise': 's:9Rearrange15CalculatedRangeV12intersection4withACyxGSgAF_tF', 'interfaceLanguage': 'swift'} | decl=func intersection(with other: `Self`) -> `Self`? |
+swift.method intersects(integersIn:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE10intersects10integersInSbSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func intersects(integersIn range: NSRange) -> Bool |
+swift.method inverseMutation(for:) | precise={'precise': 's:9TextStory0A7StoringPAAE15inverseMutation3forAA0aE0VAG_tF', 'interfaceLanguage': 'swift'} | decl=func inverseMutation(for mutation: TextMutation) -> TextMutation |
+swift.method inverseMutation(for:) | precise={'precise': 's:9TextStory0A7StoringPAAE15inverseMutation3forAA0aE0VAG_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func inverseMutation(for mutation: TextMutation) -> TextMutation |
+swift.method inverseMutation(for:) | precise={'precise': 's:9TextStory0A7StoringPAAE15inverseMutation3forAA0aE0VAG_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func inverseMutation(for mutation: TextMutation) -> TextMutation |
+swift.method inverseMutation(for:) | precise={'precise': 's:9TextStory0A7StoringPAAE15inverseMutation3forAA0aE0VAG_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func inverseMutation(for mutation: TextMutation) -> TextMutation |
+swift.method inverseMutation(for:) | precise={'precise': 's:9TextStory0A7StoringPAAE15inverseMutation3forAA0aE0VAG_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func inverseMutation(for mutation: TextMutation) -> TextMutation |
+swift.method launch(_:) | precise={'precise': 's:14CodeEditorCore14ProcessServiceV6launchyAA0D6HandleCAA0D13LaunchRequestVKF', 'interfaceLanguage': 'swift'} | decl=func launch(_ request: ProcessLaunchRequest) throws -> ProcessHandle |
+swift.method leadingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE12leadingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF', 'interfaceLanguage': 'swift'} | decl=func leadingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method leadingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE12leadingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func leadingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method leadingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE12leadingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func leadingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method leadingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE12leadingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func leadingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method leadingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE12leadingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func leadingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method leadingWhitespaceRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange10containingSo8_NSRangeVSgSi_tF', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(containing location: Int) -> NSRange? |
+swift.method leadingWhitespaceRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange10containingSo8_NSRangeVSgSi_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(containing location: Int) -> NSRange? |
+swift.method leadingWhitespaceRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange10containingSo8_NSRangeVSgSi_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(containing location: Int) -> NSRange? |
+swift.method leadingWhitespaceRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange10containingSo8_NSRangeVSgSi_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(containing location: Int) -> NSRange? |
+swift.method leadingWhitespaceRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange10containingSo8_NSRangeVSgSi_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(containing location: Int) -> NSRange? |
+swift.method leadingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange2inSo8_NSRangeVSgAG_tF', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method leadingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method leadingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method leadingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method leadingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE22leadingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func leadingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method line(atIndex:) | precise={'precise': 's:14CodeEditorCore9LineIndexC4line02atE0AA0D8PositionVyxGSgSi_tF', 'interfaceLanguage': 'swift'} | decl=func line(atIndex index: Int) -> LinePosition<Payload>? |
+swift.method line(atUTF16Offset:) | precise={'precise': 's:14CodeEditorCore9LineIndexC4line13atUTF16OffsetAA0D8PositionVyxGSgSi_tF', 'interfaceLanguage': 'swift'} | decl=func line(atUTF16Offset offset: Int) -> LinePosition<Payload>? |
+swift.method line(atY:) | precise={'precise': 's:14CodeEditorCore9LineIndexC4line3atYAA0D8PositionVyxGSg0C10Foundation7CGFloatV_tF', 'interfaceLanguage': 'swift'} | decl=func line(atY y: CGFloat) -> LinePosition<Payload>? |
+swift.method lineRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE9lineRange10containingSo8_NSRangeVSi_tF', 'interfaceLanguage': 'swift'} | decl=func lineRange(containing location: Int) -> NSRange |
+swift.method lineRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE9lineRange10containingSo8_NSRangeVSi_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func lineRange(containing location: Int) -> NSRange |
+swift.method lineRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE9lineRange10containingSo8_NSRangeVSi_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func lineRange(containing location: Int) -> NSRange |
+swift.method lineRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE9lineRange10containingSo8_NSRangeVSi_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func lineRange(containing location: Int) -> NSRange |
+swift.method lineRange(containing:) | precise={'precise': 's:9TextStory0A7StoringPAAE9lineRange10containingSo8_NSRangeVSi_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func lineRange(containing location: Int) -> NSRange |
+swift.method makeEdit(in:replacement:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC8makeEdit2in11replacementAA04TextG0VSo8_NSRangeV_SStF', 'interfaceLanguage': 'swift'} | decl=func makeEdit(in range: NSRange, replacement: String) -> TextEdit |
+swift.method makeEventStream(bufferSize:) | precise={'precise': 's:14CodeEditorCore0B11EventStreamC04makedE010bufferSizeScSyAA0bD0OGSi_tF', 'interfaceLanguage': 'swift'} | decl=@MainActor func makeEventStream(bufferSize: Int = EditorEventStream.defaultEventBuffer) -> AsyncStream<EditorEvent> | actor=1
+swift.method makeSelectionStream() | precise={'precise': 's:14CodeEditorCore0B11EventStreamC013makeSelectionE0ScSySaySo8_NSRangeVGGyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func makeSelectionStream() -> AsyncStream<[NSRange]> | actor=1
+swift.method makeTextStream() | precise={'precise': 's:14CodeEditorCore0B11EventStreamC08makeTextE0ScSySSGyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func makeTextStream() -> AsyncStream<String> | actor=1
+swift.method matrixSnapshot() | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV14matrixSnapshotSDyS2SGyF', 'interfaceLanguage': 'swift'} | decl=func matrixSnapshot() -> [String : String] |
+swift.method move(direction:granularity:extending:containerWidth:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC4move9direction11granularity9extending14containerWidthyAA19NavigationDirectionO_AA0L11GranularityOSb0C10Foundation7CGFloatVtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func move(direction: NavigationDirection, granularity: NavigationGranularity = .character, extending: Bool = false, containerWidth: CGFloat) | actor=1
+swift.method needsToProcessMutation(in:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC22needsToProcessMutation2inSbSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func needsToProcessMutation(in range: NSRange) -> Bool |
+swift.method offset(by:) | precise={'precise': 's:9Rearrange15CalculatedRangeV6offset2byACyxGSgSi_tF', 'interfaceLanguage': 'swift'} | decl=func offset(by delta: Int) -> `Self`? |
+swift.method offset(from:to:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingP6offset4from2toSi0bC0_5BoundQZ_AItF', 'interfaceLanguage': 'swift'} | decl=func offset(from start: Position, to end: Position) -> Int |
+swift.method offset(from:to:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAASi0bC0_5BoundRTzrlE6offset4from2toS2i_SitF', 'interfaceLanguage': 'swift'} | decl=func offset(from start: Position, to end: Position) -> Int |
+swift.method overlaps(_:) | precise={'precise': 's:9Rearrange13RangeMutationV8overlapsySbSo8_NSRangeVF', 'interfaceLanguage': 'swift'} | decl=func overlaps(_ r: NSRange) -> Bool |
+swift.method position(from:offset:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingP8position4from6offset0bC0_5BoundQZSgAI_SitF', 'interfaceLanguage': 'swift'} | decl=func position(from position: Position, offset: Int) -> Position? |
+swift.method position(from:offset:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAASi0bC0_5BoundRTzrlE8position4from6offsetSiSgSi_SitF', 'interfaceLanguage': 'swift'} | decl=func position(from position: Position, offset: Int) -> Position? |
+swift.method processMutation(_:in:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE15processMutation_2inyAA0aF0V_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func processMutation(_ mutation: TextMutation, in storage: TextStoring) |
+swift.method processMutation(_:in:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE15processMutation_2inyAA0aF0V_AA0aC0_ptF::SYNTHESIZED::s:9TextStory04LazyA14StoringMonitorC', 'interfaceLanguage': 'swift'} | decl=func processMutation(_ mutation: TextMutation, in storage: TextStoring) |
+swift.method processMutation(_:in:) | precise={'precise': 's:9TextStory0A14StoringMonitorPAAE15processMutation_2inyAA0aF0V_AA0aC0_ptF::SYNTHESIZED::s:9TextStory09CompositeA14StoringMonitorV', 'interfaceLanguage': 'swift'} | decl=func processMutation(_ mutation: TextMutation, in storage: TextStoring) |
+swift.method processNextDeltaIfNeeded(in:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC24processNextDeltaIfNeeded2inSbAA0aD0_p_tF', 'interfaceLanguage': 'swift'} | decl=func processNextDeltaIfNeeded(in storage: TextStoring) -> Bool |
+swift.method rebuild(lines:) | precise={'precise': 's:14CodeEditorCore9LineIndexC7rebuild5linesySayx_AA0D7MetricsVtG_tF', 'interfaceLanguage': 'swift'} | decl=func rebuild(lines: [(Payload, LineMetrics)]) |
+swift.method redo(apply:) | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC4redo5applyyyAA8TextEditVKXE_tKF', 'interfaceLanguage': 'swift'} | decl=@MainActor func redo(apply: (TextEdit) throws -> Void) throws | actor=1
+swift.method redoGroup(apply:) | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC9redoGroup5applyyySayAA8TextEditVGKXE_tKF', 'interfaceLanguage': 'swift'} | decl=@MainActor func redoGroup(apply: ([TextEdit]) throws -> Void) throws | actor=1
+swift.method register(edit:) | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC8register4edityAA8TextEditV_tF', 'interfaceLanguage': 'swift'} | decl=@MainActor func register(edit: TextEdit) | actor=1
+swift.method remove(atIndex:) | precise={'precise': 's:14CodeEditorCore9LineIndexC6remove02atE0ySi_tF', 'interfaceLanguage': 'swift'} | decl=func remove(atIndex index: Int) |
+swift.method remove(integersIn:) | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE6remove10integersInySo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=mutating func remove(integersIn range: NSRange) |
+swift.method removeAll() | precise={'precise': 's:14CodeEditorCore9LineIndexC9removeAllyyF', 'interfaceLanguage': 'swift'} | decl=func removeAll() |
+swift.method replaceAllSelections(with:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC20replaceAllSelections4withSayAA8TextEditVGSS_tF', 'interfaceLanguage': 'swift'} | decl=@discardableResult @MainActor func replaceAllSelections(with string: String) -> [TextEdit] | actor=1
+swift.method replaceCharacters(in:with:) | precise={'precise': 'c:@M@TextStory@objc(cs)BufferingTextStorage(im)replaceCharactersInRange:withString:', 'interfaceLanguage': 'swift'} | decl=override func replaceCharacters(in range: NSRange, with str: String) |
+swift.method replaceCharacters(in:with:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC17replaceCharacters2in4withAA8TextEditVSo8_NSRangeV_SStF', 'interfaceLanguage': 'swift'} | decl=@discardableResult func replaceCharacters(in range: NSRange, with replacement: String) -> TextEdit |
+swift.method replaceSelection(with:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC07replaceD04withAA8TextEditVSgSS_tF', 'interfaceLanguage': 'swift'} | decl=@MainActor func replaceSelection(with string: String) -> TextEdit? | actor=1
+swift.method replaceString(in:with:) | precise={'precise': 's:9TextStory0A7StoringPAAE13replaceString2in4withySo8_NSRangeV_SStF', 'interfaceLanguage': 'swift'} | decl=func replaceString(in range: NSRange, with string: String) |
+swift.method replaceString(in:with:) | precise={'precise': 's:9TextStory0A7StoringPAAE13replaceString2in4withySo8_NSRangeV_SStF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func replaceString(in range: NSRange, with string: String) |
+swift.method replaceString(in:with:) | precise={'precise': 's:9TextStory0A7StoringPAAE13replaceString2in4withySo8_NSRangeV_SStF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func replaceString(in range: NSRange, with string: String) |
+swift.method replaceString(in:with:) | precise={'precise': 's:9TextStory0A7StoringPAAE13replaceString2in4withySo8_NSRangeV_SStF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func replaceString(in range: NSRange, with string: String) |
+swift.method replaceString(in:with:) | precise={'precise': 's:9TextStory0A7StoringPAAE13replaceString2in4withySo8_NSRangeV_SStF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func replaceString(in range: NSRange, with string: String) |
+swift.method requireFilesystemCapability() | precise={'precise': 's:14CodeEditorCore16FileSystemAccessP27requireFilesystemCapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requireFilesystemCapability() throws |
+swift.method requireFilesystemCapability() | precise={'precise': 's:14CodeEditorCore23ProfileFileSystemAccessV27requireFilesystemCapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requireFilesystemCapability() throws |
+swift.method requireLocal(_:) | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV12requireLocalyyAA0dE4KindOKF', 'interfaceLanguage': 'swift'} | decl=func requireLocal(_ kind: PlatformCapabilityKind) throws |
+swift.method requireNetworkCapability() | precise={'precise': 's:14CodeEditorCore13NetworkAccessP07requireD10CapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requireNetworkCapability() throws |
+swift.method requireNetworkCapability() | precise={'precise': 's:14CodeEditorCore20ProfileNetworkAccessV07requireE10CapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requireNetworkCapability() throws |
+swift.method requirePTYCapability() | precise={'precise': 's:14CodeEditorCore16ProfilePTYAccessV20requirePTYCapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requirePTYCapability() throws |
+swift.method requirePTYCapability() | precise={'precise': 's:14CodeEditorCore9PTYAccessP20requirePTYCapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requirePTYCapability() throws |
+swift.method requireProcessCapability() | precise={'precise': 's:14CodeEditorCore16ProcessLaunchingP07requireD10CapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requireProcessCapability() throws |
+swift.method requireProcessCapability() | precise={'precise': 's:14CodeEditorCore22ProfileProcessLauncherV07requireE10CapabilityyyKF', 'interfaceLanguage': 'swift'} | decl=func requireProcessCapability() throws |
+swift.method resetAttributesToDefaults() | precise={'precise': 's:14CodeEditorCore13DocumentStoreC25resetAttributesToDefaultsyyF', 'interfaceLanguage': 'swift'} | decl=func resetAttributesToDefaults() |
+swift.method runCollecting(_:) | precise={'precise': 's:14CodeEditorCore14ProcessServiceV13runCollectingySS6stdout_SS6stderrs5Int32V4codetAA0D13LaunchRequestVYaKF', 'interfaceLanguage': 'swift'} | decl=func runCollecting(_ request: ProcessLaunchRequest) async throws -> (stdout: String, stderr: String, code: Int32) |
+swift.method selectAll() | precise={'precise': 's:14CodeEditorCore15SelectionEngineC9selectAllyyF', 'interfaceLanguage': 'swift'} | decl=@MainActor func selectAll() | actor=1
+swift.method setAttributes(_:range:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC13setAttributes_5rangeySDySo21NSAttributedStringKeyaypG_So8_NSRangeVtF', 'interfaceLanguage': 'swift'} | decl=func setAttributes(_ attributes: [NSAttributedString.Key : Any], range: NSRange) |
+swift.method setFullText(_:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC11setFullTextyySSF', 'interfaceLanguage': 'swift'} | decl=func setFullText(_ string: String) |
+swift.method setInsertionPoint(_:preferredX:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC17setInsertionPoint_10preferredXySi_0C10Foundation7CGFloatVSgtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setInsertionPoint(_ location: Int, preferredX: CGFloat? = nil) | actor=1
+swift.method setPreferredLineEnding(_:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC22setPreferredLineEndingyyAA0hI0OF', 'interfaceLanguage': 'swift'} | decl=func setPreferredLineEnding(_ ending: LineEnding) |
+swift.method setSelectedRange(_:preferredX:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC16setSelectedRange_10preferredXySo8_NSRangeV_0C10Foundation7CGFloatVSgtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setSelectedRange(_ range: NSRange, preferredX: CGFloat? = nil) | actor=1
+swift.method setSelectedRanges(_:preferredX:) | precise={'precise': 's:14CodeEditorCore15SelectionEngineC17setSelectedRanges_10preferredXySaySo8_NSRangeVG_0C10Foundation7CGFloatVSgtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setSelectedRanges(_ ranges: [NSRange], preferredX: CGFloat? = nil) | actor=1
+swift.method snapshot() | precise={'precise': 's:14CodeEditorCore13DocumentStoreC8snapshotAA0D8SnapshotVyF', 'interfaceLanguage': 'swift'} | decl=func snapshot() -> DocumentSnapshot |
+swift.method substring(from:) | precise={'precise': 's:14CodeEditorCore13DocumentStoreC9substring4fromSSSgSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func substring(from range: NSRange) -> String? |
+swift.method substring(from:) | precise={'precise': 's:9TextStory0A7StoringP9substring4fromSSSgSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func substring(from range: NSRange) -> String? |
+swift.method substring(from:) | precise={'precise': 's:So10NSTextViewC9TextStoryE9substring4fromSSSgSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=nonisolated func substring(from range: NSRange) -> String? |
+swift.method substring(from:) | precise={'precise': 's:So13NSTextStorageC9TextStoryE9substring4fromSSSgSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func substring(from range: NSRange) -> String? |
+swift.method substring(from:) | precise={'precise': 's:So20NSTextContentStorageC9TextStoryE9substring4fromSSSgSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func substring(from range: NSRange) -> String? |
+swift.method terminateProcessGroup() | precise={'precise': 's:14CodeEditorCore13ProcessHandleC09terminateD5GroupyyF', 'interfaceLanguage': 'swift'} | decl=func terminateProcessGroup() |
+swift.method textRange(from:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAAE04textC04from0bC0QzSgSo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=func textRange(from range: NSRange) -> TextRange? |
+swift.method textRange(from:to:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingP04textC04from2to0bC0QzSgAG_5BoundQZ_AKtF', 'interfaceLanguage': 'swift'} | decl=func textRange(from start: Position, to end: Position) -> TextRange? |
+swift.method textRange(from:to:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAASo8_NSRangeV0bC0RtzrlE04textC04from2toAESgSi_SitF', 'interfaceLanguage': 'swift'} | decl=func textRange(from start: Position, to end: Position) -> TextRange? |
+swift.method textStorage(_:didReplaceCharactersIn:with:) | precise={'precise': 'c:@CM@TextStory@objc(cs)TextMutationEventRouter(im)textStorage:didReplaceCharactersInRange:withString:', 'interfaceLanguage': 'swift'} | decl=func textStorage(_ textStorage: TSYTextStorage, didReplaceCharactersIn range: NSRange, with string: String) |
+swift.method textStorage(_:willReplaceCharactersIn:with:) | precise={'precise': 'c:@CM@TextStory@objc(cs)TextMutationEventRouter(im)textStorage:willReplaceCharactersInRange:withString:', 'interfaceLanguage': 'swift'} | decl=func textStorage(_ textStorage: TSYTextStorage, willReplaceCharactersIn range: NSRange, with string: String) |
+swift.method textStorageDidCompleteProcessingEdit(_:) | precise={'precise': 'c:@CM@TextStory@objc(cs)TextMutationEventRouter(im)textStorageDidCompleteProcessingEdit:', 'interfaceLanguage': 'swift'} | decl=func textStorageDidCompleteProcessingEdit(_ textStorage: TSYTextStorage) |
+swift.method textStorageWillCompleteProcessingEdit(_:) | precise={'precise': 'c:@CM@TextStory@objc(cs)TextMutationEventRouter(im)textStorageWillCompleteProcessingEdit:', 'interfaceLanguage': 'swift'} | decl=func textStorageWillCompleteProcessingEdit(_ textStorage: TSYTextStorage) |
+swift.method trailingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE13trailingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF', 'interfaceLanguage': 'swift'} | decl=func trailingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method trailingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE13trailingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func trailingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method trailingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE13trailingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func trailingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method trailingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE13trailingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func trailingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method trailingRange(in:within:) | precise={'precise': 's:9TextStory0A7StoringPAAE13trailingRange2in6withinSo8_NSRangeVSgAH_10Foundation12CharacterSetVtF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func trailingRange(in range: NSRange, within set: CharacterSet) -> NSRange? |
+swift.method trailingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE23trailingWhitespaceRange2inSo8_NSRangeVSgAG_tF', 'interfaceLanguage': 'swift'} | decl=func trailingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method trailingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE23trailingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=func trailingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method trailingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE23trailingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=func trailingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method trailingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE23trailingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=func trailingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method trailingWhitespaceRange(in:) | precise={'precise': 's:9TextStory0A7StoringPAAE23trailingWhitespaceRange2inSo8_NSRangeVSgAG_tF::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=func trailingWhitespaceRange(in range: NSRange) -> NSRange? |
+swift.method transform(location:) | precise={'precise': 's:9Rearrange13RangeMutationV9transform8locationSiSgSi_tF', 'interfaceLanguage': 'swift'} | decl=func transform(location: Int) -> Int? |
+swift.method transform(range:) | precise={'precise': 's:9Rearrange13RangeMutationV9transform5rangeSo8_NSRangeVSgAG_tF', 'interfaceLanguage': 'swift'} | decl=func transform(range r: NSRange) -> NSRange? |
+swift.method transform(set:) | precise={'precise': 's:9Rearrange13RangeMutationV9transform3set10Foundation8IndexSetVAH_tF', 'interfaceLanguage': 'swift'} | decl=func transform(set: IndexSet) -> IndexSet |
+swift.method transformBaseRange(_:) | precise={'precise': 's:9TextStory09BufferingA7StorageC18transformBaseRangeySo8_NSRangeVSgAFF', 'interfaceLanguage': 'swift'} | decl=func transformBaseRange(_ range: NSRange) -> NSRange? |
+swift.method undo(apply:) | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC4undo5applyyyAA8TextEditVKXE_tKF', 'interfaceLanguage': 'swift'} | decl=@MainActor func undo(apply: (TextEdit) throws -> Void) throws | actor=1
+swift.method undoGroup(apply:) | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC9undoGroup5applyyySayAA8TextEditVGKXE_tKF', 'interfaceLanguage': 'swift'} | decl=@MainActor func undoGroup(apply: ([TextEdit]) throws -> Void) throws | actor=1
+swift.method updateMetrics(atIndex:metrics:) | precise={'precise': 's:14CodeEditorCore9LineIndexC13updateMetrics02atE07metricsySi_AA0dG0VtF', 'interfaceLanguage': 'swift'} | decl=func updateMetrics(atIndex index: Int, metrics: LineMetrics) |
+swift.method updatePayload(atIndex:payload:) | precise={'precise': 's:14CodeEditorCore9LineIndexC13updatePayload02atE07payloadySi_xtF', 'interfaceLanguage': 'swift'} | decl=func updatePayload(atIndex index: Int, payload: Payload) |
+swift.method utf16Offset(at:containerWidth:) | precise={'precise': 's:14CodeEditorCore19CaretLayoutQueryingP11utf16Offset2at14containerWidthSiSo7CGPointV_0C10Foundation7CGFloatVtF', 'interfaceLanguage': 'swift'} | decl=@MainActor func utf16Offset(at point: CGPoint, containerWidth: CGFloat) -> Int | actor=1
+swift.method validRange(_:) | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAAE05validC0ySb0bC0QzF', 'interfaceLanguage': 'swift'} | decl=func validRange(_ range: TextRange) -> Bool |
+swift.method waitUntilExit() | precise={'precise': 's:14CodeEditorCore13ProcessHandleC13waitUntilExits5Int32V4code_Sb8timedOuttyYaF', 'interfaceLanguage': 'swift'} | decl=func waitUntilExit() async -> (code: Int32, timedOut: Bool) |
+swift.method willApplyMutation(_:to:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC17willApplyMutation_2toyAA0aH0V_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func willApplyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method willApplyMutation(_:to:) | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV17willApplyMutation_2toyAA0aH0V_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func willApplyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method willApplyMutation(_:to:) | precise={'precise': 's:9TextStory0A14StoringMonitorP17willApplyMutation_2toyAA0aG0V_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func willApplyMutation(_ mutation: TextMutation, to storage: TextStoring) |
+swift.method willCompleteChangeProcessing(of:in:) | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC28willCompleteChangeProcessing2of2inyAA0A8MutationVSg_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func willCompleteChangeProcessing(of mutation: TextMutation?, in storage: TextStoring) |
+swift.method willCompleteChangeProcessing(of:in:) | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV28willCompleteChangeProcessing2of2inyAA0A8MutationVSg_AA0aD0_ptF', 'interfaceLanguage': 'swift'} | decl=func willCompleteChangeProcessing(of mutation: TextMutation?, in storage: TextStoring) |
+swift.method willCompleteChangeProcessing(of:in:) | precise={'precise': 's:9TextStory0A14StoringMonitorP28willCompleteChangeProcessing2of2inyAA0A8MutationVSg_AA0aC0_ptF', 'interfaceLanguage': 'swift'} | decl=func willCompleteChangeProcessing(of mutation: TextMutation?, in storage: TextStoring) |
+swift.method yield(_:) | precise={'precise': 's:14CodeEditorCore0B11EventStreamC5yieldyyAA0bD0OF', 'interfaceLanguage': 'swift'} | decl=@MainActor func yield(_ event: EditorEvent) | actor=1
+swift.method yieldSelection(_:) | precise={'precise': 's:14CodeEditorCore0B11EventStreamC14yieldSelectionyySaySo8_NSRangeVGF', 'interfaceLanguage': 'swift'} | decl=@MainActor func yieldSelection(_ ranges: [NSRange]) | actor=1
+swift.method yieldText(_:) | precise={'precise': 's:14CodeEditorCore0B11EventStreamC9yieldTextyySSF', 'interfaceLanguage': 'swift'} | decl=@MainActor func yieldText(_ text: String) | actor=1
+swift.property arguments | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV9argumentsSaySSGvp', 'interfaceLanguage': 'swift'} | decl=var arguments: [String] |
+swift.property beginningOfDocument | precise={'precise': 's:9Rearrange20TextRangeCalculatingP19beginningOfDocument0bC0_5BoundQZvp', 'interfaceLanguage': 'swift'} | decl=var beginningOfDocument: Position { get } |
+swift.property beginningOfDocument | precise={'precise': 's:9Rearrange20TextRangeCalculatingPAASi0bC0_5BoundRTzrlE19beginningOfDocumentSivp', 'interfaceLanguage': 'swift'} | decl=var beginningOfDocument: Position { get } |
+swift.property bufferedLength | precise={'precise': 's:9TextStory09BufferingA7StorageC14bufferedLengthSivp', 'interfaceLanguage': 'swift'} | decl=var bufferedLength: Int { get } |
+swift.property bufferingEnabled | precise={'precise': 's:9TextStory09BufferingA7StorageC16bufferingEnabledSbvp', 'interfaceLanguage': 'swift'} | decl=var bufferingEnabled: Bool { get set } |
+swift.property calculator | precise={'precise': 's:9Rearrange15CalculatedRangeV10calculatorxvp', 'interfaceLanguage': 'swift'} | decl=let calculator: Calculator |
+swift.property calculator | precise={'precise': 's:9Rearrange18CalculatedPositionV10calculatorxvp', 'interfaceLanguage': 'swift'} | decl=let calculator: Calculator |
+swift.property canRedo | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC7canRedoSbvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var canRedo: Bool { get } | actor=1
+swift.property canUndo | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC03canD0Sbvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var canUndo: Bool { get } | actor=1
+swift.property capabilities | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV12capabilitiesSDyAA0dE4KindOAA0E12AvailabilityOGvp', 'interfaceLanguage': 'swift'} | decl=let capabilities: [PlatformCapabilityKind : CapabilityAvailability] |
+swift.property capabilityKind | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV14capabilityKindAA018PlatformCapabilityH0Ovp', 'interfaceLanguage': 'swift'} | decl=var capabilityKind: PlatformCapabilityKind |
+swift.property caretOffsetInPayload | precise={'precise': 's:14CodeEditorCore11TextFiltersO16NewlineInsertionV20caretOffsetInPayloadSivp', 'interfaceLanguage': 'swift'} | decl=var caretOffsetInPayload: Int |
+swift.property changeCount | precise={'precise': 's:9TextStory09BufferingA7StorageC11changeCountSivp', 'interfaceLanguage': 'swift'} | decl=var changeCount: Int { get } |
+swift.property changes | precise={'precise': 's:14CodeEditorCore15EditTransactionV7changesSayAA10TextChangeVGvp', 'interfaceLanguage': 'swift'} | decl=let changes: [TextChange] |
+swift.property close | precise={'precise': 's:14CodeEditorCore14BracketMatcherO5MatchV5closeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var close: NSRange |
+swift.property count | precise={'precise': 's:14CodeEditorCore9LineIndexC5countSivp', 'interfaceLanguage': 'swift'} | decl=var count: Int { get } |
+swift.property ctLine | precise={'precise': 's:14CodeEditorCore23ColumnSelectionFragmentV6ctLineSo9CTLineRefaSgvp', 'interfaceLanguage': 'swift'} | decl=var ctLine: CTLine? |
+swift.property currentDirectory | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV16currentDirectory10Foundation3URLVSgvp', 'interfaceLanguage': 'swift'} | decl=var currentDirectory: URL? |
+swift.property defaultAttributes | precise={'precise': 's:14CodeEditorCore13DocumentStoreC17defaultAttributesSDySo21NSAttributedStringKeyaypGvp', 'interfaceLanguage': 'swift'} | decl=var defaultAttributes: [NSAttributedString.Key : Any] |
+swift.property delta | precise={'precise': 's:9Rearrange13RangeMutationV5deltaSivp', 'interfaceLanguage': 'swift'} | decl=let delta: Int |
+swift.property delta | precise={'precise': 's:9TextStory0A8MutationV5deltaSivp', 'interfaceLanguage': 'swift'} | decl=var delta: Int { get } |
+swift.property displayName | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO11displayNameSSvp', 'interfaceLanguage': 'swift'} | decl=var displayName: String { get } |
+swift.property documentRange | precise={'precise': 's:14CodeEditorCore23ColumnSelectionFragmentV13documentRangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var documentRange: NSRange |
+swift.property documentVersion | precise={'precise': 's:14CodeEditorCore0B7ContextV15documentVersionAA08DocumentF0Vvp', 'interfaceLanguage': 'swift'} | decl=let documentVersion: DocumentVersion |
+swift.property droppedEventCount | precise={'precise': 's:14CodeEditorCore0B11EventStreamC07droppedD5CountSivp', 'interfaceLanguage': 'swift'} | decl=@MainActor var droppedEventCount: Int { get } | actor=1
+swift.property end | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV3endSivp', 'interfaceLanguage': 'swift'} | decl=var end: Int { get } |
+swift.property end | precise={'precise': 's:14CodeEditorCore9TextRangeV3endAA0D8PositionVvp', 'interfaceLanguage': 'swift'} | decl=let end: TextPosition |
+swift.property endOfDocument | precise={'precise': 's:9Rearrange20TextRangeCalculatingP13endOfDocument0bC0_5BoundQZvp', 'interfaceLanguage': 'swift'} | decl=var endOfDocument: Position { get } |
+swift.property enterpriseOptions | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV17enterpriseOptionsAA010EnterprisefH0VSgvp', 'interfaceLanguage': 'swift'} | decl=let enterpriseOptions: EnterpriseProfileOptions? |
+swift.property environment | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV11environmentSDyS2SGvp', 'interfaceLanguage': 'swift'} | decl=var environment: [String : String] |
+swift.property events | precise={'precise': 's:14CodeEditorCore13ProcessHandleC6eventsScSyAA0D11OutputEventOGvp', 'interfaceLanguage': 'swift'} | decl=let events: AsyncStream<ProcessOutputEvent> |
+swift.property executable | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV10executableSSvp', 'interfaceLanguage': 'swift'} | decl=var executable: String |
+swift.property filesystem | precise={'precise': 's:14CodeEditorCore16PlatformServicesV10filesystemAA16FileSystemAccess_pvp', 'interfaceLanguage': 'swift'} | decl=var filesystem: any FileSystemAccess |
+swift.property first | precise={'precise': 's:14CodeEditorCore9LineIndexC5firstAA0D8PositionVyxGSgvp', 'interfaceLanguage': 'swift'} | decl=var first: LinePosition<Payload>? { get } |
+swift.property frame | precise={'precise': 's:14CodeEditorCore23ColumnSelectionFragmentV5frameSo6CGRectVvp', 'interfaceLanguage': 'swift'} | decl=var frame: CGRect |
+swift.property fullRange | precise={'precise': 's:9TextStory0A7StoringPAAE9fullRangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var fullRange: NSRange { get } |
+swift.property fullRange | precise={'precise': 's:9TextStory0A7StoringPAAE9fullRangeSo8_NSRangeVvp::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=var fullRange: NSRange { get } |
+swift.property fullRange | precise={'precise': 's:9TextStory0A7StoringPAAE9fullRangeSo8_NSRangeVvp::SYNTHESIZED::c:objc(cs)NSTextStorage', 'interfaceLanguage': 'swift'} | decl=var fullRange: NSRange { get } |
+swift.property fullRange | precise={'precise': 's:9TextStory0A7StoringPAAE9fullRangeSo8_NSRangeVvp::SYNTHESIZED::c:objc(cs)NSTextView', 'interfaceLanguage': 'swift'} | decl=var fullRange: NSRange { get } |
+swift.property fullRange | precise={'precise': 's:9TextStory0A7StoringPAAE9fullRangeSo8_NSRangeVvp::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=var fullRange: NSRange { get } |
+swift.property fullString | precise={'precise': 's:14CodeEditorCore13DocumentStoreC10fullStringSSvp', 'interfaceLanguage': 'swift'} | decl=var fullString: String { get } |
+swift.property groupingEnabled | precise={'precise': 's:14CodeEditorCore15UndoCoordinatorC15groupingEnabledSbvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var groupingEnabled: Bool | actor=1
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore10EditOriginO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore10LineEndingO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore12HostPlatformO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore17ShippingProfileIDO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore18WordNavigationModeO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:14CodeEditorCore22PlatformCapabilityKindO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property height | precise={'precise': 's:14CodeEditorCore11LineMetricsV6height0C10Foundation7CGFloatVvp', 'interfaceLanguage': 'swift'} | decl=var height: CGFloat |
+swift.property height | precise={'precise': 's:14CodeEditorCore9LineIndexC6height0C10Foundation7CGFloatVvp', 'interfaceLanguage': 'swift'} | decl=var height: CGFloat { get } |
+swift.property hostPlatform | precise={'precise': 's:14CodeEditorCore17ShippingProfileIDO12hostPlatformAA04HostH0Ovp', 'interfaceLanguage': 'swift'} | decl=var hostPlatform: HostPlatform { get } |
+swift.property id | precise={'precise': 's:14CodeEditorCore13ProcessHandleC2id10Foundation4UUIDVvp', 'interfaceLanguage': 'swift'} | decl=let id: UUID |
+swift.property id | precise={'precise': 's:14CodeEditorCore15EditTransactionV2id10Foundation4UUIDVvp', 'interfaceLanguage': 'swift'} | decl=let id: UUID |
+swift.property ignoreUnprocessedMutations | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC26ignoreUnprocessedMutationsSbvp', 'interfaceLanguage': 'swift'} | decl=var ignoreUnprocessedMutations: Bool |
+swift.property index | precise={'precise': 's:14CodeEditorCore12LinePositionV5indexSivp', 'interfaceLanguage': 'swift'} | decl=let index: Int |
+swift.property insert | precise={'precise': 's:14CodeEditorCore11TextFiltersO14AutoPairResultV6insertSSvp', 'interfaceLanguage': 'swift'} | decl=var insert: String |
+swift.property inverse | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV7inverseAA0eF0Vvp', 'interfaceLanguage': 'swift'} | decl=let inverse: EditTransaction |
+swift.property inverse | precise={'precise': 's:14CodeEditorCore8TextEditV7inverse0D5Story0D8MutationVvp', 'interfaceLanguage': 'swift'} | decl=let inverse: TextMutation |
+swift.property inverseDelta | precise={'precise': 's:9TextStory0A8MutationV12inverseDeltaSivp', 'interfaceLanguage': 'swift'} | decl=var inverseDelta: Int { get } |
+swift.property inverseRange | precise={'precise': 's:9TextStory0A8MutationV12inverseRangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var inverseRange: NSRange { get } |
+swift.property isEmpty | precise={'precise': 's:14CodeEditorCore9LineIndexC7isEmptySbvp', 'interfaceLanguage': 'swift'} | decl=var isEmpty: Bool { get } |
+swift.property isEmpty | precise={'precise': 's:14CodeEditorCore9TextRangeV7isEmptySbvp', 'interfaceLanguage': 'swift'} | decl=var isEmpty: Bool { get } |
+swift.property isEmpty | precise={'precise': 's:9Rearrange15CalculatedRangeV7isEmptySbvp', 'interfaceLanguage': 'swift'} | decl=var isEmpty: Bool { get } |
+swift.property isEnabled | precise={'precise': 's:14CodeEditorCore15SelectionEngineC9isEnabledSbvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var isEnabled: Bool | actor=1
+swift.property isInsertionPoint | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV16isInsertionPointSbvp', 'interfaceLanguage': 'swift'} | decl=var isInsertionPoint: Bool { get } |
+swift.property isLocallyAvailable | precise={'precise': 's:14CodeEditorCore22CapabilityAvailabilityO18isLocallyAvailableSbvp', 'interfaceLanguage': 'swift'} | decl=var isLocallyAvailable: Bool { get } |
+swift.property isTerminated | precise={'precise': 's:14CodeEditorCore13ProcessHandleC12isTerminatedSbvp', 'interfaceLanguage': 'swift'} | decl=var isTerminated: Bool { get } |
+swift.property kind | precise={'precise': 's:14CodeEditorCore22ProfileProcessLauncherV4kindAA22PlatformCapabilityKindOvp', 'interfaceLanguage': 'swift'} | decl=let kind: PlatformCapabilityKind |
+swift.property last | precise={'precise': 's:14CodeEditorCore9LineIndexC4lastAA0D8PositionVyxGSgvp', 'interfaceLanguage': 'swift'} | decl=var last: LinePosition<Payload>? { get } |
+swift.property length | precise={'precise': 's:14CodeEditorCore10LineEndingO6lengthSivp', 'interfaceLanguage': 'swift'} | decl=var length: Int { get } |
+swift.property length | precise={'precise': 's:14CodeEditorCore13DocumentStoreC6lengthSivp', 'interfaceLanguage': 'swift'} | decl=var length: Int { get } |
+swift.property length | precise={'precise': 's:14CodeEditorCore9LineIndexC6lengthSivp', 'interfaceLanguage': 'swift'} | decl=var length: Int { get } |
+swift.property length | precise={'precise': 's:14CodeEditorCore9TextRangeV6lengthSivp', 'interfaceLanguage': 'swift'} | decl=var length: Int { get } |
+swift.property length | precise={'precise': 's:9TextStory0A7StoringP6lengthSivp', 'interfaceLanguage': 'swift'} | decl=var length: Int { get } |
+swift.property length | precise={'precise': 's:So10NSTextViewC9TextStoryE6lengthSivp', 'interfaceLanguage': 'swift'} | decl=nonisolated var length: Int { get } |
+swift.property length | precise={'precise': 's:So20NSTextContentStorageC9TextStoryE6lengthSivp', 'interfaceLanguage': 'swift'} | decl=var length: Int { get } |
+swift.property limit | precise={'precise': 's:9Rearrange13RangeMutationV5limitSivp', 'interfaceLanguage': 'swift'} | decl=var limit: Int { get } |
+swift.property limit | precise={'precise': 's:9TextStory0A8MutationV5limitSivp', 'interfaceLanguage': 'swift'} | decl=let limit: Int |
+swift.property limitSpanningRange | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE18limitSpanningRangeSo8_NSRangeVSgvp', 'interfaceLanguage': 'swift'} | decl=var limitSpanningRange: NSRange? { get } |
+swift.property lineEnding | precise={'precise': 's:14CodeEditorCore13DocumentStoreC10lineEndingAA04LineG0Ovp', 'interfaceLanguage': 'swift'} | decl=var lineEnding: LineEnding { get } |
+swift.property localizedDescription | precise={'precise': 's:14CodeEditorCore0aB13PlatformErrorO20localizedDescriptionSSvp', 'interfaceLanguage': 'swift'} | decl=var localizedDescription: String { get } |
+swift.property localizedDescription | precise={'precise': 's:s5ErrorP10FoundationE20localizedDescriptionSSvp::SYNTHESIZED::s:14CodeEditorCore18DocumentStoreErrorO', 'interfaceLanguage': 'swift'} | decl=var localizedDescription: String { get } |
+swift.property localizedDescription | precise={'precise': 's:s5ErrorP10FoundationE20localizedDescriptionSSvp::SYNTHESIZED::s:14CodeEditorCore19ProcessServiceErrorO', 'interfaceLanguage': 'swift'} | decl=var localizedDescription: String { get } |
+swift.property location | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV8locationSivp', 'interfaceLanguage': 'swift'} | decl=var location: Int { get } |
+swift.property location | precise={'precise': 's:14CodeEditorCore9TextRangeV8locationSivp', 'interfaceLanguage': 'swift'} | decl=var location: Int { get } |
+swift.property lowerBound | precise={'precise': 's:9Rearrange15CalculatedRangeV10lowerBoundAA0B8PositionVyxGvp', 'interfaceLanguage': 'swift'} | decl=let lowerBound: CalculatedPosition<Calculator> |
+swift.property lowerBound | precise={'precise': 's:9Rearrange7BoundedP10lowerBound0D0Qzvp', 'interfaceLanguage': 'swift'} | decl=var lowerBound: Bound { get } |
+swift.property lowerBound | precise={'precise': 's:So11NSTextRangeC9RearrangeE10lowerBoundSo0A8Location_pvp', 'interfaceLanguage': 'swift'} | decl=var lowerBound: NSTextLocation { get } |
+swift.property managedRegistryOnly | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV19managedRegistryOnlySbvp', 'interfaceLanguage': 'swift'} | decl=var managedRegistryOnly: Bool |
+swift.property maxStderrBytes | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV14maxStderrBytesSivp', 'interfaceLanguage': 'swift'} | decl=var maxStderrBytes: Int |
+swift.property maxStdoutBytes | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV14maxStdoutBytesSivp', 'interfaceLanguage': 'swift'} | decl=var maxStdoutBytes: Int |
+swift.property maxY | precise={'precise': 's:14CodeEditorCore12LinePositionV4maxY0C10Foundation7CGFloatVvp', 'interfaceLanguage': 'swift'} | decl=var maxY: CGFloat { get } |
+swift.property maximumProcessedLocation | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC24maximumProcessedLocationSivp', 'interfaceLanguage': 'swift'} | decl=var maximumProcessedLocation: Int { get } |
+swift.property mergeEnvironment | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV16mergeEnvironmentSbvp', 'interfaceLanguage': 'swift'} | decl=var mergeEnvironment: Bool |
+swift.property metrics | precise={'precise': 's:14CodeEditorCore12LinePositionV7metricsAA0D7MetricsVvp', 'interfaceLanguage': 'swift'} | decl=let metrics: LineMetrics |
+swift.property minimumDelta | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC12minimumDeltaSuvp', 'interfaceLanguage': 'swift'} | decl=var minimumDelta: UInt |
+swift.property mode | precise={'precise': 's:14CodeEditorCore15SelectionEngineC4modeAA0D4ModeOvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var mode: SelectionMode | actor=1
+swift.property mode | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV4modeAA0dE4ModeOvp', 'interfaceLanguage': 'swift'} | decl=var mode: ProcessLaunchMode |
+swift.property monitors | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV8monitorsSayAA0adE0_pGvp', 'interfaceLanguage': 'swift'} | decl=var monitors: [TextStoringMonitor] |
+swift.property mutation | precise={'precise': 's:14CodeEditorCore8TextEditV8mutation0D5Story0D8MutationVvp', 'interfaceLanguage': 'swift'} | decl=let mutation: TextMutation |
+swift.property name | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV4nameSSvp', 'interfaceLanguage': 'swift'} | decl=let name: String |
+swift.property network | precise={'precise': 's:14CodeEditorCore16PlatformServicesV7networkAA13NetworkAccess_pvp', 'interfaceLanguage': 'swift'} | decl=var network: any NetworkAccess |
+swift.property newVersion | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV10newVersionAA08DocumentH0Vvp', 'interfaceLanguage': 'swift'} | decl=let newVersion: DocumentVersion |
+swift.property nsRange | precise={'precise': 's:14CodeEditorCore9TextRangeV02nsE0So8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var nsRange: NSRange { get } |
+swift.property nsRangeView | precise={'precise': 's:10Foundation8IndexSetV9RearrangeE11nsRangeViewSaySo8_NSRangeVGvp', 'interfaceLanguage': 'swift'} | decl=var nsRangeView: [NSRange] { get } |
+swift.property oldVersion | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV10oldVersionAA08DocumentH0Vvp', 'interfaceLanguage': 'swift'} | decl=let oldVersion: DocumentVersion |
+swift.property open | precise={'precise': 's:14CodeEditorCore14BracketMatcherO5MatchV4openSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var open: NSRange |
+swift.property origin | precise={'precise': 's:14CodeEditorCore15EditTransactionV6originAA0D6OriginOvp', 'interfaceLanguage': 'swift'} | decl=let origin: EditOrigin |
+swift.property payload | precise={'precise': 's:14CodeEditorCore11TextFiltersO16NewlineInsertionV7payloadSSvp', 'interfaceLanguage': 'swift'} | decl=var payload: String |
+swift.property payload | precise={'precise': 's:14CodeEditorCore12LinePositionV7payloadxvp', 'interfaceLanguage': 'swift'} | decl=let payload: Payload |
+swift.property pendingMutation | precise={'precise': 's:9TextStory0A19MutationEventRouterC07pendingC0AA0aC0VSgvp', 'interfaceLanguage': 'swift'} | decl=var pendingMutation: TextMutation? { get } |
+swift.property placeCaretInside | precise={'precise': 's:14CodeEditorCore11TextFiltersO14AutoPairResultV16placeCaretInsideSbvp', 'interfaceLanguage': 'swift'} | decl=var placeCaretInside: Bool |
+swift.property platform | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV8platformAA04HostD0Ovp', 'interfaceLanguage': 'swift'} | decl=let platform: HostPlatform |
+swift.property postApplyLimit | precise={'precise': 's:9Rearrange13RangeMutationV14postApplyLimitSivp', 'interfaceLanguage': 'swift'} | decl=var postApplyLimit: Int { get } |
+swift.property postApplyRange | precise={'precise': 's:9TextStory0A8MutationV14postApplyRangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var postApplyRange: NSRange { get } |
+swift.property preferredX | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV10preferredX0C10Foundation7CGFloatVSgvp', 'interfaceLanguage': 'swift'} | decl=var preferredX: CGFloat? |
+swift.property primarySelection | precise={'precise': 's:14CodeEditorCore15SelectionEngineC07primaryD0AA09TextRangeD0Vvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var primarySelection: TextRangeSelection { get } | actor=1
+swift.property process | precise={'precise': 's:14CodeEditorCore16PlatformServicesV7processAA16ProcessLaunching_pvp', 'interfaceLanguage': 'swift'} | decl=var process: any ProcessLaunching |
+swift.property processIdentifier | precise={'precise': 's:14CodeEditorCore13ProcessHandleC17processIdentifiers5Int32Vvp', 'interfaceLanguage': 'swift'} | decl=var processIdentifier: Int32 { get } |
+swift.property processingTextChange | precise={'precise': 's:9TextStory0A19MutationEventRouterC010processingA6ChangeSbvp', 'interfaceLanguage': 'swift'} | decl=var processingTextChange: Bool { get } |
+swift.property profile | precise={'precise': 's:14CodeEditorCore14ProcessServiceV7profileAA25PlatformCapabilityProfileVvp', 'interfaceLanguage': 'swift'} | decl=var profile: PlatformCapabilityProfile |
+swift.property profile | precise={'precise': 's:14CodeEditorCore16PlatformServicesV7profileAA0D17CapabilityProfileVvp', 'interfaceLanguage': 'swift'} | decl=var profile: PlatformCapabilityProfile |
+swift.property profile | precise={'precise': 's:14CodeEditorCore16ProfilePTYAccessV7profileAA018PlatformCapabilityD0Vvp', 'interfaceLanguage': 'swift'} | decl=let profile: PlatformCapabilityProfile |
+swift.property profile | precise={'precise': 's:14CodeEditorCore20ProfileNetworkAccessV7profileAA018PlatformCapabilityD0Vvp', 'interfaceLanguage': 'swift'} | decl=let profile: PlatformCapabilityProfile |
+swift.property profile | precise={'precise': 's:14CodeEditorCore22ProfileProcessLauncherV7profileAA018PlatformCapabilityD0Vvp', 'interfaceLanguage': 'swift'} | decl=let profile: PlatformCapabilityProfile |
+swift.property profile | precise={'precise': 's:14CodeEditorCore23ProfileFileSystemAccessV7profileAA018PlatformCapabilityD0Vvp', 'interfaceLanguage': 'swift'} | decl=let profile: PlatformCapabilityProfile |
+swift.property pty | precise={'precise': 's:14CodeEditorCore16PlatformServicesV3ptyAA9PTYAccess_pvp', 'interfaceLanguage': 'swift'} | decl=var pty: any PTYAccess |
+swift.property publisherAllowlistRequired | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV26publisherAllowlistRequiredSbvp', 'interfaceLanguage': 'swift'} | decl=var publisherAllowlistRequired: Bool |
+swift.property range | precise={'precise': 's:14CodeEditorCore15TextReplacementV5rangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var range: NSRange |
+swift.property range | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV5rangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var range: NSRange |
+swift.property range | precise={'precise': 's:14CodeEditorCore8TextEditV5rangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var range: NSRange { get } |
+swift.property range | precise={'precise': 's:9Rearrange13RangeMutationV5rangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=let range: NSRange |
+swift.property range | precise={'precise': 's:9Rearrange15CalculatedRangeV5range04TextC0Qzvp', 'interfaceLanguage': 'swift'} | decl=let range: Calculator.TextRange |
+swift.property range | precise={'precise': 's:9TextStory0A8MutationV5rangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=let range: NSRange |
+swift.property rangeMutation | precise={'precise': 's:9TextStory0A8MutationV05rangeC09Rearrange05RangeC0Vvp', 'interfaceLanguage': 'swift'} | decl=var rangeMutation: RangeMutation { get } |
+swift.property rawValue | precise={'precise': 's:14CodeEditorCore15DocumentVersionV8rawValues6UInt64Vvp', 'interfaceLanguage': 'swift'} | decl=let rawValue: UInt64 |
+swift.property remoteToolingAvailable | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV22remoteToolingAvailableSbvp', 'interfaceLanguage': 'swift'} | decl=var remoteToolingAvailable: Bool { get } |
+swift.property replacedRange | precise={'precise': 's:14CodeEditorCore10TextChangeV13replacedRangeAA0dG0Vvp', 'interfaceLanguage': 'swift'} | decl=let replacedRange: TextRange |
+swift.property replacement | precise={'precise': 's:14CodeEditorCore10TextChangeV11replacementSSvp', 'interfaceLanguage': 'swift'} | decl=let replacement: String |
+swift.property replacement | precise={'precise': 's:14CodeEditorCore8TextEditV11replacementSSvp', 'interfaceLanguage': 'swift'} | decl=var replacement: String { get } |
+swift.property requireSignedNativeHelpers | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV26requireSignedNativeHelpersSbvp', 'interfaceLanguage': 'swift'} | decl=var requireSignedNativeHelpers: Bool |
+swift.property selectedRange | precise={'precise': 's:14CodeEditorCore15SelectionEngineC13selectedRangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var selectedRange: NSRange { get } | actor=1
+swift.property selectedRanges | precise={'precise': 's:14CodeEditorCore15SelectionEngineC14selectedRangesSaySo8_NSRangeVGvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var selectedRanges: [NSRange] { get } | actor=1
+swift.property selections | precise={'precise': 's:14CodeEditorCore15SelectionEngineC10selectionsSayAA09TextRangeD0VGvp', 'interfaceLanguage': 'swift'} | decl=@MainActor var selections: [TextRangeSelection] { get } | actor=1
+swift.property selections | precise={'precise': 's:14CodeEditorCore20SelectionChangeEventV10selectionsSayAA9TextRangeVGvp', 'interfaceLanguage': 'swift'} | decl=let selections: [TextRange] |
+swift.property shippingProfileID | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV08shippingF2IDAA08ShippingfH0OSgvp', 'interfaceLanguage': 'swift'} | decl=let shippingProfileID: ShippingProfileID? |
+swift.property skipOver | precise={'precise': 's:14CodeEditorCore11TextFiltersO14AutoPairResultV8skipOverSbvp', 'interfaceLanguage': 'swift'} | decl=var skipOver: Bool |
+swift.property start | precise={'precise': 's:14CodeEditorCore9TextRangeV5startAA0D8PositionVvp', 'interfaceLanguage': 'swift'} | decl=let start: TextPosition |
+swift.property storingMonitor | precise={'precise': 's:9TextStory04LazyA14StoringMonitorC07storingE0AA0adE0_pvp', 'interfaceLanguage': 'swift'} | decl=let storingMonitor: TextStoringMonitor |
+swift.property storingMonitors | precise={'precise': 's:9TextStory0A19MutationEventRouterC15storingMonitorsSayAA0A14StoringMonitor_pGvp', 'interfaceLanguage': 'swift'} | decl=var storingMonitors: [TextStoringMonitor] { get set } |
+swift.property storingMonitorsCompletionBlock | precise={'precise': 's:9TextStory0A19MutationEventRouterC30storingMonitorsCompletionBlockyAA0A7Storing_pcSgvp', 'interfaceLanguage': 'swift'} | decl=var storingMonitorsCompletionBlock: ((TextStoring) -> Void)? |
+swift.property string | precise={'precise': 's:14CodeEditorCore12IndentOptionO6stringSSvp', 'interfaceLanguage': 'swift'} | decl=var string: String { get } |
+swift.property string | precise={'precise': 's:14CodeEditorCore15TextReplacementV6stringSSvp', 'interfaceLanguage': 'swift'} | decl=var string: String |
+swift.property string | precise={'precise': 's:9TextStory0A7StoringPAAE6stringSSvp', 'interfaceLanguage': 'swift'} | decl=var string: String { get } |
+swift.property string | precise={'precise': 's:9TextStory0A7StoringPAAE6stringSSvp::SYNTHESIZED::c:objc(cs)NSTextContentStorage', 'interfaceLanguage': 'swift'} | decl=var string: String { get } |
+swift.property string | precise={'precise': 's:9TextStory0A7StoringPAAE6stringSSvp::SYNTHESIZED::s:14CodeEditorCore13DocumentStoreC', 'interfaceLanguage': 'swift'} | decl=var string: String { get } |
+swift.property string | precise={'precise': 's:9TextStory0A8MutationV6stringSSvp', 'interfaceLanguage': 'swift'} | decl=let string: String |
+swift.property text | precise={'precise': 's:14CodeEditorCore16DocumentSnapshotV4textSSvp', 'interfaceLanguage': 'swift'} | decl=let text: String |
+swift.property textEdits | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV9textEditsSayAA04TextE0VGvp', 'interfaceLanguage': 'swift'} | decl=let textEdits: [TextEdit] |
+swift.property timeout | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV7timeouts8DurationVSgvp', 'interfaceLanguage': 'swift'} | decl=var timeout: Duration? |
+swift.property transaction | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV11transactionAA0eF0Vvp', 'interfaceLanguage': 'swift'} | decl=let transaction: EditTransaction |
+swift.property upperBound | precise={'precise': 's:9Rearrange15CalculatedRangeV10upperBoundAA0B8PositionVyxGvp', 'interfaceLanguage': 'swift'} | decl=let upperBound: CalculatedPosition<Calculator> |
+swift.property upperBound | precise={'precise': 's:9Rearrange7BoundedP10upperBound0D0Qzvp', 'interfaceLanguage': 'swift'} | decl=var upperBound: Bound { get } |
+swift.property upperBound | precise={'precise': 's:So11NSTextRangeC9RearrangeE10upperBoundSo0A8Location_pvp', 'interfaceLanguage': 'swift'} | decl=var upperBound: NSTextLocation { get } |
+swift.property utf16Length | precise={'precise': 's:14CodeEditorCore11LineMetricsV11utf16LengthSivp', 'interfaceLanguage': 'swift'} | decl=var utf16Length: Int |
+swift.property utf16Length | precise={'precise': 's:14CodeEditorCore16DocumentSnapshotV11utf16LengthSivp', 'interfaceLanguage': 'swift'} | decl=let utf16Length: Int |
+swift.property utf16Offset | precise={'precise': 's:14CodeEditorCore12LinePositionV11utf16OffsetSivp', 'interfaceLanguage': 'swift'} | decl=let utf16Offset: Int |
+swift.property utf16Offset | precise={'precise': 's:14CodeEditorCore12TextPositionV11utf16OffsetSivp', 'interfaceLanguage': 'swift'} | decl=let utf16Offset: Int |
+swift.property utf16Range | precise={'precise': 's:14CodeEditorCore12LinePositionV10utf16RangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var utf16Range: NSRange { get } |
+swift.property value | precise={'precise': 's:9Rearrange18CalculatedPositionV5value9TextRange_5BoundQZvp', 'interfaceLanguage': 'swift'} | decl=let value: Position |
+swift.property version | precise={'precise': 's:14CodeEditorCore13DocumentStoreC7versionAA0D7VersionVvp', 'interfaceLanguage': 'swift'} | decl=var version: DocumentVersion { get } |
+swift.property version | precise={'precise': 's:14CodeEditorCore16DocumentSnapshotV7versionAA0D7VersionVvp', 'interfaceLanguage': 'swift'} | decl=let version: DocumentVersion |
+swift.property version | precise={'precise': 's:14CodeEditorCore20SelectionChangeEventV7versionAA15DocumentVersionVvp', 'interfaceLanguage': 'swift'} | decl=let version: DocumentVersion |
+swift.property visualWidth | precise={'precise': 's:14CodeEditorCore12IndentOptionO11visualWidthSivp', 'interfaceLanguage': 'swift'} | decl=var visualWidth: Int { get } |
+swift.property yOffset | precise={'precise': 's:14CodeEditorCore12LinePositionV7yOffset0C10Foundation7CGFloatVvp', 'interfaceLanguage': 'swift'} | decl=let yOffset: CGFloat |
+swift.protocol Bounded | precise={'precise': 's:9Rearrange7BoundedP', 'interfaceLanguage': 'swift'} | decl=protocol Bounded<Bound> |
+swift.protocol CaretLayoutQuerying | precise={'precise': 's:14CodeEditorCore19CaretLayoutQueryingP', 'interfaceLanguage': 'swift'} | decl=@MainActor protocol CaretLayoutQuerying : AnyObject | actor=1
+swift.protocol FileSystemAccess | precise={'precise': 's:14CodeEditorCore16FileSystemAccessP', 'interfaceLanguage': 'swift'} | decl=protocol FileSystemAccess : Sendable | sendable=1
+swift.protocol LinePayload | precise={'precise': 's:14CodeEditorCore11LinePayloadP', 'interfaceLanguage': 'swift'} | decl=protocol LinePayload : AnyObject, Identifiable |
+swift.protocol NetworkAccess | precise={'precise': 's:14CodeEditorCore13NetworkAccessP', 'interfaceLanguage': 'swift'} | decl=protocol NetworkAccess : Sendable | sendable=1
+swift.protocol PTYAccess | precise={'precise': 's:14CodeEditorCore9PTYAccessP', 'interfaceLanguage': 'swift'} | decl=protocol PTYAccess : Sendable | sendable=1
+swift.protocol ProcessLaunching | precise={'precise': 's:14CodeEditorCore16ProcessLaunchingP', 'interfaceLanguage': 'swift'} | decl=protocol ProcessLaunching : Sendable | sendable=1
+swift.protocol TextRangeCalculating | precise={'precise': 's:9Rearrange20TextRangeCalculatingP', 'interfaceLanguage': 'swift'} | decl=protocol TextRangeCalculating<TextRange> |
+swift.protocol TextStoring | precise={'precise': 's:9TextStory0A7StoringP', 'interfaceLanguage': 'swift'} | decl=protocol TextStoring : AnyObject |
+swift.protocol TextStoringMonitor | precise={'precise': 's:9TextStory0A14StoringMonitorP', 'interfaceLanguage': 'swift'} | decl=protocol TextStoringMonitor |
+swift.struct AppliedEditTransaction | precise={'precise': 's:14CodeEditorCore22AppliedEditTransactionV', 'interfaceLanguage': 'swift'} | decl=struct AppliedEditTransaction |
+swift.struct BracketMatcher.Match | precise={'precise': 's:14CodeEditorCore14BracketMatcherO5MatchV', 'interfaceLanguage': 'swift'} | decl=struct Match |
+swift.struct CalculatedPosition | precise={'precise': 's:9Rearrange18CalculatedPositionV', 'interfaceLanguage': 'swift'} | decl=struct CalculatedPosition<Calculator> where Calculator : TextRangeCalculating |
+swift.struct CalculatedRange | precise={'precise': 's:9Rearrange15CalculatedRangeV', 'interfaceLanguage': 'swift'} | decl=struct CalculatedRange<Calculator> where Calculator : TextRangeCalculating |
+swift.struct ColumnSelectionFragment | precise={'precise': 's:14CodeEditorCore23ColumnSelectionFragmentV', 'interfaceLanguage': 'swift'} | decl=struct ColumnSelectionFragment |
+swift.struct CompositeTextStoringMonitor | precise={'precise': 's:9TextStory09CompositeA14StoringMonitorV', 'interfaceLanguage': 'swift'} | decl=struct CompositeTextStoringMonitor |
+swift.struct DocumentSnapshot | precise={'precise': 's:14CodeEditorCore16DocumentSnapshotV', 'interfaceLanguage': 'swift'} | decl=struct DocumentSnapshot |
+swift.struct DocumentVersion | precise={'precise': 's:14CodeEditorCore15DocumentVersionV', 'interfaceLanguage': 'swift'} | decl=struct DocumentVersion |
+swift.struct EditTransaction | precise={'precise': 's:14CodeEditorCore15EditTransactionV', 'interfaceLanguage': 'swift'} | decl=struct EditTransaction |
+swift.struct EditorContext | precise={'precise': 's:14CodeEditorCore0B7ContextV', 'interfaceLanguage': 'swift'} | decl=struct EditorContext |
+swift.struct EnterpriseProfileOptions | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV', 'interfaceLanguage': 'swift'} | decl=struct EnterpriseProfileOptions |
+swift.struct LineMetrics | precise={'precise': 's:14CodeEditorCore11LineMetricsV', 'interfaceLanguage': 'swift'} | decl=struct LineMetrics |
+swift.struct LinePosition | precise={'precise': 's:14CodeEditorCore12LinePositionV', 'interfaceLanguage': 'swift'} | decl=struct LinePosition<Payload> where Payload : LinePayload |
+swift.struct PlatformCapabilityProfile | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV', 'interfaceLanguage': 'swift'} | decl=struct PlatformCapabilityProfile |
+swift.struct PlatformServices | precise={'precise': 's:14CodeEditorCore16PlatformServicesV', 'interfaceLanguage': 'swift'} | decl=struct PlatformServices |
+swift.struct ProcessLaunchRequest | precise={'precise': 's:14CodeEditorCore20ProcessLaunchRequestV', 'interfaceLanguage': 'swift'} | decl=struct ProcessLaunchRequest |
+swift.struct ProcessService | precise={'precise': 's:14CodeEditorCore14ProcessServiceV', 'interfaceLanguage': 'swift'} | decl=struct ProcessService |
+swift.struct ProfileFileSystemAccess | precise={'precise': 's:14CodeEditorCore23ProfileFileSystemAccessV', 'interfaceLanguage': 'swift'} | decl=struct ProfileFileSystemAccess |
+swift.struct ProfileNetworkAccess | precise={'precise': 's:14CodeEditorCore20ProfileNetworkAccessV', 'interfaceLanguage': 'swift'} | decl=struct ProfileNetworkAccess |
+swift.struct ProfilePTYAccess | precise={'precise': 's:14CodeEditorCore16ProfilePTYAccessV', 'interfaceLanguage': 'swift'} | decl=struct ProfilePTYAccess |
+swift.struct ProfileProcessLauncher | precise={'precise': 's:14CodeEditorCore22ProfileProcessLauncherV', 'interfaceLanguage': 'swift'} | decl=struct ProfileProcessLauncher |
+swift.struct RangeMutation | precise={'precise': 's:9Rearrange13RangeMutationV', 'interfaceLanguage': 'swift'} | decl=struct RangeMutation |
+swift.struct SelectionChangeEvent | precise={'precise': 's:14CodeEditorCore20SelectionChangeEventV', 'interfaceLanguage': 'swift'} | decl=struct SelectionChangeEvent |
+swift.struct TextChange | precise={'precise': 's:14CodeEditorCore10TextChangeV', 'interfaceLanguage': 'swift'} | decl=struct TextChange |
+swift.struct TextEdit | precise={'precise': 's:14CodeEditorCore8TextEditV', 'interfaceLanguage': 'swift'} | decl=struct TextEdit |
+swift.struct TextFilters.AutoPairResult | precise={'precise': 's:14CodeEditorCore11TextFiltersO14AutoPairResultV', 'interfaceLanguage': 'swift'} | decl=struct AutoPairResult |
+swift.struct TextFilters.NewlineInsertion | precise={'precise': 's:14CodeEditorCore11TextFiltersO16NewlineInsertionV', 'interfaceLanguage': 'swift'} | decl=struct NewlineInsertion |
+swift.struct TextMutation | precise={'precise': 's:9TextStory0A8MutationV', 'interfaceLanguage': 'swift'} | decl=struct TextMutation |
+swift.struct TextPosition | precise={'precise': 's:14CodeEditorCore12TextPositionV', 'interfaceLanguage': 'swift'} | decl=struct TextPosition |
+swift.struct TextRange | precise={'precise': 's:14CodeEditorCore9TextRangeV', 'interfaceLanguage': 'swift'} | decl=struct TextRange |
+swift.struct TextRangeSelection | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV', 'interfaceLanguage': 'swift'} | decl=struct TextRangeSelection |
+swift.struct TextReplacement | precise={'precise': 's:14CodeEditorCore15TextReplacementV', 'interfaceLanguage': 'swift'} | decl=struct TextReplacement |
+swift.subscript subscript(_:) | precise={'precise': 's:SS9RearrangeEySsSgSnySiGcip', 'interfaceLanguage': 'swift'} | decl=subscript(range: Range<Int>) -> Substring? { get } |
+swift.subscript subscript(_:) | precise={'precise': 's:SS9RearrangeEySsSgSo8_NSRangeVcip', 'interfaceLanguage': 'swift'} | decl=subscript(range: NSRange) -> Substring? { get } |
+swift.type.method autoPair(inserted:nextCharacter:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO8autoPair8inserted13nextCharacterAC04AutoG6ResultVSgSS_SJSgtFZ', 'interfaceLanguage': 'swift'} | decl=static func autoPair(inserted: String, nextCharacter: Character?) -> AutoPairResult? |
+swift.type.method boundary(fromUTF16Offset:in:direction:mode:) | precise={'precise': 's:14CodeEditorCore13WordSelectionO8boundary15fromUTF16Offset2in9direction4modeS2i_SSSiAA0D14NavigationModeOtFZ', 'interfaceLanguage': 'swift'} | decl=static func boundary(fromUTF16Offset offset: Int, in document: String, direction: Int, mode: WordNavigationMode) -> Int |
+swift.type.method build(from:estimatedLineHeight:makePayload:) | precise={'precise': 's:14CodeEditorCore9LineIndexC5build4from09estimatedD6Height11makePayloadACyxGSS_0C10Foundation7CGFloatVxSiXEtFZ', 'interfaceLanguage': 'swift'} | decl=static func build(from string: String, estimatedLineHeight: CGFloat, makePayload: (Int) -> Payload) -> LineIndex<Payload> |
+swift.type.method buildUsingSplitLines(from:estimatedLineHeight:makePayload:) | precise={'precise': 's:14CodeEditorCore9LineIndexC20buildUsingSplitLines4from09estimatedD6Height11makePayloadACyxGSS_0C10Foundation7CGFloatVxSiXEtFZ', 'interfaceLanguage': 'swift'} | decl=static func buildUsingSplitLines(from string: String, estimatedLineHeight: CGFloat, makePayload: (Int) -> Payload) -> LineIndex<Payload> |
+swift.type.method caretAfterReplace(range:replacementUTF16Count:) | precise={'precise': 's:14CodeEditorCore14MultiRangeEditO17caretAfterReplace5range21replacementUTF16CountSiSo8_NSRangeV_SitFZ', 'interfaceLanguage': 'swift'} | decl=static func caretAfterReplace(range: NSRange, replacementUTF16Count: Int) -> Int |
+swift.type.method clamp(_:documentLength:) | precise={'precise': 's:14CodeEditorCore14MultiRangeEditO5clamp_14documentLengthSo8_NSRangeVAG_SitFZ', 'interfaceLanguage': 'swift'} | decl=static func clamp(_ range: NSRange, documentLength: Int) -> NSRange |
+swift.type.method default(for:) | precise={'precise': 's:14CodeEditorCore16PlatformServicesV7default3forAcA04HostD0O_tFZ', 'interfaceLanguage': 'swift'} | decl=static func `default`(for platform: HostPlatform = .current) -> PlatformServices |
+swift.type.method default(for:) | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV7default3forAcA04HostD0O_tFZ', 'interfaceLanguage': 'swift'} | decl=static func `default`(for platform: HostPlatform = .current) -> PlatformCapabilityProfile |
+swift.type.method deleteBackwardRange(caret:in:indent:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO19deleteBackwardRange5caret2in6indentSo8_NSRangeVSgSi_SSAA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func deleteBackwardRange(caret: Int, in document: String, indent: IndentOption = .spaces(count: 4)) -> NSRange? |
+swift.type.method detect(in:sampleLimit:) | precise={'precise': 's:14CodeEditorCore10LineEndingO6detect2in11sampleLimitACSS_SitFZ', 'interfaceLanguage': 'swift'} | decl=static func detect(in string: String, sampleLimit: Int = 50) -> LineEnding |
+swift.type.method encodeAvailability(_:) | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV18encodeAvailabilityySSAA0eH0OFZ', 'interfaceLanguage': 'swift'} | decl=static func encodeAvailability(_ a: CapabilityAvailability) -> String |
+swift.type.method expandTab(indent:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO9expandTab6indentSSAA12IndentOptionO_tFZ', 'interfaceLanguage': 'swift'} | decl=static func expandTab(indent: IndentOption) -> String |
+swift.type.method graphemeBoundaryAfter(utf16Offset:in:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO21graphemeBoundaryAfter05utf16E02inS2i_SStKFZ', 'interfaceLanguage': 'swift'} | decl=static func graphemeBoundaryAfter(utf16Offset: Int, in text: String) throws -> Int |
+swift.type.method graphemeBoundaryBefore(utf16Offset:in:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO22graphemeBoundaryBefore05utf16E02inS2i_SStKFZ', 'interfaceLanguage': 'swift'} | decl=static func graphemeBoundaryBefore(utf16Offset: Int, in text: String) throws -> Int |
+swift.type.method indentLine(_:indent:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO10indentLine_0F0S2S_AA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func indentLine(_ line: String, indent: IndentOption) -> String |
+swift.type.method indentLines(selections:document:indent:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO11indentLines10selections8document0F0SayAA15TextReplacementVGSaySo8_NSRangeVG_SSAA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func indentLines(selections: [NSRange], document: String, indent: IndentOption) -> [TextReplacement] |
+swift.type.method indentPrefix(forNewlineAfter:indent:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO12indentPrefix15forNewlineAfter0F0S2S_AA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func indentPrefix(forNewlineAfter lineText: String, indent: IndentOption) -> String |
+swift.type.method insertionPoint(_:) | precise={'precise': 's:14CodeEditorCore18TextRangeSelectionV14insertionPointyACSiFZ', 'interfaceLanguage': 'swift'} | decl=static func insertionPoint(_ location: Int) -> TextRangeSelection |
+swift.type.method isAtLineStart(location:in:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO13isAtLineStart8location2inSbSi_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func isAtLineStart(location: Int, in document: String) -> Bool |
+swift.type.method isClosing(_:) | precise={'precise': 's:14CodeEditorCore12BracketPairsO9isClosingySbSJFZ', 'interfaceLanguage': 'swift'} | decl=static func isClosing(_ character: Character) -> Bool |
+swift.type.method isClosingPair(_:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO13isClosingPairySbSJFZ', 'interfaceLanguage': 'swift'} | decl=static func isClosingPair(_ ch: Character) -> Bool |
+swift.type.method isOpening(_:) | precise={'precise': 's:14CodeEditorCore12BracketPairsO9isOpeningySbSJFZ', 'interfaceLanguage': 'swift'} | decl=static func isOpening(_ character: Character) -> Bool |
+swift.type.method isOpening(_:mate:) | precise={'precise': 's:14CodeEditorCore12BracketPairsO9isOpening_4mateSbSJ_SJtFZ', 'interfaceLanguage': 'swift'} | decl=static func isOpening(_ character: Character, mate: Character) -> Bool |
+swift.type.method isValidUTF16Offset(_:documentUTF16Length:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO012isValidUTF16E0_08documentI6LengthSbSi_SitFZ', 'interfaceLanguage': 'swift'} | decl=static func isValidUTF16Offset(_ offset: Int, documentUTF16Length length: Int) -> Bool |
+swift.type.method joinCommand(executable:arguments:) | precise={'precise': 's:14CodeEditorCore12ShellQuotingO11joinCommand10executable9argumentsS2S_SaySSGtFZ', 'interfaceLanguage': 'swift'} | decl=static func joinCommand(executable: String, arguments: [String]) -> String |
+swift.type.method leadingWhitespace(ofLine:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO17leadingWhitespace6ofLineS2S_tFZ', 'interfaceLanguage': 'swift'} | decl=static func leadingWhitespace(ofLine line: String) -> String |
+swift.type.method leadingWhitespaceRange(containing:in:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO22leadingWhitespaceRange10containing2inSo8_NSRangeVSgSi_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func leadingWhitespaceRange(containing location: Int, in document: String) -> NSRange? |
+swift.type.method lineContent(range:in:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO11lineContent5range2inSSSo8_NSRangeV_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func lineContent(range: NSRange, in document: String) -> String |
+swift.type.method lineEndingRangeBefore(location:in:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO21lineEndingRangeBefore8location2inSo8_NSRangeVSgSi_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func lineEndingRangeBefore(location: Int, in document: String) -> NSRange? |
+swift.type.method lineRanges(intersecting:in:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO10lineRanges12intersecting2inSaySo8_NSRangeVGAI_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func lineRanges(intersecting selections: [NSRange], in document: String) -> [NSRange] |
+swift.type.method match(aroundUTF16Offset:in:) | precise={'precise': 's:14CodeEditorCore14BracketMatcherO5match17aroundUTF16Offset2inAC5MatchVSgSi_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func match(aroundUTF16Offset offset: Int, in string: String) -> Match? |
+swift.type.method mate(for:) | precise={'precise': 's:14CodeEditorCore12BracketPairsO4mate3forSJSgSJ_tFZ', 'interfaceLanguage': 'swift'} | decl=static func mate(for character: Character) -> Character? |
+swift.type.method moveLines(selections:document:up:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO9moveLines10selections8document2upSayAA15TextReplacementVG12replacements_So8_NSRangeV12newSelectiontSgSayAMG_SSSbtFZ', 'interfaceLanguage': 'swift'} | decl=static func moveLines(selections: [NSRange], document: String, up: Bool) -> (replacements: [TextReplacement], newSelection: NSRange)? |
+swift.type.method newlineInsertion(lineTextBeforeCaret:nextCharacter:indent:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO16newlineInsertion04lineD11BeforeCaret13nextCharacter6indentAC07NewlineG0VSS_SJSgAA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func newlineInsertion(lineTextBeforeCaret: String, nextCharacter: Character?, indent: IndentOption) -> NewlineInsertion |
+swift.type.method normalize(_:documentLength:) | precise={'precise': 's:14CodeEditorCore14MultiRangeEditO9normalize_14documentLengthSaySo8_NSRangeVGAH_SitFZ', 'interfaceLanguage': 'swift'} | decl=static func normalize(_ ranges: [NSRange], documentLength: Int) -> [NSRange] |
+swift.type.method normalizeLineEndings(_:to:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO20normalizeLineEndings_2toS2S_AA0H6EndingOtFZ', 'interfaceLanguage': 'swift'} | decl=static func normalizeLineEndings(_ text: String, to ending: LineEnding) -> String |
+swift.type.method outdentLine(_:indent:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO11outdentLine_6indentS2S_AA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func outdentLine(_ line: String, indent: IndentOption) -> String |
+swift.type.method outdentLines(selections:document:indent:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO12outdentLines10selections8document6indentSayAA15TextReplacementVGSaySo8_NSRangeVG_SSAA12IndentOptionOtFZ', 'interfaceLanguage': 'swift'} | decl=static func outdentLines(selections: [NSRange], document: String, indent: IndentOption) -> [TextReplacement] |
+swift.type.method pairOpen(for:) | precise={'precise': 's:14CodeEditorCore11TextFiltersO8pairOpen3forSJSgSJ_tFZ', 'interfaceLanguage': 'swift'} | decl=static func pairOpen(for close: Character) -> Character? |
+swift.type.method quote(_:) | precise={'precise': 's:14CodeEditorCore12ShellQuotingO5quoteyS2SFZ', 'interfaceLanguage': 'swift'} | decl=static func quote(_ argument: String) -> String |
+swift.type.method range(atUTF16Offset:in:) | precise={'precise': 's:14CodeEditorCore13WordSelectionO5range13atUTF16Offset2inSo8_NSRangeVSi_SStFZ', 'interfaceLanguage': 'swift'} | decl=static func range(atUTF16Offset offset: Int, in document: String) -> NSRange |
+swift.type.method range(atUTF16Offset:in:mode:) | precise={'precise': 's:14CodeEditorCore13WordSelectionO5range13atUTF16Offset2in4modeSo8_NSRangeVSi_SSAA0D14NavigationModeOtFZ', 'interfaceLanguage': 'swift'} | decl=static func range(atUTF16Offset offset: Int, in document: String, mode: WordNavigationMode) -> NSRange |
+swift.type.method ranges(in:fragments:documentLength:) | precise={'precise': 's:14CodeEditorCore22ColumnSelectionBuilderO6ranges2in9fragments14documentLengthSaySo8_NSRangeVGSo6CGRectV_SayAA0dE8FragmentVGSitFZ', 'interfaceLanguage': 'swift'} | decl=static func ranges(in rect: CGRect, fragments: [ColumnSelectionFragment], documentLength: Int) -> [NSRange] |
+swift.type.method remap(range:editLocation:delta:) | precise={'precise': 's:14CodeEditorCore14MultiRangeEditO5remap5range12editLocation5deltaSo8_NSRangeVAI_S2itFZ', 'interfaceLanguage': 'swift'} | decl=static func remap(range: NSRange, editLocation: Int, delta: Int) -> NSRange |
+swift.type.method remap(ranges:editLocation:delta:) | precise={'precise': 's:14CodeEditorCore14MultiRangeEditO5remap6ranges12editLocation5deltaSaySo8_NSRangeVGAJ_S2itFZ', 'interfaceLanguage': 'swift'} | decl=static func remap(ranges: [NSRange], editLocation: Int, delta: Int) -> [NSRange] |
+swift.type.method scalarIndex(atUTF16Offset:in:policy:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO11scalarIndex07atUTF16E02in6policySS0H0VSi_SSAC14BoundaryPolicyOtKFZ', 'interfaceLanguage': 'swift'} | decl=static func scalarIndex(atUTF16Offset offset: Int, in text: String, policy: BoundaryPolicy = .exact) throws -> String.Index |
+swift.type.method shipping(_:) | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV8shippingyAcA08ShippingF2IDOFZ', 'interfaceLanguage': 'swift'} | decl=static func shipping(_ id: ShippingProfileID) -> PlatformCapabilityProfile |
+swift.type.method single(range:replacement:origin:id:) | precise={'precise': 's:14CodeEditorCore15EditTransactionV6single5range11replacement6origin2idACSo8_NSRangeV_SSAA0D6OriginO10Foundation4UUIDVtFZ', 'interfaceLanguage': 'swift'} | decl=static func single(range: NSRange, replacement: String, origin: EditOrigin = .unknown, id: UUID = UUID()) -> EditTransaction |
+swift.type.method splitLines(in:estimatedHeight:includeTrailingEmptyLine:) | precise={'precise': 's:14CodeEditorCore11LineMetricsV10splitLines2in15estimatedHeight020includeTrailingEmptyD0SayACGSS_0C10Foundation7CGFloatVSbtFZ', 'interfaceLanguage': 'swift'} | decl=static func splitLines(in string: String, estimatedHeight: CGFloat, includeTrailingEmptyLine: Bool = false) -> [LineMetrics] |
+swift.type.method subwordSegments(_:) | precise={'precise': 's:14CodeEditorCore13WordSelectionO15subwordSegmentsySaySSGSSFZ', 'interfaceLanguage': 'swift'} | decl=static func subwordSegments(_ identifier: String) -> [String] |
+swift.type.method toggleBlockComment(selection:document:open:close:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO18toggleBlockComment9selection8document4open5closeAA15TextReplacementVSgSo8_NSRangeV_S3StFZ', 'interfaceLanguage': 'swift'} | decl=static func toggleBlockComment(selection: NSRange, document: String, open: String, close: String) -> TextReplacement? |
+swift.type.method toggleLineComment(selections:document:lineComment:) | precise={'precise': 's:14CodeEditorCore17StructureCommandsO17toggleLineComment10selections8document04lineH0SayAA15TextReplacementVGSaySo8_NSRangeVG_S2StFZ', 'interfaceLanguage': 'swift'} | decl=static func toggleLineComment(selections: [NSRange], document: String, lineComment: String) -> [TextReplacement] |
+swift.type.method utf16Offset(fromUTF8Offset:in:policy:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO05utf16E008fromUTF8E02in6policyS2i_SSAC14BoundaryPolicyOtKFZ', 'interfaceLanguage': 'swift'} | decl=static func utf16Offset(fromUTF8Offset utf8Offset: Int, in text: String, policy: BoundaryPolicy = .exact) throws -> Int |
+swift.type.method utf8Offset(fromUTF16Offset:in:policy:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO04utf8E009fromUTF16E02in6policyS2i_SSAC14BoundaryPolicyOtKFZ', 'interfaceLanguage': 'swift'} | decl=static func utf8Offset(fromUTF16Offset utf16Offset: Int, in text: String, policy: BoundaryPolicy = .exact) throws -> Int |
+swift.type.method validatedUTF16Range(_:documentUTF16Length:) | precise={'precise': 's:14CodeEditorCore19TextOffsetSemanticsO19validatedUTF16Range_08documentH6LengthSo8_NSRangeVAG_SitKFZ', 'interfaceLanguage': 'swift'} | decl=static func validatedUTF16Range(_ range: NSRange, documentUTF16Length length: Int) throws -> NSRange |
+swift.type.property autoPairs | precise={'precise': 's:14CodeEditorCore11TextFiltersO9autoPairsSaySJ4open_SJ5closetGvpZ', 'interfaceLanguage': 'swift'} | decl=static let autoPairs: [(open: Character, close: Character)] |
+swift.type.property closing | precise={'precise': 's:14CodeEditorCore12BracketPairsO7closingShySJGvpZ', 'interfaceLanguage': 'swift'} | decl=static var closing: Set<Character> { get } |
+swift.type.property current | precise={'precise': 's:14CodeEditorCore12HostPlatformO7currentACvpZ', 'interfaceLanguage': 'swift'} | decl=static var current: HostPlatform { get } |
+swift.type.property default | precise={'precise': 's:14CodeEditorCore24EnterpriseProfileOptionsV7defaultACvpZ', 'interfaceLanguage': 'swift'} | decl=static let `default`: EnterpriseProfileOptions |
+swift.type.property defaultEventBuffer | precise={'precise': 's:14CodeEditorCore0B11EventStreamC07defaultD6BufferSivpZ', 'interfaceLanguage': 'swift'} | decl=@MainActor static let defaultEventBuffer: Int | actor=1
+swift.type.property directMacOS | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV11directMacOSACvpZ', 'interfaceLanguage': 'swift'} | decl=static let directMacOS: PlatformCapabilityProfile |
+swift.type.property enterprise | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV10enterpriseACvpZ', 'interfaceLanguage': 'swift'} | decl=static let enterprise: PlatformCapabilityProfile |
+swift.type.property iOS | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV3iOSACvpZ', 'interfaceLanguage': 'swift'} | decl=static let iOS: PlatformCapabilityProfile |
+swift.type.property macAppStore | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV11macAppStoreACvpZ', 'interfaceLanguage': 'swift'} | decl=static let macAppStore: PlatformCapabilityProfile |
+swift.type.property opening | precise={'precise': 's:14CodeEditorCore12BracketPairsO7openingShySJGvpZ', 'interfaceLanguage': 'swift'} | decl=static var opening: Set<Character> { get } |
+swift.type.property pairs | precise={'precise': 's:14CodeEditorCore12BracketPairsO5pairsSaySJ4open_SJ5closetGvpZ', 'interfaceLanguage': 'swift'} | decl=static let pairs: [(open: Character, close: Character)] |
+swift.type.property processUnavailable | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV18processUnavailableACvpZ', 'interfaceLanguage': 'swift'} | decl=static let processUnavailable: PlatformCapabilityProfile |
+swift.type.property test | precise={'precise': 's:14CodeEditorCore25PlatformCapabilityProfileV4testACvpZ', 'interfaceLanguage': 'swift'} | decl=static let test: PlatformCapabilityProfile |
+swift.type.property zero | precise={'precise': 's:14CodeEditorCore15DocumentVersionV4zeroACvpZ', 'interfaceLanguage': 'swift'} | decl=static let zero: DocumentVersion |
+swift.typealias CalculatedPosition.Position | precise={'precise': 's:9Rearrange18CalculatedPositionV0C0a', 'interfaceLanguage': 'swift'} | decl=typealias Position = Calculator.TextRange.Bound |
+swift.typealias CalculatedRange.Position | precise={'precise': 's:9Rearrange15CalculatedRangeV8Positiona', 'interfaceLanguage': 'swift'} | decl=typealias Position = Calculator.TextRange.Bound |
+swift.typealias ProcessSupervisor | precise={'precise': 's:14CodeEditorCore17ProcessSupervisora', 'interfaceLanguage': 'swift'} | decl=typealias ProcessSupervisor = ProcessService |
+swift.typealias TSYTextStorage | precise={'precise': 's:9TextStory14TSYTextStoragea', 'interfaceLanguage': 'swift'} | decl=typealias TSYTextStorage = Internal.TSYTextStorage |
+swift.typealias TSYTextStorageDelegate | precise={'precise': 's:9TextStory22TSYTextStorageDelegatea', 'interfaceLanguage': 'swift'} | decl=typealias TSYTextStorageDelegate = Internal.TSYTextStorageDelegate |
+swift.typealias TextRangeCalculating.Position | precise={'precise': 's:9Rearrange20TextRangeCalculatingP8Positiona', 'interfaceLanguage': 'swift'} | decl=typealias Position = TextRange.Bound |

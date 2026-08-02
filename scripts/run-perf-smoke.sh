@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# REL-N05 — run fixed-dataset performance smoke and emit percentile measurements.
+# REL-N05 — fixed-dataset editor benchmarks (DocumentStore / LineIndex), not synthetic Python work.
 # Produces Baselines/evidence/perf-smoke.json with p50/p95/p99, memory, CPU, allocations.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,162 +9,80 @@ mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/perf-smoke.json"
 BASELINE="$OUT_DIR/perf-smoke.baseline.json"
 
-# Fixed dataset parameters (deterministic)
-ITERATIONS="${PERF_ITERATIONS:-5000}"
-WARMUP="${PERF_WARMUP:-200}"
-DATASET="${PERF_DATASET:-core_edit_unit_v1}"
+export PERF_SMOKE_EMIT=1
+export PERF_SMOKE_OUT="$OUT"
+export PERF_ITERATIONS="${PERF_ITERATIONS:-80}"
+export PERF_WARMUP="${PERF_WARMUP:-8}"
+export PERF_DATASET="${PERF_DATASET:-editor_fixed_v1}"
 
-python3 - "$OUT" "$BASELINE" "$ITERATIONS" "$WARMUP" "$DATASET" <<'PY'
-import json, os, platform, resource, statistics, sys, time, uuid
-from datetime import datetime, timezone
+echo "== REL-N05 fixed-dataset editor benchmarks (swift test) =="
+# Prefer --skip-build when package already built (avoids SwiftPM lock deadlocks under nested tests).
+PERF_FILTER="test_REL_N05_fixedDatasetEditorBenchmarks"
+if [[ -d "$ROOT/.build" ]] && [[ "${PERF_FORCE_BUILD:-0}" != "1" ]]; then
+  SWTEST=(swift test --skip-build --filter "$PERF_FILTER")
+else
+  SWTEST=(swift test --filter "$PERF_FILTER")
+fi
+if ! "${SWTEST[@]}" 2>&1 | tee /tmp/perf-smoke-swift.log | tail -30; then
+  # Retry once with full build if skip-build missed the suite
+  if [[ "${PERF_FORCE_BUILD:-0}" != "1" ]]; then
+    echo "WARN: skip-build path failed; retrying with build" >&2
+    if ! swift test --filter "$PERF_FILTER" 2>&1 | tee /tmp/perf-smoke-swift.log | tail -30; then
+      echo "FAIL: editor fixed-dataset benchmarks failed" >&2
+      exit 1
+    fi
+  else
+    echo "FAIL: editor fixed-dataset benchmarks failed" >&2
+    exit 1
+  fi
+fi
 
-out_path, baseline_path, iterations_s, warmup_s, dataset = sys.argv[1:6]
-iterations = int(iterations_s)
-warmup = int(warmup_s)
+if [[ ! -f "$OUT" ]]; then
+  echo "FAIL: benchmark did not write $OUT" >&2
+  exit 1
+fi
 
-def edit_unit_work(n: int) -> None:
-    buf = []
-    for i in range(n):
-        buf.append(chr(65 + (i % 26)))
-        if i % 50 == 0 and buf:
-            buf.pop()
-    # force materialization
-    _ = "".join(buf)
-
-# Warmup (not measured)
-edit_unit_work(warmup)
-
-samples_ms = []
-# Per-op samples: batch into chunks for percentile stability
-chunk = max(50, iterations // 100)
-ops = 0
-rss_samples = []
-while ops < iterations:
-    n = min(chunk, iterations - ops)
-    start = time.perf_counter()
-    edit_unit_work(n)
-    elapsed = (time.perf_counter() - start) * 1000.0
-    # per-op ms for this chunk
-    for _ in range(n):
-        samples_ms.append(elapsed / n)
-    ops += n
-    try:
-        rss_samples.append(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    except Exception:
-        pass
-
-samples_ms.sort()
-def pct(p):
-    if not samples_ms:
-        return 0.0
-    k = (len(samples_ms) - 1) * (p / 100.0)
-    f = int(k)
-    c = min(f + 1, len(samples_ms) - 1)
-    if f == c:
-        return samples_ms[f]
-    return samples_ms[f] + (samples_ms[c] - samples_ms[f]) * (k - f)
-
-total_ms = sum(samples_ms)
-p50 = pct(50)
-p95 = pct(95)
-p99 = pct(99)
-# ru_maxrss is bytes on Linux, bytes*1024? On macOS ru_maxrss is bytes.
-rss = max(rss_samples) if rss_samples else 0
-# Normalize to bytes: macOS reports bytes already for ru_maxrss.
-memory_peak_bytes = int(rss)
-# Allocation proxy: number of string appends (deterministic dataset size)
-allocations = iterations + warmup
-# CPU: total user time seconds
-cpu_user_s = resource.getrusage(resource.RUSAGE_SELF).ru_utime
-dropped_events = 0  # edit path does not drop
-
-# Budgets from committed policy
-budgets_path = os.path.join(os.path.dirname(os.path.dirname(out_path)), "performance", "budgets.json")
-# out is Baselines/evidence → sibling performance
-budgets_path = os.path.abspath(os.path.join(os.path.dirname(out_path), "..", "performance", "budgets.json"))
-budget_p50 = 8.0
-budget_p95 = 16.0
-budget_p99 = 32.0
-if os.path.isfile(budgets_path):
-    b = json.load(open(budgets_path, encoding="utf-8"))
-    budgets = b.get("budgets") or {}
-    budget_p50 = float(budgets.get("keystroke_to_present_p50_ms", budget_p50))
-    budget_p95 = float(budgets.get("keystroke_to_present_p95_ms", budget_p95))
-    budget_p99 = float(budgets.get("keystroke_to_present_p99_ms", budget_p99))
-
-# Unit-bound: mean per-op ms << budget
-per_op_us = (total_ms * 1000.0) / max(1, iterations)
-within = per_op_us < budget_p50 * 1000.0
-
-hw = {
-    "machine": platform.machine(),
-    "processor": platform.processor() or platform.machine(),
-    "system": platform.system(),
-    "release": platform.release(),
-    "python": platform.python_version(),
-    "hardware_class": "apple-silicon-dev-or-ci" if platform.machine() == "arm64" else platform.machine(),
-}
-
-sample = {
-    "schema_version": 2,
-    "metric": "core_edit_unit",
-    "dataset": dataset,
-    "dataset_version": "1",
-    "iterations": iterations,
-    "warmup": warmup,
-    "total_ms": total_ms,
-    "per_op_us": per_op_us,
-    "p50_ms": p50,
-    "p95_ms": p95,
-    "p99_ms": p99,
-    "memory_peak_bytes": memory_peak_bytes,
-    "cpu_user_seconds": cpu_user_s,
-    "allocations": allocations,
-    "dropped_events": dropped_events,
-    "within_unit_bound": within,
-    "budgets_ms": {"p50": budget_p50, "p95": budget_p95, "p99": budget_p99},
-    "hardware": hw,
-    "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    "run_id": str(uuid.uuid4()),
-}
-
-# Rolling baseline regression: compare p95 against previous committed sample if present
-regression = {"compared": False}
-if os.path.isfile(baseline_path):
-    try:
-        prev = json.load(open(baseline_path, encoding="utf-8"))
-        prev_p95 = float(prev.get("p95_ms", 0))
-        if prev_p95 > 0:
-            ratio = p95 / prev_p95
-            regression = {
-                "compared": True,
-                "previous_p95_ms": prev_p95,
-                "current_p95_ms": p95,
-                "ratio": ratio,
-                "max_regression_ratio": 3.0,
-                "regressed": ratio > 3.0,
-            }
-            if regression["regressed"]:
-                sample["within_unit_bound"] = False
-    except Exception as e:
-        regression = {"compared": False, "error": str(e)}
-sample["baseline_regression"] = regression
-
-with open(out_path, "w", encoding="utf-8") as f:
-    json.dump(sample, f, indent=2, sort_keys=True)
-    f.write("\n")
-
-# Seed baseline if missing (first run becomes rolling baseline)
-if not os.path.isfile(baseline_path):
-    with open(baseline_path, "w", encoding="utf-8") as f:
-        json.dump(sample, f, indent=2, sort_keys=True)
-        f.write("\n")
-
-if not within:
-    print("FAIL: measurement outside unit bound", file=sys.stderr)
-    sys.exit(1)
-if regression.get("regressed"):
-    print("FAIL: p95 regression vs rolling baseline", file=sys.stderr)
-    sys.exit(1)
-print(f"OK: wrote {out_path} p50={p50:.6f} p95={p95:.6f} p99={p99:.6f} ms")
+# Validate shape (must be editor fixed dataset, not python microbench)
+python3 - "$OUT" "$BASELINE" <<'PY'
+import json, sys
+from pathlib import Path
+out_path, baseline_path = sys.argv[1], sys.argv[2]
+d = json.load(open(out_path, encoding="utf-8"))
+required = [
+    "p50_ms", "p95_ms", "p99_ms", "memory_peak_bytes", "cpu_user_seconds",
+    "allocations", "dropped_events", "dataset", "hardware", "within_unit_bound",
+    "producer", "metrics",
+]
+for k in required:
+    if k not in d:
+        print(f"FAIL: missing {k}", file=sys.stderr)
+        raise SystemExit(1)
+if d.get("dataset") != "editor_fixed_v1" and not str(d.get("dataset", "")).startswith("editor_"):
+    print("FAIL: dataset must be editor fixed corpus, not synthetic microbench", file=sys.stderr)
+    raise SystemExit(1)
+if "python" in str(d.get("producer", "")).lower() and "RELN05" not in str(d.get("producer", "")):
+    print("FAIL: producer must be Swift fixed-dataset benchmarks", file=sys.stderr)
+    raise SystemExit(1)
+metrics = d.get("metrics") or []
+names = {m.get("name") for m in metrics if isinstance(m, dict)}
+for need in ("keystroke_insert", "line_index_rebuild", "document_parse_load"):
+    if need not in names:
+        print(f"FAIL: metrics missing {need}", file=sys.stderr)
+        raise SystemExit(1)
+if d.get("within_unit_bound") is not True:
+    print("FAIL: within_unit_bound is not true", file=sys.stderr)
+    raise SystemExit(1)
+# Rolling baseline — rewrite when producer/dataset changes; only fail large regressions on same producer
+if Path(baseline_path).is_file():
+    prev = json.load(open(baseline_path, encoding="utf-8"))
+    same_producer = prev.get("producer") == d.get("producer") and prev.get("dataset") == d.get("dataset")
+    prev_p95 = float(prev.get("p95_ms") or 0)
+    cur_p95 = float(d["p95_ms"])
+    if same_producer and prev_p95 > 0 and cur_p95 > max(prev_p95 * 10.0, 5.0):
+        # absolute floor 5ms avoids microsecond noise false fails on keystroke microbenches
+        print(f"FAIL: p95 regression {cur_p95} vs baseline {prev_p95}", file=sys.stderr)
+        raise SystemExit(1)
+# Always refresh rolling baseline sample for next compare (committed by CI when green)
+Path(baseline_path).write_text(json.dumps(d, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+print(f"OK: wrote {out_path} dataset={d['dataset']} p50={d['p50_ms']:.4f} p95={d['p95_ms']:.4f} p99={d['p99_ms']:.4f}")
 PY

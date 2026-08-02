@@ -3,7 +3,7 @@ CodeEditorCore	312
 CodeEditorDocuments	165
 CodeEditorCommands	187
 CodeEditorWorkspace	275
-CodeEditorWorkbench	411
+CodeEditorWorkbench	429
 CodeEditorView	789
 CodeEditorLanguageSupport	144
 CodeEditorLanguageServices	367
@@ -14,9 +14,9 @@ CodeEditorWasmEngine	71
 CodeEditorWasmEngineWasmKit	6
 CodeEditorExtensionWasmGuest	20
 CodeEditorExtensions	222
-CodeEditorExtensionHost	530
+CodeEditorExtensionHost	528
 CodeEditorLSP	224
-CodeEditorDAP	198
+CodeEditorDAP	195
 CodeEditorSearch	71
 CodeEditorTasks	155
 CodeEditorTerminal	152

@@ -1,0 +1,4701 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "CodeEditorTreeSitter",
+    "printedName": "CodeEditorTreeSitter",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "CodeEditorLanguageSupport",
+        "printedName": "CodeEditorLanguageSupport",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "Import",
+        "name": "SwiftOnoneSupport",
+        "printedName": "SwiftOnoneSupport",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "Import",
+        "name": "SwiftTreeSitter",
+        "printedName": "SwiftTreeSitter",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "Import",
+        "name": "_Concurrency",
+        "printedName": "_Concurrency",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "Import",
+        "name": "_StringProcessing",
+        "printedName": "_StringProcessing",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "Import",
+        "name": "_SwiftConcurrencyShims",
+        "printedName": "_SwiftConcurrencyShims",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTreeSitter"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LanguageDocumentActor",
+        "printedName": "LanguageDocumentActor",
+        "children": [
+          {
+            "kind": "TypeDecl",
+            "name": "HighlightPublication",
+            "printedName": "HighlightPublication",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "generation",
+                "printedName": "generation",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10generations6UInt64Vvp",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10generations6UInt64Vvp",
+                "moduleName": "CodeEditorTreeSitter",
+                "declAttributes": [
+                  "HasStorage"
+                ],
+                "hasStorage": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UInt64",
+                        "printedName": "Swift.UInt64",
+                        "usr": "s:s6UInt64V"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10generations6UInt64Vvg",
+                    "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10generations6UInt64Vvg",
+                    "moduleName": "CodeEditorTreeSitter",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "get"
+                  },
+                  {
+                    "kind": "Accessor",
+                    "name": "Set",
+                    "printedName": "Set()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UInt64",
+                        "printedName": "Swift.UInt64",
+                        "usr": "s:s6UInt64V"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10generations6UInt64Vvs",
+                    "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10generations6UInt64Vvs",
+                    "moduleName": "CodeEditorTreeSitter",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "set"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "highlights",
+                "printedName": "highlights",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageSupport.HighlightRange]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "HighlightRange",
+                        "printedName": "CodeEditorLanguageSupport.HighlightRange",
+                        "usr": "s:25CodeEditorLanguageSupport14HighlightRangeV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10highlightsSay0abE7Support0H5RangeVGvp",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10highlightsSay0abE7Support0H5RangeVGvp",
+                "moduleName": "CodeEditorTreeSitter",
+                "declAttributes": [
+                  "HasStorage"
+                ],
+                "hasStorage": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[CodeEditorLanguageSupport.HighlightRange]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "HighlightRange",
+                            "printedName": "CodeEditorLanguageSupport.HighlightRange",
+                            "usr": "s:25CodeEditorLanguageSupport14HighlightRangeV"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10highlightsSay0abE7Support0H5RangeVGvg",
+                    "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10highlightsSay0abE7Support0H5RangeVGvg",
+                    "moduleName": "CodeEditorTreeSitter",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "get"
+                  },
+                  {
+                    "kind": "Accessor",
+                    "name": "Set",
+                    "printedName": "Set()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[CodeEditorLanguageSupport.HighlightRange]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "HighlightRange",
+                            "printedName": "CodeEditorLanguageSupport.HighlightRange",
+                            "usr": "s:25CodeEditorLanguageSupport14HighlightRangeV"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10highlightsSay0abE7Support0H5RangeVGvs",
+                    "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV10highlightsSay0abE7Support0H5RangeVGvs",
+                    "moduleName": "CodeEditorTreeSitter",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "set"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "sourceLengthUTF16",
+                "printedName": "sourceLengthUTF16",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV17sourceLengthUTF16Sivp",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV17sourceLengthUTF16Sivp",
+                "moduleName": "CodeEditorTreeSitter",
+                "declAttributes": [
+                  "HasStorage"
+                ],
+                "hasStorage": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV17sourceLengthUTF16Sivg",
+                    "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV17sourceLengthUTF16Sivg",
+                    "moduleName": "CodeEditorTreeSitter",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "get"
+                  },
+                  {
+                    "kind": "Accessor",
+                    "name": "Set",
+                    "printedName": "Set()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV17sourceLengthUTF16Sivs",
+                    "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV17sourceLengthUTF16Sivs",
+                    "moduleName": "CodeEditorTreeSitter",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "set"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Struct",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV",
+            "moduleName": "CodeEditorTreeSitter",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "EngineError",
+            "printedName": "EngineError",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "notConfigured",
+                "printedName": "notConfigured",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTreeSitter.LanguageDocumentActor.EngineError.Type) -> CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "EngineError",
+                        "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                        "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "EngineError",
+                            "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO13notConfiguredyA2EmF",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO13notConfiguredyA2EmF",
+                "moduleName": "CodeEditorTreeSitter"
+              },
+              {
+                "kind": "Var",
+                "name": "queryMissing",
+                "printedName": "queryMissing",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTreeSitter.LanguageDocumentActor.EngineError.Type) -> (Swift.String) -> CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(Swift.String) -> CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "EngineError",
+                            "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "EngineError",
+                            "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO12queryMissingyAESScAEmF",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO12queryMissingyAESScAEmF",
+                "moduleName": "CodeEditorTreeSitter"
+              },
+              {
+                "kind": "Var",
+                "name": "cancelled",
+                "printedName": "cancelled",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTreeSitter.LanguageDocumentActor.EngineError.Type) -> CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "EngineError",
+                        "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                        "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "EngineError",
+                            "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO9cancelledyA2EmF",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO9cancelledyA2EmF",
+                "moduleName": "CodeEditorTreeSitter"
+              },
+              {
+                "kind": "Function",
+                "name": "__derived_enum_equals",
+                "printedName": "__derived_enum_equals(_:_:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "EngineError",
+                    "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "EngineError",
+                    "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.EngineError",
+                    "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO"
+                  }
+                ],
+                "declKind": "Func",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO21__derived_enum_equalsySbAE_AEtFZ",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO21__derived_enum_equalsySbAE_AEtFZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Implements",
+                  "Semantics"
+                ],
+                "funcSelfKind": "NonMutating"
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC11EngineErrorO",
+            "moduleName": "CodeEditorTreeSitter",
+            "isEnumExhaustive": true,
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Error",
+                "printedName": "Error",
+                "usr": "s:s5ErrorP",
+                "mangledName": "$ss5ErrorP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "lastPublishedGeneration",
+            "printedName": "lastPublishedGeneration",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC23lastPublishedGenerations6UInt64Vvp",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC23lastPublishedGenerations6UInt64Vvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC23lastPublishedGenerations6UInt64Vvg",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC23lastPublishedGenerations6UInt64Vvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageDocumentActor",
+                "printedName": "CodeEditorTreeSitter.LanguageDocumentActor",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorCACycfc",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorCACycfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "currentGeneration",
+            "printedName": "currentGeneration",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC17currentGenerations6UInt64Vvp",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC17currentGenerations6UInt64Vvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC17currentGenerations6UInt64Vvg",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC17currentGenerations6UInt64Vvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "configure",
+            "printedName": "configure(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageConfiguration",
+                "printedName": "SwiftTreeSitter.LanguageConfiguration",
+                "usr": "s:15SwiftTreeSitter21LanguageConfigurationV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC9configureyy05SwiftcD00E13ConfigurationVKF",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC9configureyy05SwiftcD00E13ConfigurationVKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "reset",
+            "printedName": "reset()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC5resetyyF",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC5resetyyF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setText",
+            "printedName": "setText(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC7setTextys6UInt64VSSKF",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC7setTextys6UInt64VSSKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "DiscardableResult"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "applyEdit",
+            "printedName": "applyEdit(range:delta:newText:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Tuple",
+                "printedName": "(invalid: Foundation.IndexSet, generation: Swift.UInt64)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "IndexSet",
+                    "printedName": "Foundation.IndexSet",
+                    "usr": "s:10Foundation8IndexSetV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRange",
+                "printedName": "Foundation.NSRange",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "_NSRange",
+                    "printedName": "Foundation._NSRange",
+                    "usr": "c:@S@_NSRange"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC9applyEdit5range5delta7newText10Foundation8IndexSetV7invalid_s6UInt64V10generationtSo8_NSRangeV_SiSStKF",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC9applyEdit5range5delta7newText10Foundation8IndexSetV7invalid_s6UInt64V10generationtSo8_NSRangeV_SiSStKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "queryHighlights",
+            "printedName": "queryHighlights(in:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "HighlightPublication",
+                "printedName": "CodeEditorTreeSitter.LanguageDocumentActor.HighlightPublication",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC20HighlightPublicationV"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRange",
+                "printedName": "Foundation.NSRange",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "_NSRange",
+                    "printedName": "Foundation._NSRange",
+                    "usr": "c:@S@_NSRange"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC15queryHighlights2inAC20HighlightPublicationVSo8_NSRangeV_tKF",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC15queryHighlights2inAC20HighlightPublicationVSo8_NSRangeV_tKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "isCurrent",
+            "printedName": "isCurrent(generation:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC9isCurrent10generationSbs6UInt64V_tF",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC9isCurrent10generationSbs6UInt64V_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "unownedExecutor",
+            "printedName": "unownedExecutor",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UnownedSerialExecutor",
+                "printedName": "_Concurrency.UnownedSerialExecutor",
+                "usr": "s:Sce"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC15unownedExecutorScevp",
+            "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC15unownedExecutorScevp",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "intro_Macosx": "10.15",
+            "intro_iOS": "13.0",
+            "intro_tvOS": "13.0",
+            "intro_watchOS": "6.0",
+            "declAttributes": [
+              "Available",
+              "Available",
+              "Available",
+              "Available",
+              "Final",
+              "Nonisolated",
+              "Semantics"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UnownedSerialExecutor",
+                    "printedName": "_Concurrency.UnownedSerialExecutor",
+                    "usr": "s:Sce"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC15unownedExecutorScevg",
+                "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC15unownedExecutorScevg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:20CodeEditorTreeSitter21LanguageDocumentActorC",
+        "mangledName": "$s20CodeEditorTreeSitter21LanguageDocumentActorC",
+        "moduleName": "CodeEditorTreeSitter",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Actor",
+            "printedName": "Actor",
+            "usr": "s:ScA",
+            "mangledName": "$sScA"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterQueryLimits",
+        "printedName": "TreeSitterQueryLimits",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "maxCombinedQueryBytes",
+            "printedName": "maxCombinedQueryBytes",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5BytesSivp",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5BytesSivp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5BytesSivg",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5BytesSivg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5BytesSivs",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5BytesSivs",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "maxInjectionDepth",
+            "printedName": "maxInjectionDepth",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV17maxInjectionDepthSivp",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV17maxInjectionDepthSivp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV17maxInjectionDepthSivg",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV17maxInjectionDepthSivg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV17maxInjectionDepthSivs",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV17maxInjectionDepthSivs",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "maxHighlightCaptures",
+            "printedName": "maxHighlightCaptures",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV20maxHighlightCapturesSivp",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV20maxHighlightCapturesSivp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV20maxHighlightCapturesSivg",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV20maxHighlightCapturesSivg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV20maxHighlightCapturesSivs",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV20maxHighlightCapturesSivs",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(maxCombinedQueryBytes:maxInjectionDepth:maxHighlightCaptures:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterQueryLimits",
+                "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5Bytes0G14InjectionDepth0G17HighlightCapturesACSi_S2itcfc",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV011maxCombinedE5Bytes0G14InjectionDepth0G17HighlightCapturesACSi_S2itcfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "default",
+            "printedName": "default",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterQueryLimits",
+                "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV7defaultACvpZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV7defaultACvpZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterQueryLimits",
+                    "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                    "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV7defaultACvgZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV7defaultACvgZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterQueryLimits",
+                "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterQueryLimits",
+                "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV9hashValueSivp",
+            "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV9hashValueSivp",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV9hashValueSivg",
+                "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV9hashValueSivg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV",
+        "mangledName": "$s20CodeEditorTreeSitter0cD11QueryLimitsV",
+        "moduleName": "CodeEditorTreeSitter",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "GrammarIdentity",
+        "printedName": "GrammarIdentity",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "languageID",
+            "printedName": "languageID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV10languageID0aB15LanguageSupport0iH0Vvp",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV10languageID0aB15LanguageSupport0iH0Vvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageID",
+                    "printedName": "CodeEditorLanguageSupport.LanguageID",
+                    "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV10languageID0aB15LanguageSupport0iH0Vvg",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV10languageID0aB15LanguageSupport0iH0Vvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageID",
+                    "printedName": "CodeEditorLanguageSupport.LanguageID",
+                    "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV10languageID0aB15LanguageSupport0iH0Vvs",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV10languageID0aB15LanguageSupport0iH0Vvs",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "sourceRevision",
+            "printedName": "sourceRevision",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV14sourceRevisionSSSgvp",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV14sourceRevisionSSSgvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV14sourceRevisionSSSgvg",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV14sourceRevisionSSSgvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV14sourceRevisionSSSgvs",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV14sourceRevisionSSSgvs",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "parserContentHash",
+            "printedName": "parserContentHash",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV17parserContentHashSSSgvp",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV17parserContentHashSSSgvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV17parserContentHashSSSgvg",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV17parserContentHashSSSgvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV17parserContentHashSSSgvs",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV17parserContentHashSSSgvs",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(languageID:sourceRevision:parserContentHash:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GrammarIdentity",
+                "printedName": "CodeEditorTreeSitter.GrammarIdentity",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV10languageID14sourceRevision17parserContentHashAC0aB15LanguageSupport0nH0V_SSSgAJtcfc",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV10languageID14sourceRevision17parserContentHashAC0aB15LanguageSupport0nH0V_SSSgAJtcfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "GrammarIdentity",
+                "printedName": "CodeEditorTreeSitter.GrammarIdentity",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "GrammarIdentity",
+                "printedName": "CodeEditorTreeSitter.GrammarIdentity",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV6encode2toys7Encoder_p_tKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV9hashValueSivp",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV9hashValueSivp",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV9hashValueSivg",
+                "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV9hashValueSivg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GrammarIdentity",
+                "printedName": "CodeEditorTreeSitter.GrammarIdentity",
+                "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20CodeEditorTreeSitter15GrammarIdentityV",
+        "mangledName": "$s20CodeEditorTreeSitter15GrammarIdentityV",
+        "moduleName": "CodeEditorTreeSitter",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "QuerySetDiagnostic",
+        "printedName": "QuerySetDiagnostic",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "missing",
+            "printedName": "missing",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTreeSitter.QuerySetDiagnostic.Type) -> (CodeEditorLanguageSupport.QueryKind) -> CodeEditorTreeSitter.QuerySetDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.QueryKind) -> CodeEditorTreeSitter.QuerySetDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QueryKind",
+                        "printedName": "CodeEditorLanguageSupport.QueryKind",
+                        "usr": "s:25CodeEditorLanguageSupport9QueryKindO"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO7missingyAC0aB15LanguageSupport0E4KindOcACmF",
+            "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO7missingyAC0aB15LanguageSupport0E4KindOcACmF",
+            "moduleName": "CodeEditorTreeSitter"
+          },
+          {
+            "kind": "Var",
+            "name": "unreadable",
+            "printedName": "unreadable",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTreeSitter.QuerySetDiagnostic.Type) -> (CodeEditorLanguageSupport.QueryKind, Swift.String) -> CodeEditorTreeSitter.QuerySetDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.QueryKind, Swift.String) -> CodeEditorTreeSitter.QuerySetDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(CodeEditorLanguageSupport.QueryKind, path: Swift.String)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QueryKind",
+                            "printedName": "CodeEditorLanguageSupport.QueryKind",
+                            "usr": "s:25CodeEditorLanguageSupport9QueryKindO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO10unreadableyAC0aB15LanguageSupport0E4KindO_SStcACmF",
+            "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO10unreadableyAC0aB15LanguageSupport0E4KindO_SStcACmF",
+            "moduleName": "CodeEditorTreeSitter"
+          },
+          {
+            "kind": "Var",
+            "name": "oversized",
+            "printedName": "oversized",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTreeSitter.QuerySetDiagnostic.Type) -> (CodeEditorLanguageSupport.QueryKind, Swift.Int) -> CodeEditorTreeSitter.QuerySetDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.QueryKind, Swift.Int) -> CodeEditorTreeSitter.QuerySetDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(CodeEditorLanguageSupport.QueryKind, bytes: Swift.Int)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QueryKind",
+                            "printedName": "CodeEditorLanguageSupport.QueryKind",
+                            "usr": "s:25CodeEditorLanguageSupport9QueryKindO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Int",
+                            "printedName": "Swift.Int",
+                            "usr": "s:Si"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO9oversizedyAC0aB15LanguageSupport0E4KindO_SitcACmF",
+            "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO9oversizedyAC0aB15LanguageSupport0E4KindO_SitcACmF",
+            "moduleName": "CodeEditorTreeSitter"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "QuerySetDiagnostic",
+                "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "QuerySetDiagnostic",
+                "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO9hashValueSivp",
+            "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO9hashValueSivp",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO9hashValueSivg",
+                "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO9hashValueSivg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO",
+        "mangledName": "$s20CodeEditorTreeSitter18QuerySetDiagnosticO",
+        "moduleName": "CodeEditorTreeSitter",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "QuerySetLoader",
+        "printedName": "QuerySetLoader",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "loadSources",
+            "printedName": "loadSources(languageID:kinds:registry:limits:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Tuple",
+                "printedName": "(sources: [CodeEditorLanguageSupport.QueryKind : Swift.String], diagnostics: [CodeEditorTreeSitter.QuerySetDiagnostic])",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[CodeEditorLanguageSupport.QueryKind : Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QueryKind",
+                        "printedName": "CodeEditorLanguageSupport.QueryKind",
+                        "usr": "s:25CodeEditorLanguageSupport9QueryKindO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorTreeSitter.QuerySetDiagnostic]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuerySetDiagnostic",
+                        "printedName": "CodeEditorTreeSitter.QuerySetDiagnostic",
+                        "usr": "s:20CodeEditorTreeSitter18QuerySetDiagnosticO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Set",
+                "printedName": "Swift.Set<CodeEditorLanguageSupport.QueryKind>",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "QueryKind",
+                    "printedName": "CodeEditorLanguageSupport.QueryKind",
+                    "usr": "s:25CodeEditorLanguageSupport9QueryKindO"
+                  }
+                ],
+                "usr": "s:Sh"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistry",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport0C8RegistryC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterQueryLimits",
+                "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                "hasDefaultArg": true,
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter14QuerySetLoaderO11loadSources10languageID5kinds8registry6limitsSDy0aB15LanguageSupport0E4KindOSSG7sources_SayAA0eF10DiagnosticOG11diagnosticstAI0oK0V_ShyAKGAI0O8RegistryCAA0cdE6LimitsVtFZ",
+            "mangledName": "$s20CodeEditorTreeSitter14QuerySetLoaderO11loadSources10languageID5kinds8registry6limitsSDy0aB15LanguageSupport0E4KindOSSG7sources_SayAA0eF10DiagnosticOG11diagnosticstAI0oK0V_ShyAKGAI0O8RegistryCAA0cdE6LimitsVtFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "combinedHighlightsSource",
+            "printedName": "combinedHighlightsSource(language:registry:limits:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CodeLanguage",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                "usr": "s:25CodeEditorLanguageSupport0aC0V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistry",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport0C8RegistryC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterQueryLimits",
+                "printedName": "CodeEditorTreeSitter.TreeSitterQueryLimits",
+                "hasDefaultArg": true,
+                "usr": "s:20CodeEditorTreeSitter0cD11QueryLimitsV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter14QuerySetLoaderO24combinedHighlightsSource8language8registry6limitsSS0aB15LanguageSupport0aN0V_AH0N8RegistryCAA0cdE6LimitsVtKFZ",
+            "mangledName": "$s20CodeEditorTreeSitter14QuerySetLoaderO24combinedHighlightsSource8language8registry6limitsSS0aB15LanguageSupport0aN0V_AH0N8RegistryCAA0cdE6LimitsVtKFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:20CodeEditorTreeSitter14QuerySetLoaderO",
+        "mangledName": "$s20CodeEditorTreeSitter14QuerySetLoaderO",
+        "moduleName": "CodeEditorTreeSitter",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterConfigurationProviding",
+        "printedName": "TreeSitterConfigurationProviding",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "codeLanguage",
+            "printedName": "codeLanguage(id:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CodeLanguage",
+                    "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                    "usr": "s:25CodeEditorLanguageSupport0aC0V"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP12codeLanguage2id0abH7Support0aH0VSgSS_tF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD22ConfigurationProvidingP12codeLanguage2id0abH7Support0aH0VSgSS_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "genericSig": "<Self where Self : CodeEditorTreeSitter.TreeSitterConfigurationProviding>",
+            "protocolReq": true,
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "languageConfiguration",
+            "printedName": "languageConfiguration(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "SwiftTreeSitter.LanguageConfiguration?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageConfiguration",
+                    "printedName": "SwiftTreeSitter.LanguageConfiguration",
+                    "usr": "s:15SwiftTreeSitter21LanguageConfigurationV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP08languageE03for05SwiftcD008LanguageE0VSgSS_tKF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD22ConfigurationProvidingP08languageE03for05SwiftcD008LanguageE0VSgSS_tKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "genericSig": "<Self where Self : CodeEditorTreeSitter.TreeSitterConfigurationProviding>",
+            "protocolReq": true,
+            "throwing": true,
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Protocol",
+        "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP",
+        "mangledName": "$s20CodeEditorTreeSitter0cD22ConfigurationProvidingP",
+        "moduleName": "CodeEditorTreeSitter",
+        "genericSig": "<Self : Swift.Sendable>",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterLanguageRuntime",
+        "printedName": "TreeSitterLanguageRuntime",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "shared",
+            "printedName": "shared",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterLanguageRuntime",
+                "printedName": "CodeEditorTreeSitter.TreeSitterLanguageRuntime",
+                "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC6sharedACvpZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC6sharedACvpZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterLanguageRuntime",
+                    "printedName": "CodeEditorTreeSitter.TreeSitterLanguageRuntime",
+                    "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC6sharedACvgZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC6sharedACvgZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "install",
+            "printedName": "install(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterConfigurationProviding",
+                "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC7installyyAA0cD22ConfigurationProviding_pF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC7installyyAA0cD22ConfigurationProviding_pF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setBootstrap",
+            "printedName": "setBootstrap(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(() -> Swift.Void)?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "() -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC12setBootstrapyyyyYbcSgF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC12setBootstrapyyyyYbcSgF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "resolveProvider",
+            "printedName": "resolveProvider()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(any CodeEditorTreeSitter.TreeSitterConfigurationProviding)?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterConfigurationProviding",
+                    "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                    "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC15resolveProviderAA0cD22ConfigurationProviding_pSgyF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC15resolveProviderAA0cD22ConfigurationProviding_pSgyF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "currentGeneration",
+            "printedName": "currentGeneration()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC17currentGenerations6UInt64VyF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC17currentGenerations6UInt64VyF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "reset",
+            "printedName": "reset()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC5resetyyF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC5resetyyF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "unownedExecutor",
+            "printedName": "unownedExecutor",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UnownedSerialExecutor",
+                "printedName": "_Concurrency.UnownedSerialExecutor",
+                "usr": "s:Sce"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC15unownedExecutorScevp",
+            "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC15unownedExecutorScevp",
+            "moduleName": "CodeEditorTreeSitter",
+            "implicit": true,
+            "intro_Macosx": "10.15",
+            "intro_iOS": "13.0",
+            "intro_tvOS": "13.0",
+            "intro_watchOS": "6.0",
+            "declAttributes": [
+              "Available",
+              "Available",
+              "Available",
+              "Available",
+              "Final",
+              "Nonisolated",
+              "Semantics"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UnownedSerialExecutor",
+                    "printedName": "_Concurrency.UnownedSerialExecutor",
+                    "usr": "s:Sce"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC15unownedExecutorScevg",
+                "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC15unownedExecutorScevg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:20CodeEditorTreeSitter0cD15LanguageRuntimeC",
+        "mangledName": "$s20CodeEditorTreeSitter0cD15LanguageRuntimeC",
+        "moduleName": "CodeEditorTreeSitter",
+        "hasMissingDesignatedInitializers": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Actor",
+            "printedName": "Actor",
+            "usr": "s:ScA",
+            "mangledName": "$sScA"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterLanguageEnvironment",
+        "printedName": "TreeSitterLanguageEnvironment",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "hasProvider",
+            "printedName": "hasProvider",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO11hasProviderSbvpZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO11hasProviderSbvpZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO11hasProviderSbvgZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO11hasProviderSbvgZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "configurationProvider",
+            "printedName": "configurationProvider",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(any CodeEditorTreeSitter.TreeSitterConfigurationProviding)?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterConfigurationProviding",
+                    "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                    "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO21configurationProviderAA0cD22ConfigurationProviding_pSgvpZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO21configurationProviderAA0cD22ConfigurationProviding_pSgvpZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "(any CodeEditorTreeSitter.TreeSitterConfigurationProviding)?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TreeSitterConfigurationProviding",
+                        "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                        "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO21configurationProviderAA0cD22ConfigurationProviding_pSgvgZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO21configurationProviderAA0cD22ConfigurationProviding_pSgvgZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "(any CodeEditorTreeSitter.TreeSitterConfigurationProviding)?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TreeSitterConfigurationProviding",
+                        "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                        "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO21configurationProviderAA0cD22ConfigurationProviding_pSgvsZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO21configurationProviderAA0cD22ConfigurationProviding_pSgvsZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "onDemandBootstrap",
+            "printedName": "onDemandBootstrap",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(() -> Swift.Void)?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "() -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO17onDemandBootstrapyyYbcSgvpZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO17onDemandBootstrapyyYbcSgvpZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "(() -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "() -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO17onDemandBootstrapyyYbcSgvgZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO17onDemandBootstrapyyYbcSgvgZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "(() -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "() -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO17onDemandBootstrapyyYbcSgvsZ",
+                "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO17onDemandBootstrapyyYbcSgvsZ",
+                "moduleName": "CodeEditorTreeSitter",
+                "static": true,
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "install",
+            "printedName": "install(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterConfigurationProviding",
+                "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO7installyyAA0cD22ConfigurationProviding_pFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO7installyyAA0cD22ConfigurationProviding_pFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "reset",
+            "printedName": "reset()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO5resetyyFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO5resetyyFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "resolveProvider",
+            "printedName": "resolveProvider()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(any CodeEditorTreeSitter.TreeSitterConfigurationProviding)?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterConfigurationProviding",
+                    "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                    "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO15resolveProviderAA0cD22ConfigurationProviding_pSgyFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO15resolveProviderAA0cD22ConfigurationProviding_pSgyFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "resolveProviderAsync",
+            "printedName": "resolveProviderAsync()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(any CodeEditorTreeSitter.TreeSitterConfigurationProviding)?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterConfigurationProviding",
+                    "printedName": "any CodeEditorTreeSitter.TreeSitterConfigurationProviding",
+                    "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO20resolveProviderAsyncAA0cD22ConfigurationProviding_pSgyYaFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO20resolveProviderAsyncAA0cD22ConfigurationProviding_pSgyYaFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:20CodeEditorTreeSitter0cD19LanguageEnvironmentO",
+        "mangledName": "$s20CodeEditorTreeSitter0cD19LanguageEnvironmentO",
+        "moduleName": "CodeEditorTreeSitter",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterConfigurationFactory",
+        "printedName": "TreeSitterConfigurationFactory",
+        "children": [
+          {
+            "kind": "TypeDecl",
+            "name": "Error",
+            "printedName": "Error",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "queriesNotFound",
+                "printedName": "queriesNotFound",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error.Type) -> (Swift.String) -> CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(Swift.String) -> CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Error",
+                            "printedName": "CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Error",
+                            "printedName": "CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO15queriesNotFoundyAESScAEmF",
+                "mangledName": "$s20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO15queriesNotFoundyAESScAEmF",
+                "moduleName": "CodeEditorTreeSitter"
+              },
+              {
+                "kind": "Var",
+                "name": "parserUnavailable",
+                "printedName": "parserUnavailable",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error.Type) -> (Swift.String) -> CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(Swift.String) -> CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Error",
+                            "printedName": "CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Error",
+                            "printedName": "CodeEditorTreeSitter.TreeSitterConfigurationFactory.Error",
+                            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO17parserUnavailableyAESScAEmF",
+                "mangledName": "$s20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO17parserUnavailableyAESScAEmF",
+                "moduleName": "CodeEditorTreeSitter"
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO",
+            "mangledName": "$s20CodeEditorTreeSitter0cD20ConfigurationFactoryO5ErrorO",
+            "moduleName": "CodeEditorTreeSitter",
+            "isEnumExhaustive": true,
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Error",
+                "printedName": "Error",
+                "usr": "s:s5ErrorP",
+                "mangledName": "$ss5ErrorP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "languageConfiguration",
+            "printedName": "languageConfiguration(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "SwiftTreeSitter.LanguageConfiguration?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageConfiguration",
+                    "printedName": "SwiftTreeSitter.LanguageConfiguration",
+                    "usr": "s:15SwiftTreeSitter21LanguageConfigurationV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CodeLanguage",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                "usr": "s:25CodeEditorLanguageSupport0aC0V"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO08languageE03for05SwiftcD008LanguageE0VSg0abJ7Support0aJ0V_tKFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD20ConfigurationFactoryO08languageE03for05SwiftcD008LanguageE0VSg0abJ7Support0aJ0V_tKFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "declAttributes": [
+              "Nonisolated"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "languageConfiguration",
+            "printedName": "languageConfiguration(id:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "SwiftTreeSitter.LanguageConfiguration?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageConfiguration",
+                    "printedName": "SwiftTreeSitter.LanguageConfiguration",
+                    "usr": "s:15SwiftTreeSitter21LanguageConfigurationV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO08languageE02id05SwiftcD008LanguageE0VSgSS_tKFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD20ConfigurationFactoryO08languageE02id05SwiftcD008LanguageE0VSgSS_tKFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "declAttributes": [
+              "Nonisolated"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:20CodeEditorTreeSitter0cD20ConfigurationFactoryO",
+        "mangledName": "$s20CodeEditorTreeSitter0cD20ConfigurationFactoryO",
+        "moduleName": "CodeEditorTreeSitter",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "RegistryTreeSitterConfigurationProvider",
+        "printedName": "RegistryTreeSitterConfigurationProvider",
+        "children": [
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "RegistryTreeSitterConfigurationProvider",
+                "printedName": "CodeEditorTreeSitter.RegistryTreeSitterConfigurationProvider",
+                "usr": "s:20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderVACycfc",
+            "mangledName": "$s20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderVACycfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "codeLanguage",
+            "printedName": "codeLanguage(id:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CodeLanguage",
+                    "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                    "usr": "s:25CodeEditorLanguageSupport0aC0V"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV12codeLanguage2id0abI7Support0aI0VSgSS_tF",
+            "mangledName": "$s20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV12codeLanguage2id0abI7Support0aI0VSgSS_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "languageConfiguration",
+            "printedName": "languageConfiguration(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "SwiftTreeSitter.LanguageConfiguration?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageConfiguration",
+                    "printedName": "SwiftTreeSitter.LanguageConfiguration",
+                    "usr": "s:15SwiftTreeSitter21LanguageConfigurationV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV08languageF03for05SwiftcD008LanguageF0VSgSS_tKF",
+            "mangledName": "$s20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV08languageF03for05SwiftcD008LanguageF0VSgSS_tKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV",
+        "mangledName": "$s20CodeEditorTreeSitter08RegistrycD21ConfigurationProviderV",
+        "moduleName": "CodeEditorTreeSitter",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "TreeSitterConfigurationProviding",
+            "printedName": "TreeSitterConfigurationProviding",
+            "usr": "s:20CodeEditorTreeSitter0cD22ConfigurationProvidingP",
+            "mangledName": "$s20CodeEditorTreeSitter0cD22ConfigurationProvidingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterEdit",
+        "printedName": "TreeSitterEdit",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "make",
+            "printedName": "make(range:delta:oldSource:newSource:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "InputEdit",
+                "printedName": "SwiftTreeSitter.InputEdit",
+                "usr": "s:15SwiftTreeSitter9InputEditV"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRange",
+                "printedName": "Foundation.NSRange",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "_NSRange",
+                    "printedName": "Foundation._NSRange",
+                    "usr": "c:@S@_NSRange"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD4EditO4make5range5delta9oldSource03newJ005SwiftcD005InputE0VSo8_NSRangeV_SiS2StFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD4EditO4make5range5delta9oldSource03newJ005SwiftcD005InputE0VSo8_NSRangeV_SiS2StFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "point",
+            "printedName": "point(atUTF16Offset:in:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Point",
+                "printedName": "SwiftTreeSitter.Point",
+                "usr": "s:15SwiftTreeSitter5PointV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "NSString",
+                "printedName": "Foundation.NSString",
+                "usr": "c:objc(cs)NSString"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD4EditO5point13atUTF16Offset2in05SwiftcD05PointVSi_So8NSStringCtFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD4EditO5point13atUTF16Offset2in05SwiftcD05PointVSi_So8NSStringCtFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "indexSet",
+            "printedName": "indexSet(from:documentLength:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "IndexSet",
+                "printedName": "Foundation.IndexSet",
+                "usr": "s:10Foundation8IndexSetV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[SwiftTreeSitter.TSRange]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TSRange",
+                    "printedName": "SwiftTreeSitter.TSRange",
+                    "usr": "s:15SwiftTreeSitter7TSRangeV"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD4EditO8indexSet4from14documentLength10Foundation05IndexG0VSay05SwiftcD07TSRangeVG_SitFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD4EditO8indexSet4from14documentLength10Foundation05IndexG0VSay05SwiftcD07TSRangeVG_SitFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:20CodeEditorTreeSitter0cD4EditO",
+        "mangledName": "$s20CodeEditorTreeSitter0cD4EditO",
+        "moduleName": "CodeEditorTreeSitter",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TreeSitterHighlightProvider",
+        "printedName": "TreeSitterHighlightProvider",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "highlightGeneration",
+            "printedName": "highlightGeneration",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC19highlightGenerations6UInt64Vvp",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC19highlightGenerations6UInt64Vvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "SetterAccess",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC19highlightGenerations6UInt64Vvg",
+                "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC19highlightGenerations6UInt64Vvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterHighlightProvider",
+                "printedName": "CodeEditorTreeSitter.TreeSitterHighlightProvider",
+                "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderCACycfc",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderCACycfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Custom"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(language:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterHighlightProvider",
+                "printedName": "CodeEditorTreeSitter.TreeSitterHighlightProvider",
+                "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CodeLanguage",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                "usr": "s:25CodeEditorLanguageSupport0aC0V"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC8languageAC0aB15LanguageSupport0aH0V_tcfc",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC8languageAC0aB15LanguageSupport0aH0V_tcfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Custom"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(languageID:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TreeSitterHighlightProvider",
+                "printedName": "CodeEditorTreeSitter.TreeSitterHighlightProvider",
+                "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC10languageIDACSS_tcfc",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC10languageIDACSS_tcfc",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Custom"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "make",
+            "printedName": "make(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorTreeSitter.TreeSitterHighlightProvider?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterHighlightProvider",
+                    "printedName": "CodeEditorTreeSitter.TreeSitterHighlightProvider",
+                    "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CodeLanguage",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                "usr": "s:25CodeEditorLanguageSupport0aC0V"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC4make3forACSg0aB15LanguageSupport0aI0V_tFZ",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC4make3forACSg0aB15LanguageSupport0aI0V_tFZ",
+            "moduleName": "CodeEditorTreeSitter",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "loadAsync",
+            "printedName": "loadAsync(language:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CodeLanguage",
+                "printedName": "CodeEditorLanguageSupport.CodeLanguage",
+                "usr": "s:25CodeEditorLanguageSupport0aC0V"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC9loadAsync8languagey0aB15LanguageSupport0aJ0V_tYaF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC9loadAsync8languagey0aB15LanguageSupport0aJ0V_tYaF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setUp",
+            "printedName": "setUp(documentLength:languageID:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC5setUp14documentLength10languageIDySi_SSSgtYaF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC5setUp14documentLength10languageIDySi_SSSgtYaF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "willApplyEdit",
+            "printedName": "willApplyEdit(range:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRange",
+                "printedName": "Foundation.NSRange",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "_NSRange",
+                    "printedName": "Foundation._NSRange",
+                    "usr": "c:@S@_NSRange"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC13willApplyEdit5rangeySo8_NSRangeV_tF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC13willApplyEdit5rangeySo8_NSRangeV_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setDocumentText",
+            "printedName": "setDocumentText(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC15setDocumentTextyySSYaF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC15setDocumentTextyySSYaF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "applyEdit",
+            "printedName": "applyEdit(range:delta:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "IndexSet",
+                "printedName": "Foundation.IndexSet",
+                "usr": "s:10Foundation8IndexSetV"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRange",
+                "printedName": "Foundation.NSRange",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "_NSRange",
+                    "printedName": "Foundation._NSRange",
+                    "usr": "c:@S@_NSRange"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC9applyEdit5range5delta10Foundation8IndexSetVSo8_NSRangeV_SitYaKF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC9applyEdit5range5delta10Foundation8IndexSetVSo8_NSRangeV_SitYaKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "identifierRange",
+            "printedName": "identifierRange(atUTF16Offset:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Foundation.NSRange?",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "NSRange",
+                    "printedName": "Foundation.NSRange",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "_NSRange",
+                        "printedName": "Foundation._NSRange",
+                        "usr": "c:@S@_NSRange"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC15identifierRange13atUTF16OffsetSo8_NSRangeVSgSi_tF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC15identifierRange13atUTF16OffsetSo8_NSRangeVSgSi_tF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "queryHighlights",
+            "printedName": "queryHighlights(in:text:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.HighlightRange]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "HighlightRange",
+                    "printedName": "CodeEditorLanguageSupport.HighlightRange",
+                    "usr": "s:25CodeEditorLanguageSupport14HighlightRangeV"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRange",
+                "printedName": "Foundation.NSRange",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "_NSRange",
+                    "printedName": "Foundation._NSRange",
+                    "usr": "c:@S@_NSRange"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC15queryHighlights2in4textSay0aB15LanguageSupport0E5RangeVGSo8_NSRangeV_SStYaKF",
+            "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC15queryHighlights2in4textSay0aB15LanguageSupport0E5RangeVGSo8_NSRangeV_SStYaKF",
+            "moduleName": "CodeEditorTreeSitter",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:20CodeEditorTreeSitter0cD17HighlightProviderC",
+        "mangledName": "$s20CodeEditorTreeSitter0cD17HighlightProviderC",
+        "moduleName": "CodeEditorTreeSitter",
+        "declAttributes": [
+          "Final",
+          "Custom"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "HighlightProviding",
+            "printedName": "HighlightProviding",
+            "usr": "s:25CodeEditorLanguageSupport18HighlightProvidingP",
+            "mangledName": "$s25CodeEditorLanguageSupport18HighlightProvidingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "CodeLanguage",
+        "printedName": "CodeLanguage",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "tsLanguage",
+            "printedName": "tsLanguage",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "SwiftTreeSitter.Language?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Language",
+                    "printedName": "SwiftTreeSitter.Language",
+                    "usr": "s:15SwiftTreeSitter8LanguageV"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0aC0V0aB10TreeSitterE02tsC005SwifteF00C0VSgvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0aC0V0aB10TreeSitterE02tsC005SwifteF00C0VSgvp",
+            "moduleName": "CodeEditorTreeSitter",
+            "isFromExtension": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "SwiftTreeSitter.Language?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Language",
+                        "printedName": "SwiftTreeSitter.Language",
+                        "usr": "s:15SwiftTreeSitter8LanguageV"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0aC0V0aB10TreeSitterE02tsC005SwifteF00C0VSgvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0aC0V0aB10TreeSitterE02tsC005SwifteF00C0VSgvg",
+                "moduleName": "CodeEditorTreeSitter",
+                "isFromExtension": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorLanguageSupport0aC0V",
+        "mangledName": "$s25CodeEditorLanguageSupport0aC0V",
+        "moduleName": "CodeEditorLanguageSupport",
+        "isExternal": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Identifiable",
+            "printedName": "Identifiable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "ID",
+                "printedName": "ID",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TreeSitterLanguageID",
+                    "printedName": "CodeEditorLanguageSupport.TreeSitterLanguageID",
+                    "usr": "s:25CodeEditorLanguageSupport010TreeSitterC2IDO"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s12IdentifiableP",
+            "mangledName": "$ss12IdentifiableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      }
+    ],
+    "json_format_version": 8,
+    "tool_arguments": [
+      "-dump-sdk",
+      "-module",
+      "CodeEditorTreeSitter",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Modules",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ArgumentParser.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ArgumentParserToolInfo.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Atomics.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/BasicContainers.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/BitCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIODarwin.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOFreeBSD.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOLLHTTP.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOLinux.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOOpenBSD.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOPosix.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOSHA1.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOWASI.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CSystemExtras.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorCommands.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorCore.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorDAP.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorDocuments.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionAPI.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionGuest.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionHost.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionProtocol.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionWasmGuest.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensions.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLSP.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageJSON.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageServices.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageSupport.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageSwift.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguages.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorSearch.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorSourceControl.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTasks.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTerminal.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTerminalGhostty.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTreeSitter.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorView.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWorkbench.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWorkspace.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Collections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ComponentModel.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ContainersPreview.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/DequeModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/GDBRemoteProtocol.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/HashTreeCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/HeapModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/InMemoryLogging.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Internal.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/InternalCollectionsUtilities.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Logging.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIO.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOConcurrencyHelpers.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOCore.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOEmbedded.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOFileSystem.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOFoundationCompat.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOFoundationEssentialsCompat.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOHTTP1.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOPosix.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOTLS.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOTestUtils.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOWebSocket.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/OrderedCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Rearrange.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SortedCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SwiftTreeSitter.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SwiftTreeSitterLayer.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SystemExtras.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SystemPackage.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TextStory.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TextStoryTesting.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TrailingElementsModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitter.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterAgdaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterBashGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCSharpGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCppGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCssGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterDartGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterDockerfileGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterElixirGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterGoGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterGoModGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterHaskellGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterHtmlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJavaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJavascriptGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJsdocGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJsonGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJuliaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterKotlinGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterLuaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterMarkdownGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterMarkdownInlineGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterObjcGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterOcamlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterPerlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterPhpGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterPythonGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterRegexGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterRubyGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterRustGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterScalaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterSqlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterSwiftGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterTomlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterTsxGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterTypescriptGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterVerilogGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterYamlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterZigGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WASI.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WAT.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WAVE.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WIT.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WITExtractor.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WITOverlayGenerator.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmKit.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmKitGDBHandler.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmKitWASI.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmParser.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmTypes.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOBase64.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOConcurrency.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIODataStructures.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOFileSystem.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOFileSystemFoundationCompat.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_RopeModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/WasmKit\/FuzzTesting\/Sources\/WasmCAPI\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/WasmKit\/Sources\/_CWasmKit\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/WasmKit\/Sources\/_CabiShims\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-atomics\/Sources\/_AtomicsShims\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-collections\/Benchmarks\/Sources\/CppBenchmarks\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-nio\/Sources\/CNIOWindows\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-system\/Sources\/CSystem\/include",
+      "-sdk",
+      "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX26.4.sdk",
+      "-o",
+      "Baselines\/api\/digester\/CodeEditorTreeSitter.json",
+      "-avoid-location",
+      "-sdk-version",
+      "25E236"
+    ]
+  }
+}

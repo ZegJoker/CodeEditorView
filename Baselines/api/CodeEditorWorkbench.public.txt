@@ -1,4 +1,5 @@
 class DocumentViewRegistry | isolation=@MainActor
+class EmptyAccessibilityContentSource
 class FileTreeIndexService | sendable=1
 class ImageDocumentViewProvider | isolation=@MainActor
 class OpenQuicklyModel | isolation=@MainActor
@@ -12,6 +13,7 @@ class WorkbenchDebugModel | isolation=@MainActor
 class WorkbenchEditorClientRegistry | isolation=@MainActor
 class WorkbenchHostBuilder | isolation=@MainActor
 class WorkbenchModel | isolation=@MainActor
+class WorkbenchModelAccessibilityContentSource
 class WorkbenchOutputPanelContribution | isolation=@MainActor
 class WorkbenchOutputPanelModel | isolation=@MainActor
 class WorkbenchProblemsPanelContribution | isolation=@MainActor
@@ -31,6 +33,7 @@ enum SchemeAction | sendable=1
 enum UtilityAreaTab | sendable=1
 enum WorkbenchAccessibilityHierarchy
 enum WorkbenchAccessibilityID
+enum WorkbenchAccessibilityTreeProbe | isolation=@MainActor
 enum WorkbenchChromeCommand | sendable=1
 enum WorkbenchChromeError | sendable=1
 enum WorkbenchContributionAvailability | sendable=1
@@ -67,6 +70,8 @@ func apply(preferences: Preferences)
 func apply(snapshots: [WorkbenchToolingSurfaceSnapshot])
 func applyRestoration(_ state: WorkbenchRestorationState)
 func applyWindowState(_ state: WorkbenchWindowState)
+func assertPrimaryChromeReachable()
+func attach(contentSource: any WorkbenchAccessibilityContentSource)
 func begin(id: String, title: String, cancellable: Bool )
 func beginTearDown()
 func build()
@@ -80,6 +85,7 @@ func clearFault(id: String)
 func client(for sessionID: EditorSessionID) -> (any EditorCommandClient)
 func close(_ id: WorkbenchWindowID)
 func closeWindow(_ id: WorkbenchWindowID)
+func collectChromeAccessibilityIdentifiers()
 func commandDispatcher(_ dispatcher: CommandDispatcher) | attr=discardableResult
 func configuration(_ configuration: WorkbenchConfiguration) | attr=discardableResult
 func contribution(id: String) -> (any WorkbenchContribution)
@@ -103,6 +109,7 @@ func ensureActiveUtility()
 func enterBackground()
 func enterForeground()
 func extensions(_ ext: String...)
+func extraHierarchyIdentifiers()
 func failed()
 func flatten(_ node: Node )
 func focus(_ id: WorkbenchWindowID)
@@ -147,6 +154,7 @@ func register(_ provider: any DocumentViewProvider)
 func register(sessionID: EditorSessionID, client: any EditorCommandClient)
 func remove(id: String)
 func renameItem(_ id: WorkspaceItemID, to newName: String)
+func replace(snapshot: Snapshot)
 func requestClosePane( _ id: EditorPaneID, policy: DirtyTabClosePolicy? ) | attr=discardableResult
 func requestCloseWindow(policy: DirtyTabClosePolicy? ) | attr=discardableResult
 func resetPresentation()
@@ -155,6 +163,7 @@ func retainContribution(_ contribution: any WorkbenchContribution) | attr=discar
 func retry(id: String)
 func retryTooling(id: String)
 func revealInFinder(_ id: WorkspaceItemID)
+func rotorHits(for surface: WorkbenchAccessibilityHierarchy.RotorSurface)
 func rotorQuery(_ surface: WorkbenchAccessibilityHierarchy.RotorSurface)
 func selectIndex(_ index: Int)
 func selectNavigator(id: String)
@@ -188,6 +197,7 @@ func validatedPaletteCommands()
 func visibleToolingFailures()
 func workspace(_ workspace: Workspace) | attr=discardableResult
 func writeKey(_ data: Data)
+init ( errors: [(id: String, label: String)
 init ( id: String )
 init ( id: String, kind: WorkbenchToolingKind, title: String, status: WorkbenchToolingStatus , boundContributionID: String? , canRetry: Bool )
 init ( id: String, name: String, buildTaskID: String? , testTaskID: String? , runTaskID: String? , debugSessionName: String? )
@@ -196,9 +206,11 @@ init ( id: String? , uri: DocumentURI?, name: String, path: String, mode: OpenQu
 init ( id: WorkbenchWindowID )
 init ( maxDepth: Int , maxFiles: Int , ignoredDirectoryNames: Set<String> , "node_modules", ".build", "DerivedData", "Pods"] )
 init ( model: OpenQuicklyModel, onSelect: @escaping (DocumentURI)
+init ( preferences: Preferences )
 init ( reduceMotion: Bool , highContrast: Bool , fullKeyboardAccess: Bool , dynamicTypeSize: Double , switchControlEnabled: Bool )
 init ( schemaVersion: Int , lifecyclePhase: WorkbenchLifecyclePhase , windows: [WorkbenchWindowState] , focusedWindowID: WorkbenchWindowID? , workspace: WorkspaceRestorationState? , registeredContributionIDs: [String] , toolingSurfaces: [WorkbenchToolingSurfaceSnapshot] )
 init ( showsNavigator: Bool , showsInspector: Bool , showsUtilityArea: Bool , showsStatusBar: Bool , showsActivityBar: Bool , showsToolbar: Bool , navigatorStyle: WorkbenchNavigatorStyle , utilityAreaHeight: CGFloat , editorConfiguration: EditorConfiguration )
+init ( surface: WorkbenchAccessibilityHierarchy.RotorSurface, identifier: String, label: String )
 init ( workspace: Workspace, configuration: WorkbenchConfiguration , commandDispatcher: CommandDispatcher? )
 init ( workspace: Workspace, document: TextDocument, session: EditorSession, paneID: EditorPaneID, tabID: EditorTabID, commandDispatcher: CommandDispatcher? , editorConfiguration: EditorConfiguration )
 init ()
@@ -214,21 +226,24 @@ init (model: WorkbenchOutputPanelModel ))
 init (model: WorkbenchProblemsPanelModel ))
 init (model: WorkbenchTerminalPanelModel ))
 init (pathExtensions: Set<String>, utTypes: [String] )
-init (preferences: Preferences ))
 init (rawValue: UUID ))
 init (service: TerminalService? )
+init (snapshot: Snapshot ))
 init (workspace: Workspace, model: WorkbenchModel)
 protocol DocumentViewProvider | isolation=@MainActor
+protocol WorkbenchAccessibilityContentSource
 protocol WorkbenchContribution | isolation=@MainActor
 protocol WorkspaceIndexService | sendable=1
 struct DocumentContentSelector | sendable=1
 struct DocumentViewContext | isolation=@MainActor
+struct ElementSnapshot | sendable=1
 struct Item
 struct Node | sendable=1
 struct OpenQuicklyItem | sendable=1
 struct OpenQuicklyView
 struct Preferences | sendable=1
 struct RotorHit | sendable=1
+struct Snapshot | sendable=1
 struct WorkbenchActivityItem | sendable=1
 struct WorkbenchBreakpointItem | sendable=1
 struct WorkbenchConfiguration | sendable=1
@@ -292,6 +307,7 @@ var editorConfiguration
 var editorContent
 var enabled
 var errorMessage
+var errors
 var faultMessage
 var filter
 var filtered
@@ -300,6 +316,7 @@ var focusedTarget
 var focusedWindowID
 var fold
 var foldChildren
+var folds
 var fullKeyboardAccess
 var highContrast
 var id
@@ -358,6 +375,7 @@ var runTaskID
 var schemaVersion
 var schemes
 var scmModel
+var search
 var selectedDestination
 var selectedDestinationID
 var selectedIndex

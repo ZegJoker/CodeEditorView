@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N01",
@@ -98,7 +98,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_readmeAndProfileAgreeOnMaturity",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_profileIsCIGeneratedWithArtifactAndToolchainIDs"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N02",
@@ -110,15 +110,16 @@
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_scorecardGateRejectsFailWithEmptyResidual",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_scorecardGateFailsOnAuthoredPassWithoutArtifact",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_liveScorecardsPassStructuralHonestyGate"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_liveScorecardsPassStructuralHonestyGate",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_scorecardsRequireCIGeneratedEvidenceNotHandAuthoredAlone"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "title": "defect gate trusts manually marked “fixed” rows",
       "phase": 0,
       "status": "fixed",
       "regression_tests": [
@@ -126,7 +127,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_defectGateRejectsFixedWithoutRegressionTests",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_liveDefectsLinkRegressionTests"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N04",
@@ -140,9 +141,12 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_workbenchAccessibilityHierarchyModel",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_accessibilityGateExecutesAutomationTests",
         "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_accessibilityHierarchyAndRotorSurfaces",
-        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_xcuiEquivalentHierarchyKeyboardRotorSwitchControl"
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_xcuiEquivalentHierarchyKeyboardRotorSwitchControl",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_switchControlFailsClosedWhenDisabled",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_noHardcodedRotorCatalogInProduction",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_appKitTreeProbeReachesPrimaryChrome"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N05",
@@ -154,9 +158,11 @@
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_perfGateRequiresMeasurementsNotDocsAlone",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_livePerfGatePassesWithCommittedSample",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_perfProducerEmitsPercentilesAndHardware"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_perfProducerEmitsPercentilesAndHardware",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_rejectsSyntheticPythonMicrobenchSample",
+        "Tests/CodeEditorCoreTests/RELN05PerfBenchmarks.swift::test_REL_N05_fixedDatasetEditorBenchmarks"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N06",
@@ -170,7 +176,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeScriptRuns",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_digesterToolIsAvailableAndBaselineScriptUsesIt"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N07",
@@ -183,7 +189,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N07_strictConcurrencyIsWarningsAsErrors",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N07_sanitizerScriptExecutesTestsNotBuildOnly"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "REL-N08",
@@ -197,10 +203,10 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_realLspScriptHardFailsWhenRequiredAndMissing",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_productionMocksNotDefaultInProtocolDAPModules",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_productionGhosttyDefaultsRequireLinked",
-        "Tests/CodeEditorTerminalTests/Phase5TerminalTests.swift::test_REL_N08_terminalServiceDefaultsRequireGhosttyLinked",
-        "Tests/CodeEditorTerminalTests/Phase5TerminalTests.swift::test_REL_N08_ghosttyControllerDefaultsRequireLinked"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_realDapScriptRequiresPostInitializeResponses",
+        "Tests/CodeEditorTerminalTests/Phase5TerminalTests.swift::test_REL_N08_terminalServiceDefaultsRequireGhosttyLinked"
       ],
-      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
+      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
     },
     {
       "id": "CORE-N01",
@@ -305,7 +311,7 @@
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "severity_raw": "P1 for the “durable” claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "open",
@@ -705,7 +711,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "severity_raw": "P1 for “gitignore-compatible” claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "open",
@@ -1056,7 +1062,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "title": "current “real LSP” gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1076,7 +1082,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as \u201cearly\u201d responses",
+      "title": "late responses are retained as “early” responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1216,7 +1222,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "title": "repeated full-string snapshots are O(n²)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1366,7 +1372,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process \u201cargsGlob\u201d is not a glob",
+      "title": "process “argsGlob” is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1436,7 +1442,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "title": "compatibility claims need levels, not one “passing” flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1786,7 +1792,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

@@ -4,7 +4,6 @@ actor DebugAdapterSession
 class DAPLog | sendable=1
 class DAPProcessTransport | sendable=1
 class DAPTCPConnectTransport | sendable=1
-class DAPTestTransport | sendable=1
 class Decoder | sendable=1
 enum DAPError | sendable=1
 enum DAPLogLevel | sendable=1
@@ -26,7 +25,6 @@ func encode(_ body: Data)
 func evaluate(expression: String, frameId: Int?, context: String )
 func launch(configuration: DAPJSONObject, noDebug: Bool )
 func loadedSources()
-func makePair() -> (client: DAPTestTransport, server: DAPTestTransport)
 func modules()
 func next(threadId: Int)
 func parse(from body: [String: Any])
@@ -71,7 +69,6 @@ init ( line: Int, column: Int? , condition: String? , hitCondition: String? , lo
 init ( maxBodyBytes: Int , maxBufferBytes: Int )
 init ( requestTimeout: Duration )
 init ( transport: any DAPTransport, log: DAPLog )
-init ()
 init (_ dictionary: [String: Any] )
 init (host: String, port: Int, timeoutSeconds: TimeInterval )
 init (id: Int, name: String)

@@ -1,0 +1,8 @@
+{
+  "commit": "b86407f1558d4cd7d3762dbd88fffe4e54693749",
+  "digester_dir": "Baselines/api/digester",
+  "generated_at": "2026-08-02T13:46:42Z",
+  "schema_version": 1,
+  "status": "partial",
+  "symbolgraph_dir": "Baselines/api/symbol-graphs"
+}

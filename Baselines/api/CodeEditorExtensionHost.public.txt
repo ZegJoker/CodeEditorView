@@ -26,7 +26,6 @@ class Decoder | sendable=1
 class ExtensionManagerModel | isolation=@MainActor
 class MCPProcessTransport | sendable=1
 class MCPTestTransport | sendable=1
-class MockRemoteExtensionTransport | sendable=1
 class NativeHelperProcessTransport | sendable=1
 class ProcessRemoteExtensionTransport | sendable=1
 class RemoteProviderRegistration | sendable=1
@@ -137,7 +136,6 @@ func listResources()
 func load(from url: URL)
 func make()
 func makePair() -> (client: MCPTestTransport, server: MCPTestTransport)
-func makePair() -> (host: MockRemoteExtensionTransport, remote: MockRemoteExtensionTransport)
 func markCrashed(reason: String)
 func mintHandlesJSON(extensionID: ExtensionID)
 func noteCrash(id: ExtensionID, reason: String)

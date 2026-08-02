@@ -40,6 +40,8 @@
 
 ## Log
 
+- 2026-08-02: Phase 0 verifier rework — PKG-N01 hard suite exit + no soft --version; REL-N02 generate-product-scorecards evidence; REL-N04 content-sourced a11y + fail-closed Switch Control; REL-N05 DocumentStore/LineIndex fixed datasets; REL-N06 real digester/symbol-graph (no public seed); REL-N08 DAP post-init responses + DAPTestTransport/MockRemote moved to Tests/.
+
 - 2026-08-02: Phase 0 verifier remediation — PKG-N01 full-archive default + execution test; REL-N01 CI generate-compatibility-profile; REL-N04 WorkbenchAccessibilitySession keyboard/rotor/Switch Control; REL-N05 p50/p95/p99+memory/cpu/allocs producer; REL-N06 digester/symbol-graph freeze; REL-N07 TSan executes tests + per-site dossier; REL-N08 production requireLinked/requireGhosttyLinked defaults true.
 - 2026-08-02: Phase 0 release-truth — fixed PKG-N01, REL-N01…REL-N08 (honesty gates, CompatibilityProfile pre-alpha, evidence scorecards, defect regression links, a11y hierarchy, perf hard measurements, semantic API freeze, concurrency Werror, hard Ghostty/LSP/DAP; mocks moved to Tests/).
 - 2026-08-02: bootstrap — audit plan + FINDINGS.json (174 open) + tracker present; `swift package dump-package` OK; `swift test --filter Nonexistent` builds (0 tests). All phases open; no findings marked fixed.

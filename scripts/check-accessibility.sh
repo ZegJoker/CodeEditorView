@@ -38,13 +38,21 @@ if [[ -f "$A11Y" ]]; then
 fi
 
 if [[ -f "$AUTO" ]]; then
-  for token in WorkbenchAccessibilitySession moveFocus rotorQuery switchControl fullKeyboardAccess reduceMotion; do
+  for token in WorkbenchAccessibilitySession moveFocus rotorQuery switchControl fullKeyboardAccess reduceMotion WorkbenchAccessibilityContentSource; do
     if ! grep -q "$token" "$AUTO"; then
       echo "FAIL: automation missing $token"
       fail=1
     fi
   done
-  echo "OK:   accessibility automation session API present"
+  if grep -q 'seedRotorCatalog' "$AUTO"; then
+    echo "FAIL: hardcoded seedRotorCatalog must not ship in production automation"
+    fail=1
+  fi
+  if grep -q 'switchControlEnabled || true' "$AUTO"; then
+    echo "FAIL: Switch Control soft-allow (|| true) is forbidden"
+    fail=1
+  fi
+  echo "OK:   accessibility automation session API present (content-sourced, fail-closed)"
 else
   echo "FAIL: WorkbenchAccessibilityAutomation.swift required for XCUI-equivalent coverage"
   fail=1
@@ -85,11 +93,22 @@ else
   echo "OK:   executable accessibility automation tests present"
 fi
 
-# Always run focused swift tests (no skip escape hatch)
-echo "== swift test --filter REL_N04 =="
-if ! swift test --filter REL_N04 2>&1 | tee /tmp/a11y-swift-test.log | tail -40; then
-  echo "FAIL: accessibility automation swift tests failed"
-  fail=1
+# Always run focused workbench automation suite (no skip escape hatch).
+# Filter Phase16AccessibilityTests only — never REL_N04 globally (would nest
+# ReleaseTruthTests that re-invoke swift test and hang under load).
+echo "== swift test --filter Phase16AccessibilityTests =="
+export CODEEDITOR_IN_A11Y_GATE=1
+# Prefer --skip-build to avoid nested SwiftPM lock deadlocks when already under swift test.
+if [[ -d "$ROOT/.build" ]]; then
+  A11Y_CMD=(swift test --skip-build --filter Phase16AccessibilityTests)
+else
+  A11Y_CMD=(swift test --filter Phase16AccessibilityTests)
+fi
+if ! "${A11Y_CMD[@]}" 2>&1 | tee /tmp/a11y-swift-test.log | tail -40; then
+  if ! swift test --filter Phase16AccessibilityTests 2>&1 | tee /tmp/a11y-swift-test.log | tail -40; then
+    echo "FAIL: accessibility automation swift tests failed"
+    fail=1
+  fi
 fi
 if ! grep -Eqi 'passed|Test run' /tmp/a11y-swift-test.log; then
   # swift-testing formats vary; exit code is authoritative

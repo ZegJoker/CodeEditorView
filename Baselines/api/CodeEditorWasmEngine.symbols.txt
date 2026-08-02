@@ -1,71 +1,139 @@
-class LinkedGuestWasmInstance | sendable=1
-enum CoreWasmABI
-enum CoreWasmExport | sendable=1
-enum CoreWasmImport | sendable=1
-enum WasmEngineError | sendable=1
-enum WasmValue | sendable=1
-func abiVersionConstantModule(value: Int32)
-func abiVersionOnlyModule()
-func call(_ name: String, args: [WasmValue])
-func conformanceModule()
-func hostSendEchoModule()
-func infiniteLoopModule()
-func instantiate( module: Data, imports: WasmHostImports, limits: WasmResourceLimits )
-func interrupt()
-func malformedModule()
-func missingExportModule()
-func validate(module: Data, limits: WasmResourceLimits)
-init ( maxLinearMemoryBytes: Int , maxWallTime: Duration )
-init ( send: @escaping @Sendable (UnsafeRawPointer?, Int32)
-init ( wallTimeStarted: Date )
-init ()
-init (factory: @escaping GuestFactory)
-init (guest: any LinkedWasmGuest, limits: WasmResourceLimits)
-protocol CodeEditorWasmEngine | sendable=1
-protocol CodeEditorWasmInstance | sendable=1
-protocol LinkedWasmGuest | sendable=1
-protocol WasmMemoryView | sendable=1
-struct InProcessCoreWasmEngine
-struct LinkedGuestWasmEngine
-struct WasmHostImports | sendable=1
-struct WasmMeters | sendable=1
-struct WasmModuleBuilder | sendable=1
-struct WasmResourceLimits | sendable=1
-typealias CodeEditorWasmSimulationEngine
-typealias GuestFactory | sendable=1
-var budgetConsumed
-var guest
-var hostSendBytes
-var hostSendMessages
-var i32
-var i64
-var interrupted
-var isInterrupted
-var log | sendable=1
-var logBytes
-var magic
-var maxConcurrentRequests
-var maxHostSendQueueBytes
-var maxHostSendQueueMessages
-var maxLinearMemoryBytes
-var maxLogBytes
-var maxModuleBytes
-var maxPollBudgetPerTick
-var maxPollTicks
-var maxWallTime
-var memory
-var memoryBytes
-var meters
-var moduleName
-var monotonicMillis | sendable=1
-var pollTicks
-var send | sendable=1
-var shouldCancel | sendable=1
-var statusBackpressure
-var statusBusy
-var statusCancelled
-var statusError
-var statusOK
-var tight
-var version
-var wallTimeStarted
+swift.class LinkedGuestWasmInstance | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC', 'interfaceLanguage': 'swift'} | decl=final class LinkedGuestWasmInstance |
+swift.enum CoreWasmABI | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO', 'interfaceLanguage': 'swift'} | decl=enum CoreWasmABI |
+swift.enum CoreWasmExport | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO', 'interfaceLanguage': 'swift'} | decl=enum CoreWasmExport |
+swift.enum CoreWasmImport | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO', 'interfaceLanguage': 'swift'} | decl=enum CoreWasmImport |
+swift.enum WasmEngineError | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO', 'interfaceLanguage': 'swift'} | decl=enum WasmEngineError |
+swift.enum WasmValue | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO', 'interfaceLanguage': 'swift'} | decl=enum WasmValue |
+swift.enum.case CoreWasmExport.abiVersion | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO10abiVersionyA2CmF', 'interfaceLanguage': 'swift'} | decl=case abiVersion |
+swift.enum.case CoreWasmExport.alloc | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO5allocyA2CmF', 'interfaceLanguage': 'swift'} | decl=case alloc |
+swift.enum.case CoreWasmExport.dealloc | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO7deallocyA2CmF', 'interfaceLanguage': 'swift'} | decl=case dealloc |
+swift.enum.case CoreWasmExport.poll | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO4pollyA2CmF', 'interfaceLanguage': 'swift'} | decl=case poll |
+swift.enum.case CoreWasmExport.receive | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO7receiveyA2CmF', 'interfaceLanguage': 'swift'} | decl=case receive |
+swift.enum.case CoreWasmExport.start | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO5startyA2CmF', 'interfaceLanguage': 'swift'} | decl=case start |
+swift.enum.case CoreWasmExport.stop | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO4stopyA2CmF', 'interfaceLanguage': 'swift'} | decl=case stop |
+swift.enum.case CoreWasmImport.hostLog | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO7hostLogyA2CmF', 'interfaceLanguage': 'swift'} | decl=case hostLog |
+swift.enum.case CoreWasmImport.hostMonotonicMillis | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO19hostMonotonicMillisyA2CmF', 'interfaceLanguage': 'swift'} | decl=case hostMonotonicMillis |
+swift.enum.case CoreWasmImport.hostSend | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO8hostSendyA2CmF', 'interfaceLanguage': 'swift'} | decl=case hostSend |
+swift.enum.case CoreWasmImport.hostShouldCancel | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO16hostShouldCancelyA2CmF', 'interfaceLanguage': 'swift'} | decl=case hostShouldCancel |
+swift.enum.case WasmEngineError.deadlineExceeded | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO16deadlineExceededyA2CmF', 'interfaceLanguage': 'swift'} | decl=case deadlineExceeded |
+swift.enum.case WasmEngineError.instantiationFailed(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO19instantiationFailedyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case instantiationFailed(String) |
+swift.enum.case WasmEngineError.interrupted | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO11interruptedyA2CmF', 'interfaceLanguage': 'swift'} | decl=case interrupted |
+swift.enum.case WasmEngineError.invalidModule(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO13invalidModuleyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case invalidModule(String) |
+swift.enum.case WasmEngineError.linkError(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO04linkE0yACSScACmF', 'interfaceLanguage': 'swift'} | decl=case linkError(String) |
+swift.enum.case WasmEngineError.logLimitExceeded | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO16logLimitExceededyA2CmF', 'interfaceLanguage': 'swift'} | decl=case logLimitExceeded |
+swift.enum.case WasmEngineError.memoryLimitExceeded | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO19memoryLimitExceededyA2CmF', 'interfaceLanguage': 'swift'} | decl=case memoryLimitExceeded |
+swift.enum.case WasmEngineError.missingExport(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO13missingExportyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case missingExport(String) |
+swift.enum.case WasmEngineError.missingImport(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO13missingImportyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case missingImport(String) |
+swift.enum.case WasmEngineError.moduleTooLarge(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO14moduleTooLargeyACSicACmF', 'interfaceLanguage': 'swift'} | decl=case moduleTooLarge(Int) |
+swift.enum.case WasmEngineError.notSupported(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO12notSupportedyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case notSupported(String) |
+swift.enum.case WasmEngineError.queueBackpressure | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO17queueBackpressureyA2CmF', 'interfaceLanguage': 'swift'} | decl=case queueBackpressure |
+swift.enum.case WasmEngineError.resourceLimit(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO13resourceLimityACSScACmF', 'interfaceLanguage': 'swift'} | decl=case resourceLimit(String) |
+swift.enum.case WasmEngineError.trap(_:) | precise={'precise': 's:20CodeEditorWasmEngine0cD5ErrorO4trapyACSScACmF', 'interfaceLanguage': 'swift'} | decl=case trap(String) |
+swift.enum.case WasmValue.f32(_:) | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO3f32yACSfcACmF', 'interfaceLanguage': 'swift'} | decl=case f32(Float) |
+swift.enum.case WasmValue.f64(_:) | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO3f64yACSdcACmF', 'interfaceLanguage': 'swift'} | decl=case f64(Double) |
+swift.enum.case WasmValue.i32(_:) | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO3i32yACs5Int32VcACmF', 'interfaceLanguage': 'swift'} | decl=case i32(Int32) |
+swift.enum.case WasmValue.i64(_:) | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO3i64yACs5Int64VcACmF', 'interfaceLanguage': 'swift'} | decl=case i64(Int64) |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:20CodeEditorWasmEngine04CoreC6ExportO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:20CodeEditorWasmEngine04CoreC6ImportO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:20CodeEditorWasmEngine0C14ResourceLimitsV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:20CodeEditorWasmEngine0C5ValueO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:20CodeEditorWasmEngine0C6MetersV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:20CodeEditorWasmEngine0cD5ErrorO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.init init() | precise={'precise': 's:20CodeEditorWasmEngine013InProcessCorecD0VACycfc', 'interfaceLanguage': 'swift'} | decl=init() |
+swift.init init() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderVACycfc', 'interfaceLanguage': 'swift'} | decl=init() |
+swift.init init(factory:) | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestcD0V7factoryAcA0ecF0_pyYbc_tcfc', 'interfaceLanguage': 'swift'} | decl=init(factory: @escaping GuestFactory) |
+swift.init init(from:) | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV4fromACs7Decoder_p_tKcfc', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(guest:limits:) | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC5guest6limitsAcA0ecF0_p_AA0C14ResourceLimitsVtcfc', 'interfaceLanguage': 'swift'} | decl=init(guest: any LinkedWasmGuest, limits: WasmResourceLimits) |
+swift.init init(maxLinearMemoryBytes:maxWallTime:maxPollBudgetPerTick:maxHostSendQueueBytes:maxHostSendQueueMessages:maxLogBytes:maxModuleBytes:maxConcurrentRequests:maxPollTicks:) | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV20maxLinearMemoryBytes0G8WallTime0G17PollBudgetPerTick0g13HostSendQueueJ00gqrS8Messages0g3LogJ00g6ModuleJ00G18ConcurrentRequests0gM5TicksACSi_s8DurationVS7itcfc', 'interfaceLanguage': 'swift'} | decl=init(maxLinearMemoryBytes: Int = 16 * 1024 * 1024, maxWallTime: Duration = .seconds(5), maxPollBudgetPerTick: Int = 10_000, maxHostSendQueueBytes: Int = 1 * 1024 * 1024, maxHostSendQueueMessages: Int |
+swift.init init(rawValue:) | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ExportO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(send:log:monotonicMillis:shouldCancel:) | precise={'precise': 's:20CodeEditorWasmEngine0C11HostImportsV4send3log15monotonicMillis12shouldCancelACs5Int32VSVSg_AItYbc_yAI_AjItYbcs5Int64VyYbcAiL_ALtYbctcfc', 'interfaceLanguage': 'swift'} | decl=init(send: @escaping @Sendable (UnsafeRawPointer?, Int32) -> Int32, log: @escaping @Sendable (Int32, UnsafeRawPointer?, Int32) -> Void, monotonicMillis: @escaping @Sendable () -> Int64, shouldCancel: | sendable=1
+swift.init init(wallTimeStarted:pollTicks:budgetConsumed:memoryBytes:hostSendMessages:hostSendBytes:logBytes:interrupted:) | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV15wallTimeStarted9pollTicks14budgetConsumed11memoryBytes16hostSendMessages0opN003logN011interruptedAC10Foundation4DateV_S6iSbtcfc', 'interfaceLanguage': 'swift'} | decl=init(wallTimeStarted: Date = Date(), pollTicks: Int = 0, budgetConsumed: Int = 0, memoryBytes: Int = 0, hostSendMessages: Int = 0, hostSendBytes: Int = 0, logBytes: Int = 0, interrupted: Bool = false) |
+swift.method abiVersion() | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP10abiVersions5Int32VyF', 'interfaceLanguage': 'swift'} | decl=func abiVersion() -> Int32 |
+swift.method alloc(_:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP5allocys5Int32VAFF', 'interfaceLanguage': 'swift'} | decl=func alloc(_ length: Int32) -> Int32 |
+swift.method bindHost(imports:limits:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP8bindHost7imports6limitsyAA0cH7ImportsV_AA0C14ResourceLimitsVtF', 'interfaceLanguage': 'swift'} | decl=func bindHost(imports: WasmHostImports, limits: WasmResourceLimits) |
+swift.method call(_:args:) | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC4call_4argsSayAA0C5ValueOGSS_AHtYaKF', 'interfaceLanguage': 'swift'} | decl=func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] |
+swift.method call(_:args:) | precise={'precise': 's:20CodeEditorWasmEngine0abC8InstanceP4call_4argsSayAA0C5ValueOGSS_AHtYaKF', 'interfaceLanguage': 'swift'} | decl=func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] |
+swift.method dealloc(_:_:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP7deallocyys5Int32V_AFtF', 'interfaceLanguage': 'swift'} | decl=func dealloc(_ ptr: Int32, _ length: Int32) |
+swift.method grow(pages:) | precise={'precise': 's:20CodeEditorWasmEngine0C10MemoryViewP4grow5pagesS2i_tKF', 'interfaceLanguage': 'swift'} | decl=func grow(pages: Int) throws -> Int |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:20CodeEditorWasmEngine04CoreC6ExportO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:20CodeEditorWasmEngine04CoreC6ImportO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method instantiate(module:imports:limits:) | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestcD0V11instantiate6module7imports6limitsAA0abC8Instance_p10Foundation4DataV_AA0C11HostImportsVAA0C14ResourceLimitsVtYaKF', 'interfaceLanguage': 'swift'} | decl=func instantiate(module: Data, imports: WasmHostImports, limits: WasmResourceLimits) async throws -> any CodeEditorWasmInstance |
+swift.method instantiate(module:imports:limits:) | precise={'precise': 's:20CodeEditorWasmEngine013InProcessCorecD0V11instantiate6module7imports6limitsAA0abC8Instance_p10Foundation4DataV_AA0C11HostImportsVAA0C14ResourceLimitsVtYaKF', 'interfaceLanguage': 'swift'} | decl=func instantiate(module: Data, imports: WasmHostImports, limits: WasmResourceLimits) async throws -> any CodeEditorWasmInstance |
+swift.method instantiate(module:imports:limits:) | precise={'precise': 's:20CodeEditorWasmEngineAAP11instantiate6module7imports6limitsAA0abC8Instance_p10Foundation4DataV_AA0C11HostImportsVAA0C14ResourceLimitsVtYaKF', 'interfaceLanguage': 'swift'} | decl=func instantiate(module: Data, imports: WasmHostImports, limits: WasmResourceLimits) async throws -> any CodeEditorWasmInstance |
+swift.method interrupt() | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC9interruptyyF', 'interfaceLanguage': 'swift'} | decl=func interrupt() |
+swift.method interrupt() | precise={'precise': 's:20CodeEditorWasmEngine0abC8InstanceP9interruptyyF', 'interfaceLanguage': 'swift'} | decl=func interrupt() |
+swift.method poll(_:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP4pollys5Int32VAFF', 'interfaceLanguage': 'swift'} | decl=func poll(_ budget: Int32) -> Int32 |
+swift.method read(offset:length:) | precise={'precise': 's:20CodeEditorWasmEngine0C10MemoryViewP4read6offset6length10Foundation4DataVSi_SitKF', 'interfaceLanguage': 'swift'} | decl=func read(offset: Int, length: Int) throws -> Data |
+swift.method receive(ptr:len:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP7receive3ptr3lens5Int32VAH_AHtF', 'interfaceLanguage': 'swift'} | decl=func receive(ptr: Int32, len: Int32) -> Int32 |
+swift.method start(configPtr:configLen:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP5start9configPtr0H3Lens5Int32VAH_AHtF', 'interfaceLanguage': 'swift'} | decl=func start(configPtr: Int32, configLen: Int32) -> Int32 |
+swift.method stop(_:) | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP4stopyys5Int32VF', 'interfaceLanguage': 'swift'} | decl=func stop(_ reason: Int32) |
+swift.method validate(module:limits:) | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestcD0V8validate6module6limitsy10Foundation4DataV_AA0C14ResourceLimitsVtKF', 'interfaceLanguage': 'swift'} | decl=func validate(module: Data, limits: WasmResourceLimits) throws |
+swift.method validate(module:limits:) | precise={'precise': 's:20CodeEditorWasmEngine013InProcessCorecD0V8validate6module6limitsy10Foundation4DataV_AA0C14ResourceLimitsVtKF', 'interfaceLanguage': 'swift'} | decl=func validate(module: Data, limits: WasmResourceLimits) throws |
+swift.method validate(module:limits:) | precise={'precise': 's:20CodeEditorWasmEngineAAP8validate6module6limitsy10Foundation4DataV_AA0C14ResourceLimitsVtKF', 'interfaceLanguage': 'swift'} | decl=func validate(module: Data, limits: WasmResourceLimits) throws |
+swift.method write(offset:data:) | precise={'precise': 's:20CodeEditorWasmEngine0C10MemoryViewP5write6offset4dataySi_10Foundation4DataVtKF', 'interfaceLanguage': 'swift'} | decl=func write(offset: Int, data: Data) throws |
+swift.property budgetConsumed | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV14budgetConsumedSivp', 'interfaceLanguage': 'swift'} | decl=var budgetConsumed: Int |
+swift.property guest | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC5guestAA0ecF0_pvp', 'interfaceLanguage': 'swift'} | decl=let guest: any LinkedWasmGuest |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:20CodeEditorWasmEngine04CoreC6ExportO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:20CodeEditorWasmEngine04CoreC6ImportO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hostSendBytes | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV13hostSendBytesSivp', 'interfaceLanguage': 'swift'} | decl=var hostSendBytes: Int |
+swift.property hostSendMessages | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV16hostSendMessagesSivp', 'interfaceLanguage': 'swift'} | decl=var hostSendMessages: Int |
+swift.property i32 | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO3i32s5Int32VSgvp', 'interfaceLanguage': 'swift'} | decl=var i32: Int32? { get } |
+swift.property i64 | precise={'precise': 's:20CodeEditorWasmEngine0C5ValueO3i64s5Int64VSgvp', 'interfaceLanguage': 'swift'} | decl=var i64: Int64? { get } |
+swift.property interrupted | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV11interruptedSbvp', 'interfaceLanguage': 'swift'} | decl=var interrupted: Bool |
+swift.property isInterrupted | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC13isInterruptedSbvp', 'interfaceLanguage': 'swift'} | decl=var isInterrupted: Bool { get } |
+swift.property isInterrupted | precise={'precise': 's:20CodeEditorWasmEngine0abC8InstanceP13isInterruptedSbvp', 'interfaceLanguage': 'swift'} | decl=var isInterrupted: Bool { get } |
+swift.property localizedDescription | precise={'precise': 's:s5ErrorP10FoundationE20localizedDescriptionSSvp::SYNTHESIZED::s:20CodeEditorWasmEngine0cD5ErrorO', 'interfaceLanguage': 'swift'} | decl=var localizedDescription: String { get } |
+swift.property log | precise={'precise': 's:20CodeEditorWasmEngine0C11HostImportsV3logyys5Int32V_SVSgAFtYbcvp', 'interfaceLanguage': 'swift'} | decl=var log: @Sendable (Int32, UnsafeRawPointer?, Int32) -> Void | sendable=1
+swift.property logBytes | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV8logBytesSivp', 'interfaceLanguage': 'swift'} | decl=var logBytes: Int |
+swift.property maxConcurrentRequests | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV21maxConcurrentRequestsSivp', 'interfaceLanguage': 'swift'} | decl=var maxConcurrentRequests: Int |
+swift.property maxHostSendQueueBytes | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV21maxHostSendQueueBytesSivp', 'interfaceLanguage': 'swift'} | decl=var maxHostSendQueueBytes: Int |
+swift.property maxHostSendQueueMessages | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV24maxHostSendQueueMessagesSivp', 'interfaceLanguage': 'swift'} | decl=var maxHostSendQueueMessages: Int |
+swift.property maxLinearMemoryBytes | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV20maxLinearMemoryBytesSivp', 'interfaceLanguage': 'swift'} | decl=var maxLinearMemoryBytes: Int |
+swift.property maxLogBytes | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV11maxLogBytesSivp', 'interfaceLanguage': 'swift'} | decl=var maxLogBytes: Int |
+swift.property maxModuleBytes | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV14maxModuleBytesSivp', 'interfaceLanguage': 'swift'} | decl=var maxModuleBytes: Int |
+swift.property maxPollBudgetPerTick | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV20maxPollBudgetPerTickSivp', 'interfaceLanguage': 'swift'} | decl=var maxPollBudgetPerTick: Int |
+swift.property maxPollTicks | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV12maxPollTicksSivp', 'interfaceLanguage': 'swift'} | decl=var maxPollTicks: Int |
+swift.property maxWallTime | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV11maxWallTimes8DurationVvp', 'interfaceLanguage': 'swift'} | decl=var maxWallTime: Duration |
+swift.property memory | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC6memoryAA0C10MemoryView_pvp', 'interfaceLanguage': 'swift'} | decl=var memory: any WasmMemoryView { get } |
+swift.property memory | precise={'precise': 's:20CodeEditorWasmEngine0abC8InstanceP6memoryAA0C10MemoryView_pvp', 'interfaceLanguage': 'swift'} | decl=var memory: any WasmMemoryView { get } |
+swift.property memoryBytes | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV11memoryBytesSivp', 'interfaceLanguage': 'swift'} | decl=var memoryBytes: Int |
+swift.property memoryView | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP10memoryViewAA0c6MemoryH0_pvp', 'interfaceLanguage': 'swift'} | decl=var memoryView: any WasmMemoryView { get } |
+swift.property meters | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestC8InstanceC6metersAA0C6MetersVvp', 'interfaceLanguage': 'swift'} | decl=var meters: WasmMeters { get } |
+swift.property meters | precise={'precise': 's:20CodeEditorWasmEngine0abC8InstanceP6metersAA0C6MetersVvp', 'interfaceLanguage': 'swift'} | decl=var meters: WasmMeters { get } |
+swift.property monotonicMillis | precise={'precise': 's:20CodeEditorWasmEngine0C11HostImportsV15monotonicMilliss5Int64VyYbcvp', 'interfaceLanguage': 'swift'} | decl=var monotonicMillis: @Sendable () -> Int64 | sendable=1
+swift.property pollTicks | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV9pollTicksSivp', 'interfaceLanguage': 'swift'} | decl=var pollTicks: Int |
+swift.property send | precise={'precise': 's:20CodeEditorWasmEngine0C11HostImportsV4sendys5Int32VSVSg_AFtYbcvp', 'interfaceLanguage': 'swift'} | decl=var send: @Sendable (UnsafeRawPointer?, Int32) -> Int32 | sendable=1
+swift.property shouldCancel | precise={'precise': 's:20CodeEditorWasmEngine0C11HostImportsV12shouldCancelys5Int32Vs5Int64V_AHtYbcvp', 'interfaceLanguage': 'swift'} | decl=var shouldCancel: @Sendable (Int64, Int64) -> Int32 | sendable=1
+swift.property size | precise={'precise': 's:20CodeEditorWasmEngine0C10MemoryViewP4sizeSivp', 'interfaceLanguage': 'swift'} | decl=var size: Int { get } |
+swift.property wallTimeStarted | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV15wallTimeStarted10Foundation4DateVvp', 'interfaceLanguage': 'swift'} | decl=var wallTimeStarted: Date |
+swift.protocol CodeEditorWasmEngine | precise={'precise': 's:20CodeEditorWasmEngineAAP', 'interfaceLanguage': 'swift'} | decl=protocol CodeEditorWasmEngine : Sendable | sendable=1
+swift.protocol CodeEditorWasmInstance | precise={'precise': 's:20CodeEditorWasmEngine0abC8InstanceP', 'interfaceLanguage': 'swift'} | decl=protocol CodeEditorWasmInstance : AnyObject, Sendable | sendable=1
+swift.protocol LinkedWasmGuest | precise={'precise': 's:20CodeEditorWasmEngine06LinkedC5GuestP', 'interfaceLanguage': 'swift'} | decl=protocol LinkedWasmGuest : AnyObject, Sendable | sendable=1
+swift.protocol WasmMemoryView | precise={'precise': 's:20CodeEditorWasmEngine0C10MemoryViewP', 'interfaceLanguage': 'swift'} | decl=protocol WasmMemoryView : Sendable | sendable=1
+swift.struct InProcessCoreWasmEngine | precise={'precise': 's:20CodeEditorWasmEngine013InProcessCorecD0V', 'interfaceLanguage': 'swift'} | decl=struct InProcessCoreWasmEngine |
+swift.struct LinkedGuestWasmEngine | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestcD0V', 'interfaceLanguage': 'swift'} | decl=struct LinkedGuestWasmEngine |
+swift.struct WasmHostImports | precise={'precise': 's:20CodeEditorWasmEngine0C11HostImportsV', 'interfaceLanguage': 'swift'} | decl=struct WasmHostImports |
+swift.struct WasmMeters | precise={'precise': 's:20CodeEditorWasmEngine0C6MetersV', 'interfaceLanguage': 'swift'} | decl=struct WasmMeters |
+swift.struct WasmModuleBuilder | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV', 'interfaceLanguage': 'swift'} | decl=struct WasmModuleBuilder |
+swift.struct WasmResourceLimits | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV', 'interfaceLanguage': 'swift'} | decl=struct WasmResourceLimits |
+swift.type.method abiVersionConstantModule(value:) | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV018abiVersionConstantE05value10Foundation4DataVs5Int32V_tFZ', 'interfaceLanguage': 'swift'} | decl=static func abiVersionConstantModule(value: Int32) -> Data |
+swift.type.method abiVersionOnlyModule() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV014abiVersionOnlyE010Foundation4DataVyFZ', 'interfaceLanguage': 'swift'} | decl=static func abiVersionOnlyModule() -> Data |
+swift.type.method conformanceModule() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV011conformanceE010Foundation4DataVyFZ', 'interfaceLanguage': 'swift'} | decl=static func conformanceModule() -> Data |
+swift.type.method hostSendEchoModule() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV012hostSendEchoE010Foundation4DataVyFZ', 'interfaceLanguage': 'swift'} | decl=static func hostSendEchoModule() -> Data |
+swift.type.method infiniteLoopModule() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV012infiniteLoopE010Foundation4DataVyFZ', 'interfaceLanguage': 'swift'} | decl=static func infiniteLoopModule() -> Data |
+swift.type.method malformedModule() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV09malformedE010Foundation4DataVyFZ', 'interfaceLanguage': 'swift'} | decl=static func malformedModule() -> Data |
+swift.type.method missingExportModule() | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV013missingExportE010Foundation4DataVyFZ', 'interfaceLanguage': 'swift'} | decl=static func missingExportModule() -> Data |
+swift.type.property default | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV7defaultACvpZ', 'interfaceLanguage': 'swift'} | decl=static let `default`: WasmResourceLimits |
+swift.type.property magic | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV5magicSays5UInt8VGvpZ', 'interfaceLanguage': 'swift'} | decl=static let magic: [UInt8] |
+swift.type.property moduleName | precise={'precise': 's:20CodeEditorWasmEngine04CoreC6ImportO10moduleNameSSvpZ', 'interfaceLanguage': 'swift'} | decl=static let moduleName: String |
+swift.type.property statusBackpressure | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO18statusBackpressures5Int32VvpZ', 'interfaceLanguage': 'swift'} | decl=static let statusBackpressure: Int32 |
+swift.type.property statusBusy | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO10statusBusys5Int32VvpZ', 'interfaceLanguage': 'swift'} | decl=static let statusBusy: Int32 |
+swift.type.property statusCancelled | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO15statusCancelleds5Int32VvpZ', 'interfaceLanguage': 'swift'} | decl=static let statusCancelled: Int32 |
+swift.type.property statusError | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO11statusErrors5Int32VvpZ', 'interfaceLanguage': 'swift'} | decl=static let statusError: Int32 |
+swift.type.property statusOK | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO8statusOKs5Int32VvpZ', 'interfaceLanguage': 'swift'} | decl=static let statusOK: Int32 |
+swift.type.property tight | precise={'precise': 's:20CodeEditorWasmEngine0C14ResourceLimitsV5tightACvpZ', 'interfaceLanguage': 'swift'} | decl=static let tight: WasmResourceLimits |
+swift.type.property version | precise={'precise': 's:20CodeEditorWasmEngine04CoreC3ABIO7versions5Int32VvpZ', 'interfaceLanguage': 'swift'} | decl=static let version: Int32 |
+swift.type.property version | precise={'precise': 's:20CodeEditorWasmEngine0C13ModuleBuilderV7versionSays5UInt8VGvpZ', 'interfaceLanguage': 'swift'} | decl=static let version: [UInt8] |
+swift.typealias CodeEditorWasmSimulationEngine | precise={'precise': 's:20CodeEditorWasmEngine0abc10SimulationD0a', 'interfaceLanguage': 'swift'} | decl=typealias CodeEditorWasmSimulationEngine = LinkedGuestWasmEngine |
+swift.typealias LinkedGuestWasmEngine.GuestFactory | precise={'precise': 's:20CodeEditorWasmEngine011LinkedGuestcD0V0F7Factorya', 'interfaceLanguage': 'swift'} | decl=typealias GuestFactory = @Sendable () -> any LinkedWasmGuest | sendable=1

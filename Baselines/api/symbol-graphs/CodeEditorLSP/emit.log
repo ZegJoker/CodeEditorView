@@ -1,0 +1,4 @@
+warning: 'codeeditorview': found 3 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/stanx/dev/projects/CodeEditorView/Tests/CodeEditorWorkspaceTests/Fixtures/restoration-v1-minimal.json
+    /Users/stanx/dev/projects/CodeEditorView/Tests/CodeEditorWorkspaceTests/Fixtures/restoration-corrupt.json
+    /Users/stanx/dev/projects/CodeEditorView/Tests/CodeEditorWorkspaceTests/Fixtures/restoration-v999-future.json

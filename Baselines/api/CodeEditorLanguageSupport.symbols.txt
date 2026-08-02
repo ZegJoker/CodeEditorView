@@ -1,144 +1,323 @@
-class LanguageRegistry | sendable=1
-enum CaptureName | sendable=1
-enum CodeLanguages | sendable=1
-enum HighlightProvidingError | sendable=1
-enum LanguageDetector | sendable=1
-enum LanguagePackError | sendable=1
-enum LanguagePackRegistration | sendable=1
-enum LanguageRegistrationDiagnostic | sendable=1
-enum QueryKind | sendable=1
-enum TreeSitterLanguageID | sendable=1
-func allDefinitions()
-func definition(for id: LanguageID)
-func detect( filename: String, contentPrefix: String? , in registry: LanguageRegistry )
-func from(capture: String)
-func hasParser(for id: LanguageID)
-func hasQueryProvider(for id: LanguageID)
-func hash(into hasher: inout Hasher)
-func language(forFileExtension ext: String)
-func language(id: LanguageID)
-func language(id: String)
-func language(id: TreeSitterLanguageID)
-func parser(for id: LanguageID)
-func queryURL(for id: LanguageID, kind: QueryKind)
-func queryURL(for id: LanguageID, query: String)
-func queryURL(for name: String )
-func record(_ error: LanguagePackError)
-func register(_ definition: LanguageDefinition) | attr=discardableResult
-func registerParser(for id: LanguageID, factory: @escaping ParserFactory)
-func registerQueryProvider(for id: LanguageID, provider: @escaping QueryURLProvider)
-func removeAll()
-func resetForTests()
-func setDocumentText(_ text: String)
-func setUp(documentLength: Int, languageID: String?)
-func snapshot()
-func unregisterAll(for id: LanguageID)
-func unregisterDefinition(for id: LanguageID)
-func unregisterParser(for id: LanguageID)
-func unregisterQueryProvider(for id: LanguageID)
-func validateCompleteness(for id: LanguageID)
-func willApplyEdit(range: NSRange)
-init ( definitions: [LanguageDefinition], languageIDsWithParsers: Set<LanguageID>, languageIDsWithQueries: Set<LanguageID>, generation: UInt64 )
-init ( id: LanguageID, displayName: String, tsName: String, fileExtensions: Set<String> , aliases: Set<String> , filenames: Set<String> , firstLinePatterns: [String] , contentPatterns: [String] , detectionPriority: Int , lineComment: String , blockComment: (String, String) , "")
-init ( id: TreeSitterLanguageID, tsName: String, displayName: String, extensions: Set<String>, lineComment: String , rangeComment: (String, String) , "")
-init ()
-init (_ language: CodeLanguage)
-init (didRegister: Bool, diagnostics: [LanguageRegistrationDiagnostic] )
-init (range: NSRange, capture: CaptureName? , rawCapture: String? )
-init (rawValue: String)
-init (stringLiteral value: String)
-protocol HighlightProviding | isolation=@MainActor
-struct CodeLanguage | sendable=1
-struct HighlightRange | sendable=1
-struct LanguageDefinition | sendable=1
-struct LanguageID | sendable=1
-struct LanguageRegistrationResult | sendable=1
-struct LanguageRegistrySnapshot | sendable=1
-typealias ParserFactory | sendable=1
-typealias QueryURLProvider | sendable=1
-var additionalQueries
-var agda
-var aliases
-var all
-var allLanguages
-var allowsComments
-var bash
-var blockComment
-var brackets
-var c
-var cSharp
-var capture
-var contentPatterns
-var cpp
-var css
-var dart
-var definitions
-var description
-var detectionPriority
-var diagnostics
-var didRegister
-var displayName
-var dockerfile
-var elixir
-var errors
-var extensions
-var fileBasename
-var fileExtensions
-var fileName
-var filenames
-var firstLinePatterns
-var generation
-var go
-var goMod
-var haskell
-var highlightable
-var html
-var id
-var insertSpaces
-var isHighlightFamily
-var java
-var javascript
-var jsdoc
-var json
-var jsx
-var julia
-var kotlin
-var languageID
-var languageIDsWithParsers
-var languageIDsWithQueries
-var lineComment
-var lua
-var markdown
-var markdownInline
-var maxContentBytes
-var objc
-var ocaml
-var parent
-var perl
-var php
-var plainText
-var preferredDebuggers
-var preferredFormatters
-var preferredLanguageServers
-var python
-var queryKinds
-var range
-var rangeComment
-var rawCapture
-var rawValue
-var regex
-var ruby
-var rust
-var scala
-var shared
-var sql
-var swift
-var tabSize
-var toml
-var tsName
-var tsx
-var typescript
-var verilog
-var wordPattern
-var yaml
-var zig
+swift.class LanguageRegistry | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC', 'interfaceLanguage': 'swift'} | decl=final class LanguageRegistry |
+swift.enum CaptureName | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO', 'interfaceLanguage': 'swift'} | decl=enum CaptureName |
+swift.enum CodeLanguages | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO', 'interfaceLanguage': 'swift'} | decl=enum CodeLanguages |
+swift.enum HighlightProvidingError | precise={'precise': 's:25CodeEditorLanguageSupport23HighlightProvidingErrorO', 'interfaceLanguage': 'swift'} | decl=enum HighlightProvidingError |
+swift.enum LanguageDetector | precise={'precise': 's:25CodeEditorLanguageSupport0C8DetectorO', 'interfaceLanguage': 'swift'} | decl=enum LanguageDetector |
+swift.enum LanguagePackError | precise={'precise': 's:25CodeEditorLanguageSupport0C9PackErrorO', 'interfaceLanguage': 'swift'} | decl=enum LanguagePackError |
+swift.enum LanguagePackRegistration | precise={'precise': 's:25CodeEditorLanguageSupport0C16PackRegistrationO', 'interfaceLanguage': 'swift'} | decl=enum LanguagePackRegistration |
+swift.enum LanguageRegistrationDiagnostic | precise={'precise': 's:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO', 'interfaceLanguage': 'swift'} | decl=enum LanguageRegistrationDiagnostic |
+swift.enum QueryKind | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO', 'interfaceLanguage': 'swift'} | decl=enum QueryKind |
+swift.enum TreeSitterLanguageID | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO', 'interfaceLanguage': 'swift'} | decl=enum TreeSitterLanguageID |
+swift.enum.case CaptureName.attribute | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO9attributeyA2CmF', 'interfaceLanguage': 'swift'} | decl=case attribute |
+swift.enum.case CaptureName.boolean | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO7booleanyA2CmF', 'interfaceLanguage': 'swift'} | decl=case boolean |
+swift.enum.case CaptureName.character | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO9characteryA2CmF', 'interfaceLanguage': 'swift'} | decl=case character |
+swift.enum.case CaptureName.command | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO7commandyA2CmF', 'interfaceLanguage': 'swift'} | decl=case command |
+swift.enum.case CaptureName.comment | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO7commentyA2CmF', 'interfaceLanguage': 'swift'} | decl=case comment |
+swift.enum.case CaptureName.conditional | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO11conditionalyA2CmF', 'interfaceLanguage': 'swift'} | decl=case conditional |
+swift.enum.case CaptureName.constant | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO8constantyA2CmF', 'interfaceLanguage': 'swift'} | decl=case constant |
+swift.enum.case CaptureName.constructor | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO11constructoryA2CmF', 'interfaceLanguage': 'swift'} | decl=case constructor |
+swift.enum.case CaptureName.float | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO5floatyA2CmF', 'interfaceLanguage': 'swift'} | decl=case float |
+swift.enum.case CaptureName.function | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO8functionyA2CmF', 'interfaceLanguage': 'swift'} | decl=case function |
+swift.enum.case CaptureName.include | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO7includeyA2CmF', 'interfaceLanguage': 'swift'} | decl=case include |
+swift.enum.case CaptureName.keyword | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO7keywordyA2CmF', 'interfaceLanguage': 'swift'} | decl=case keyword |
+swift.enum.case CaptureName.keywordFunction | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO15keywordFunctionyA2CmF', 'interfaceLanguage': 'swift'} | decl=case keywordFunction |
+swift.enum.case CaptureName.keywordReturn | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO13keywordReturnyA2CmF', 'interfaceLanguage': 'swift'} | decl=case keywordReturn |
+swift.enum.case CaptureName.method | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO6methodyA2CmF', 'interfaceLanguage': 'swift'} | decl=case method |
+swift.enum.case CaptureName.number | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO6numberyA2CmF', 'interfaceLanguage': 'swift'} | decl=case number |
+swift.enum.case CaptureName.operator | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO8operatoryA2CmF', 'interfaceLanguage': 'swift'} | decl=case `operator` |
+swift.enum.case CaptureName.parameter | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO9parameteryA2CmF', 'interfaceLanguage': 'swift'} | decl=case parameter |
+swift.enum.case CaptureName.property | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO8propertyyA2CmF', 'interfaceLanguage': 'swift'} | decl=case property |
+swift.enum.case CaptureName.punctuation | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO11punctuationyA2CmF', 'interfaceLanguage': 'swift'} | decl=case punctuation |
+swift.enum.case CaptureName.repeat | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO6repeatyA2CmF', 'interfaceLanguage': 'swift'} | decl=case `repeat` |
+swift.enum.case CaptureName.string | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO6stringyA2CmF', 'interfaceLanguage': 'swift'} | decl=case string |
+swift.enum.case CaptureName.tag | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO3tagyA2CmF', 'interfaceLanguage': 'swift'} | decl=case tag |
+swift.enum.case CaptureName.text | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO4textyA2CmF', 'interfaceLanguage': 'swift'} | decl=case text |
+swift.enum.case CaptureName.type | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO4typeyA2CmF', 'interfaceLanguage': 'swift'} | decl=case type |
+swift.enum.case CaptureName.typeAlternate | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO13typeAlternateyA2CmF', 'interfaceLanguage': 'swift'} | decl=case typeAlternate |
+swift.enum.case CaptureName.value | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO5valueyA2CmF', 'interfaceLanguage': 'swift'} | decl=case value |
+swift.enum.case CaptureName.variable | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO8variableyA2CmF', 'interfaceLanguage': 'swift'} | decl=case variable |
+swift.enum.case CaptureName.variableBuiltin | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO15variableBuiltinyA2CmF', 'interfaceLanguage': 'swift'} | decl=case variableBuiltin |
+swift.enum.case HighlightProvidingError.cancelled | precise={'precise': 's:25CodeEditorLanguageSupport23HighlightProvidingErrorO9cancelledyA2CmF', 'interfaceLanguage': 'swift'} | decl=case cancelled |
+swift.enum.case HighlightProvidingError.unavailable | precise={'precise': 's:25CodeEditorLanguageSupport23HighlightProvidingErrorO11unavailableyA2CmF', 'interfaceLanguage': 'swift'} | decl=case unavailable |
+swift.enum.case LanguagePackError.missingGrammarArtifact(language:detail:) | precise={'precise': 's:25CodeEditorLanguageSupport0C9PackErrorO22missingGrammarArtifactyAcA0C2IDV_SStcACmF', 'interfaceLanguage': 'swift'} | decl=case missingGrammarArtifact(language: LanguageID, detail: String) |
+swift.enum.case LanguagePackError.missingQuery(language:query:searchedPaths:) | precise={'precise': 's:25CodeEditorLanguageSupport0C9PackErrorO12missingQueryyAcA0C2IDV_SSSaySSGtcACmF', 'interfaceLanguage': 'swift'} | decl=case missingQuery(language: LanguageID, query: String, searchedPaths: [String]) |
+swift.enum.case LanguageRegistrationDiagnostic.ambiguousExtension(_:existing:incoming:) | precise={'precise': 's:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO18ambiguousExtensionyACSS_AA0C2IDVAFtcACmF', 'interfaceLanguage': 'swift'} | decl=case ambiguousExtension(String, existing: LanguageID, incoming: LanguageID) |
+swift.enum.case LanguageRegistrationDiagnostic.ambiguousFilename(_:existing:incoming:) | precise={'precise': 's:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO17ambiguousFilenameyACSS_AA0C2IDVAFtcACmF', 'interfaceLanguage': 'swift'} | decl=case ambiguousFilename(String, existing: LanguageID, incoming: LanguageID) |
+swift.enum.case LanguageRegistrationDiagnostic.duplicateID(_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO11duplicateIDyAcA0cH0VcACmF', 'interfaceLanguage': 'swift'} | decl=case duplicateID(LanguageID) |
+swift.enum.case LanguageRegistrationDiagnostic.missingHighlightsQuery(_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO22missingHighlightsQueryyAcA0C2IDVcACmF', 'interfaceLanguage': 'swift'} | decl=case missingHighlightsQuery(LanguageID) |
+swift.enum.case LanguageRegistrationDiagnostic.missingParser(_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO13missingParseryAcA0C2IDVcACmF', 'interfaceLanguage': 'swift'} | decl=case missingParser(LanguageID) |
+swift.enum.case QueryKind.brackets | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO8bracketsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case brackets |
+swift.enum.case QueryKind.folds | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO5foldsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case folds |
+swift.enum.case QueryKind.highlights | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO10highlightsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case highlights |
+swift.enum.case QueryKind.indents | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO7indentsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case indents |
+swift.enum.case QueryKind.injections | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO10injectionsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case injections |
+swift.enum.case QueryKind.locals | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO6localsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case locals |
+swift.enum.case QueryKind.outline | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO7outlineyA2CmF', 'interfaceLanguage': 'swift'} | decl=case outline |
+swift.enum.case QueryKind.structure | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO9structureyA2CmF', 'interfaceLanguage': 'swift'} | decl=case structure |
+swift.enum.case QueryKind.tags | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO4tagsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case tags |
+swift.enum.case QueryKind.textobjects | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO11textobjectsyA2CmF', 'interfaceLanguage': 'swift'} | decl=case textobjects |
+swift.enum.case TreeSitterLanguageID.agda | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4agdayA2CmF', 'interfaceLanguage': 'swift'} | decl=case agda |
+swift.enum.case TreeSitterLanguageID.bash | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4bashyA2CmF', 'interfaceLanguage': 'swift'} | decl=case bash |
+swift.enum.case TreeSitterLanguageID.c | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO1cyA2CmF', 'interfaceLanguage': 'swift'} | decl=case c |
+swift.enum.case TreeSitterLanguageID.cSharp | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO6cSharpyA2CmF', 'interfaceLanguage': 'swift'} | decl=case cSharp |
+swift.enum.case TreeSitterLanguageID.cpp | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3cppyA2CmF', 'interfaceLanguage': 'swift'} | decl=case cpp |
+swift.enum.case TreeSitterLanguageID.css | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3cssyA2CmF', 'interfaceLanguage': 'swift'} | decl=case css |
+swift.enum.case TreeSitterLanguageID.dart | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4dartyA2CmF', 'interfaceLanguage': 'swift'} | decl=case dart |
+swift.enum.case TreeSitterLanguageID.dockerfile | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO10dockerfileyA2CmF', 'interfaceLanguage': 'swift'} | decl=case dockerfile |
+swift.enum.case TreeSitterLanguageID.elixir | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO6elixiryA2CmF', 'interfaceLanguage': 'swift'} | decl=case elixir |
+swift.enum.case TreeSitterLanguageID.go | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO2goyA2CmF', 'interfaceLanguage': 'swift'} | decl=case go |
+swift.enum.case TreeSitterLanguageID.goMod | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5goModyA2CmF', 'interfaceLanguage': 'swift'} | decl=case goMod |
+swift.enum.case TreeSitterLanguageID.haskell | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO7haskellyA2CmF', 'interfaceLanguage': 'swift'} | decl=case haskell |
+swift.enum.case TreeSitterLanguageID.html | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4htmlyA2CmF', 'interfaceLanguage': 'swift'} | decl=case html |
+swift.enum.case TreeSitterLanguageID.java | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4javayA2CmF', 'interfaceLanguage': 'swift'} | decl=case java |
+swift.enum.case TreeSitterLanguageID.javascript | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO10javascriptyA2CmF', 'interfaceLanguage': 'swift'} | decl=case javascript |
+swift.enum.case TreeSitterLanguageID.jsdoc | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5jsdocyA2CmF', 'interfaceLanguage': 'swift'} | decl=case jsdoc |
+swift.enum.case TreeSitterLanguageID.json | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4jsonyA2CmF', 'interfaceLanguage': 'swift'} | decl=case json |
+swift.enum.case TreeSitterLanguageID.jsx | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3jsxyA2CmF', 'interfaceLanguage': 'swift'} | decl=case jsx |
+swift.enum.case TreeSitterLanguageID.julia | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5juliayA2CmF', 'interfaceLanguage': 'swift'} | decl=case julia |
+swift.enum.case TreeSitterLanguageID.kotlin | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO6kotlinyA2CmF', 'interfaceLanguage': 'swift'} | decl=case kotlin |
+swift.enum.case TreeSitterLanguageID.lua | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3luayA2CmF', 'interfaceLanguage': 'swift'} | decl=case lua |
+swift.enum.case TreeSitterLanguageID.markdown | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO8markdownyA2CmF', 'interfaceLanguage': 'swift'} | decl=case markdown |
+swift.enum.case TreeSitterLanguageID.markdownInline | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO14markdownInlineyA2CmF', 'interfaceLanguage': 'swift'} | decl=case markdownInline |
+swift.enum.case TreeSitterLanguageID.objc | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4objcyA2CmF', 'interfaceLanguage': 'swift'} | decl=case objc |
+swift.enum.case TreeSitterLanguageID.ocaml | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5ocamlyA2CmF', 'interfaceLanguage': 'swift'} | decl=case ocaml |
+swift.enum.case TreeSitterLanguageID.perl | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4perlyA2CmF', 'interfaceLanguage': 'swift'} | decl=case perl |
+swift.enum.case TreeSitterLanguageID.php | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3phpyA2CmF', 'interfaceLanguage': 'swift'} | decl=case php |
+swift.enum.case TreeSitterLanguageID.plainText | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO9plainTextyA2CmF', 'interfaceLanguage': 'swift'} | decl=case plainText |
+swift.enum.case TreeSitterLanguageID.python | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO6pythonyA2CmF', 'interfaceLanguage': 'swift'} | decl=case python |
+swift.enum.case TreeSitterLanguageID.regex | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5regexyA2CmF', 'interfaceLanguage': 'swift'} | decl=case regex |
+swift.enum.case TreeSitterLanguageID.ruby | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4rubyyA2CmF', 'interfaceLanguage': 'swift'} | decl=case ruby |
+swift.enum.case TreeSitterLanguageID.rust | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4rustyA2CmF', 'interfaceLanguage': 'swift'} | decl=case rust |
+swift.enum.case TreeSitterLanguageID.scala | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5scalayA2CmF', 'interfaceLanguage': 'swift'} | decl=case scala |
+swift.enum.case TreeSitterLanguageID.sql | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3sqlyA2CmF', 'interfaceLanguage': 'swift'} | decl=case sql |
+swift.enum.case TreeSitterLanguageID.swift | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO5swiftyA2CmF', 'interfaceLanguage': 'swift'} | decl=case swift |
+swift.enum.case TreeSitterLanguageID.toml | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4tomlyA2CmF', 'interfaceLanguage': 'swift'} | decl=case toml |
+swift.enum.case TreeSitterLanguageID.tsx | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3tsxyA2CmF', 'interfaceLanguage': 'swift'} | decl=case tsx |
+swift.enum.case TreeSitterLanguageID.typescript | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO10typescriptyA2CmF', 'interfaceLanguage': 'swift'} | decl=case typescript |
+swift.enum.case TreeSitterLanguageID.verilog | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO7verilogyA2CmF', 'interfaceLanguage': 'swift'} | decl=case verilog |
+swift.enum.case TreeSitterLanguageID.yaml | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO4yamlyA2CmF', 'interfaceLanguage': 'swift'} | decl=case yaml |
+swift.enum.case TreeSitterLanguageID.zig | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO3zigyA2CmF', 'interfaceLanguage': 'swift'} | decl=case zig |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport010TreeSitterC2IDO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0C10DefinitionV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0C16RegistrySnapshotV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0C18RegistrationResultV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0C9PackErrorO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport0aC0V', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport11CaptureNameO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport14HighlightRangeV', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport23HighlightProvidingErrorO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op !=(_:_:) | precise={'precise': 's:SQsE2neoiySbx_xtFZ::SYNTHESIZED::s:25CodeEditorLanguageSupport9QueryKindO', 'interfaceLanguage': 'swift'} | decl=static func != (lhs: Self, rhs: Self) -> Bool |
+swift.func.op ==(_:_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV2eeoiySbAC_ACtFZ', 'interfaceLanguage': 'swift'} | decl=static func == (lhs: LanguageDefinition, rhs: LanguageDefinition) -> Bool |
+swift.func.op ==(_:_:) | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V2eeoiySbAC_ACtFZ', 'interfaceLanguage': 'swift'} | decl=static func == (lhs: CodeLanguage, rhs: CodeLanguage) -> Bool |
+swift.init init() | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryCACycfc', 'interfaceLanguage': 'swift'} | decl=init() |
+swift.init init(_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionVyAcA0aC0Vcfc', 'interfaceLanguage': 'swift'} | decl=init(_ language: CodeLanguage) |
+swift.init init(definitions:languageIDsWithParsers:languageIDsWithQueries:generation:) | precise={'precise': 's:25CodeEditorLanguageSupport0C16RegistrySnapshotV11definitions22languageIDsWithParsers0hiJ7Queries10generationACSayAA0C10DefinitionVG_ShyAA0C2IDVGAMs6UInt64Vtcfc', 'interfaceLanguage': 'swift'} | decl=init(definitions: [LanguageDefinition], languageIDsWithParsers: Set<LanguageID>, languageIDsWithQueries: Set<LanguageID>, generation: UInt64) |
+swift.init init(didRegister:diagnostics:) | precise={'precise': 's:25CodeEditorLanguageSupport0C18RegistrationResultV11didRegister11diagnosticsACSb_SayAA0cE10DiagnosticOGtcfc', 'interfaceLanguage': 'swift'} | decl=init(didRegister: Bool, diagnostics: [LanguageRegistrationDiagnostic] = []) |
+swift.init init(extendedGraphemeClusterLiteral:) | precise={'precise': 's:s26ExpressibleByStringLiteralPs0cD4TypeQz023ExtendedGraphemeClusterdE0RtzrlE08extendedghD0xAF_tcfc::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=init(extendedGraphemeClusterLiteral value: Self.StringLiteralType) |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(from:) | precise={'precise': 's:SYsSeRzSS8RawValueSYRtzrlE4fromxs7Decoder_p_tKcfc::SYNTHESIZED::s:25CodeEditorLanguageSupport9QueryKindO', 'interfaceLanguage': 'swift'} | decl=init(from decoder: any Decoder) throws |
+swift.init init(id:displayName:tsName:fileExtensions:aliases:filenames:firstLinePatterns:contentPatterns:detectionPriority:lineComment:blockComment:tabSize:insertSpaces:wordPattern:brackets:additionalQueries:queryKinds:parent:preferredLanguageServers:preferredFormatters:preferredDebuggers:allowsComments:) | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV2id11displayName02tsH014fileExtensions7aliases9filenames17firstLinePatterns07contentP017detectionPriority11lineComment05blockU07tabSize12insertSpaces11wordPattern8brackets17additionalQueries10queryKinds6parent09preferredC7Servers19preferredFormatters18preferredDebuggers14allowsCommentsAcA0C2IDV_S2SShySSGA0_A0_SaySSGA1_SiS2S_SStSiSbSSSaySS_SStGA0_ShyAA9QueryKindOGSgA_SgA1_A1_A1_Sbtcfc', 'interfaceLanguage': 'swift'} | decl=init(id: LanguageID, displayName: String, tsName: String, fileExtensions: Set<String> = [], aliases: Set<String> = [], filenames: Set<String> = [], firstLinePatterns: [String] = [], contentPatterns: [ |
+swift.init init(id:tsName:displayName:extensions:lineComment:rangeComment:additionalQueries:parent:aliases:) | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V2id6tsName07displayG010extensions11lineComment05rangeK017additionalQueries6parent7aliasesAcA010TreeSitterC2IDO_S2SShySSGS2S_SStAoNSgAOtcfc', 'interfaceLanguage': 'swift'} | decl=init(id: TreeSitterLanguageID, tsName: String, displayName: String, extensions: Set<String>, lineComment: String = "", rangeComment: (String, String) = ("", ""), additionalQueries: Set<String> = [], p |
+swift.init init(languageID:) | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO08languageG0ACSgAA0cG0V_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(languageID: LanguageID) |
+swift.init init(range:capture:rawCapture:) | precise={'precise': 's:25CodeEditorLanguageSupport14HighlightRangeV5range7capture10rawCaptureACSo8_NSRangeV_AA0J4NameOSgSSSgtcfc', 'interfaceLanguage': 'swift'} | decl=init(range: NSRange, capture: CaptureName? = nil, rawCapture: String? = nil) |
+swift.init init(rawValue:) | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV8rawValueACSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(rawValue:) | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO8rawValueACSgSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init?(rawValue: String) |
+swift.init init(stringLiteral:) | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV13stringLiteralACSS_tcfc', 'interfaceLanguage': 'swift'} | decl=init(stringLiteral value: String) |
+swift.init init(unicodeScalarLiteral:) | precise={'precise': 's:s43ExpressibleByExtendedGraphemeClusterLiteralPs013UnicodeScalarF4TypeQz0cdefI0RtzrlE07unicodehF0xAF_tcfc::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=init(unicodeScalarLiteral value: Self.ExtendedGraphemeClusterLiteralType) |
+swift.method allDefinitions() | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC14allDefinitionsSayAA0C10DefinitionVGyF', 'interfaceLanguage': 'swift'} | decl=func allDefinitions() -> [LanguageDefinition] |
+swift.method applyEdit(range:delta:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingP9applyEdit5range5delta10Foundation8IndexSetVSo8_NSRangeV_SitYaKF', 'interfaceLanguage': 'swift'} | decl=@MainActor func applyEdit(range: NSRange, delta: Int) async throws -> IndexSet | actor=1
+swift.method definition(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC10definition3forAA0C10DefinitionVSgAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func definition(for id: LanguageID) -> LanguageDefinition? |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method encode(to:) | precise={'precise': 's:SYsSERzSS8RawValueSYRtzrlE6encode2toys7Encoder_p_tKF::SYNTHESIZED::s:25CodeEditorLanguageSupport9QueryKindO', 'interfaceLanguage': 'swift'} | decl=func encode(to encoder: any Encoder) throws |
+swift.method hasParser(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC9hasParser3forSbAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func hasParser(for id: LanguageID) -> Bool |
+swift.method hasQueryProvider(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC16hasQueryProvider3forSbAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func hasQueryProvider(for id: LanguageID) -> Bool |
+swift.method hash(into:) | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV4hash4intoys6HasherVz_tF', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4hash4intoys6HasherVz_tF', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:25CodeEditorLanguageSupport010TreeSitterC2IDO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:25CodeEditorLanguageSupport11CaptureNameO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method hash(into:) | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE4hash4intoys6HasherVz_tF::SYNTHESIZED::s:25CodeEditorLanguageSupport9QueryKindO', 'interfaceLanguage': 'swift'} | decl=func hash(into hasher: inout Hasher) |
+swift.method parser(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC6parser3fors13OpaquePointerVSgAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func parser(for id: LanguageID) -> OpaquePointer? |
+swift.method queryHighlights(in:text:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingP15queryHighlights2in4textSayAA0E5RangeVGSo8_NSRangeV_SStYaKF', 'interfaceLanguage': 'swift'} | decl=@MainActor func queryHighlights(in range: NSRange, text: String) async throws -> [HighlightRange] | actor=1
+swift.method queryURL(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V8queryURL3for10Foundation0F0VSgSS_tF', 'interfaceLanguage': 'swift'} | decl=func queryURL(for name: String = "highlights") -> URL? |
+swift.method queryURL(for:kind:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC8queryURL3for4kind10Foundation0G0VSgAA0C2IDV_AA9QueryKindOtF', 'interfaceLanguage': 'swift'} | decl=func queryURL(for id: LanguageID, kind: QueryKind) -> URL? |
+swift.method queryURL(for:query:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC8queryURL3for0F010Foundation0G0VSgAA0C2IDV_SStF', 'interfaceLanguage': 'swift'} | decl=func queryURL(for id: LanguageID, query: String) -> URL? |
+swift.method register(_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC8registeryAA0C18RegistrationResultVAA0C10DefinitionVF', 'interfaceLanguage': 'swift'} | decl=@discardableResult func register(_ definition: LanguageDefinition) -> LanguageRegistrationResult |
+swift.method registerParser(for:factory:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC14registerParser3for7factoryyAA0C2IDV_s13OpaquePointerVSgyYbctF', 'interfaceLanguage': 'swift'} | decl=func registerParser(for id: LanguageID, factory: @escaping ParserFactory) |
+swift.method registerQueryProvider(for:provider:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC21registerQueryProvider3for8provideryAA0C2IDV_10Foundation3URLVSgSSYbctF', 'interfaceLanguage': 'swift'} | decl=func registerQueryProvider(for id: LanguageID, provider: @escaping QueryURLProvider) |
+swift.method removeAll() | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC9removeAllyyF', 'interfaceLanguage': 'swift'} | decl=func removeAll() |
+swift.method setDocumentText(_:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingP15setDocumentTextyySSYaF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setDocumentText(_ text: String) async | actor=1
+swift.method setDocumentText(_:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingPAAE15setDocumentTextyySSYaF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setDocumentText(_ text: String) async | actor=1
+swift.method setUp(documentLength:languageID:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingP5setUp14documentLength10languageIDySi_SSSgtYaF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setUp(documentLength: Int, languageID: String?) async | actor=1
+swift.method setUp(documentLength:languageID:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingPAAE5setUp14documentLength10languageIDySi_SSSgtYaF', 'interfaceLanguage': 'swift'} | decl=@MainActor func setUp(documentLength: Int, languageID: String?) async | actor=1
+swift.method snapshot() | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC8snapshotAA0cE8SnapshotVyF', 'interfaceLanguage': 'swift'} | decl=func snapshot() -> LanguageRegistrySnapshot |
+swift.method unregisterAll(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC13unregisterAll3foryAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func unregisterAll(for id: LanguageID) |
+swift.method unregisterDefinition(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC20unregisterDefinition3foryAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func unregisterDefinition(for id: LanguageID) |
+swift.method unregisterParser(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC16unregisterParser3foryAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func unregisterParser(for id: LanguageID) |
+swift.method unregisterQueryProvider(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC23unregisterQueryProvider3foryAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func unregisterQueryProvider(for id: LanguageID) |
+swift.method validateCompleteness(for:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC20validateCompleteness3forSayAA0C22RegistrationDiagnosticOGAA0C2IDV_tF', 'interfaceLanguage': 'swift'} | decl=func validateCompleteness(for id: LanguageID) -> [LanguageRegistrationDiagnostic] |
+swift.method willApplyEdit(range:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingP13willApplyEdit5rangeySo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=@MainActor func willApplyEdit(range: NSRange) | actor=1
+swift.method willApplyEdit(range:) | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingPAAE13willApplyEdit5rangeySo8_NSRangeV_tF', 'interfaceLanguage': 'swift'} | decl=@MainActor func willApplyEdit(range: NSRange) | actor=1
+swift.property additionalQueries | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV17additionalQueriesShySSGvp', 'interfaceLanguage': 'swift'} | decl=var additionalQueries: Set<String> |
+swift.property additionalQueries | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V17additionalQueriesShySSGvp', 'interfaceLanguage': 'swift'} | decl=var additionalQueries: Set<String> |
+swift.property aliases | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV7aliasesShySSGvp', 'interfaceLanguage': 'swift'} | decl=var aliases: Set<String> |
+swift.property aliases | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V7aliasesShySSGvp', 'interfaceLanguage': 'swift'} | decl=var aliases: Set<String> |
+swift.property allowsComments | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV14allowsCommentsSbvp', 'interfaceLanguage': 'swift'} | decl=var allowsComments: Bool |
+swift.property blockComment | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV12blockCommentSS_SStvp', 'interfaceLanguage': 'swift'} | decl=var blockComment: (String, String) |
+swift.property brackets | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV8bracketsSaySS_SStGvp', 'interfaceLanguage': 'swift'} | decl=var brackets: [(String, String)] |
+swift.property capture | precise={'precise': 's:25CodeEditorLanguageSupport14HighlightRangeV7captureAA11CaptureNameOSgvp', 'interfaceLanguage': 'swift'} | decl=var capture: CaptureName? |
+swift.property contentPatterns | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV15contentPatternsSaySSGvp', 'interfaceLanguage': 'swift'} | decl=var contentPatterns: [String] |
+swift.property definitions | precise={'precise': 's:25CodeEditorLanguageSupport0C16RegistrySnapshotV11definitionsSayAA0C10DefinitionVGvp', 'interfaceLanguage': 'swift'} | decl=var definitions: [LanguageDefinition] |
+swift.property description | precise={'precise': 's:25CodeEditorLanguageSupport0C9PackErrorO11descriptionSSvp', 'interfaceLanguage': 'swift'} | decl=var description: String { get } |
+swift.property detectionPriority | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV17detectionPrioritySivp', 'interfaceLanguage': 'swift'} | decl=var detectionPriority: Int |
+swift.property diagnostics | precise={'precise': 's:25CodeEditorLanguageSupport0C18RegistrationResultV11diagnosticsSayAA0cE10DiagnosticOGvp', 'interfaceLanguage': 'swift'} | decl=var diagnostics: [LanguageRegistrationDiagnostic] |
+swift.property didRegister | precise={'precise': 's:25CodeEditorLanguageSupport0C18RegistrationResultV11didRegisterSbvp', 'interfaceLanguage': 'swift'} | decl=var didRegister: Bool |
+swift.property displayName | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV11displayNameSSvp', 'interfaceLanguage': 'swift'} | decl=var displayName: String |
+swift.property displayName | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V11displayNameSSvp', 'interfaceLanguage': 'swift'} | decl=var displayName: String |
+swift.property extensions | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V10extensionsShySSGvp', 'interfaceLanguage': 'swift'} | decl=var extensions: Set<String> |
+swift.property fileBasename | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO12fileBasenameSSvp', 'interfaceLanguage': 'swift'} | decl=var fileBasename: String { get } |
+swift.property fileExtensions | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV14fileExtensionsShySSGvp', 'interfaceLanguage': 'swift'} | decl=var fileExtensions: Set<String> |
+swift.property fileName | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO8fileNameSSvp', 'interfaceLanguage': 'swift'} | decl=var fileName: String { get } |
+swift.property filenames | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV9filenamesShySSGvp', 'interfaceLanguage': 'swift'} | decl=var filenames: Set<String> |
+swift.property firstLinePatterns | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV17firstLinePatternsSaySSGvp', 'interfaceLanguage': 'swift'} | decl=var firstLinePatterns: [String] |
+swift.property generation | precise={'precise': 's:25CodeEditorLanguageSupport0C16RegistrySnapshotV10generations6UInt64Vvp', 'interfaceLanguage': 'swift'} | decl=var generation: UInt64 |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:25CodeEditorLanguageSupport010TreeSitterC2IDO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:25CodeEditorLanguageSupport11CaptureNameO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property hashValue | precise={'precise': 's:SYsSHRzSH8RawValueSYRpzrlE04hashB0Sivp::SYNTHESIZED::s:25CodeEditorLanguageSupport9QueryKindO', 'interfaceLanguage': 'swift'} | decl=var hashValue: Int { get } |
+swift.property id | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV2idAA0C2IDVvp', 'interfaceLanguage': 'swift'} | decl=var id: LanguageID |
+swift.property id | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V2idAA010TreeSitterC2IDOvp', 'interfaceLanguage': 'swift'} | decl=var id: TreeSitterLanguageID |
+swift.property insertSpaces | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV12insertSpacesSbvp', 'interfaceLanguage': 'swift'} | decl=var insertSpaces: Bool |
+swift.property isHighlightFamily | precise={'precise': 's:25CodeEditorLanguageSupport9QueryKindO17isHighlightFamilySbvp', 'interfaceLanguage': 'swift'} | decl=var isHighlightFamily: Bool { get } |
+swift.property languageID | precise={'precise': 's:25CodeEditorLanguageSupport010TreeSitterC2IDO08languageG0AA0cG0Vvp', 'interfaceLanguage': 'swift'} | decl=var languageID: LanguageID { get } |
+swift.property languageID | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V10languageIDAA0cF0Vvp', 'interfaceLanguage': 'swift'} | decl=var languageID: LanguageID { get } |
+swift.property languageIDsWithParsers | precise={'precise': 's:25CodeEditorLanguageSupport0C16RegistrySnapshotV22languageIDsWithParsersShyAA0C2IDVGvp', 'interfaceLanguage': 'swift'} | decl=var languageIDsWithParsers: Set<LanguageID> |
+swift.property languageIDsWithQueries | precise={'precise': 's:25CodeEditorLanguageSupport0C16RegistrySnapshotV22languageIDsWithQueriesShyAA0C2IDVGvp', 'interfaceLanguage': 'swift'} | decl=var languageIDsWithQueries: Set<LanguageID> |
+swift.property lineComment | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV11lineCommentSSvp', 'interfaceLanguage': 'swift'} | decl=var lineComment: String |
+swift.property lineComment | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V11lineCommentSSvp', 'interfaceLanguage': 'swift'} | decl=var lineComment: String |
+swift.property localizedDescription | precise={'precise': 's:s5ErrorP10FoundationE20localizedDescriptionSSvp::SYNTHESIZED::s:25CodeEditorLanguageSupport0C9PackErrorO', 'interfaceLanguage': 'swift'} | decl=var localizedDescription: String { get } |
+swift.property localizedDescription | precise={'precise': 's:s5ErrorP10FoundationE20localizedDescriptionSSvp::SYNTHESIZED::s:25CodeEditorLanguageSupport23HighlightProvidingErrorO', 'interfaceLanguage': 'swift'} | decl=var localizedDescription: String { get } |
+swift.property parent | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV6parentAA0C2IDVSgvp', 'interfaceLanguage': 'swift'} | decl=var parent: LanguageID? |
+swift.property parent | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V6parentAA010TreeSitterC2IDOSgvp', 'interfaceLanguage': 'swift'} | decl=var parent: TreeSitterLanguageID? |
+swift.property preferredDebuggers | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV18preferredDebuggersSaySSGvp', 'interfaceLanguage': 'swift'} | decl=var preferredDebuggers: [String] |
+swift.property preferredFormatters | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV19preferredFormattersSaySSGvp', 'interfaceLanguage': 'swift'} | decl=var preferredFormatters: [String] |
+swift.property preferredLanguageServers | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV09preferredC7ServersSaySSGvp', 'interfaceLanguage': 'swift'} | decl=var preferredLanguageServers: [String] |
+swift.property queryKinds | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV10queryKindsShyAA9QueryKindOGvp', 'interfaceLanguage': 'swift'} | decl=var queryKinds: Set<QueryKind> |
+swift.property range | precise={'precise': 's:25CodeEditorLanguageSupport14HighlightRangeV5rangeSo8_NSRangeVvp', 'interfaceLanguage': 'swift'} | decl=var range: NSRange |
+swift.property rangeComment | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V12rangeCommentSS_SStvp', 'interfaceLanguage': 'swift'} | decl=var rangeComment: (String, String) |
+swift.property rawCapture | precise={'precise': 's:25CodeEditorLanguageSupport14HighlightRangeV10rawCaptureSSSgvp', 'interfaceLanguage': 'swift'} | decl=var rawCapture: String? |
+swift.property rawValue | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV8rawValueSSvp', 'interfaceLanguage': 'swift'} | decl=let rawValue: String |
+swift.property tabSize | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV7tabSizeSivp', 'interfaceLanguage': 'swift'} | decl=var tabSize: Int |
+swift.property tsName | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV6tsNameSSvp', 'interfaceLanguage': 'swift'} | decl=var tsName: String |
+swift.property tsName | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V6tsNameSSvp', 'interfaceLanguage': 'swift'} | decl=var tsName: String |
+swift.property wordPattern | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV11wordPatternSSvp', 'interfaceLanguage': 'swift'} | decl=var wordPattern: String |
+swift.protocol HighlightProviding | precise={'precise': 's:25CodeEditorLanguageSupport18HighlightProvidingP', 'interfaceLanguage': 'swift'} | decl=@MainActor protocol HighlightProviding : AnyObject | actor=1
+swift.struct CodeLanguage | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V', 'interfaceLanguage': 'swift'} | decl=struct CodeLanguage |
+swift.struct HighlightRange | precise={'precise': 's:25CodeEditorLanguageSupport14HighlightRangeV', 'interfaceLanguage': 'swift'} | decl=struct HighlightRange |
+swift.struct LanguageDefinition | precise={'precise': 's:25CodeEditorLanguageSupport0C10DefinitionV', 'interfaceLanguage': 'swift'} | decl=struct LanguageDefinition |
+swift.struct LanguageID | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV', 'interfaceLanguage': 'swift'} | decl=struct LanguageID |
+swift.struct LanguageRegistrationResult | precise={'precise': 's:25CodeEditorLanguageSupport0C18RegistrationResultV', 'interfaceLanguage': 'swift'} | decl=struct LanguageRegistrationResult |
+swift.struct LanguageRegistrySnapshot | precise={'precise': 's:25CodeEditorLanguageSupport0C16RegistrySnapshotV', 'interfaceLanguage': 'swift'} | decl=struct LanguageRegistrySnapshot |
+swift.type.method detect(filename:contentPrefix:in:) | precise={'precise': 's:25CodeEditorLanguageSupport0C8DetectorO6detect8filename13contentPrefix2inAA0C2IDVSgSS_SSSgAA0C8RegistryCtFZ', 'interfaceLanguage': 'swift'} | decl=static func detect(filename: String, contentPrefix: String? = nil, in registry: LanguageRegistry = .shared) -> LanguageID? |
+swift.type.method from(capture:) | precise={'precise': 's:25CodeEditorLanguageSupport11CaptureNameO4from7captureACSgSS_tFZ', 'interfaceLanguage': 'swift'} | decl=static func from(capture: String) -> CaptureName? |
+swift.type.method language(forFileExtension:) | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO8language16forFileExtensionAA0aC0VSgSS_tFZ', 'interfaceLanguage': 'swift'} | decl=static func language(forFileExtension ext: String) -> CodeLanguage? |
+swift.type.method language(id:) | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO8language2idAA0aC0VSgAA010TreeSitterC2IDO_tFZ', 'interfaceLanguage': 'swift'} | decl=static func language(id: TreeSitterLanguageID) -> CodeLanguage? |
+swift.type.method language(id:) | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO8language2idAA0aC0VSgAA0C2IDV_tFZ', 'interfaceLanguage': 'swift'} | decl=static func language(id: LanguageID) -> CodeLanguage? |
+swift.type.method language(id:) | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO8language2idAA0aC0VSgSS_tFZ', 'interfaceLanguage': 'swift'} | decl=static func language(id: String) -> CodeLanguage? |
+swift.type.method record(_:) | precise={'precise': 's:25CodeEditorLanguageSupport0C16PackRegistrationO6recordyyAA0cE5ErrorOFZ', 'interfaceLanguage': 'swift'} | decl=static func record(_ error: LanguagePackError) |
+swift.type.method resetForTests() | precise={'precise': 's:25CodeEditorLanguageSupport0C16PackRegistrationO13resetForTestsyyFZ', 'interfaceLanguage': 'swift'} | decl=static func resetForTests() |
+swift.type.property agda | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4agdaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let agda: LanguageID |
+swift.type.property agda | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4agdaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let agda: CodeLanguage |
+swift.type.property all | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO3allSayAA0aC0VGvpZ', 'interfaceLanguage': 'swift'} | decl=static var all: [CodeLanguage] { get } |
+swift.type.property allLanguages | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V12allLanguagesSayACGvpZ', 'interfaceLanguage': 'swift'} | decl=static let allLanguages: [CodeLanguage] |
+swift.type.property bash | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4bashACvpZ', 'interfaceLanguage': 'swift'} | decl=static let bash: LanguageID |
+swift.type.property bash | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4bashACvpZ', 'interfaceLanguage': 'swift'} | decl=static let bash: CodeLanguage |
+swift.type.property c | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV1cACvpZ', 'interfaceLanguage': 'swift'} | decl=static let c: LanguageID |
+swift.type.property c | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V1cACvpZ', 'interfaceLanguage': 'swift'} | decl=static let c: CodeLanguage |
+swift.type.property cSharp | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV6cSharpACvpZ', 'interfaceLanguage': 'swift'} | decl=static let cSharp: LanguageID |
+swift.type.property cSharp | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V6cSharpACvpZ', 'interfaceLanguage': 'swift'} | decl=static let cSharp: CodeLanguage |
+swift.type.property cpp | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3cppACvpZ', 'interfaceLanguage': 'swift'} | decl=static let cpp: LanguageID |
+swift.type.property cpp | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3cppACvpZ', 'interfaceLanguage': 'swift'} | decl=static let cpp: CodeLanguage |
+swift.type.property css | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3cssACvpZ', 'interfaceLanguage': 'swift'} | decl=static let css: LanguageID |
+swift.type.property css | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3cssACvpZ', 'interfaceLanguage': 'swift'} | decl=static let css: CodeLanguage |
+swift.type.property dart | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4dartACvpZ', 'interfaceLanguage': 'swift'} | decl=static let dart: LanguageID |
+swift.type.property dart | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4dartACvpZ', 'interfaceLanguage': 'swift'} | decl=static let dart: CodeLanguage |
+swift.type.property dockerfile | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV10dockerfileACvpZ', 'interfaceLanguage': 'swift'} | decl=static let dockerfile: LanguageID |
+swift.type.property dockerfile | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V10dockerfileACvpZ', 'interfaceLanguage': 'swift'} | decl=static let dockerfile: CodeLanguage |
+swift.type.property elixir | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV6elixirACvpZ', 'interfaceLanguage': 'swift'} | decl=static let elixir: LanguageID |
+swift.type.property elixir | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V6elixirACvpZ', 'interfaceLanguage': 'swift'} | decl=static let elixir: CodeLanguage |
+swift.type.property errors | precise={'precise': 's:25CodeEditorLanguageSupport0C16PackRegistrationO6errorsSayAA0cE5ErrorOGvpZ', 'interfaceLanguage': 'swift'} | decl=static var errors: [LanguagePackError] { get } |
+swift.type.property go | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV2goACvpZ', 'interfaceLanguage': 'swift'} | decl=static let go: LanguageID |
+swift.type.property go | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V2goACvpZ', 'interfaceLanguage': 'swift'} | decl=static let go: CodeLanguage |
+swift.type.property goMod | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5goModACvpZ', 'interfaceLanguage': 'swift'} | decl=static let goMod: LanguageID |
+swift.type.property goMod | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5goModACvpZ', 'interfaceLanguage': 'swift'} | decl=static let goMod: CodeLanguage |
+swift.type.property haskell | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV7haskellACvpZ', 'interfaceLanguage': 'swift'} | decl=static let haskell: LanguageID |
+swift.type.property haskell | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V7haskellACvpZ', 'interfaceLanguage': 'swift'} | decl=static let haskell: CodeLanguage |
+swift.type.property highlightable | precise={'precise': 's:25CodeEditorLanguageSupport0A9LanguagesO13highlightableSayAA0aC0VGvpZ', 'interfaceLanguage': 'swift'} | decl=static var highlightable: [CodeLanguage] { get } |
+swift.type.property highlightable | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V13highlightableSayACGvpZ', 'interfaceLanguage': 'swift'} | decl=static var highlightable: [CodeLanguage] { get } |
+swift.type.property html | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4htmlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let html: LanguageID |
+swift.type.property html | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4htmlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let html: CodeLanguage |
+swift.type.property java | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4javaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let java: LanguageID |
+swift.type.property java | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4javaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let java: CodeLanguage |
+swift.type.property javascript | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV10javascriptACvpZ', 'interfaceLanguage': 'swift'} | decl=static let javascript: LanguageID |
+swift.type.property javascript | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V10javascriptACvpZ', 'interfaceLanguage': 'swift'} | decl=static let javascript: CodeLanguage |
+swift.type.property jsdoc | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5jsdocACvpZ', 'interfaceLanguage': 'swift'} | decl=static let jsdoc: LanguageID |
+swift.type.property jsdoc | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5jsdocACvpZ', 'interfaceLanguage': 'swift'} | decl=static let jsdoc: CodeLanguage |
+swift.type.property json | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4jsonACvpZ', 'interfaceLanguage': 'swift'} | decl=static let json: LanguageID |
+swift.type.property json | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4jsonACvpZ', 'interfaceLanguage': 'swift'} | decl=static let json: CodeLanguage |
+swift.type.property jsx | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3jsxACvpZ', 'interfaceLanguage': 'swift'} | decl=static let jsx: LanguageID |
+swift.type.property jsx | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3jsxACvpZ', 'interfaceLanguage': 'swift'} | decl=static let jsx: CodeLanguage |
+swift.type.property julia | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5juliaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let julia: LanguageID |
+swift.type.property julia | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5juliaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let julia: CodeLanguage |
+swift.type.property kotlin | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV6kotlinACvpZ', 'interfaceLanguage': 'swift'} | decl=static let kotlin: LanguageID |
+swift.type.property kotlin | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V6kotlinACvpZ', 'interfaceLanguage': 'swift'} | decl=static let kotlin: CodeLanguage |
+swift.type.property lua | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3luaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let lua: LanguageID |
+swift.type.property lua | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3luaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let lua: CodeLanguage |
+swift.type.property markdown | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV8markdownACvpZ', 'interfaceLanguage': 'swift'} | decl=static let markdown: LanguageID |
+swift.type.property markdown | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V8markdownACvpZ', 'interfaceLanguage': 'swift'} | decl=static let markdown: CodeLanguage |
+swift.type.property markdownInline | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV14markdownInlineACvpZ', 'interfaceLanguage': 'swift'} | decl=static let markdownInline: LanguageID |
+swift.type.property markdownInline | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V14markdownInlineACvpZ', 'interfaceLanguage': 'swift'} | decl=static let markdownInline: CodeLanguage |
+swift.type.property maxContentBytes | precise={'precise': 's:25CodeEditorLanguageSupport0C8DetectorO15maxContentBytesSivpZ', 'interfaceLanguage': 'swift'} | decl=static let maxContentBytes: Int |
+swift.type.property objc | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4objcACvpZ', 'interfaceLanguage': 'swift'} | decl=static let objc: LanguageID |
+swift.type.property objc | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4objcACvpZ', 'interfaceLanguage': 'swift'} | decl=static let objc: CodeLanguage |
+swift.type.property ocaml | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5ocamlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let ocaml: LanguageID |
+swift.type.property ocaml | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5ocamlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let ocaml: CodeLanguage |
+swift.type.property perl | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4perlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let perl: LanguageID |
+swift.type.property perl | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4perlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let perl: CodeLanguage |
+swift.type.property php | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3phpACvpZ', 'interfaceLanguage': 'swift'} | decl=static let php: LanguageID |
+swift.type.property php | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3phpACvpZ', 'interfaceLanguage': 'swift'} | decl=static let php: CodeLanguage |
+swift.type.property plainText | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV9plainTextACvpZ', 'interfaceLanguage': 'swift'} | decl=static let plainText: LanguageID |
+swift.type.property plainText | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V9plainTextACvpZ', 'interfaceLanguage': 'swift'} | decl=static let plainText: CodeLanguage |
+swift.type.property python | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV6pythonACvpZ', 'interfaceLanguage': 'swift'} | decl=static let python: LanguageID |
+swift.type.property python | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V6pythonACvpZ', 'interfaceLanguage': 'swift'} | decl=static let python: CodeLanguage |
+swift.type.property regex | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5regexACvpZ', 'interfaceLanguage': 'swift'} | decl=static let regex: LanguageID |
+swift.type.property regex | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5regexACvpZ', 'interfaceLanguage': 'swift'} | decl=static let regex: CodeLanguage |
+swift.type.property ruby | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4rubyACvpZ', 'interfaceLanguage': 'swift'} | decl=static let ruby: LanguageID |
+swift.type.property ruby | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4rubyACvpZ', 'interfaceLanguage': 'swift'} | decl=static let ruby: CodeLanguage |
+swift.type.property rust | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4rustACvpZ', 'interfaceLanguage': 'swift'} | decl=static let rust: LanguageID |
+swift.type.property rust | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4rustACvpZ', 'interfaceLanguage': 'swift'} | decl=static let rust: CodeLanguage |
+swift.type.property scala | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5scalaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let scala: LanguageID |
+swift.type.property scala | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5scalaACvpZ', 'interfaceLanguage': 'swift'} | decl=static let scala: CodeLanguage |
+swift.type.property shared | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC6sharedACvpZ', 'interfaceLanguage': 'swift'} | decl=static let shared: LanguageRegistry |
+swift.type.property sql | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3sqlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let sql: LanguageID |
+swift.type.property sql | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3sqlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let sql: CodeLanguage |
+swift.type.property swift | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV5swiftACvpZ', 'interfaceLanguage': 'swift'} | decl=static let swift: LanguageID |
+swift.type.property swift | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V5swiftACvpZ', 'interfaceLanguage': 'swift'} | decl=static let swift: CodeLanguage |
+swift.type.property toml | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4tomlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let toml: LanguageID |
+swift.type.property toml | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4tomlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let toml: CodeLanguage |
+swift.type.property tsx | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3tsxACvpZ', 'interfaceLanguage': 'swift'} | decl=static let tsx: LanguageID |
+swift.type.property tsx | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3tsxACvpZ', 'interfaceLanguage': 'swift'} | decl=static let tsx: CodeLanguage |
+swift.type.property typescript | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV10typescriptACvpZ', 'interfaceLanguage': 'swift'} | decl=static let typescript: LanguageID |
+swift.type.property typescript | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V10typescriptACvpZ', 'interfaceLanguage': 'swift'} | decl=static let typescript: CodeLanguage |
+swift.type.property verilog | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV7verilogACvpZ', 'interfaceLanguage': 'swift'} | decl=static let verilog: LanguageID |
+swift.type.property verilog | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V7verilogACvpZ', 'interfaceLanguage': 'swift'} | decl=static let verilog: CodeLanguage |
+swift.type.property yaml | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV4yamlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let yaml: LanguageID |
+swift.type.property yaml | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V4yamlACvpZ', 'interfaceLanguage': 'swift'} | decl=static let yaml: CodeLanguage |
+swift.type.property zig | precise={'precise': 's:25CodeEditorLanguageSupport0C2IDV3zigACvpZ', 'interfaceLanguage': 'swift'} | decl=static let zig: LanguageID |
+swift.type.property zig | precise={'precise': 's:25CodeEditorLanguageSupport0aC0V3zigACvpZ', 'interfaceLanguage': 'swift'} | decl=static let zig: CodeLanguage |
+swift.typealias LanguageRegistry.ParserFactory | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC13ParserFactorya', 'interfaceLanguage': 'swift'} | decl=typealias ParserFactory = @Sendable () -> OpaquePointer? | sendable=1
+swift.typealias LanguageRegistry.QueryURLProvider | precise={'precise': 's:25CodeEditorLanguageSupport0C8RegistryC16QueryURLProvidera', 'interfaceLanguage': 'swift'} | decl=typealias QueryURLProvider = @Sendable (_ queryName: String) -> URL? | sendable=1

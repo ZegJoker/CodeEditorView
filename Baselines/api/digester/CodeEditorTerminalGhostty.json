@@ -1,0 +1,2937 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "CodeEditorTerminalGhostty",
+    "printedName": "CodeEditorTerminalGhostty",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "AppKit",
+        "printedName": "AppKit",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "CGhosttyShim",
+        "printedName": "CGhosttyShim",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "CodeEditorDAP",
+        "printedName": "CodeEditorDAP",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "CodeEditorTerminal",
+        "printedName": "CodeEditorTerminal",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "SwiftOnoneSupport",
+        "printedName": "SwiftOnoneSupport",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "SwiftUI",
+        "printedName": "SwiftUI",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "_Concurrency",
+        "printedName": "_Concurrency",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "_StringProcessing",
+        "printedName": "_StringProcessing",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "Import",
+        "name": "_SwiftConcurrencyShims",
+        "printedName": "_SwiftConcurrencyShims",
+        "declKind": "Import",
+        "moduleName": "CodeEditorTerminalGhostty"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "GhosttyAccessibilityAdapter",
+        "printedName": "GhosttyAccessibilityAdapter",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "screenText",
+            "printedName": "screenText",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenTextSSvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenTextSSvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenTextSSvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenTextSSvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenTextSSvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenTextSSvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "cursorLine",
+            "printedName": "cursorLine",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10cursorLineSivp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10cursorLineSivp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10cursorLineSivg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10cursorLineSivg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10cursorLineSivs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10cursorLineSivs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "cursorColumn",
+            "printedName": "cursorColumn",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV12cursorColumnSivp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV12cursorColumnSivp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV12cursorColumnSivg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV12cursorColumnSivg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV12cursorColumnSivs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV12cursorColumnSivs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "title",
+            "printedName": "title",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV5titleSSvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV5titleSSvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV5titleSSvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV5titleSSvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV5titleSSvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV5titleSSvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isRunning",
+            "printedName": "isRunning",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV9isRunningSbvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV9isRunningSbvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV9isRunningSbvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV9isRunningSbvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV9isRunningSbvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV9isRunningSbvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(screenText:cursorLine:cursorColumn:title:isRunning:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttyAccessibilityAdapter",
+                "printedName": "CodeEditorTerminalGhostty.GhosttyAccessibilityAdapter",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "hasDefaultArg": true,
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "hasDefaultArg": true,
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenText10cursorLine0I6Column5title9isRunningACSS_S2iSSSbtcfc",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV10screenText10cursorLine0I6Column5title9isRunningACSS_S2iSSSbtcfc",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "from",
+            "printedName": "from(snapshot:title:isRunning:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttyAccessibilityAdapter",
+                "printedName": "CodeEditorTerminalGhostty.GhosttyAccessibilityAdapter",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV4from8snapshot5title9isRunningACSS_SSSbtFZ",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV4from8snapshot5title9isRunningACSS_SSSbtFZ",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "accessibilityLabel",
+            "printedName": "accessibilityLabel",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityLabelSSvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityLabelSSvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityLabelSSvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityLabelSSvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "accessibilityValue",
+            "printedName": "accessibilityValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityValueSSvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityValueSSvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityValueSSvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV18accessibilityValueSSvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorTerminalGhostty0D20AccessibilityAdapterV",
+        "mangledName": "$s25CodeEditorTerminalGhostty0D20AccessibilityAdapterV",
+        "moduleName": "CodeEditorTerminalGhostty",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "GhosttyRunInTerminalHandler",
+        "printedName": "GhosttyRunInTerminalHandler",
+        "children": [
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(service:transportFactory:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttyRunInTerminalHandler",
+                "printedName": "CodeEditorTerminalGhostty.GhosttyRunInTerminalHandler",
+                "usr": "s:25CodeEditorTerminalGhostty0d5RunInC7HandlerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalService",
+                "printedName": "CodeEditorTerminal.TerminalService",
+                "usr": "s:18CodeEditorTerminal0C7ServiceC"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "() -> any CodeEditorTerminal.TerminalByteTransport",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TerminalByteTransport",
+                    "printedName": "any CodeEditorTerminal.TerminalByteTransport",
+                    "usr": "s:18CodeEditorTerminal0C13ByteTransportP"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorTerminalGhostty0d5RunInC7HandlerC7service16transportFactoryAC0abC00C7ServiceC_AF0C13ByteTransport_pyYbctcfc",
+            "mangledName": "$s25CodeEditorTerminalGhostty0d5RunInC7HandlerC7service16transportFactoryAC0abC00C7ServiceC_AF0C13ByteTransport_pyYbctcfc",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "runInTerminal",
+            "printedName": "runInTerminal(args:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "DAPRunInTerminalResult",
+                "printedName": "CodeEditorDAP.DAPRunInTerminalResult",
+                "usr": "s:13CodeEditorDAP22DAPRunInTerminalResultV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "DAPRunInTerminalArgs",
+                "printedName": "CodeEditorDAP.DAPRunInTerminalArgs",
+                "usr": "s:13CodeEditorDAP20DAPRunInTerminalArgsV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0d5RunInC7HandlerC03runfC04args0aB3DAP06DAPRunfC6ResultVAF0kfC4ArgsV_tYaKF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0d5RunInC7HandlerC03runfC04args0aB3DAP06DAPRunfC6ResultVAF0kfC4ArgsV_tYaKF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "unownedExecutor",
+            "printedName": "unownedExecutor",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UnownedSerialExecutor",
+                "printedName": "_Concurrency.UnownedSerialExecutor",
+                "usr": "s:Sce"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0d5RunInC7HandlerC15unownedExecutorScevp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0d5RunInC7HandlerC15unownedExecutorScevp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "implicit": true,
+            "intro_Macosx": "10.15",
+            "intro_iOS": "13.0",
+            "intro_tvOS": "13.0",
+            "intro_watchOS": "6.0",
+            "declAttributes": [
+              "Available",
+              "Available",
+              "Available",
+              "Available",
+              "Final",
+              "Nonisolated",
+              "Semantics"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UnownedSerialExecutor",
+                    "printedName": "_Concurrency.UnownedSerialExecutor",
+                    "usr": "s:Sce"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0d5RunInC7HandlerC15unownedExecutorScevg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0d5RunInC7HandlerC15unownedExecutorScevg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:25CodeEditorTerminalGhostty0d5RunInC7HandlerC",
+        "mangledName": "$s25CodeEditorTerminalGhostty0d5RunInC7HandlerC",
+        "moduleName": "CodeEditorTerminalGhostty",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "DAPRunInTerminalHandler",
+            "printedName": "DAPRunInTerminalHandler",
+            "usr": "s:13CodeEditorDAP23DAPRunInTerminalHandlerP",
+            "mangledName": "$s13CodeEditorDAP23DAPRunInTerminalHandlerP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Actor",
+            "printedName": "Actor",
+            "usr": "s:ScA",
+            "mangledName": "$sScA"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "GhosttySessionController",
+        "printedName": "GhosttySessionController",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "id",
+            "printedName": "id",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC2id0abC00cE2IDVvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC2id0abC00cE2IDVvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Final",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TerminalSessionID",
+                    "printedName": "CodeEditorTerminal.TerminalSessionID",
+                    "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC2id0abC00cE2IDVvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC2id0abC00cE2IDVvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isLinkedToGhostty",
+            "printedName": "isLinkedToGhostty",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC010isLinkedToD0Sbvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC010isLinkedToD0Sbvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC010isLinkedToD0Sbvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC010isLinkedToD0Sbvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "cols",
+            "printedName": "cols",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC4colsSivp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC4colsSivp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC4colsSivg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC4colsSivg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "rows",
+            "printedName": "rows",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC4rowsSivp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC4rowsSivp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC4rowsSivg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC4rowsSivg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isDestroyed",
+            "printedName": "isDestroyed",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC11isDestroyedSbvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC11isDestroyedSbvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC11isDestroyedSbvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC11isDestroyedSbvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(id:cols:rows:requireLinked:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySessionController",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySessionController",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "hasDefaultArg": true,
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC2id4cols4rows13requireLinkedAC0abC00cE2IDV_S2iSbtKcfc",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC2id4cols4rows13requireLinkedAC0abC00cE2IDV_S2iSbtKcfc",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "throwing": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "shutdown",
+            "printedName": "shutdown()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC8shutdownyyF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC8shutdownyyF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "write",
+            "printedName": "write(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC5writeyy10Foundation4DataVKF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC5writeyy10Foundation4DataVKF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "keyInput",
+            "printedName": "keyInput(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC8keyInputy10Foundation4DataVAGKF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC8keyInputy10Foundation4DataVAGKF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "resize",
+            "printedName": "resize(cols:rows:widthPx:heightPx:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC6resize4cols4rows7widthPx06heightK0ySi_S3itKF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC6resize4cols4rows7widthPx06heightK0ySi_S3itKF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "snapshotUTF8",
+            "printedName": "snapshotUTF8()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC12snapshotUTF8SSyKF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC12snapshotUTF8SSyKF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "shimABI",
+            "printedName": "shimABI",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC7shimABISivpZ",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC7shimABISivpZ",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "static": true,
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC7shimABISivgZ",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC7shimABISivgZ",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "static": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isLinked",
+            "printedName": "isLinked",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC8isLinkedSbvpZ",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC8isLinkedSbvpZ",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "static": true,
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC8isLinkedSbvgZ",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC8isLinkedSbvgZ",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "static": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "unownedExecutor",
+            "printedName": "unownedExecutor",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UnownedSerialExecutor",
+                "printedName": "_Concurrency.UnownedSerialExecutor",
+                "usr": "s:Sce"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC15unownedExecutorScevp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC15unownedExecutorScevp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "implicit": true,
+            "intro_Macosx": "10.15",
+            "intro_iOS": "13.0",
+            "intro_tvOS": "13.0",
+            "intro_watchOS": "6.0",
+            "declAttributes": [
+              "Available",
+              "Available",
+              "Available",
+              "Available",
+              "Final",
+              "Nonisolated",
+              "Semantics"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UnownedSerialExecutor",
+                    "printedName": "_Concurrency.UnownedSerialExecutor",
+                    "usr": "s:Sce"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC15unownedExecutorScevg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC15unownedExecutorScevg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:25CodeEditorTerminalGhostty0D17SessionControllerC",
+        "mangledName": "$s25CodeEditorTerminalGhostty0D17SessionControllerC",
+        "moduleName": "CodeEditorTerminalGhostty",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Actor",
+            "printedName": "Actor",
+            "usr": "s:ScA",
+            "mangledName": "$sScA"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "GhosttySurfaceView",
+        "printedName": "GhosttySurfaceView",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "sessionID",
+            "printedName": "sessionID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC9sessionID0abC00c7SessionH0Vvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC9sessionID0abC00c7SessionH0Vvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Final",
+              "SetterAccess",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TerminalSessionID",
+                    "printedName": "CodeEditorTerminal.TerminalSessionID",
+                    "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC9sessionID0abC00c7SessionH0Vvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC9sessionID0abC00c7SessionH0Vvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "onKeyData",
+            "printedName": "onKeyData",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "((Foundation.Data) -> Swift.Void)?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Foundation.Data) -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Data",
+                        "printedName": "Foundation.Data",
+                        "usr": "s:10Foundation4DataV"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC9onKeyDatay10Foundation0I0VcSgvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC9onKeyDatay10Foundation0I0VcSgvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((Foundation.Data) -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(Foundation.Data) -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Data",
+                            "printedName": "Foundation.Data",
+                            "usr": "s:10Foundation4DataV"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC9onKeyDatay10Foundation0I0VcSgvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC9onKeyDatay10Foundation0I0VcSgvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((Foundation.Data) -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(Foundation.Data) -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Data",
+                            "printedName": "Foundation.Data",
+                            "usr": "s:10Foundation4DataV"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC9onKeyDatay10Foundation0I0VcSgvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC9onKeyDatay10Foundation0I0VcSgvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(sessionID:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySurfaceView",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceView",
+                "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "hasDefaultArg": true,
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC9sessionIDAC0abC00c7SessionH0V_tcfc",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC9sessionIDAC0abC00c7SessionH0V_tcfc",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Custom"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "acceptsFirstResponder",
+            "printedName": "acceptsFirstResponder",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView(py)acceptsFirstResponder",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC21acceptsFirstResponderSbvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "overriding": true,
+            "objc_name": "acceptsFirstResponder",
+            "declAttributes": [
+              "Final",
+              "ObjC",
+              "Override",
+              "Custom"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView(im)acceptsFirstResponder",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC21acceptsFirstResponderSbvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "overriding": true,
+                "objc_name": "acceptsFirstResponder",
+                "declAttributes": [
+                  "Final",
+                  "ObjC",
+                  "Override"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "layout",
+            "printedName": "layout()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView(im)layout",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC6layoutyyF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "overriding": true,
+            "objc_name": "layout",
+            "declAttributes": [
+              "Final",
+              "ObjC",
+              "Override",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "applySnapshot",
+            "printedName": "applySnapshot(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC13applySnapshotyySSF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC13applySnapshotyySSF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "bindSession",
+            "printedName": "bindSession(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D11SurfaceViewC11bindSessionyy0abC00cH2IDVF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC11bindSessionyy0abC00cH2IDVF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Final",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(frame:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySurfaceView",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceView",
+                "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "NSRect",
+                "printedName": "Foundation.NSRect",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CGRect",
+                    "printedName": "CoreFoundation.CGRect",
+                    "usr": "c:@S@CGRect"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView(im)initWithFrame:",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC5frameACSo6CGRectV_tcfc",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "overriding": true,
+            "implicit": true,
+            "objc_name": "initWithFrame:",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override",
+              "Custom"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "textDidChange",
+            "printedName": "textDidChange(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Notification",
+                "printedName": "Foundation.Notification",
+                "usr": "s:10Foundation12NotificationV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView(im)textDidChange:",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC13textDidChangeyy10Foundation12NotificationVF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "objc_name": "textDidChange:",
+            "declAttributes": [
+              "Final",
+              "ObjC",
+              "Preconcurrency",
+              "Custom"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "keyDown",
+            "printedName": "keyDown(with:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "NSEvent",
+                "printedName": "AppKit.NSEvent",
+                "usr": "c:objc(cs)NSEvent"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView(im)keyDown:",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC7keyDown4withySo7NSEventC_tF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "overriding": true,
+            "objc_name": "keyDown:",
+            "declAttributes": [
+              "Final",
+              "ObjC",
+              "Override",
+              "Custom"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView",
+        "mangledName": "$s25CodeEditorTerminalGhostty0D11SurfaceViewC",
+        "moduleName": "CodeEditorTerminalGhostty",
+        "declAttributes": [
+          "Final",
+          "Custom",
+          "ObjC"
+        ],
+        "superclassUsr": "c:objc(cs)NSView",
+        "hasMissingDesignatedInitializers": true,
+        "superclassNames": [
+          "AppKit.NSView",
+          "AppKit.NSResponder",
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "NSAccessibilityElementProtocol",
+            "printedName": "NSAccessibilityElementProtocol",
+            "usr": "c:objc(pl)NSAccessibilityElement"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSAccessibilityProtocol",
+            "printedName": "NSAccessibilityProtocol",
+            "usr": "c:objc(pl)NSAccessibility"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSAnimatablePropertyContainer",
+            "printedName": "NSAnimatablePropertyContainer",
+            "usr": "c:objc(pl)NSAnimatablePropertyContainer"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSAppearanceCustomization",
+            "printedName": "NSAppearanceCustomization",
+            "usr": "c:objc(pl)NSAppearanceCustomization"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSDraggingDestination",
+            "printedName": "NSDraggingDestination",
+            "usr": "c:objc(pl)NSDraggingDestination"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSStandardKeyBindingResponding",
+            "printedName": "NSStandardKeyBindingResponding",
+            "usr": "c:objc(pl)NSStandardKeyBindingResponding"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSTextDelegate",
+            "printedName": "NSTextDelegate",
+            "usr": "c:objc(pl)NSTextDelegate"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSTextViewDelegate",
+            "printedName": "NSTextViewDelegate",
+            "usr": "c:objc(pl)NSTextViewDelegate"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSTouchBarProvider",
+            "printedName": "NSTouchBarProvider",
+            "usr": "c:objc(pl)NSTouchBarProvider"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSUserActivityRestoring",
+            "printedName": "NSUserActivityRestoring",
+            "usr": "c:objc(pl)NSUserActivityRestoring"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSUserInterfaceItemIdentification",
+            "printedName": "NSUserInterfaceItemIdentification",
+            "usr": "c:objc(pl)NSUserInterfaceItemIdentification"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSCoding",
+            "printedName": "NSCoding",
+            "usr": "c:objc(pl)NSCoding"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSObjectProtocol",
+            "printedName": "NSObjectProtocol",
+            "usr": "c:objc(pl)NSObject"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "GhosttySurfaceRepresentable",
+        "printedName": "GhosttySurfaceRepresentable",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "sessionID",
+            "printedName": "sessionID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID0abC00c7SessionH0Vvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID0abC00c7SessionH0Vvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Preconcurrency",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TerminalSessionID",
+                    "printedName": "CodeEditorTerminal.TerminalSessionID",
+                    "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID0abC00c7SessionH0Vvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID0abC00c7SessionH0Vvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TerminalSessionID",
+                    "printedName": "CodeEditorTerminal.TerminalSessionID",
+                    "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID0abC00c7SessionH0Vvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID0abC00c7SessionH0Vvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "snapshot",
+            "printedName": "snapshot",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV8snapshotSSvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV8snapshotSSvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Preconcurrency",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV8snapshotSSvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV8snapshotSSvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV8snapshotSSvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV8snapshotSSvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "onKeyData",
+            "printedName": "onKeyData",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(Foundation.Data) -> Swift.Void",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "Void",
+                    "printedName": "Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Data",
+                    "printedName": "Foundation.Data",
+                    "usr": "s:10Foundation4DataV"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9onKeyDatayy10Foundation0I0Vcvp",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9onKeyDatayy10Foundation0I0Vcvp",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Preconcurrency",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Foundation.Data) -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Data",
+                        "printedName": "Foundation.Data",
+                        "usr": "s:10Foundation4DataV"
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9onKeyDatayy10Foundation0I0Vcvg",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9onKeyDatayy10Foundation0I0Vcvg",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Foundation.Data) -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Data",
+                        "printedName": "Foundation.Data",
+                        "usr": "s:10Foundation4DataV"
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9onKeyDatayy10Foundation0I0Vcvs",
+                "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9onKeyDatayy10Foundation0I0Vcvs",
+                "moduleName": "CodeEditorTerminalGhostty",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(sessionID:snapshot:onKeyData:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySurfaceRepresentable",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceRepresentable",
+                "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TerminalSessionID",
+                "printedName": "CodeEditorTerminal.TerminalSessionID",
+                "usr": "s:18CodeEditorTerminal0C9SessionIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(Foundation.Data) -> Swift.Void",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "Void",
+                    "printedName": "Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Data",
+                    "printedName": "Foundation.Data",
+                    "usr": "s:10Foundation4DataV"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID8snapshot9onKeyDataAC0abC00c7SessionH0V_SSy10Foundation0L0Vctcfc",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV9sessionID8snapshot9onKeyDataAC0abC00c7SessionH0V_SSy10Foundation0L0Vctcfc",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "makeNSView",
+            "printedName": "makeNSView(context:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySurfaceView",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceView",
+                "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "Context",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceRepresentable.Context",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSViewRepresentableContext",
+                    "printedName": "SwiftUI.NSViewRepresentableContext<CodeEditorTerminalGhostty.GhosttySurfaceRepresentable>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GhosttySurfaceRepresentable",
+                        "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceRepresentable",
+                        "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV"
+                      }
+                    ],
+                    "usr": "s:7SwiftUI26NSViewRepresentableContextV"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV10makeNSView7contextAA0dE4ViewC7SwiftUI0hF7ContextVyACG_tF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV10makeNSView7contextAA0dE4ViewC7SwiftUI0hF7ContextVyACG_tF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "updateNSView",
+            "printedName": "updateNSView(_:context:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySurfaceView",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceView",
+                "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "Context",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceRepresentable.Context",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSViewRepresentableContext",
+                    "printedName": "SwiftUI.NSViewRepresentableContext<CodeEditorTerminalGhostty.GhosttySurfaceRepresentable>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "GhosttySurfaceRepresentable",
+                        "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceRepresentable",
+                        "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV"
+                      }
+                    ],
+                    "usr": "s:7SwiftUI26NSViewRepresentableContextV"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV12updateNSView_7contextyAA0dE4ViewC_7SwiftUI0hF7ContextVyACGtF",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV12updateNSView_7contextyAA0dE4ViewC_7SwiftUI0hF7ContextVyACGtF",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "declAttributes": [
+              "Preconcurrency",
+              "Custom"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "Body",
+            "printedName": "Body",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Never",
+                "printedName": "Swift.Never",
+                "usr": "s:s5NeverO"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV4Bodya",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV4Bodya",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "implicit": true
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "Coordinator",
+            "printedName": "Coordinator",
+            "children": [
+              {
+                "kind": "TypeNameAlias",
+                "name": "Void",
+                "printedName": "Swift.Void",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ]
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV11Coordinatora",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV11Coordinatora",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "implicit": true
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "NSViewType",
+            "printedName": "NSViewType",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "GhosttySurfaceView",
+                "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceView",
+                "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV10NSViewTypea",
+            "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV10NSViewTypea",
+            "moduleName": "CodeEditorTerminalGhostty",
+            "implicit": true
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorTerminalGhostty0D20SurfaceRepresentableV",
+        "mangledName": "$s25CodeEditorTerminalGhostty0D20SurfaceRepresentableV",
+        "moduleName": "CodeEditorTerminalGhostty",
+        "declAttributes": [
+          "Preconcurrency",
+          "Custom"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "NSViewRepresentable",
+            "printedName": "NSViewRepresentable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "NSViewType",
+                "printedName": "NSViewType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "GhosttySurfaceView",
+                    "printedName": "CodeEditorTerminalGhostty.GhosttySurfaceView",
+                    "usr": "c:@M@CodeEditorTerminalGhostty@objc(cs)GhosttySurfaceView"
+                  }
+                ]
+              },
+              {
+                "kind": "TypeWitness",
+                "name": "Coordinator",
+                "printedName": "Coordinator",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "Void",
+                    "printedName": "Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "usr": "s:7SwiftUI19NSViewRepresentableP",
+            "mangledName": "$s7SwiftUI19NSViewRepresentableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "View",
+            "printedName": "View",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "Body",
+                "printedName": "Body",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Never",
+                    "printedName": "Swift.Never",
+                    "usr": "s:s5NeverO"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:7SwiftUI4ViewP",
+            "mangledName": "$s7SwiftUI4ViewP"
+          }
+        ]
+      }
+    ],
+    "json_format_version": 8,
+    "tool_arguments": [
+      "-dump-sdk",
+      "-module",
+      "CodeEditorTerminalGhostty",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Modules",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ArgumentParser.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ArgumentParserToolInfo.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Atomics.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/BasicContainers.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/BitCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIODarwin.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOFreeBSD.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOLLHTTP.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOLinux.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOOpenBSD.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOPosix.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOSHA1.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOWASI.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CSystemExtras.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorCommands.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorCore.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorDAP.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorDocuments.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionAPI.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionGuest.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionHost.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionProtocol.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensionWasmGuest.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorExtensions.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLSP.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageJSON.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageServices.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageSupport.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguageSwift.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorLanguages.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorSearch.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorSourceControl.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTasks.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTerminal.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTerminalGhostty.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorTreeSitter.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorView.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWorkbench.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWorkspace.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Collections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ComponentModel.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/ContainersPreview.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/DequeModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/GDBRemoteProtocol.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/HashTreeCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/HeapModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/InMemoryLogging.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Internal.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/InternalCollectionsUtilities.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Logging.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIO.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOConcurrencyHelpers.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOCore.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOEmbedded.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOFileSystem.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOFoundationCompat.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOFoundationEssentialsCompat.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOHTTP1.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOPosix.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOTLS.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOTestUtils.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/NIOWebSocket.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/OrderedCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/Rearrange.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SortedCollections.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SwiftTreeSitter.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SwiftTreeSitterLayer.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SystemExtras.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/SystemPackage.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TextStory.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TextStoryTesting.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TrailingElementsModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitter.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterAgdaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterBashGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCSharpGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCppGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterCssGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterDartGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterDockerfileGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterElixirGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterGoGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterGoModGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterHaskellGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterHtmlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJavaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJavascriptGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJsdocGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJsonGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterJuliaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterKotlinGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterLuaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterMarkdownGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterMarkdownInlineGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterObjcGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterOcamlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterPerlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterPhpGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterPythonGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterRegexGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterRubyGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterRustGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterScalaGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterSqlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterSwiftGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterTomlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterTsxGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterTypescriptGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterVerilogGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterYamlGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/TreeSitterZigGrammar.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WASI.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WAT.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WAVE.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WIT.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WITExtractor.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WITOverlayGenerator.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmKit.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmKitGDBHandler.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmKitWASI.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmParser.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/WasmTypes.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOBase64.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOConcurrency.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIODataStructures.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOFileSystem.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_NIOFileSystemFoundationCompat.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/_RopeModule.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/WasmKit\/FuzzTesting\/Sources\/WasmCAPI\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/WasmKit\/Sources\/_CWasmKit\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/WasmKit\/Sources\/_CabiShims\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-atomics\/Sources\/_AtomicsShims\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-collections\/Benchmarks\/Sources\/CppBenchmarks\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-nio\/Sources\/CNIOWindows\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/checkouts\/swift-system\/Sources\/CSystem\/include",
+      "-sdk",
+      "\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/SDKs\/MacOSX26.4.sdk",
+      "-o",
+      "Baselines\/api\/digester\/CodeEditorTerminalGhostty.json",
+      "-avoid-location",
+      "-sdk-version",
+      "25E236"
+    ]
+  }
+}

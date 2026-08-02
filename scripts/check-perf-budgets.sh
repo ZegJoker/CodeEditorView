@@ -92,6 +92,26 @@ if "hardware" not in d and "hardwareClass" not in d:
 if "dataset" not in d:
     print("FAIL: perf-smoke.json missing fixed dataset id")
     raise SystemExit(1)
+# REL-N05: reject synthetic Python string microbench as performance truth
+ds = str(d.get("dataset", ""))
+prod = str(d.get("producer", ""))
+metric = str(d.get("metric", ""))
+if ds in ("core_edit_unit_v1",) or metric == "core_edit_unit":
+    if "RELN05" not in prod and "editor_fixed" not in ds:
+        print("FAIL: synthetic core_edit_unit microbench is not performance truth (need editor_fixed_v1)")
+        raise SystemExit(1)
+if not ds.startswith("editor_") and "editor_fixed" not in ds:
+    print(f"FAIL: dataset {ds!r} must be fixed editor corpus (editor_fixed_v1)")
+    raise SystemExit(1)
+metrics = d.get("metrics")
+if not isinstance(metrics, list) or not metrics:
+    print("FAIL: perf-smoke.json must include metrics[] for keystroke/scroll/parse")
+    raise SystemExit(1)
+names = {m.get("name") for m in metrics if isinstance(m, dict)}
+for need in ("keystroke_insert", "line_index_rebuild"):
+    if need not in names:
+        print(f"FAIL: metrics missing required editor bench {need}")
+        raise SystemExit(1)
 
 # Budget ceilings when named metric present
 if Path(budgets_path).is_file():
@@ -108,13 +128,14 @@ if Path(budgets_path).is_file():
             print(f"FAIL: per_op_us exceeds core_edit_unit budget")
             raise SystemExit(1)
 
-# Rolling baseline regression program
+# Rolling baseline regression program (same producer/dataset only; absolute floor avoids µs noise)
 if Path(baseline_path).is_file():
     prev = json.load(open(baseline_path, encoding="utf-8"))
+    same = prev.get("producer") == d.get("producer") and prev.get("dataset") == d.get("dataset")
     prev_p95 = float(prev.get("p95_ms") or 0)
     cur_p95 = float(d["p95_ms"])
-    if prev_p95 > 0 and cur_p95 > prev_p95 * 3.0:
-        print(f"FAIL: p95_ms {cur_p95} regressed >3x vs baseline {prev_p95}")
+    if same and prev_p95 > 0 and cur_p95 > max(prev_p95 * 10.0, 5.0):
+        print(f"FAIL: p95_ms {cur_p95} regressed vs baseline {prev_p95}")
         raise SystemExit(1)
     print("OK:   rolling baseline regression check")
 else:

@@ -1,0 +1,11 @@
+{
+  "commit": "b86407f1558d4cd7d3762dbd88fffe4e54693749",
+  "generated_at": "2026-08-02T13:46:42Z",
+  "open_findings": 165,
+  "open_p0": 49,
+  "open_p1": 102,
+  "run_id": "local-20260802T134642Z",
+  "schema_version": 1,
+  "source": "AUDIT-2026-08-02-FINDINGS.json",
+  "status": "fail"
+}

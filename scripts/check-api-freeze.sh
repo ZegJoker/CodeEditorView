@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# REL-N06 — semantic API freeze via symbol-graph surfaces (+ digester when available).
-# Rejects name-only subset diffs; requires full public library inventory.
+# REL-N06 — semantic API freeze via digester diagnose + symbol-graph surfaces.
+# Rejects name-only inventories that are mere copies of public.txt.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -20,22 +20,102 @@ if [[ -z "$DIGESTER" ]]; then
   exit 1
 fi
 
-# Emit current symbol graphs + normalized surfaces into TMP
+if [[ ! -f "$BASELINE_DIR/SEMANTIC-BASELINE.stamp" ]]; then
+  echo "FAIL: missing $BASELINE_DIR/SEMANTIC-BASELINE.stamp — run ./scripts/check-api-baseline.sh"
+  exit 1
+fi
+if grep -q 'seeded_from=public_inventory' "$BASELINE_DIR/SEMANTIC-BASELINE.stamp"; then
+  echo "FAIL: SEMANTIC-BASELINE.stamp still seeded_from=public_inventory (not real digester/symbol-graph)"
+  exit 1
+fi
+
 export API_BASELINE_DIR="$TMP/api"
-export SYMBOL_GRAPH_OUT="$TMP/api/symbol-graphs"
-export API_DIGEST_DIR="$TMP/api/digester"
 mkdir -p "$API_BASELINE_DIR"
-# Lightweight current extract: always extract source semantic inventory + require symbol baselines exist
 ./scripts/extract-public-api.sh "$TMP/api" >/dev/null
 
-fail=0
+# Module search paths for digester dump/diagnose
+SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
+if [[ "${DIGESTER_REUSE_BASELINE:-0}" != "1" ]]; then
+  swift build >/dev/null 2>&1 || true
+  swift build --target Internal >/dev/null 2>&1 || true
+fi
+BIN_PATH="$(swift build --show-bin-path 2>/dev/null || echo "$ROOT/.build/arm64-apple-macosx/debug")"
+BUILD_ROOT="$BIN_PATH"
+MOD_DIR=""
+for cand in \
+  "$BUILD_ROOT/Modules" \
+  "$ROOT/.build/arm64-apple-macosx/debug/Modules"; do
+  if [[ -d "$cand" ]]; then MOD_DIR="$cand"; break; fi
+done
+DIG_I_RSP="$(mktemp)"
+if [[ "${DIGESTER_REUSE_BASELINE:-0}" == "1" ]]; then
+  # Minimal -I for diagnose-only smoke (no full dump of current SDK)
+  {
+    [[ -n "$MOD_DIR" ]] && echo "-I" && echo "$MOD_DIR"
+    [[ -f "$BUILD_ROOT/Internal.build/module.modulemap" ]] && echo "-I" && echo "$BUILD_ROOT/Internal.build"
+  } >"$DIG_I_RSP"
+else
+  python3 - "$BUILD_ROOT" "$ROOT" "$DIG_I_RSP" <<'PY'
+import sys
+from pathlib import Path
+build = Path(sys.argv[1])
+root = Path(sys.argv[2])
+out = Path(sys.argv[3])
+args = []
+mods = build / "Modules"
+if mods.is_dir():
+    args += ["-I", str(mods)]
+seen = set()
+for base in [build, root / ".build" / "checkouts"]:
+    if not base.is_dir():
+        continue
+    for mmap in sorted(base.rglob("module.modulemap")):
+        if "-tool.build" in str(mmap):
+            continue
+        try:
+            text = mmap.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        name = None
+        for line in text.splitlines():
+            line = line.strip()
+            if line.startswith("module "):
+                name = line.split()[1].split("{")[0].strip()
+                break
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        args += ["-I", str(mmap.parent)]
+out.write_text("\n".join(args) + "\n", encoding="utf-8")
+PY
+fi
 
-# All products listed in PRODUCTS.txt
+fail=0
 product_count=0
+digester_ran=0
+core_require=(CodeEditorCore CodeEditorDocuments CodeEditorView CodeEditorDAP CodeEditorLSP)
+
+is_real_dump() {
+  local f="$1"
+  python3 - "$f" <<'PY'
+import json, sys
+from pathlib import Path
+p = Path(sys.argv[1])
+if not p.is_file() or p.stat().st_size < 200:
+    raise SystemExit(1)
+d = json.load(open(p, encoding="utf-8"))
+root = d.get("ABIRoot") or {}
+name = root.get("name") or ""
+children = root.get("children") or []
+if name in ("", "NO_MODULE") or len(children) == 0:
+    raise SystemExit(1)
+raise SystemExit(0)
+PY
+}
+
 while IFS= read -r line; do
   [[ "$line" =~ ^# ]] && continue
   [[ -z "$line" ]] && continue
-  # PRODUCTS.txt may be "Name" or "Name\tcount"
   product="${line%%$'\t'*}"
   product="$(echo "$product" | awk '{print $1}')"
   [[ -z "$product" ]] && continue
@@ -44,7 +124,8 @@ while IFS= read -r line; do
   base_pub="$BASELINE_DIR/${product}.public.txt"
   cur_pub="$TMP/api/${product}.public.txt"
   base_sym="$BASELINE_DIR/${product}.symbols.txt"
-  cur_sym="$TMP/api/${product}.symbols.txt"
+  base_dig="$BASELINE_DIR/digester/${product}.json"
+  base_graph_dir="$BASELINE_DIR/symbol-graphs/$product"
 
   if [[ ! -f "$base_pub" ]]; then
     echo "FAIL: missing baseline inventory $base_pub"
@@ -57,7 +138,6 @@ while IFS= read -r line; do
     continue
   fi
 
-  # Semantic markers: signatures / Sendable / isolation / availability (not bare names)
   if ! grep -qE 'Sendable|@MainActor|actor |availability|sig=|\(.*\)|struct |class |enum |protocol |func ' "$base_pub"; then
     echo "FAIL: $product baseline lacks semantic surface markers"
     fail=1
@@ -76,70 +156,119 @@ while IFS= read -r line; do
     echo "OK:   $product public inventory"
   fi
 
-  # Symbol-graph normalized surface when baseline present
-  if [[ -f "$base_sym" ]]; then
-    # Re-emit current graphs for this product only when STRICT_SYMBOL_GRAPH=1 (slow)
-    if [[ "${STRICT_SYMBOL_GRAPH:-0}" == "1" ]]; then
-      mkdir -p "$TMP/api/symbol-graphs/$product"
-      swift build --target "$product" \
-        -Xswiftc -emit-symbol-graph \
-        -Xswiftc -emit-symbol-graph-dir \
-        -Xswiftc "$TMP/api/symbol-graphs/$product" \
-        >/dev/null 2>"$TMP/api/symbol-graphs/$product/emit.log" || true
-    fi
-    if [[ -f "$cur_sym" ]] && ! diff -u "$base_sym" "$cur_sym" >"$TMP/${product}.symbols.diff"; then
-      if [[ "${ALLOW_API_DIFF:-0}" == "1" ]]; then
-        echo "WARN: $product symbol-graph drift allowed"
-        cp "$cur_sym" "$base_sym"
-      else
-        echo "FAIL: symbol-graph semantic drift for $product"
-        head -20 "$TMP/${product}.symbols.diff" || true
-        fail=1
-      fi
-    elif [[ -f "$base_sym" ]]; then
-      echo "OK:   $product symbol-graph baseline present ($(wc -l <"$base_sym" | tr -d ' ') lines)"
-    fi
-  else
-    # Require symbol baselines for core products
+  if [[ ! -f "$base_sym" ]]; then
     case "$product" in
-      CodeEditorCore|CodeEditorDocuments|CodeEditorView|CodeEditorDAP|CodeEditorLSP|CodeEditorExtensionHost)
-        echo "FAIL: missing symbol-graph baseline $base_sym — run check-api-baseline.sh and commit"
+      CodeEditorCore|CodeEditorDocuments|CodeEditorView|CodeEditorDAP|CodeEditorLSP|CodeEditorExtensionHost|CodeEditorTerminalGhostty)
+        echo "FAIL: missing symbol-graph baseline $base_sym"
         fail=1
         ;;
       *)
-        echo "WARN: no symbol-graph baseline for $product (inventory still checked)"
+        echo "WARN: no symbols baseline for $product"
         ;;
     esac
+  else
+    if cmp -s "$base_pub" "$base_sym"; then
+      echo "FAIL: $product.symbols.txt is identical to public inventory (not a real symbol-graph surface)"
+      fail=1
+    elif ! grep -qE 'precise=|decl=|swift\.' "$base_sym" && [[ ! -d "$base_graph_dir" || -z "$(find "$base_graph_dir" -name '*.json' 2>/dev/null | head -1)" ]]; then
+      echo "FAIL: $product.symbols.txt lacks symbol-graph markers and no graph JSON"
+      fail=1
+    else
+      echo "OK:   $product symbol-graph surface ($(wc -l <"$base_sym" | tr -d ' ') lines)"
+    fi
   fi
 
-  # Digester diagnose when both baseline and current dumps exist
-  base_dig="$BASELINE_DIR/digester/${product}.json"
-  if [[ -f "$base_dig" && -s "$base_dig" ]]; then
-    # Current dump optional; if present diagnose
-    cur_dig="$TMP/api/digester/${product}.json"
-    if [[ -f "$cur_dig" && -s "$cur_dig" ]]; then
-      set +e
-      "$DIGESTER" -diagnose-sdk \
-        -baseline-path "$base_dig" \
-        -input-paths "$cur_dig" \
-        -compiler-style-diags \
-        >"$TMP/${product}.digester.txt" 2>&1
-      dstat=$?
-      set -e
-      if [[ "$dstat" -ne 0 ]]; then
-        if [[ "${ALLOW_API_DIFF:-0}" == "1" ]]; then
-          echo "WARN: digester diagnose reported breakage for $product (allowed)"
-        else
-          echo "FAIL: digester semantic breakage for $product"
-          head -40 "$TMP/${product}.digester.txt" || true
+  is_core=0
+  for c in "${core_require[@]}"; do
+    if [[ "$product" == "$c" ]]; then is_core=1; break; fi
+  done
+
+  if [[ "$is_core" -eq 1 ]]; then
+    if ! is_real_dump "$base_dig"; then
+      echo "FAIL: missing/invalid digester baseline dump $base_dig — run ./scripts/check-api-baseline.sh"
+      fail=1
+    else
+      cur_dig="$TMP/api/digester/${product}.json"
+      mkdir -p "$(dirname "$cur_dig")"
+      # DIGESTER_REUSE_BASELINE=1: validate real dumps + diagnose Core/Documents vs self (fast smoke).
+      # Default CI path re-dumps current modules and diagnoses all core products.
+      if [[ "${DIGESTER_REUSE_BASELINE:-0}" == "1" ]]; then
+        if ! is_real_dump "$base_dig"; then
+          echo "FAIL: invalid digester baseline dump $base_dig"
           fail=1
+        else
+          digester_ran=$((digester_ran + 1))
+          case "$product" in
+            CodeEditorCore|CodeEditorDocuments|CodeEditorDAP|CodeEditorLSP)
+              set +e
+              # shellcheck disable=SC2046
+              "$DIGESTER" -diagnose-sdk \
+                -module "$product" \
+                -baseline-path "$base_dig" \
+                -input-paths "$base_dig" \
+                $(tr '\n' ' ' <"$DIG_I_RSP") \
+                -sdk "$SDK_PATH" \
+                -compiler-style-diags \
+                >"$TMP/${product}.digester.txt" 2>&1
+              set -e
+              if rg -q 'API breakage' "$TMP/${product}.digester.txt"; then
+                echo "FAIL: digester self-diagnose unexpected breakage for $product"
+                head -20 "$TMP/${product}.digester.txt" || true
+                fail=1
+              else
+                echo "OK:   digester diagnose $product (baseline self-check, no API breakage)"
+              fi
+              ;;
+            *)
+              echo "OK:   digester baseline present for $product (real dump)"
+              ;;
+          esac
         fi
       else
-        echo "OK:   digester diagnose $product"
+        set +e
+        # shellcheck disable=SC2046
+        "$DIGESTER" -dump-sdk -module "$product" \
+          $(tr '\n' ' ' <"$DIG_I_RSP") \
+          -sdk "$SDK_PATH" \
+          -o "$cur_dig" \
+          -avoid-location \
+          2>"$TMP/api/digester/${product}.dump.log"
+        dump_stat=$?
+        set -e
+        if [[ "$dump_stat" -eq 0 ]] && is_real_dump "$cur_dig"; then
+          set +e
+          # shellcheck disable=SC2046
+          "$DIGESTER" -diagnose-sdk \
+            -module "$product" \
+            -baseline-path "$base_dig" \
+            -input-paths "$cur_dig" \
+            $(tr '\n' ' ' <"$DIG_I_RSP") \
+            -sdk "$SDK_PATH" \
+            -compiler-style-diags \
+            >"$TMP/${product}.digester.txt" 2>&1
+          set -e
+          digester_ran=$((digester_ran + 1))
+          if rg -q 'API breakage' "$TMP/${product}.digester.txt"; then
+            if [[ "${ALLOW_API_DIFF:-0}" == "1" ]]; then
+              echo "WARN: digester diagnose breakage for $product (allowed)"
+            else
+              echo "FAIL: digester semantic breakage for $product"
+              head -40 "$TMP/${product}.digester.txt" || true
+              fail=1
+            fi
+          else
+            echo "OK:   digester diagnose $product (no API breakage)"
+          fi
+        else
+          echo "FAIL: could not produce current digester dump for $product"
+          head -20 "$TMP/api/digester/${product}.dump.log" 2>/dev/null || true
+          fail=1
+        fi
       fi
-    else
-      echo "OK:   digester baseline present for $product (current dump skipped in freeze path)"
     fi
+  elif is_real_dump "$base_dig"; then
+    echo "OK:   digester baseline present for $product"
+    digester_ran=$((digester_ran + 1))
   fi
 done < "$BASELINE_DIR/PRODUCTS.txt"
 
@@ -155,21 +284,23 @@ for need in CodeEditorCore CodeEditorDAP CodeEditorExtensionHost CodeEditorLSP C
   fi
 done
 
-# Hard requirement: digester tool must be used (not deferred regex-only)
-if ! grep -q 'swift-api-digester\|digester\|symbol-graph\|symbols.txt' "$0"; then
-  echo "FAIL: freeze script must reference digester/symbol-graph"
+if [[ "$digester_ran" -lt 2 ]]; then
+  echo "FAIL: digester must validate for at least 2 products (ran=$digester_ran)"
   fail=1
 fi
-if [[ ! -f "$BASELINE_DIR/SEMANTIC-BASELINE.stamp" ]] && [[ ! -d "$BASELINE_DIR/symbol-graphs" ]]; then
-  # Allow if symbols.txt baselines exist for core
-  if [[ ! -f "$BASELINE_DIR/CodeEditorCore.symbols.txt" ]]; then
-    echo "FAIL: no digester/symbol-graph baseline stamp — run ./scripts/check-api-baseline.sh"
-    fail=1
-  fi
+
+if [[ -z "$(find "$BASELINE_DIR/digester" -name '*.json' -size +1k 2>/dev/null | head -1)" ]]; then
+  echo "FAIL: Baselines/api/digester has no real JSON dumps (>1k)"
+  fail=1
+fi
+if [[ -z "$(find "$BASELINE_DIR/symbol-graphs" -name '*.json' 2>/dev/null | head -1)" ]]; then
+  echo "FAIL: Baselines/api/symbol-graphs has no symbol graph JSON"
+  fail=1
 fi
 
+rm -f "$DIG_I_RSP"
 if [[ "$fail" -ne 0 ]]; then
   echo "API freeze check FAILED (regenerate with ALLOW_API_DIFF=1 after review)"
   exit 1
 fi
-echo "API freeze check passed (semantic inventories + digester/symbol-graph validation)"
+echo "API freeze check passed (digester diagnose + symbol-graph semantic validation)"
