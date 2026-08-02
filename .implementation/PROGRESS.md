@@ -19,7 +19,7 @@
 | 5b | tasks | 8 | verified |
 | 5c | SCM | 9 | verified |
 | 6a | language/Tree-sitter | 7 | verified |
-| 6b | LSP | 13 | fixed |
+| 6b | LSP | 13 | verified |
 | 7 | DAP | 10 | open |
 | 8 | terminal/Ghostty | 10 | open |
 | 9a | extension package/signing | 20 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch lsp verified — LSP-N01, LSP-N02, LSP-N03, LSP-N04, LSP-N05, LSP-N06, LSP-N07, LSP-N08, LSP-N09, LSP-N10, LSP-N11, LSP-N12, LSP-N13 status set to `verified` (all previously fixed with regression tests; CodeEditorLSPTests green, residual closed).
 - 2026-08-03: Phase 6b LSP verifier residual (2) — removed `LanguageServerSession.text(for:)` soft empty fallback entirely (requireText only; digester/symbol baselines updated); N12 hard-requires AsyncBroadcastHub stream delivery of versioned diagnostics (no `latestPublication` soft-OR); N13 requires literal `full session` success when sourcekit-lsp/clangd present (binary-name-only OK rejected). CodeEditorLSPTests 60 passed.
 
 - 2026-08-03: Phase 6b LSP verifier residual — LSP-N09 navigation/workspace-symbol use `requireText` fail-closed (removed production `session.text(for:)` empty soft path); hardened N04 (incremental vs forceFull, gap reopen text), N06 (didChange before didSave hard), N13 (executes check-real-lsp.sh + in-process session steps); cleared LSP residuals from scorecard inventory. CodeEditorLSPTests green.

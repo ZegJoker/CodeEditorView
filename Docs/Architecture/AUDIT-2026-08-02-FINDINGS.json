@@ -1274,7 +1274,7 @@
       "severity_raw": "P0 protocol/lifecycle",
       "title": "request registration still races timeout/cancellation",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_pendingRegisteredBeforeTimeoutWithoutUnstructuredTask",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_responseBeforeWaitCompletesWithoutEarlyMap",
@@ -1288,7 +1288,7 @@
       "severity_raw": "P1",
       "title": "ordered inbound chain can be stalled by one handler",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_slowNotificationDoesNotStallResponse",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_stateOrderedNotificationsPreserveOrder"
@@ -1301,7 +1301,7 @@
       "severity_raw": "P1",
       "title": "public `didChange` API remains ambiguous/unsafe",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N03_synchronizeRequiresBaseAndTransaction"
       ],
@@ -1313,7 +1313,7 @@
       "severity_raw": "P2",
       "title": "`preferIncremental` does not control behavior meaningfully",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N04_capabilityAndPolicyDriveIncrementalVsFull",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N04_versionGapForcesFullResync"
@@ -1326,7 +1326,7 @@
       "severity_raw": "P0 for synchronization",
       "title": "bounded document events have no gap recovery",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N05_streamGapTriggersFullResync"
       ],
@@ -1338,7 +1338,7 @@
       "severity_raw": "P1",
       "title": "save/close/change ordering is not one document lane",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N06_saveFlushesPendingChangeBeforeDidSave",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N06_closeCancelsDebounceAndSendsClose"
@@ -1351,7 +1351,7 @@
       "severity_raw": "P1",
       "title": "local open state can change before send succeeds",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateNotCommittedWhenNotifyFails",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateCommittedAfterSuccessfulSend"
@@ -1364,7 +1364,7 @@
       "severity_raw": "P1 for rename/code-action claim",
       "title": "WorkspaceEdit decoding is incomplete",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N08_decodesChangesDocumentChangesAndResourceOps"
       ],
@@ -1376,7 +1376,7 @@
       "severity_raw": "P0 for source edits/navigation",
       "title": "cross-file snapshot resolution can silently use empty text",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_missingSnapshotThrowsNotEmptyText",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N09_navigationMissingTargetThrowsNotEmptyRange"
@@ -1389,7 +1389,7 @@
       "severity_raw": "P2",
       "title": "dynamic registration accounting is fragile",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N10_unregisterExactRegistrationIDNotMethodCount"
       ],
@@ -1401,7 +1401,7 @@
       "severity_raw": "P2",
       "title": "JSON result model is incomplete",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N11_jsonValuePreservesScalarsArraysObjectsNull"
       ],
@@ -1413,7 +1413,7 @@
       "severity_raw": "P1",
       "title": "diagnostics streams are unbounded/not version-safe",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N12_diagnosticsCarryVersionGenerationSequenceAndBound"
       ],
@@ -1425,7 +1425,7 @@
       "severity_raw": "P1",
       "title": "current \u201creal LSP\u201d gate is not an integration test",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_checkRealLspIsIntegrationFixtureNotProbeOnly",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N13_fixtureFilesPresent",
