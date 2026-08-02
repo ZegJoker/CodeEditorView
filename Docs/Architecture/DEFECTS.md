@@ -40,11 +40,11 @@ Updated: 2026-08-02
 | CMD-002 | P1 | CodeEditorCommands | fixed | Chord SM: prefix, timeout short, Escape, layers |
 | LSP-002 | P1 | CodeEditorLSP | fixed | Register-before-send actor path; earlyResponses bounded |
 | LSP-003 | P1 | CodeEditorLSP | fixed | WorkspaceSnapshotResolver; cross-file tests retained |
-| DAP-001 | P1 | CodeEditorDAP | fixed | Register-before-send |
-| TASK-001 | P1 | CodeEditorTasks | fixed | No fabricated offsets |
-| TASK-002 | P1 | CodeEditorTasks | fixed | Rolling readiness window; dep requires ready |
+| DAP-001 | P1 | CodeEditorDAP | fixed | Register-before-send; ordered inbound; earlyResponses bounded |
+| TASK-001 | P1 | CodeEditorTasks | fixed | Snapshot-only range resolve; zero fabricated offsets |
+| TASK-002 | P1 | CodeEditorTasks | fixed | Streaming matcher across chunks + multiline EOF flush |
 | UI-001 | P1 | CodeEditorView | fixed | Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session |
-| SCM-001 | P1 | CodeEditorSourceControl | fixed | Rename + path containment |
+| SCM-001 | P1 | CodeEditorSourceControl | fixed | Porcelain -z rename/unicode/conflict/copy fixtures |
 | TS-001 | P1 | CodeEditorTreeSitter | fixed | LanguageDocumentActor off-main; provider delegates highlights |
 | WB-001 | P1 | CodeEditorWorkbench | fixed | Real utility panels |
 | DOC-005 | P0 | CodeEditorDocuments | fixed | Streaming readContentAndIdentity; no Data(contentsOf) identity path |
@@ -83,3 +83,11 @@ Updated: 2026-08-02
 | LSP-008 | P1 | CodeEditorLSP | fixed | LSPDiagnosticStore version-aware clear on empty/server |
 | LSP-009 | P1 | CodeEditorLSP | fixed | scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1 |
 | TS-002 | P1 | CodeEditorTreeSitter | fixed | Generation-tagged highlights; stale discarded |
+| TASK-003 | P1 | CodeEditorTasks | fixed | Cancel waits process death; exclusive slot held until exit |
+| TASK-004 | P1 | CodeEditorTasks | fixed | Bounded output single marker; unresolved vars throw |
+| TASK-005 | P1 | CodeEditorTasks | fixed | FakeTaskRunner only in Tests/CodeEditorTasksTests |
+| DAP-002 | P1 | CodeEditorDAP | fixed | Ordered inbound chain + lifecycle failed/terminated |
+| DAP-003 | P1 | CodeEditorDAP | fixed | runInTerminal Ghostty/TerminalService + trust deny |
+| SCM-002 | P1 | CodeEditorSourceControl | fixed | Trust-gated Git; per-op handles; component path check |
+| PROC-001 | P1 | CodeEditorCore | fixed | ProcessSupervisor alias; tasks/Git share ProcessService |
+| WB-007 | P1 | CodeEditorWorkbench | fixed | Problems/SCM/Debug models with unit tests |

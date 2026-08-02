@@ -191,21 +191,21 @@
       "severity": "P1",
       "product": "CodeEditorDAP",
       "status": "fixed",
-      "summary": "Register-before-send"
+      "summary": "Register-before-send; ordered inbound; earlyResponses bounded"
     },
     {
       "id": "TASK-001",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "No fabricated offsets"
+      "summary": "Snapshot-only range resolve; zero fabricated offsets"
     },
     {
       "id": "TASK-002",
       "severity": "P1",
       "product": "CodeEditorTasks",
       "status": "fixed",
-      "summary": "Rolling readiness window; dep requires ready"
+      "summary": "Streaming matcher across chunks + multiline EOF flush"
     },
     {
       "id": "UI-001",
@@ -219,7 +219,7 @@
       "severity": "P1",
       "product": "CodeEditorSourceControl",
       "status": "fixed",
-      "summary": "Rename + path containment"
+      "summary": "Porcelain -z rename/unicode/conflict/copy fixtures"
     },
     {
       "id": "TS-001",
@@ -479,6 +479,62 @@
       "product": "CodeEditorTreeSitter",
       "status": "fixed",
       "summary": "Generation-tagged highlights; stale discarded"
+    },
+    {
+      "id": "TASK-003",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Cancel waits process death; exclusive slot held until exit"
+    },
+    {
+      "id": "TASK-004",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Bounded output single marker; unresolved vars throw"
+    },
+    {
+      "id": "TASK-005",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "FakeTaskRunner only in Tests/CodeEditorTasksTests"
+    },
+    {
+      "id": "DAP-002",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "Ordered inbound chain + lifecycle failed/terminated"
+    },
+    {
+      "id": "DAP-003",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "runInTerminal Ghostty/TerminalService + trust deny"
+    },
+    {
+      "id": "SCM-002",
+      "severity": "P1",
+      "product": "CodeEditorSourceControl",
+      "status": "fixed",
+      "summary": "Trust-gated Git; per-op handles; component path check"
+    },
+    {
+      "id": "PROC-001",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "ProcessSupervisor alias; tasks/Git share ProcessService"
+    },
+    {
+      "id": "WB-007",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Problems/SCM/Debug models with unit tests"
     }
   ]
 }

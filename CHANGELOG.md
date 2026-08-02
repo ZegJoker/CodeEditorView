@@ -10,6 +10,15 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ### Changed — Audit remediation 2026-08 (pre-alpha reset)
 
+- **Phase 7 complete (TASK-001…005 / DAP-001…003 / SCM-001…002 / PROC-001 / WB-007 / §14, §18–19):**
+  - Shared `ProcessSupervisor` (`ProcessService`); cancel waits for process death before exclusive release
+  - Snapshot-accurate problem matchers; streaming/multiline chunk tests; no fabricated offsets
+  - Bounded output channel (single truncation marker); unresolved task variables fail closed
+  - `FakeTaskRunner` moved out of production product
+  - DAP register-before-send + ordered inbound; TCP `.connect` transport; lifecycle failed/terminated
+  - `runInTerminal` via Ghostty/`TerminalService` with untrusted deny
+  - Git porcelain fixtures; component path containment; trust fail-closed; per-op handles
+  - Workbench problems / SCM / debug models; `scripts/check-real-dap.sh`
 - **Phase 6 complete (LSP-001…009 / TS-001…002 / §12–13):**
   - `LanguageDocumentActor` off-main Tree-sitter; generation-tagged highlights
   - LSP register-before-send; ordered inbound; rapid-edit full-text matrix
