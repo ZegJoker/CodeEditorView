@@ -19,7 +19,7 @@ struct ProcessSubstrateTests {
             )
         )
 
-        // Two independent consumers must both observe exit (and typically stdout).
+        // Two independent consumers must both observe exit and the same stdout.
         async let consumerA: [ProcessOutputEvent] = {
             var events: [ProcessOutputEvent] = []
             for await e in handle.events { events.append(e) }
@@ -55,7 +55,12 @@ struct ProcessSubstrateTests {
         #expect(aStdout.contains("broadcast-hello"))
         #expect(bStdout.contains("broadcast-hello"))
         #else
-        #expect(Bool(true))
+        // Foundation.Process is unavailable: launch must fail closed (not a silent empty stream).
+        #expect(throws: ProcessServiceError.unavailableOnPlatform) {
+            _ = try ProcessService(profile: .test).launch(
+                ProcessLaunchRequest(executable: "/bin/echo", arguments: ["broadcast-hello"], mode: .direct)
+            )
+        }
         #endif
     }
 
@@ -73,10 +78,9 @@ struct ProcessSubstrateTests {
                 capabilityKind: .localShellExecution
             )
         )
-        // Prefer shell-capable path if /bin/sh -c style; but mode.direct with sh -c args still works
-        // when shell capability is granted via capabilityKind override.
         var totalStdout = 0
         var sawExit = false
+        var sawGap = false
         for await event in handle.events {
             switch event {
             case .stdout(let d):
@@ -86,14 +90,26 @@ struct ProcessSubstrateTests {
             case .exited:
                 sawExit = true
             case .outputGap:
-                break
+                sawGap = true
             }
         }
         #expect(sawExit)
         // Cap must bound delivered payload well below flood size.
         #expect(totalStdout <= 8 * 1024)
+        // With a 200KB flood and 1KB spool, gap or hard truncation must engage.
+        #expect(sawGap || totalStdout <= 1024)
         #else
-        #expect(Bool(true))
+        #expect(throws: ProcessServiceError.unavailableOnPlatform) {
+            _ = try ProcessService(profile: .test).launch(
+                ProcessLaunchRequest(
+                    executable: "/bin/sh",
+                    arguments: ["-c", "yes x | head -c 200000"],
+                    mode: .direct,
+                    maxStdoutBytes: 1024,
+                    capabilityKind: .localShellExecution
+                )
+            )
+        }
         #endif
     }
 
@@ -110,19 +126,24 @@ struct ProcessSubstrateTests {
             )
         )
         try await Task.sleep(nanoseconds: 30_000_000)
+        #expect(!handle.isTerminated)
 
         let start = ContinuousClock.now
         handle.cancel()
         let elapsed = ContinuousClock.now - start
-        // cancel() must not block on process.waitUntilExit (would take ~grace or longer).
+        // cancel() must not block on process.waitUntilExit (would take ~grace or longer for sleep 30).
         #expect(elapsed < .milliseconds(50))
-        #expect(!handle.isTerminated || handle.isTerminated) // may race; termination is separate
 
+        // Reaping is a separate API; process was signalled (non-zero), not a clean exit 0.
         let exit = await handle.awaitTermination()
         #expect(handle.isTerminated)
-        #expect(exit.code != 0 || exit.code == 0) // process reaped either way
+        #expect(exit.code != 0)
         #else
-        #expect(Bool(true))
+        #expect(throws: ProcessServiceError.unavailableOnPlatform) {
+            _ = try ProcessService(profile: .test).launch(
+                ProcessLaunchRequest(executable: "/bin/sleep", arguments: ["30"], mode: .direct)
+            )
+        }
         #endif
     }
 
@@ -136,24 +157,38 @@ struct ProcessSubstrateTests {
                 mode: .direct
             )
         )
+        #expect(!handle.isTerminated)
+
         let cancelStart = ContinuousClock.now
         await supervisor.cancel(handle.id, escalation: .termThenKill(grace: .milliseconds(100)))
         let cancelElapsed = ContinuousClock.now - cancelStart
+        // cancel must return immediately; death is awaited separately.
         #expect(cancelElapsed < .milliseconds(50))
 
+        let waitStart = ContinuousClock.now
         let exit = try await supervisor.awaitExit(handle.id)
-        #expect(handle.isTerminated || exit.code != 0 || true)
-        let waitElapsed = ContinuousClock.now - cancelStart
-        // Death should complete within grace + kill window.
+        let waitElapsed = ContinuousClock.now - waitStart
+        #expect(handle.isTerminated)
+        #expect(exit.code != 0)
+        // Death should complete within grace + kill window (not the full 5s sleep).
         #expect(waitElapsed < .seconds(3))
         #else
-        #expect(Bool(true))
+        do {
+            _ = try await ProcessSupervisor(profile: .test).spawn(
+                ProcessLaunchRequest(executable: "/bin/sleep", arguments: ["5"], mode: .direct)
+            )
+            Issue.record("expected unavailableOnPlatform from ProcessSupervisor.spawn")
+        } catch ProcessServiceError.unavailableOnPlatform {
+            // expected fail-closed
+        } catch {
+            Issue.record("unexpected error \(error)")
+        }
         #endif
     }
 
     // MARK: - CORE-N04 shell capability
 
-    @Test func test_CORE_N04_shellModeRequiresShellCapability() throws {
+    @Test func test_CORE_N04_shellModeRequiresShellCapability() async throws {
         var caps = PlatformCapabilityProfile.test.capabilities
         caps[.localShellExecution] = .unavailable(reason: "shell denied in test")
         let profile = PlatformCapabilityProfile(
@@ -163,7 +198,8 @@ struct ProcessSubstrateTests {
             capabilities: caps
         )
         let service = ProcessService(profile: profile)
-        #expect(throws: CodeEditorPlatformError.self) {
+        // Dedicated ProcessServiceError — not a soft generic process launch.
+        #expect(throws: ProcessServiceError.shellCapabilityRequired) {
             _ = try service.launch(
                 ProcessLaunchRequest(
                     executable: "/bin/echo",
@@ -172,7 +208,7 @@ struct ProcessSubstrateTests {
                 )
             )
         }
-        // Direct still works with localProcess.
+        // Direct still works when localProcess is granted (macOS only for live process).
         #if os(macOS)
         let handle = try service.launch(
             ProcessLaunchRequest(
@@ -181,20 +217,21 @@ struct ProcessSubstrateTests {
                 mode: .direct
             )
         )
-        _ = handle
+        #expect(handle.processIdentifier > 0)
+        handle.cancel()
+        _ = await handle.awaitTermination()
+        #else
+        #expect(throws: ProcessServiceError.unavailableOnPlatform) {
+            _ = try service.launch(
+                ProcessLaunchRequest(executable: "/bin/echo", arguments: ["ok"], mode: .direct)
+            )
+        }
         #endif
     }
 
     @Test func test_CORE_N04_shellModeSucceedsWhenCapabilityGranted() async throws {
         #if os(macOS)
         let service = ProcessService(profile: .test)
-        let handle = try service.launch(
-            ProcessLaunchRequest(
-                executable: "/bin/echo",
-                arguments: ["shell-ok"],
-                mode: .shell
-            )
-        )
         let (stdout, _, code) = try await service.runCollecting(
             ProcessLaunchRequest(
                 executable: "/bin/echo",
@@ -204,9 +241,13 @@ struct ProcessSubstrateTests {
         )
         #expect(code == 0)
         #expect(stdout.contains("shell-ok"))
-        _ = handle
         #else
-        #expect(Bool(true))
+        // Shell capability may be granted by profile, but platform still has no Process.
+        #expect(throws: ProcessServiceError.unavailableOnPlatform) {
+            _ = try ProcessService(profile: .test).launch(
+                ProcessLaunchRequest(executable: "/bin/echo", arguments: ["shell-ok"], mode: .shell)
+            )
+        }
         #endif
     }
 
@@ -219,6 +260,13 @@ struct ProcessSubstrateTests {
             // expected
         } else {
             Issue.record("iOS must not grant localShellExecution")
+        }
+        // iOS profile + shell mode must throw shellCapabilityRequired before any process spawn.
+        let iosService = ProcessService(profile: .iOS)
+        #expect(throws: ProcessServiceError.shellCapabilityRequired) {
+            _ = try iosService.launch(
+                ProcessLaunchRequest(executable: "/bin/echo", arguments: ["x"], mode: .shell)
+            )
         }
     }
 }

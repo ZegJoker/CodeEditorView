@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: Phase 2 verifier residual — CORE-N02/N03/N04: removed tautology/Bool(true) expects; cancel asserts elapsed<50ms + exit.code!=0; non-macOS #else asserts unavailableOnPlatform; shell deny throws ProcessServiceError.shellCapabilityRequired; non-macOS ProcessHandle documented fail-closed already-terminated. ProcessSubstrate+Broadcast+Promise/RPC: 16 passed; Core+Tasks: 117 passed.
 - 2026-08-02: Phase 2 substrate — fixed CORE-N02/N03/N04 + shared substrate (§22): AsyncBroadcastHub (sequence/gap/replay/finish), OneShotPromise + DeadlineScheduler/TestDeadlineClock, BoundedByteSpool, FramedRPCConnection (Content-Length + JSON-RPC codec), ProcessSupervisor actor. ProcessHandle multi-subscriber bounded events; cancel() nonblocking + awaitTermination; shell via localShellExecution. CodeEditorCoreTests+Tasks+SCM: 136 passed.
 - 2026-08-02: batch documents verified — DOC-N01…DOC-N11 + CORE-N01 status set to `verified` (all previously fixed with regression tests).
 - 2026-08-02: Phase 1 verifier residual (2) — DOC-N09 per-call peak retained payload (single buffer ≤N; hash-only ≤chunk); DOC-N10 beforeParentFsync pins disk==NEW (no soft ORIG); DOC-N05 overflow-safe residuals in TextRange/MultiRangeEdit/Search/LSP/LanguageServiceSanitize with adapter tests. 28 DOC-N/CORE-N01 + 190 product-suite tests pass.

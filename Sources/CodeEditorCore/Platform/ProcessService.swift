@@ -132,7 +132,14 @@ enum ProcessLaunchEngine {
         switch request.mode {
         case .shell:
             // CORE-N04: shell is an explicit high-trust capability, not generic localProcess.
-            try profile.requireLocal(.localShellExecution)
+            // Throw the dedicated ProcessServiceError so callers can distinguish shell denial
+            // from other capability failures without string-matching reasons.
+            switch profile.availability(for: .localShellExecution) {
+            case .local:
+                break
+            case .remote, .hostProvided, .dataOnly, .unavailable:
+                throw ProcessServiceError.shellCapabilityRequired
+            }
         case .direct:
             try profile.requireLocal(request.capabilityKind)
         }
@@ -555,11 +562,17 @@ public final class ProcessHandle: @unchecked Sendable {
     }
 }
 #else
-/// Placeholder handle on platforms without Foundation.Process (iOS).
+/// Fail-closed handle type surface on platforms without Foundation.Process (e.g. iOS).
+///
+/// Production code never obtains a live handle: ``ProcessLaunchEngine/launch`` always throws
+/// ``ProcessServiceError/unavailableOnPlatform`` after capability checks. Methods below are
+/// therefore already-terminated / no-child semantics (cancel is a no-op because there is nothing
+/// to wait on; ``awaitTermination`` returns immediately).
 public final class ProcessHandle: @unchecked Sendable {
     public let id: UUID
     public private(set) var processIdentifier: Int32 = -1
 
+    /// Unreachable from production launch paths; retained only so the public type exists on all platforms.
     fileprivate init(id: UUID = UUID()) {
         self.id = id
     }
@@ -567,7 +580,10 @@ public final class ProcessHandle: @unchecked Sendable {
     public var isTerminated: Bool { true }
 
     public var events: AsyncStream<ProcessOutputEvent> {
-        AsyncStream { $0.finish() }
+        AsyncStream { continuation in
+            continuation.yield(.exited(code: -1, timedOut: false))
+            continuation.finish()
+        }
     }
 
     public func makeEventStream(capacity: Int = 64) -> AsyncStream<ProcessOutputEvent> {
@@ -583,9 +599,15 @@ public final class ProcessHandle: @unchecked Sendable {
         ProcessExit(code: -1, timedOut: false)
     }
 
+    /// Nonblocking: no child process exists on this platform.
     public func cancel() {}
+
+    /// Nonblocking: no child process exists on this platform.
     public func requestCancellation(escalation: EscalationPolicy) { _ = escalation }
+
+    /// Nonblocking: no process group exists on this platform.
     public func terminateProcessGroup(escalation: EscalationPolicy = .termThenKill()) { _ = escalation }
+
     public func terminateProcessGroup() {}
 }
 #endif

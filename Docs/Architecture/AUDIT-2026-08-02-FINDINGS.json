@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection substrate per §22."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
     },
     {
       "id": "CORE-N03",
@@ -401,7 +401,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N03_cancelReturnsWithoutWaitingForDeath",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N03_awaitTerminationIsSeparateFromCancel"
       ],
-      "notes": "cancel()/requestCancellation nonblocking; awaitTermination/awaitExit separate; ProcessSupervisor actor; process-group TERM then KILL on background task."
+      "notes": "2026-08-02 verifier residual: removed tautology expects; real checks cancelElapsed<50ms, exit.code!=0, waitElapsed<3s, !isTerminated before cancel. cancel()/requestCancellation nonblocking; awaitTermination/awaitExit separate; ProcessSupervisor; TERM then KILL on background task."
     },
     {
       "id": "CORE-N04",
@@ -415,7 +415,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellModeSucceedsWhenCapabilityGranted",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellCapabilityPresentOnShippingProfiles"
       ],
-      "notes": "PlatformCapabilityKind.localShellExecution; ProcessLaunchMode.shell requires it (not localProcess); profiles grant/deny explicitly."
+      "notes": "2026-08-02 verifier residual: shell deny throws ProcessServiceError.shellCapabilityRequired (not only unsupportedCapability); iOS profile + shell mode asserts shellCapabilityRequired; profiles grant/deny localShellExecution explicitly."
     },
     {
       "id": "CMD-N01",
