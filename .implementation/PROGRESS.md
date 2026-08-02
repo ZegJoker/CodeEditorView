@@ -16,7 +16,7 @@
 | 3b | native editor UI | 10 | verified |
 | 4 | workspace | 10 | verified |
 | 5a | search | 9 | verified |
-| 5b | tasks | 8 | fixed |
+| 5b | tasks | 8 | verified |
 | 5c | SCM | 9 | open |
 | 6a | language/Tree-sitter | 7 | open |
 | 6b | LSP | 13 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch tasks verified — TASK-N01, TASK-N02, TASK-N03, TASK-N04, TASK-N05, TASK-N06, TASK-N07, TASK-N08 status set to `verified` (all previously fixed with regression tests; CodeEditorTasksTests TASKN green).
 - 2026-08-03: Phase 5b verifier residual — TASK-N01 runtime hub replay + equal consumer counts; TASK-N03 BoundedByteSpool absolute-offset viewport reads (baseOffset/totalAppendedBytes/read); TASK-N06 exclusiveGroupLastOutcome records holder failure (no empty catch), executeGraph terminal-only outcomes (live ≠ succeeded), start() live root without provisional success, hard skippedBecauseDependency/notReady asserts. CodeEditorTasksTests 50 passed; N03 core viewport green.
 - 2026-08-03: Phase 5b tasks — fixed TASK-N01…TASK-N08: TaskExecutionHandle on AsyncBroadcastHub (multicast); IncrementalUTF8Decoder per stream + raw spool; BoundedByteSpool + single truncation marker; maxCollectedBytes clamp; validated readiness regex (fail closed); TaskNodeOutcome/executeGraph DAG; component path normalize + VersionedProblemRange; hub/channel finish ownership on exit/cancel. CodeEditorTasksTests 48 passed.
 - 2026-08-03: batch search verified — SRCH-N01, SRCH-N02, SRCH-N03, SRCH-N04, SRCH-N05, SRCH-N06, SRCH-N07, SRCH-N08, SRCH-N09 status set to `verified` (all previously fixed with regression tests; CodeEditorSearchTests SRCHN green, 25 passed).

@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "title": "defect gate trusts manually marked “fixed” rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "severity_raw": "P1 for the “durable” claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
     },
     {
       "id": "CORE-N03",
@@ -896,7 +896,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "severity_raw": "P1 for “gitignore-compatible” claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "verified",
@@ -1010,7 +1010,7 @@
       "severity_raw": "P0",
       "title": "task events are not multicast",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N01_taskEventsAreMulticastToIndependentConsumers",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N01_eventsUseAsyncBroadcastHubNotSharedIterator"
@@ -1023,7 +1023,7 @@
       "severity_raw": "P1",
       "title": "chunk-local UTF-8 decoding corrupts output",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N02_multibyteScalarSplitAcrossChunksDecodesIntact",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N02_independentStdoutStderrDecoders",
@@ -1037,7 +1037,7 @@
       "severity_raw": "P1",
       "title": "`.bufferingNewest` silently drops task output",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N03_overflowEmitsExplicitTruncationMarkerOnce",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N03_outputChannelEmitsSingleTruncationAndMetrics",
@@ -1052,7 +1052,7 @@
       "severity_raw": "P1",
       "title": "output accumulation is unbounded",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N04_collectedOutputIsBoundedNotFullString"
       ],
@@ -1064,7 +1064,7 @@
       "severity_raw": "P1",
       "title": "invalid readiness regex disables behavior silently",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N05_invalidReadinessRegexThrowsConfigurationError",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N05_validReadinessRegexIsCompiled"
@@ -1077,7 +1077,7 @@
       "severity_raw": "P1",
       "title": "dependency/exclusive-group failures are suppressed",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_dependencyFailureIsExplicitOutcomeNotSuppressed",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N06_startThrowsWhenDependencyFailed",
@@ -1093,7 +1093,7 @@
       "severity_raw": "P1",
       "title": "problem source paths/ranges remain weak",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N07_pathNormalizeRejectsWeakStringPrefixEscape",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N07_pathNormalizeAllowsInRootCanonical",
@@ -1108,7 +1108,7 @@
       "severity_raw": "P1",
       "title": "task/output channels lack finish ownership",
       "phase": 5,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N08_eventStreamFinishesExactlyOnceOnComplete",
         "Tests/CodeEditorTasksTests/TASKNAuditTests.swift::test_TASK_N08_outputChannelFinishClosesSubscription",
@@ -1310,7 +1310,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "title": "current “real LSP” gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1330,7 +1330,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as \u201cearly\u201d responses",
+      "title": "late responses are retained as “early” responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1470,7 +1470,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "title": "repeated full-string snapshots are O(n²)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1620,7 +1620,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process \u201cargsGlob\u201d is not a glob",
+      "title": "process “argsGlob” is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1690,7 +1690,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "title": "compatibility claims need levels, not one “passing” flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -2040,7 +2040,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],
