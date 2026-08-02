@@ -52,7 +52,19 @@ if [[ -f "$AUTO" ]]; then
     echo "FAIL: Switch Control soft-allow (|| true) is forbidden"
     fail=1
   fi
-  echo "OK:   accessibility automation session API present (content-sourced, fail-closed)"
+  if ! grep -q 'switchControlDisabled' "$AUTO"; then
+    echo "FAIL: Switch Control must fail closed via switchControlDisabled error path"
+    fail=1
+  fi
+  if ! grep -qE 'accessibilityChildren|NSHostingView' "$AUTO"; then
+    echo "FAIL: TreeProbe must walk AppKit AX (accessibilityChildren / NSHostingView)"
+    fail=1
+  fi
+  if grep -q 'let viewDeclared: \[String\] = \[' "$AUTO"; then
+    echo "FAIL: TreeProbe must not hardcode chrome ID catalog as AX substitute"
+    fail=1
+  fi
+  echo "OK:   accessibility automation session API present (content-sourced, fail-closed, live AX)"
 else
   echo "FAIL: WorkbenchAccessibilityAutomation.swift required for XCUI-equivalent coverage"
   fail=1

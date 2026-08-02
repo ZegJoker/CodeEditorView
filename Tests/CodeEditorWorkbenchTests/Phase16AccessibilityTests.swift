@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import CodeEditorWorkspace
 @testable import CodeEditorWorkbench
 
 @Suite("Phase 16 accessibility")
@@ -39,7 +40,7 @@ struct Phase16AccessibilityTests {
 
     /// REL-N04 — content-sourced automation (hierarchy/keyboard/rotor/Switch Control).
     /// Rotor hits come from a model snapshot, not seedRotorCatalog hardcode.
-    @Test func test_REL_N04_xcuiEquivalentHierarchyKeyboardRotorSwitchControl() {
+    @Test func test_REL_N04_xcuiEquivalentHierarchyKeyboardRotorSwitchControl() throws {
         let source = WorkbenchModelAccessibilityContentSource(
             snapshot: .init(
                 errors: [("diag.error.0", "Error at line 1")],
@@ -101,9 +102,9 @@ struct Phase16AccessibilityTests {
         #expect(emptySession.rotorQuery(.symbols).isEmpty)
 
         // Switch Control scan + select (fail-closed when disabled — see separate test)
-        let scan = session.switchControlScan()
+        let scan = try session.switchControlScan()
         #expect(scan.count >= 5)
-        let selected = session.switchControlSelect(index: 2)
+        let selected = try session.switchControlSelect(index: 2)
         #expect(scan.contains(selected))
 
         // Focus restoration after transient UI
@@ -118,24 +119,38 @@ struct Phase16AccessibilityTests {
         #expect(session.chromePresentationValid())
     }
 
-    @Test func test_REL_N04_switchControlFailsClosedWhenDisabled() {
+    @Test func test_REL_N04_switchControlFailsClosedWhenDisabled() throws {
         let session = WorkbenchAccessibilitySession(
             preferences: .init(switchControlEnabled: false),
             contentSource: EmptyAccessibilityContentSource()
         )
-        var threw = false
+        #expect(session.preferences.switchControlEnabled == false)
+
+        // Must invoke the real production APIs and observe fail-closed errors
+        // (not a preference-only stub that never calls switchControlScan/Select).
+        var scanError: Error?
         do {
-            // preconditionFailure is not catchable; use a helper that mirrors the gate.
-            // We verify the preference is false and source path requires true.
-            #expect(session.preferences.switchControlEnabled == false)
-            // Call path used by production: only when enabled.
-            if session.preferences.switchControlEnabled {
-                _ = session.switchControlScan()
-            } else {
-                threw = true
-            }
+            _ = try session.switchControlScan()
+        } catch {
+            scanError = error
         }
-        #expect(threw, "Switch Control must not scan when disabled")
+        #expect(scanError != nil, "switchControlScan must throw when Switch Control is disabled")
+        #expect(
+            (scanError as? WorkbenchAccessibilityError) == .switchControlDisabled,
+            "scan must fail closed with switchControlDisabled"
+        )
+
+        var selectError: Error?
+        do {
+            _ = try session.switchControlSelect(index: 0)
+        } catch {
+            selectError = error
+        }
+        #expect(selectError != nil, "switchControlSelect must throw when Switch Control is disabled")
+        #expect(
+            (selectError as? WorkbenchAccessibilityError) == .switchControlDisabled,
+            "select must fail closed with switchControlDisabled"
+        )
     }
 
     @Test func test_REL_N04_noHardcodedRotorCatalogInProduction() throws {
@@ -148,18 +163,69 @@ struct Phase16AccessibilityTests {
         #expect(!src.contains("seedRotorCatalog"), "production must not hardcode rotor catalog")
         #expect(!src.contains("switchControlEnabled || true"), "Switch Control must fail closed")
         #expect(src.contains("WorkbenchAccessibilityContentSource"))
-        #expect(src.contains("precondition(\n            preferences.switchControlEnabled")
-            || src.contains("preferences.switchControlEnabled,"))
+        #expect(src.contains("WorkbenchAccessibilityError") || src.contains("switchControlDisabled"))
+        #expect(
+            src.contains("throw WorkbenchAccessibilityError.switchControlDisabled")
+                || src.contains("case switchControlDisabled"),
+            "Switch Control must throw fail-closed error (not preference-only stub)"
+        )
+        // Probe must walk live AppKit AX (not a hardcoded ID list alone).
+        #expect(
+            src.contains("accessibilityChildren") || src.contains("AXUIElement") || src.contains("NSAccessibility"),
+            "TreeProbe must walk AppKit/AX accessibility tree"
+        )
+        #expect(
+            src.contains("NSHostingView")
+                || src.contains("NSHostingController")
+                || src.contains("hostWorkbench"),
+            "TreeProbe must host live WorkbenchView chrome"
+        )
+        #expect(
+            !src.contains("let viewDeclared: [String] = ["),
+            "TreeProbe must not hardcode chrome ID catalog as AX substitute"
+        )
     }
 
     #if canImport(AppKit)
     @Test @MainActor
-    func test_REL_N04_appKitTreeProbeReachesPrimaryChrome() {
-        #expect(WorkbenchAccessibilityTreeProbe.assertPrimaryChromeReachable())
-        let ids = WorkbenchAccessibilityTreeProbe.collectChromeAccessibilityIdentifiers()
-        #expect(ids.contains(WorkbenchAccessibilityID.editor))
-        #expect(ids.contains("workbench.utility.terminal"))
-        #expect(ids.contains("workbench.navigator.breakpoints"))
+    func test_REL_N04_appKitTreeProbeReachesPrimaryChrome() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("a11y-ax-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let workspace = try await Workspace.local(rootDirectories: [root])
+        let model = WorkbenchModel(
+            workspace: workspace,
+            configuration: WorkbenchAccessibilityTreeProbe.probeConfiguration
+        )
+
+        let snapshots = WorkbenchAccessibilityTreeProbe.collectLiveAccessibilityTree(model: model)
+        #expect(
+            !snapshots.isEmpty,
+            "AppKit AX walk must return live elements (not empty hardcoded list)"
+        )
+        let ids = snapshots.map(\.identifier).filter { !$0.isEmpty }
+        #expect(
+            WorkbenchAccessibilityTreeProbe.assertPrimaryChromeReachable(model: model),
+            "primary chrome regions must appear in live AppKit accessibility tree"
+        )
+        for required in [
+            WorkbenchAccessibilityID.root,
+            WorkbenchAccessibilityID.navigator,
+            WorkbenchAccessibilityID.editor,
+            WorkbenchAccessibilityID.inspector,
+            WorkbenchAccessibilityID.utility,
+            WorkbenchAccessibilityID.statusBar,
+        ] {
+            #expect(ids.contains(required), "live AX tree missing \(required)")
+        }
+        // Navigator/utility sub-panels declare identifiers on real SwiftUI surfaces.
+        #expect(
+            ids.contains(where: { $0.hasPrefix("workbench.navigator.") || $0.hasPrefix("workbench.utility.") }),
+            "live AX tree should expose navigator or utility sub-panel identifiers from hosted views"
+        )
+        // Roles must come from AppKit, not invented catalog-only snapshots.
+        #expect(snapshots.contains(where: { !$0.role.isEmpty }), "AX walk must report accessibility roles")
     }
     #endif
 }

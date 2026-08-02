@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -146,7 +146,7 @@
         "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_noHardcodedRotorCatalogInProduction",
         "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_appKitTreeProbeReachesPrimaryChrome"
       ],
-      "notes": "Verifier remediation 2026-08-02: hard PKG exit; CI-generated scorecards; content-sourced a11y; Swift editor perf datasets; real digester dumps+diagnose; DAP post-init responses; mocks moved to Tests/"
+      "notes": "2026-08-02 verifier: live NSHostingController+NSView AppKit AX walk (WorkbenchAccessibilityTreeProbe; no hardcoded viewDeclared catalog); Switch Control throws WorkbenchAccessibilityError.switchControlDisabled (real scan/select invocation); AppKit chrome anchors on WorkbenchView/navigators/utilities."
     },
     {
       "id": "REL-N05",

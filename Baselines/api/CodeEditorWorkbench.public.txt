@@ -5,6 +5,7 @@ class ImageDocumentViewProvider | isolation=@MainActor
 class OpenQuicklyModel | isolation=@MainActor
 class PDFDocumentViewProvider | isolation=@MainActor
 class TextDocumentViewProvider | isolation=@MainActor
+class WorkbenchAccessibilityNSAnchorView
 class WorkbenchAccessibilitySession
 class WorkbenchActivityModel | isolation=@MainActor
 class WorkbenchBreakpointsModel | isolation=@MainActor
@@ -31,6 +32,7 @@ enum OpenQuicklyMode | sendable=1
 enum RotorSurface | sendable=1
 enum SchemeAction | sendable=1
 enum UtilityAreaTab | sendable=1
+enum WorkbenchAccessibilityError | sendable=1
 enum WorkbenchAccessibilityHierarchy
 enum WorkbenchAccessibilityID
 enum WorkbenchAccessibilityTreeProbe | isolation=@MainActor
@@ -66,11 +68,12 @@ func allProviders()
 func allWindows()
 func append(_ item: Item)
 func append(_ text: String)
+func apply( identifier: String, label: String?, role: NSAccessibility.Role )
 func apply(preferences: Preferences)
 func apply(snapshots: [WorkbenchToolingSurfaceSnapshot])
 func applyRestoration(_ state: WorkbenchRestorationState)
 func applyWindowState(_ state: WorkbenchWindowState)
-func assertPrimaryChromeReachable()
+func assertPrimaryChromeReachable(model: WorkbenchModel)
 func attach(contentSource: any WorkbenchAccessibilityContentSource)
 func begin(id: String, title: String, cancellable: Bool )
 func beginTearDown()
@@ -85,7 +88,8 @@ func clearFault(id: String)
 func client(for sessionID: EditorSessionID) -> (any EditorCommandClient)
 func close(_ id: WorkbenchWindowID)
 func closeWindow(_ id: WorkbenchWindowID)
-func collectChromeAccessibilityIdentifiers()
+func collectChromeAccessibilityIdentifiers(model: WorkbenchModel)
+func collectLiveAccessibilityTree(model: WorkbenchModel)
 func commandDispatcher(_ dispatcher: CommandDispatcher) | attr=discardableResult
 func configuration(_ configuration: WorkbenchConfiguration) | attr=discardableResult
 func contribution(id: String) -> (any WorkbenchContribution)
@@ -118,6 +122,7 @@ func focusWindow(_ id: WorkbenchWindowID)
 func focused()
 func fuzzyScore(query: String, name: String, path: String)
 func hierarchyIdentifiers()
+func hitTest(_ point: NSPoint)
 func indexService(_ service: any WorkspaceIndexService) | attr=discardableResult
 func ingest(matched: [MatchedProblem], runID: String)
 func isCommandEnabled(_ id: CommandID)
@@ -128,6 +133,7 @@ func lineColumn(text: String, utf16Offset: Int) -> (line: Int, column: Int)
 func makeBody(context: WorkbenchContributionContext)
 func makeBodyIsolated( id: String, context: WorkbenchContributionContext )
 func makeCommandContext()
+func makeNSView(context: Context)
 func makeView(context: DocumentViewContext)
 func markFailed(id: String, message: String)
 func markRunning(taskID: String)
@@ -188,13 +194,16 @@ func toSurface()
 func unregister(id: String)
 func unregister(sessionID: EditorSessionID)
 func update(_ state: WorkbenchWindowState)
+func updateNSView(_ nsView: WorkbenchAccessibilityNSAnchorView, context: Context)
 func updateProgress(id: String, progress: Double)
 func upsert(_ item: WorkbenchBreakpointItem)
 func upsert(_ item: WorkbenchTestItem)
 func upsert(_ surface: WorkbenchToolingSurface)
 func upsert(id: String, name: String, state: String)
 func validatedPaletteCommands()
+func viewDidMoveToSuperview()
 func visibleToolingFailures()
+func workbenchAccessibilityChrome( id: String, label: String? , role: NSAccessibility.Role )
 func workspace(_ workspace: Workspace) | attr=discardableResult
 func writeKey(_ data: Data)
 init ( errors: [(id: String, label: String)
@@ -204,6 +213,7 @@ init ( id: String, name: String, buildTaskID: String? , testTaskID: String? , ru
 init ( id: String, slot: WorkbenchSlot, priority: Int, title: String, systemImage: String , providerID: String, availability: WorkbenchContributionAvailability , faultMessage: String? )
 init ( id: String? , uri: DocumentURI?, name: String, path: String, mode: OpenQuicklyMode , line: Int? , column: Int? )
 init ( id: WorkbenchWindowID )
+init ( identifier: String, label: String? , role: NSAccessibility.Role )
 init ( maxDepth: Int , maxFiles: Int , ignoredDirectoryNames: Set<String> , "node_modules", ".build", "DerivedData", "Pods"] )
 init ( model: OpenQuicklyModel, onSelect: @escaping (DocumentURI)
 init ( preferences: Preferences )
@@ -221,6 +231,7 @@ init (id: String, name: String, state: String , message: String? )
 init (id: String, name: String, state: String)
 init (id: String, role: String, children: [Node] )
 init (id: String, title: String, isCancellable: Bool , progress: Double? )
+init (identifier: String, label: String, role: String)
 init (model: WorkbenchModel)
 init (model: WorkbenchOutputPanelModel ))
 init (model: WorkbenchProblemsPanelModel ))
@@ -244,6 +255,7 @@ struct OpenQuicklyView
 struct Preferences | sendable=1
 struct RotorHit | sendable=1
 struct Snapshot | sendable=1
+struct WorkbenchAccessibilityAnchor
 struct WorkbenchActivityItem | sendable=1
 struct WorkbenchBreakpointItem | sendable=1
 struct WorkbenchConfiguration | sendable=1
@@ -357,6 +369,7 @@ var path
 var pathExtension
 var pathExtensions
 var priority
+var probeConfiguration
 var problemsBridge
 var progress
 var providerID

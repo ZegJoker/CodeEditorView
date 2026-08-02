@@ -10,11 +10,12 @@
 | A11Y-A01 | Accessibility hierarchy IDs for chrome regions | `WorkbenchAccessibilitySession.hierarchyIdentifiers` |
 | A11Y-A02 | Keyboard-only tab order across navigator/editor/inspectors/panels | `moveFocus` |
 | A11Y-A03 | Rotor surfaces: errors, symbols, folds, breakpoints, search | `rotorQuery` / `selectRotorHit` |
-| A11Y-A04 | Switch Control linear scan + select | `switchControlScan` / `switchControlSelect` |
+| A11Y-A04 | Switch Control linear scan + select (fail-closed throws when disabled) | `switchControlScan` / `switchControlSelect` → `WorkbenchAccessibilityError.switchControlDisabled` |
 | A11Y-A05 | Reduce Motion disables large chrome motion | preferences.reduceMotion |
 | A11Y-A06 | High contrast + Dynamic Type knobs honored | `chromePresentationValid` |
 | A11Y-A07 | Focus restoration after palette / open quickly | `dismissTransientAndRestoreFocus` |
 | A11Y-A08 | Full keyboard access gate | preferences.fullKeyboardAccess |
+| A11Y-A09 | Live AppKit AX tree of hosted `WorkbenchView` (NSHostingController + NSView anchors) | `WorkbenchAccessibilityTreeProbe.collectLiveAccessibilityTree` |
 
 Regression tests: `test_REL_N04_*` under `Tests/CodeEditorWorkbenchTests` and `Tests/ReleaseTruthTests`.
 

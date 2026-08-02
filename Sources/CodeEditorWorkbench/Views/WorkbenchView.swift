@@ -28,7 +28,15 @@ public struct WorkbenchView: View {
             }
             if model.configuration.showsToolbar {
                 toolbar
+                    #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                    .workbenchAccessibilityChrome(
+                        id: WorkbenchAccessibilityID.toolbar,
+                        label: "Toolbar",
+                        role: .toolbar
+                    )
+                    #else
                     .accessibilityIdentifier(WorkbenchAccessibilityID.toolbar)
+                    #endif
                     .accessibilitySortPriority(Double(WorkbenchFocusOrder.toolbar))
                     .transition(reduceMotion ? .opacity : .opacity)
             }
@@ -38,28 +46,60 @@ public struct WorkbenchView: View {
             HStack(spacing: 0) {
                 if model.configuration.showsActivityBar {
                     activityBar
+                        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                        .workbenchAccessibilityChrome(
+                            id: WorkbenchAccessibilityID.activityBar,
+                            label: "Activity Bar",
+                            role: .tabGroup
+                        )
+                        #else
                         .accessibilityIdentifier(WorkbenchAccessibilityID.activityBar)
+                        #endif
                         .accessibilitySortPriority(Double(WorkbenchFocusOrder.activityBar))
                         .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
                 }
                 if model.isNavigatorVisible {
                     navigatorChrome
+                        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                        .workbenchAccessibilityChrome(
+                            id: WorkbenchAccessibilityID.navigator,
+                            label: WorkbenchL10n.navigator,
+                            role: .group
+                        )
+                        #else
                         .accessibilityIdentifier(WorkbenchAccessibilityID.navigator)
                         .accessibilityLabel(WorkbenchL10n.navigator)
+                        #endif
                         .accessibilitySortPriority(Double(WorkbenchFocusOrder.navigator))
                         .transition(reduceMotion ? .opacity : WorkbenchMotion.navigatorInsert)
                 }
 
                 editorColumn
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                    .workbenchAccessibilityChrome(
+                        id: WorkbenchAccessibilityID.editor,
+                        label: WorkbenchL10n.editor,
+                        role: .textArea
+                    )
+                    #else
                     .accessibilityIdentifier(WorkbenchAccessibilityID.editor)
                     .accessibilityLabel(WorkbenchL10n.editor)
+                    #endif
                     .accessibilitySortPriority(Double(WorkbenchFocusOrder.editor))
 
                 if model.isInspectorVisible {
                     inspectorChrome
+                        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                        .workbenchAccessibilityChrome(
+                            id: WorkbenchAccessibilityID.inspector,
+                            label: WorkbenchL10n.inspector,
+                            role: .group
+                        )
+                        #else
                         .accessibilityIdentifier(WorkbenchAccessibilityID.inspector)
                         .accessibilityLabel(WorkbenchL10n.inspector)
+                        #endif
                         .accessibilitySortPriority(Double(WorkbenchFocusOrder.inspector))
                         .transition(reduceMotion ? .opacity : WorkbenchMotion.inspectorInsert)
                 }
@@ -71,7 +111,15 @@ public struct WorkbenchView: View {
 
             if model.configuration.showsStatusBar {
                 statusBar
+                    #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                    .workbenchAccessibilityChrome(
+                        id: WorkbenchAccessibilityID.statusBar,
+                        label: "Status Bar",
+                        role: .button
+                    )
+                    #else
                     .accessibilityIdentifier(WorkbenchAccessibilityID.statusBar)
+                    #endif
                     .accessibilitySortPriority(Double(WorkbenchFocusOrder.statusBar))
                     .transition(.opacity)
             }
@@ -79,7 +127,15 @@ public struct WorkbenchView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(windowBackground)
         .environment(\.layoutDirection, layoutDirection)
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(
+            id: WorkbenchAccessibilityID.root,
+            label: "Workbench",
+            role: .group
+        )
+        #else
         .accessibilityIdentifier(WorkbenchAccessibilityID.root)
+        #endif
         .onAppear {
             model.ensureActiveNavigator()
             model.ensureActiveUtility()
@@ -170,8 +226,16 @@ public struct WorkbenchView: View {
                             .animation(reduceMotion ? nil : WorkbenchMotion.content, value: model.workspace.revision)
                         utilityArea
                             .frame(minHeight: 100)
+                            #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                            .workbenchAccessibilityChrome(
+                                id: WorkbenchAccessibilityID.utility,
+                                label: WorkbenchL10n.utility,
+                                role: .group
+                            )
+                            #else
                             .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
                             .accessibilityLabel(WorkbenchL10n.utility)
+                            #endif
                     }
                 #else
                     VStack(spacing: 0) {
@@ -179,8 +243,16 @@ public struct WorkbenchView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         utilityArea
                             .frame(height: model.utilityHeight)
+                            #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+                            .workbenchAccessibilityChrome(
+                                id: WorkbenchAccessibilityID.utility,
+                                label: WorkbenchL10n.utility,
+                                role: .group
+                            )
+                            #else
                             .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
                             .accessibilityLabel(WorkbenchL10n.utility)
+                            #endif
                     }
                 #endif
             } else {

@@ -67,7 +67,11 @@ struct WorkbenchOutputPanelView: View {
                 .padding(8)
             }
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.utility.output", label: "Output", role: .textArea)
+        #else
         .accessibilityIdentifier("workbench.utility.output")
+        #endif
     }
 }
 
@@ -172,7 +176,11 @@ struct WorkbenchProblemsPanelView: View {
                 .listStyle(.plain)
             }
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.utility.problems", label: "Problems", role: .list)
+        #else
         .accessibilityIdentifier("workbench.utility.problems")
+        #endif
     }
 }
 
@@ -347,12 +355,22 @@ struct WorkbenchTerminalPanelView: View {
                     .padding(8)
             #endif
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(
+            id: "workbench.utility.terminal",
+            label: GhosttyAccessibilityAdapter.from(
+                snapshot: model.snapshot, title: model.title, isRunning: model.isRunning
+            ).accessibilityLabel,
+            role: .textArea
+        )
+        #else
         .accessibilityIdentifier("workbench.utility.terminal")
         .accessibilityLabel(
             GhosttyAccessibilityAdapter.from(
                 snapshot: model.snapshot, title: model.title, isRunning: model.isRunning
             ).accessibilityLabel
         )
+        #endif
         .accessibilityValue(model.snapshot)
     }
 }

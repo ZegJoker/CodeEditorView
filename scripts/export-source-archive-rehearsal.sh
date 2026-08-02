@@ -15,6 +15,20 @@ if [[ "${FULL_ARCHIVE_TEST:-1}" != "1" ]]; then
   exit 1
 fi
 
+# ARCHIVE_PHASE:
+#   full  (default) — resolve → all products (debug+release) → executables → nested swift test
+#   smoke — same clean archive/empty HOME resolve + product builds, but skip nested swift test
+#           (used by unit tests to avoid package-lock recursion; CI runs full).
+ARCHIVE_PHASE="${ARCHIVE_PHASE:-full}"
+case "$ARCHIVE_PHASE" in
+  full|smoke) ;;
+  *)
+    echo "FAIL: ARCHIVE_PHASE must be full or smoke (got ${ARCHIVE_PHASE})" >&2
+    exit 1
+    ;;
+esac
+echo "ARCHIVE_PHASE=$ARCHIVE_PHASE"
+
 STAGING="$(mktemp -d /tmp/codeeditor-archive-XXXXXX)"
 cleanup() { rm -rf "$STAGING"; }
 trap cleanup EXIT
@@ -81,7 +95,7 @@ fi
 SHA="$(shasum -a 256 "$ARCHIVE" | awk '{print $1}')"
 echo "$SHA  source.tar.gz" | tee "$OUT_DIR/source-archive.sha256"
 
-PRODUCTS=(
+PRODUCTS_FULL=(
   CodeEditorCore
   CodeEditorDocuments
   CodeEditorCommands
@@ -110,6 +124,25 @@ PRODUCTS=(
   CodeEditorLanguages
   CodeEditorTerminalGhostty
 )
+
+# Smoke: representative public products (always includes Core/Documents/View/Ghostty for PKG-N01 tests).
+# Full phase builds every public library product.
+PRODUCTS_SMOKE=(
+  CodeEditorCore
+  CodeEditorDocuments
+  CodeEditorCommands
+  CodeEditorWorkspace
+  CodeEditorView
+  CodeEditorWorkbench
+  CodeEditorTerminal
+  CodeEditorTerminalGhostty
+)
+
+if [[ "$ARCHIVE_PHASE" == "smoke" ]]; then
+  PRODUCTS=("${PRODUCTS_SMOKE[@]}")
+else
+  PRODUCTS=("${PRODUCTS_FULL[@]}")
+fi
 
 echo "== resolve + build (empty HOME/cache tree) =="
 (
@@ -184,12 +217,17 @@ echo "== resolve + build (empty HOME/cache tree) =="
   fi
 
   # PKG-N01 acceptance: fresh archive → resolve → all product builds → all tests.
-  echo "== swift test (full suite on clean tree) =="
-  # Prevent infinite recursion when a regression test invokes this script.
-  export CODEEDITOR_IN_ARCHIVE_REHEARSAL=1
-  swift test
+  # Smoke phase skips nested swift test (unit-test execution path; CI uses full).
+  if [[ "$ARCHIVE_PHASE" == "smoke" ]]; then
+    echo "== ARCHIVE_PHASE=smoke: skip nested swift test (full suite is CI source-archive-rehearsal) =="
+  else
+    echo "== swift test (full suite on clean tree) =="
+    # Prevent infinite recursion when a regression test invokes this script.
+    export CODEEDITOR_IN_ARCHIVE_REHEARSAL=1
+    swift test
+  fi
 )
 
-echo "OK: source-archive rehearsal passed (PKG-N01 clean resolve/build/test)"
+echo "OK: source-archive rehearsal passed (PKG-N01 clean resolve/build/test; ARCHIVE_PHASE=$ARCHIVE_PHASE)"
 echo "    sha256=$SHA"
 echo "    artifacts under $OUT_DIR (dependency-graph, fingerprints)"

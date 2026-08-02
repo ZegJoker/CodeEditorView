@@ -91,7 +91,11 @@ struct SymbolsNavigatorView: View {
             }
             .listStyle(.sidebar)
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.symbols", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.symbols")
+        #endif
     }
 }
 
@@ -123,7 +127,11 @@ struct SearchNavigatorPlaceholderView: View {
         ) {
             EmptyView()
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.search", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.search")
+        #endif
     }
 }
 
@@ -164,7 +172,11 @@ struct IssuesNavigatorView: View {
             }
             .listStyle(.sidebar)
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.issues", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.issues")
+        #endif
     }
 }
 
@@ -205,7 +217,11 @@ struct TestsNavigatorView: View {
             }
             .listStyle(.sidebar)
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.tests", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.tests")
+        #endif
     }
 }
 
@@ -244,7 +260,11 @@ struct DebugNavigatorView: View {
             }
             .listStyle(.sidebar)
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.debug", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.debug")
+        #endif
     }
 }
 
@@ -281,7 +301,11 @@ struct SCMNavigatorShellView: View {
             }
             .listStyle(.sidebar)
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.scm", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.scm")
+        #endif
     }
 }
 
@@ -320,6 +344,10 @@ struct BreakpointsNavigatorView: View {
             }
             .listStyle(.sidebar)
         }
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        .workbenchAccessibilityChrome(id: "workbench.navigator.breakpoints", role: .list)
+        #else
         .accessibilityIdentifier("workbench.navigator.breakpoints")
+        #endif
     }
 }

@@ -100,13 +100,17 @@ struct ReleaseTruthTests {
         #expect(ci.contains("HOME") || ci.contains("empty cache") || ci.contains("empty-cache"))
     }
 
-    /// Executes clean archive → resolve → product builds → tests (PKG-N01 acceptance).
-    /// When already nested under the rehearsal script, only asserts the re-entry contract
-    /// so `swift test` inside the rehearsal cannot recurse infinitely.
+    /// Executes clean archive → resolve → product builds (PKG-N01).
     ///
-    /// Full rehearsal is opt-in via `PKG_N01_EXECUTE=1` so day-to-day `swift test` does not
-    /// spawn a multi-hour nested archive suite (which deadlocks the package lock). CI sets
-    /// `PKG_N01_EXECUTE=1` on the dedicated source-archive-rehearsal job.
+    /// Nested re-entry: when the full CI rehearsal already set
+    /// `CODEEDITOR_IN_ARCHIVE_REHEARSAL=1`, only assert the re-entry contract so
+    /// `swift test` inside the rehearsal cannot recurse infinitely.
+    ///
+    /// Otherwise this test **always** runs a real clean-archive smoke
+    /// (`ARCHIVE_PHASE=smoke`: empty HOME → archive → resolve → product builds)
+    /// and hard-checks that CI runs the full path with nested `swift test`
+    /// (`FULL_ARCHIVE_TEST=1 ./scripts/export-source-archive-rehearsal.sh`).
+    /// No soft-return when an env flag is unset.
     @Test func test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests() throws {
         if ProcessInfo.processInfo.environment["CODEEDITOR_IN_ARCHIVE_REHEARSAL"] == "1" {
             let script = try Self.read("scripts/export-source-archive-rehearsal.sh")
@@ -137,44 +141,70 @@ struct ReleaseTruthTests {
         #expect(script.contains("swift test"))
         #expect(script.contains("FULL_ARCHIVE_TEST:-1") || script.contains("FULL_ARCHIVE_TEST must be 1"))
         #expect(
+            script.contains("ARCHIVE_PHASE") || script.contains("ARCHIVE_PHASE=smoke"),
+            "script must support smoke phase for non-recursive unit execution"
+        )
+        #expect(
             !script.contains("ConformanceExtensionGuest.version\" || true")
                 && !script.contains("ConformanceExtensionGuest.version || true"),
             "ConformanceExtensionGuest --version must not soft-allow"
         )
 
-        // Full execute path (CI archive job): hard-fail closed, no soft-allow on suite exit.
-        guard ProcessInfo.processInfo.environment["PKG_N01_EXECUTE"] == "1" else {
-            // Still prove pipeline script is executable and rejects soft mode (done above).
-            return
-        }
+        // CI must run the full rehearsal (resolve → build → full tests), not a soft unit flag.
+        let ci = try Self.read(".github/workflows/ci.yml")
+        #expect(
+            ci.contains("source-archive-rehearsal") || ci.contains("export-source-archive-rehearsal"),
+            "CI must have source-archive-rehearsal job"
+        )
+        #expect(
+            ci.contains("FULL_ARCHIVE_TEST=1")
+                && (ci.contains("export-source-archive-rehearsal.sh") || ci.contains("export-source-archive-rehearsal")),
+            "CI must invoke full archive rehearsal with FULL_ARCHIVE_TEST=1 (not soft PKG_N01_EXECUTE alone)"
+        )
 
         let outDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("pkg-n01-rehearsal-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: outDir) }
 
+        // Always execute real clean-archive path. Smoke avoids nested full `swift test`
+        // (package lock / recursion). Full suite is the dedicated CI job above.
+        let phase = ProcessInfo.processInfo.environment["PKG_N01_EXECUTE"] == "1" ? "full" : "smoke"
         let result = try Self.runBash(
             """
             set +e
             export FULL_ARCHIVE_TEST=1
+            export ARCHIVE_PHASE=\(phase)
             ./scripts/export-source-archive-rehearsal.sh "\(outDir.path)"
             """,
-            env: ["FULL_ARCHIVE_TEST": "1"]
+            env: ["FULL_ARCHIVE_TEST": "1", "ARCHIVE_PHASE": phase]
         )
         let log = result.stdout + "\n" + result.stderr
+        #expect(result.exit == 0, "clean archive rehearsal must succeed (phase=\(phase)): \(log.suffix(2000))")
         #expect(log.contains("create source archive") || log.contains("source archive"), "must create archive")
         #expect(log.contains("swift package resolve") || log.contains("resolve"), "must resolve")
         for product in ["CodeEditorCore", "CodeEditorDocuments", "CodeEditorView", "CodeEditorTerminalGhostty"] {
             #expect(log.contains(product), "must build public product \(product)")
         }
-        #expect(
-            log.contains("swift test (full suite") || log.contains("== swift test"),
-            "must invoke full test suite on clean tree"
-        )
-        #expect(
-            log.contains("Test run with") || log.contains("test cases") || log.contains("suites"),
-            "full suite must actually execute (not build-only)"
-        )
+        if phase == "full" {
+            #expect(
+                log.contains("swift test (full suite") || log.contains("== swift test"),
+                "full phase must invoke full test suite on clean tree"
+            )
+            #expect(
+                log.contains("Test run with") || log.contains("test cases") || log.contains("suites"),
+                "full suite must actually execute (not build-only)"
+            )
+        } else {
+            #expect(
+                log.contains("ARCHIVE_PHASE=smoke") || log.contains("smoke") || log.contains("skip nested"),
+                "smoke phase must document that full tests run in CI"
+            )
+            #expect(
+                !log.contains("== swift test (full suite"),
+                "smoke must not nest full swift test (avoids recursion)"
+            )
+        }
         #expect(
             FileManager.default.fileExists(atPath: outDir.appendingPathComponent("source-archive.sha256").path)
                 || FileManager.default.fileExists(atPath: outDir.appendingPathComponent("clean-resolve-fingerprint.txt").path),
@@ -447,6 +477,18 @@ struct ReleaseTruthTests {
         #expect(auto.contains("WorkbenchAccessibilityContentSource"), "must be content-sourced")
         #expect(!auto.contains("seedRotorCatalog"), "must not hardcode rotor catalog")
         #expect(!auto.contains("switchControlEnabled || true"), "Switch Control must fail closed")
+        #expect(
+            auto.contains("throw WorkbenchAccessibilityError.switchControlDisabled")
+                || auto.contains("case switchControlDisabled"),
+            "Switch Control must throw fail-closed (not preference-only stub)"
+        )
+        #expect(
+            auto.contains("accessibilityChildren")
+                || auto.contains("NSHostingView")
+                || auto.contains("NSHostingController"),
+            "AX tree probe must walk AppKit accessibility tree of hosted WorkbenchView"
+        )
+        #expect(!auto.contains("let viewDeclared: [String] = ["), "must not hardcode chrome ID catalog as AX substitute")
     }
 
     @Test func test_REL_N04_accessibilityGateExecutesAutomationTests() throws {

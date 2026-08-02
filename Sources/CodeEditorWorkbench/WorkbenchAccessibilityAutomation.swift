@@ -5,6 +5,14 @@ import AppKit
 import SwiftUI
 #endif
 
+/// Fail-closed accessibility automation errors (REL-N04).
+public enum WorkbenchAccessibilityError: Error, Equatable, Sendable {
+    /// Switch Control APIs must not run when the preference is disabled.
+    case switchControlDisabled
+    /// Full keyboard access is required for tab-order focus movement.
+    case fullKeyboardAccessRequired
+}
+
 /// Live rotor / accessibility content supplied by workbench models (diagnostics, symbols, …).
 /// Production hosts wire real providers; tests inject structured fixtures — never a hardcoded catalog.
 public protocol WorkbenchAccessibilityContentSource: AnyObject {
@@ -158,7 +166,11 @@ public final class WorkbenchAccessibilitySession {
     /// Move focus using keyboard-only tab order (full keyboard access).
     @discardableResult
     public func moveFocus(steps: Int) -> String {
-        precondition(preferences.fullKeyboardAccess, "full keyboard access required for tab navigation")
+        guard preferences.fullKeyboardAccess else {
+            // Keep prior trap semantics for keyboard path while Switch Control uses throws;
+            // hosts that disable FKA must not drive tab order.
+            preconditionFailure("full keyboard access required for tab navigation")
+        }
         let order = WorkbenchFocusOrder.keyboardOrder
         guard let idx = order.firstIndex(of: focusedID) else {
             focusedID = order[0]
@@ -205,21 +217,19 @@ public final class WorkbenchAccessibilitySession {
     }
 
     /// Switch Control linear scan across keyboard order. Fail-closed when disabled.
-    public func switchControlScan() -> [String] {
-        precondition(
-            preferences.switchControlEnabled,
-            "Switch Control must be enabled for scan (REL-N04 fail-closed)"
-        )
+    public func switchControlScan() throws -> [String] {
+        guard preferences.switchControlEnabled else {
+            throw WorkbenchAccessibilityError.switchControlDisabled
+        }
         return WorkbenchFocusOrder.keyboardOrder
     }
 
     /// Switch Control select by scan index. Fail-closed when disabled.
     @discardableResult
-    public func switchControlSelect(index: Int) -> String {
-        precondition(
-            preferences.switchControlEnabled,
-            "Switch Control must be enabled for select (REL-N04 fail-closed)"
-        )
+    public func switchControlSelect(index: Int) throws -> String {
+        guard preferences.switchControlEnabled else {
+            throw WorkbenchAccessibilityError.switchControlDisabled
+        }
         let order = WorkbenchFocusOrder.keyboardOrder
         let i = ((index % order.count) + order.count) % order.count
         focusedID = order[i]
@@ -249,52 +259,114 @@ public final class WorkbenchAccessibilitySession {
 }
 
 #if canImport(AppKit)
-/// Hosts workbench chrome and walks the AppKit accessibility tree (XCUI-equivalent probe).
+/// Hosts live ``WorkbenchView`` chrome and walks the AppKit accessibility tree
+/// (NSAccessibility / accessibilityChildren — XCUI-equivalent probe for unit tests).
+///
+/// Does **not** substitute a hardcoded identifier catalog for a tree walk.
 @MainActor
 public enum WorkbenchAccessibilityTreeProbe {
     public struct ElementSnapshot: Sendable, Equatable {
         public var identifier: String
         public var label: String
         public var role: String
+
+        public init(identifier: String, label: String, role: String) {
+            self.identifier = identifier
+            self.label = label
+            self.role = role
+        }
     }
 
-    /// Build a minimal hosted hierarchy view and collect accessibility identifiers.
-    public static func collectChromeAccessibilityIdentifiers() -> [String] {
-        // Mirror the identifiers applied on WorkbenchView (single source of chrome IDs).
-        // Full NSHostingView AX walk requires an active NSApp; use hierarchy + view-declared IDs.
-        var ids = WorkbenchAccessibilityHierarchy.flatten()
-        // Identifiers declared on live SwiftUI surfaces (must stay in sync with Views/).
-        let viewDeclared: [String] = [
-            WorkbenchAccessibilityID.root,
-            WorkbenchAccessibilityID.toolbar,
-            WorkbenchAccessibilityID.activityBar,
-            WorkbenchAccessibilityID.navigator,
-            WorkbenchAccessibilityID.editor,
-            WorkbenchAccessibilityID.inspector,
-            WorkbenchAccessibilityID.utility,
-            WorkbenchAccessibilityID.statusBar,
-            WorkbenchAccessibilityID.commandPalette,
-            WorkbenchAccessibilityID.openQuickly,
-            "workbench.navigator.symbols",
-            "workbench.navigator.search",
-            "workbench.navigator.issues",
-            "workbench.navigator.tests",
-            "workbench.navigator.debug",
-            "workbench.navigator.scm",
-            "workbench.navigator.breakpoints",
-            "workbench.utility.output",
-            "workbench.utility.problems",
-            "workbench.utility.terminal",
-        ]
-        for id in viewDeclared where !ids.contains(id) {
-            ids.append(id)
+    /// Configuration that exposes primary chrome (navigator / inspector / utility) for AX probing.
+    public static var probeConfiguration: WorkbenchConfiguration {
+        WorkbenchConfiguration(
+            showsNavigator: true,
+            showsInspector: true,
+            showsUtilityArea: true,
+            showsStatusBar: true,
+            showsActivityBar: true,
+            showsToolbar: true
+        )
+    }
+
+    /// Host ``WorkbenchView`` in an ``NSHostingController`` and collect AX element snapshots.
+    public static func collectLiveAccessibilityTree(model: WorkbenchModel) -> [ElementSnapshot] {
+        ensureNSApplication()
+        model.isNavigatorVisible = true
+        model.isInspectorVisible = true
+        model.isUtilityVisible = true
+        model.ensureActiveNavigator()
+        model.ensureActiveUtility()
+
+        let host = NSHostingController(rootView: WorkbenchView(model: model))
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1280, height: 800),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.contentViewController = host
+        window.setFrame(NSRect(x: 0, y: 0, width: 1280, height: 800), display: true)
+        window.orderFront(nil)
+        window.makeKeyAndOrderFront(nil)
+        host.view.layoutSubtreeIfNeeded()
+        // Allow SwiftUI to materialize AppKit anchor views + accessibility nodes.
+        for _ in 0..<12 {
+            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
+        }
+        host.view.layoutSubtreeIfNeeded()
+
+        var seen = Set<ObjectIdentifier>()
+        var out: [ElementSnapshot] = []
+        walkAccessibility(element: host.view, seen: &seen, into: &out)
+        if let content = window.contentView {
+            walkAccessibility(element: content, seen: &seen, into: &out)
+        }
+        // Direct discovery of production AppKit chrome anchors (NSView-backed identifiers).
+        collectAnchorViews(in: host.view, into: &out, seen: &seen)
+
+        window.orderOut(nil)
+        window.contentViewController = nil
+        return out
+    }
+
+    private static func collectAnchorViews(
+        in root: NSView,
+        into out: inout [ElementSnapshot],
+        seen: inout Set<ObjectIdentifier>
+    ) {
+        var stack: [NSView] = [root]
+        while let view = stack.popLast() {
+            stack.append(contentsOf: view.subviews)
+            guard view is WorkbenchAccessibilityNSAnchorView else { continue }
+            let token = ObjectIdentifier(view)
+            guard !seen.contains(token) else { continue }
+            seen.insert(token)
+            let id = view.accessibilityIdentifier()
+            let label = view.accessibilityLabel() ?? ""
+            let role = view.accessibilityRole()?.rawValue ?? ""
+            if !id.isEmpty {
+                out.append(ElementSnapshot(identifier: id, label: label, role: role))
+            }
+        }
+    }
+
+    /// Identifiers discovered by the live AppKit AX walk (no hardcoded catalog).
+    public static func collectChromeAccessibilityIdentifiers(model: WorkbenchModel) -> [String] {
+        var ids: [String] = []
+        var seen = Set<String>()
+        for snap in collectLiveAccessibilityTree(model: model) {
+            guard !snap.identifier.isEmpty, !seen.contains(snap.identifier) else { continue }
+            seen.insert(snap.identifier)
+            ids.append(snap.identifier)
         }
         return ids
     }
 
-    /// XCUI-equivalent: every primary chrome region must appear in the hosted AX identifier set.
-    public static func assertPrimaryChromeReachable() -> Bool {
-        let ids = Set(collectChromeAccessibilityIdentifiers())
+    /// XCUI-equivalent: every primary chrome region must appear in the **live** AX tree.
+    public static func assertPrimaryChromeReachable(model: WorkbenchModel) -> Bool {
+        let ids = Set(collectChromeAccessibilityIdentifiers(model: model))
         let required = [
             WorkbenchAccessibilityID.root,
             WorkbenchAccessibilityID.navigator,
@@ -304,6 +376,98 @@ public enum WorkbenchAccessibilityTreeProbe {
             WorkbenchAccessibilityID.statusBar,
         ]
         return required.allSatisfy { ids.contains($0) }
+    }
+
+    // MARK: - AppKit AX walk
+
+    private static func ensureNSApplication() {
+        let app = NSApplication.shared
+        if app.activationPolicy() == .regular || app.activationPolicy() == .accessory {
+            return
+        }
+        _ = app.setActivationPolicy(.accessory)
+    }
+
+    private static func walkAccessibility(
+        element: AnyObject,
+        seen: inout Set<ObjectIdentifier>,
+        into out: inout [ElementSnapshot]
+    ) {
+        let token = ObjectIdentifier(element)
+        guard !seen.contains(token) else { return }
+        seen.insert(token)
+
+        let identifier: String
+        if let view = element as? NSView {
+            identifier = view.accessibilityIdentifier()
+        } else {
+            identifier = axPerformString(element, "accessibilityIdentifier") ?? ""
+        }
+        let label: String
+        if let view = element as? NSView {
+            label = view.accessibilityLabel() ?? ""
+        } else {
+            label = axPerformString(element, "accessibilityLabel") ?? ""
+        }
+        let role = axRoleString(element)
+
+        if !identifier.isEmpty || !label.isEmpty || !role.isEmpty {
+            out.append(ElementSnapshot(identifier: identifier, label: label, role: role))
+        }
+
+        // NSView subviews (layout tree).
+        if let view = element as? NSView {
+            for sub in view.subviews {
+                walkAccessibility(element: sub, seen: &seen, into: &out)
+            }
+        }
+
+        // NSAccessibility children (SwiftUI synthetic AX nodes live here).
+        if let children = axChildren(element) {
+            for child in children {
+                walkAccessibility(element: child, seen: &seen, into: &out)
+            }
+        }
+    }
+
+    private static func axChildren(_ element: AnyObject) -> [AnyObject]? {
+        if let view = element as? NSView, let kids = view.accessibilityChildren() as? [AnyObject] {
+            return kids
+        }
+        let sel = NSSelectorFromString("accessibilityChildren")
+        guard element.responds(to: sel) else { return nil }
+        guard let result = element.perform(sel)?.takeUnretainedValue() else { return nil }
+        if let arr = result as? [AnyObject] { return arr }
+        if let arr = result as? NSArray {
+            return arr.compactMap { $0 as AnyObject }
+        }
+        return nil
+    }
+
+    private static func axPerformString(_ element: AnyObject, _ name: String) -> String? {
+        let sel = NSSelectorFromString(name)
+        guard element.responds(to: sel) else { return nil }
+        guard let value = element.perform(sel)?.takeUnretainedValue() else { return nil }
+        if let s = value as? String, !s.isEmpty { return s }
+        if let s = value as? NSString, s.length > 0 { return s as String }
+        return nil
+    }
+
+    private static func axRoleString(_ element: AnyObject) -> String {
+        if let view = element as? NSView, let role = view.accessibilityRole() {
+            return role.rawValue
+        }
+        let sel = NSSelectorFromString("accessibilityRole")
+        guard element.responds(to: sel),
+              let value = element.perform(sel)?.takeUnretainedValue()
+        else { return "" }
+        if let role = value as? NSAccessibility.Role {
+            return role.rawValue
+        }
+        if let s = value as? String { return s }
+        if let s = value as? NSString { return s as String }
+        // NSNumber / raw attribute values from some AX elements
+        return String(describing: value)
     }
 }
 #endif
