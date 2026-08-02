@@ -53,11 +53,27 @@ if ! grep -q "ce_ghostty_surface_encode_key" Sources/CGhosttyShim/include/codeed
   echo "FAIL: missing ce_ghostty_surface_encode_key (TER-N04 ABI)"
   exit 1
 fi
+if ! grep -q "ce_ghostty_surface_encode_mouse" Sources/CGhosttyShim/include/codeeditor_ghostty.h; then
+  echo "FAIL: missing ce_ghostty_surface_encode_mouse (TER-N04 ABI)"
+  exit 1
+fi
+if ! grep -q "ce_ghostty_surface_encode_focus" Sources/CGhosttyShim/include/codeeditor_ghostty.h; then
+  echo "FAIL: missing ce_ghostty_surface_encode_focus (TER-N04 ABI)"
+  exit 1
+fi
+if ! grep -q "ce_ghostty_surface_encode_paste" Sources/CGhosttyShim/include/codeeditor_ghostty.h; then
+  echo "FAIL: missing ce_ghostty_surface_encode_paste (TER-N04 ABI)"
+  exit 1
+fi
+if ! grep -q "ce_ghostty_surface_line_utf8" Sources/CGhosttyShim/include/codeeditor_ghostty.h; then
+  echo "FAIL: missing ce_ghostty_surface_line_utf8 (TER-N06 dirty lines)"
+  exit 1
+fi
 if ! grep -q "ce_ghostty_shim_abi" Sources/CGhosttyShim/include/codeeditor_ghostty.h; then
   echo "FAIL: missing ce_ghostty_shim_abi symbol"
   exit 1
 fi
-echo "OK: shim ABI header contract (CE_GHOSTTY_SHIM_ABI + encode_key)"
+echo "OK: shim ABI header contract (CE_GHOSTTY_SHIM_ABI + encode_key/mouse/focus/paste + line_utf8)"
 
 # --- Compile-time ABI probe of unlinked shim (always hard) ---
 PROBE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ce-ghostty-abi.XXXXXX")"
@@ -71,11 +87,13 @@ int main(void) {
   int linked = ce_ghostty_is_linked() ? 1 : 0;
   int level = ce_ghostty_integration_level();
   printf("ABI=%d LINKED=%d LEVEL=%d\n", abi, linked, level);
-  if (abi < 2) return 2;
+  if (abi < 3) return 2;
   /* Unlinked build of this probe must report not linked. */
   if (linked != 0) return 3;
   if (level != CE_GHOSTTY_INTEGRATION_UNAVAILABLE) return 4;
   if (ce_ghostty_surface_create(NULL) != NULL) return 5;
+  if (ce_ghostty_surface_encode_mouse(NULL, NULL, NULL, 0) >= 0) return 6;
+  if (ce_ghostty_surface_encode_focus(NULL, 1, 1, NULL, 0) >= 0) return 7;
   return 0;
 }
 PROBE
@@ -174,8 +192,104 @@ if command -v nm >/dev/null 2>&1; then
   else
     echo "OK: ghostty_terminal_new present (ABI symbol probe)"
   fi
-  if nm -g "$LIB" 2>/dev/null | grep -q 'ghostty_key_encoder_encode'; then
-    echo "OK: ghostty_key_encoder_encode present"
+  for sym in ghostty_key_encoder_encode ghostty_mouse_encoder_encode ghostty_focus_encode ghostty_paste_encode; do
+    if nm -g "$LIB" 2>/dev/null | grep -q "$sym"; then
+      echo "OK: $sym present"
+    else
+      echo "WARN: $sym not found via nm (may be static)"
+    fi
+  done
+fi
+
+# --- Linked C ABI probe against real libghostty-vt (TER-N10) ---
+cat > "$PROBE_DIR/linked_probe.c" <<'LPROBE'
+#include "codeeditor_ghostty.h"
+#include <stdio.h>
+#include <string.h>
+int main(void) {
+  int abi = ce_ghostty_shim_abi();
+  int linked = ce_ghostty_is_linked() ? 1 : 0;
+  int level = ce_ghostty_integration_level();
+  printf("LINKED_ABI=%d LINKED=%d LEVEL=%d\n", abi, linked, level);
+  if (abi < 3) return 2;
+  if (!linked) return 3;
+  if (level < CE_GHOSTTY_INTEGRATION_VT_ENGINE) return 4;
+  ce_ghostty_config cfg = {.cols = 40, .rows = 10, .font_size_milli = 12000};
+  ce_ghostty_surface *s = ce_ghostty_surface_create(&cfg);
+  if (!s) return 5;
+  const char *msg = "gate\r\n";
+  if (ce_ghostty_surface_write(s, (const uint8_t *)msg, strlen(msg)) < 0) {
+    ce_ghostty_surface_destroy(s);
+    return 6;
+  }
+  char buf[4096];
+  int n = ce_ghostty_surface_snapshot_utf8(s, buf, sizeof(buf));
+  if (n < 0) { ce_ghostty_surface_destroy(s); return 7; }
+  ce_ghostty_key_event ke = {.key=0,.mods=0,.action=1,.composing=0,.utf8="a",.utf8_len=1};
+  uint8_t out[64];
+  if (ce_ghostty_surface_encode_key(s, &ke, out, sizeof(out)) < 0) {
+    ce_ghostty_surface_destroy(s);
+    return 8;
+  }
+  ce_ghostty_mouse_event me = {
+    .button=1,.action=1,.mods=0,.col=1,.row=1,.reporting_mode=3,
+    .cell_width_px=8,.cell_height_px=16
+  };
+  if (ce_ghostty_surface_encode_mouse(s, &me, out, sizeof(out)) < 0) {
+    ce_ghostty_surface_destroy(s);
+    return 9;
+  }
+  if (ce_ghostty_surface_encode_focus(s, 1, 1, out, sizeof(out)) < 0) {
+    ce_ghostty_surface_destroy(s);
+    return 10;
+  }
+  if (ce_ghostty_surface_encode_paste(s, "hi", 2, 1, out, sizeof(out)) < 0) {
+    ce_ghostty_surface_destroy(s);
+    return 11;
+  }
+  char line[256];
+  if (ce_ghostty_surface_line_utf8(s, 0, line, sizeof(line)) < 0) {
+    ce_ghostty_surface_destroy(s);
+    return 12;
+  }
+  printf("LINKED_BEHAVIOR=ok SNAP_N=%d GEN=%llu\n", n,
+         (unsigned long long)ce_ghostty_surface_generation(s));
+  ce_ghostty_surface_destroy(s);
+  return 0;
+}
+LPROBE
+LIBDIR="$(cd Vendor/ghostty/zig-out/lib && pwd)"
+if ! cc -DCODEEDITOR_GHOSTTY_LINKED=1 \
+  -ISources/CGhosttyShim/include -IVendor/ghostty/include \
+  Sources/CGhosttyShim/codeeditor_ghostty.c Sources/CGhosttyShim/codeeditor_pty.c \
+  "$PROBE_DIR/linked_probe.c" \
+  -L"$LIBDIR" -lghostty-vt \
+  -Wl,-rpath,"$LIBDIR" \
+  -o "$PROBE_DIR/linked_probe" 2>"$PROBE_DIR/linked_cc.err"; then
+  if [[ "$REQUIRE" == "1" ]]; then
+    echo "FAIL: linked ABI compile probe failed"
+    cat "$PROBE_DIR/linked_cc.err" || true
+    exit 1
+  fi
+  echo "WARN: linked ABI compile probe failed (soft mode)"
+  cat "$PROBE_DIR/linked_cc.err" || true
+else
+  if LINKED_OUT="$("$PROBE_DIR/linked_probe")"; then
+    echo "OK: linked ABI+behavior probe: ${LINKED_OUT}"
+    echo "${LINKED_OUT}" | grep -q 'LINKED=1' || {
+      echo "FAIL: linked probe must report LINKED=1"
+      exit 1
+    }
+    echo "${LINKED_OUT}" | grep -q 'LINKED_BEHAVIOR=ok' || {
+      echo "FAIL: linked behavior probe incomplete"
+      exit 1
+    }
+  else
+    if [[ "$REQUIRE" == "1" ]]; then
+      echo "FAIL: linked ABI probe runtime failed"
+      exit 1
+    fi
+    echo "WARN: linked ABI probe runtime failed (soft mode)"
   fi
 fi
 
@@ -187,8 +301,11 @@ else
 fi
 
 # Linked build + behavior corpus
-CODEEDITOR_GHOSTTY_LINKED=1 swift build --product CodeEditorTerminalGhostty
-REQUIRE_GHOSTTY=1 CODEEDITOR_GHOSTTY_LINKED=1 swift test --filter 'Ghostty|TerminalGhostty|CodeEditorTerminalTests|TERNAudit' || {
+export CODEEDITOR_GHOSTTY_LINKED=1
+export DYLD_LIBRARY_PATH="${LIBDIR}:${DYLD_LIBRARY_PATH:-}"
+swift build --product CodeEditorTerminalGhostty
+REQUIRE_GHOSTTY=1 CODEEDITOR_GHOSTTY_LINKED=1 GHOSTTY_SOAK_MIB="${GHOSTTY_SOAK_MIB:-1}" \
+  swift test --filter 'Ghostty|TerminalGhostty|CodeEditorTerminalTests|TERNAudit' || {
   if [[ "$REQUIRE" == "1" ]]; then
     echo "FAIL: linked Ghostty tests failed"
     exit 1

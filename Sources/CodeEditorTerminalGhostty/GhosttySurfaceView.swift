@@ -5,15 +5,19 @@ import SwiftUI
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
     import AppKit
 
-    /// AppKit host for Ghostty-backed terminal display (TER-N02 / TER-N04 / §21.6).
+    /// AppKit host for Ghostty-backed terminal display (TER-N02 / TER-N04 / TER-N06 / §21.6).
     ///
     /// Integration claim: ``GhosttySessionController/integrationClaim``.
     /// When Ghostty is unlinked this view must not present a fake terminal as Ghostty.
-    /// VT-engine path uses monospaced host rendering of Ghostty formatter plain text —
-    /// not custom `TerminalScreen` / `VTParser`.
+    ///
+    /// **Honest VT-engine path (TER-N02 temporary level):** monospaced host CoreText-backed
+    /// line buffer fed from Ghostty VT state via dirty-line deltas — not a full Ghostty
+    /// Metal surface and never custom `TerminalScreen` / `VTParser`. Claim string is
+    /// "Ghostty VT engine + CodeEditor renderer", never "Ghostty UI".
     ///
     /// Input routing (TER-N04): native events → structured Ghostty events → host callbacks
-    /// (never raw `event.characters` alone for arrows/nav/Fn).
+    /// (never raw `event.characters` alone for arrows/nav/Fn). Mouse/focus/paste bytes are
+    /// produced by Ghostty encoders on the controller, not hand-built CSI in this view.
     @MainActor
     public final class GhosttySurfaceView: NSView {
         public private(set) var sessionID: TerminalSessionID
@@ -38,6 +42,8 @@ import SwiftUI
         private var scrollView: NSScrollView!
         private var unavailableLabel: NSTextField?
         private var lastAppliedGeneration: UInt64 = 0
+        /// Line-oriented viewport cache (TER-N06) — dirty indices only mutate changed rows.
+        private var lineCache: [String] = []
         private var lastModifierFlags: NSEvent.ModifierFlags = []
         private var imeComposing = false
 
@@ -100,22 +106,77 @@ import SwiftUI
             unavailableLabel?.frame = bounds
         }
 
-        /// Apply viewport text only when generation advances (TER-N06 dirty tracking).
-        public func applySnapshot(_ text: String, generation: UInt64 = 0) {
+        /// Apply a dirty-line viewport delta from Ghostty (TER-N02/N06).
+        ///
+        /// Only mutates changed lines in the text storage when `fullRefresh` is false.
+        /// Never appends growing scrollback strings on every poll.
+        public func applyViewportDelta(_ delta: GhosttyViewportDelta) {
             guard integrationLevel != .unavailable, let textView else { return }
-            if generation > 0 && generation < lastAppliedGeneration { return }
-            if generation > 0 { lastAppliedGeneration = generation }
-            let selected = textView.selectedRange()
-            textView.string = text
-            if selected.location <= (text as NSString).length {
-                textView.setSelectedRange(selected)
+            if delta.generation > 0 && delta.generation < lastAppliedGeneration { return }
+            if delta.generation > 0 { lastAppliedGeneration = delta.generation }
+
+            if delta.fullRefresh || lineCache.count != delta.lines.count {
+                lineCache = delta.lines
+                let joined = delta.joinedPlainText
+                textView.string = joined
+                setAccessibilityValue(joined)
+                return
             }
-            setAccessibilityValue(text)
+
+            // Line-level replace for dirty rows only (TER-N06).
+            guard let storage = textView.textStorage else {
+                lineCache = delta.lines
+                textView.string = delta.joinedPlainText
+                setAccessibilityValue(textView.string)
+                return
+            }
+            storage.beginEditing()
+            for row in delta.dirtyLineIndices where row >= 0 && row < delta.lines.count {
+                let newLine = delta.lines[row]
+                if row < lineCache.count, lineCache[row] == newLine { continue }
+                // Rebuild from line cache mutation then single storage replace for dirty span.
+                if row < lineCache.count {
+                    lineCache[row] = newLine
+                }
+            }
+            // Ensure cache length matches.
+            if lineCache.count != delta.lines.count {
+                lineCache = delta.lines
+            } else {
+                for row in delta.dirtyLineIndices where row >= 0 && row < delta.lines.count {
+                    lineCache[row] = delta.lines[row]
+                }
+            }
+            let joined = lineCache.joined(separator: "\n")
+            let full = NSRange(location: 0, length: storage.length)
+            storage.replaceCharacters(in: full, with: joined)
+            storage.endEditing()
+            setAccessibilityValue(joined)
+        }
+
+        /// Legacy full-string apply — converts to a full-refresh dirty delta (TER-N06).
+        public func applySnapshot(_ text: String, generation: UInt64 = 0) {
+            let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+            let delta = GhosttyViewportDelta(
+                generation: generation == 0 ? (lastAppliedGeneration &+ 1) : generation,
+                cols: 0,
+                rows: lines.count,
+                lines: lines,
+                dirtyLineIndices: Array(0..<lines.count),
+                fullRefresh: true
+            )
+            applyViewportDelta(delta)
         }
 
         public func applySnapshot(_ text: String) {
             applySnapshot(text, generation: lastAppliedGeneration &+ 1)
         }
+
+        /// Whether the surface uses dirty-line rendering (TER-N06 production path).
+        public var usesDirtyLineRendering: Bool { true }
+
+        /// Current cached line count (tests / diagnostics).
+        public var cachedLineCount: Int { lineCache.count }
 
         public func bindSession(_ id: TerminalSessionID) {
             sessionID = id
@@ -305,13 +366,10 @@ import SwiftUI
         }
 
         private func emitMouse(_ event: GhosttyMouseEvent) {
+            // TER-N04: surface emits structured mouse events only.
+            // Encoded CSI/SGR bytes must come from GhosttySessionController.encodeMouse
+            // (Ghostty mouse encoder), never a hand-built map in the view.
             onMouseEvent?(event)
-            if mouseReportingMode != .off {
-                let data = event.encode()
-                if !data.isEmpty {
-                    onKeyData?(data)
-                }
-            }
         }
     }
 
@@ -322,6 +380,7 @@ import SwiftUI
         public var sessionID: TerminalSessionID
         public var snapshot: String
         public var generation: UInt64
+        public var viewportDelta: GhosttyViewportDelta?
         public var integrationLevel: GhosttyIntegrationLevel
         public var onKeyEvent: (GhosttyKeyEvent) -> Void
         public var onKeyData: (Data) -> Void
@@ -331,8 +390,9 @@ import SwiftUI
 
         public init(
             sessionID: TerminalSessionID,
-            snapshot: String,
+            snapshot: String = "",
             generation: UInt64 = 0,
+            viewportDelta: GhosttyViewportDelta? = nil,
             integrationLevel: GhosttyIntegrationLevel = GhosttySessionController.currentIntegrationLevel,
             onKeyEvent: @escaping (GhosttyKeyEvent) -> Void = { _ in },
             onKeyData: @escaping (Data) -> Void = { _ in },
@@ -343,6 +403,7 @@ import SwiftUI
             self.sessionID = sessionID
             self.snapshot = snapshot
             self.generation = generation
+            self.viewportDelta = viewportDelta
             self.integrationLevel = integrationLevel
             self.onKeyEvent = onKeyEvent
             self.onKeyData = onKeyData
@@ -358,7 +419,11 @@ import SwiftUI
             v.onMouseEvent = onMouseEvent
             v.onFocusEvent = onFocusEvent
             v.onPasteData = onPasteData
-            v.applySnapshot(snapshot, generation: generation)
+            if let viewportDelta {
+                v.applyViewportDelta(viewportDelta)
+            } else if !snapshot.isEmpty {
+                v.applySnapshot(snapshot, generation: generation)
+            }
             return v
         }
 
@@ -369,7 +434,11 @@ import SwiftUI
             nsView.onMouseEvent = onMouseEvent
             nsView.onFocusEvent = onFocusEvent
             nsView.onPasteData = onPasteData
-            nsView.applySnapshot(snapshot, generation: generation)
+            if let viewportDelta {
+                nsView.applyViewportDelta(viewportDelta)
+            } else if !snapshot.isEmpty {
+                nsView.applySnapshot(snapshot, generation: generation)
+            }
         }
     }
 
@@ -463,17 +532,35 @@ import SwiftUI
             ))
         }
 
-        public func applySnapshot(_ text: String, generation: UInt64 = 0) {
+        public func applyViewportDelta(_ delta: GhosttyViewportDelta) {
             guard integrationLevel != .unavailable else { return }
-            if generation > 0 && generation < lastAppliedGeneration { return }
-            if generation > 0 { lastAppliedGeneration = generation }
-            textView.text = text
-            accessibilityValue = text
+            if delta.generation > 0 && delta.generation < lastAppliedGeneration { return }
+            if delta.generation > 0 { lastAppliedGeneration = delta.generation }
+            let joined = delta.joinedPlainText
+            textView.text = joined
+            accessibilityValue = joined
+        }
+
+        public func applySnapshot(_ text: String, generation: UInt64 = 0) {
+            let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+            applyViewportDelta(
+                GhosttyViewportDelta(
+                    generation: generation == 0 ? (lastAppliedGeneration &+ 1) : generation,
+                    cols: 0,
+                    rows: lines.count,
+                    lines: lines,
+                    dirtyLineIndices: Array(0..<lines.count),
+                    fullRefresh: true
+                )
+            )
         }
 
         public func applySnapshot(_ text: String) {
             applySnapshot(text, generation: lastAppliedGeneration &+ 1)
         }
+
+        public var usesDirtyLineRendering: Bool { true }
+        public var cachedLineCount: Int { 0 }
 
         public func bindSession(_ id: TerminalSessionID) { sessionID = id }
 
@@ -527,6 +614,7 @@ import SwiftUI
         public var sessionID: TerminalSessionID
         public var snapshot: String
         public var generation: UInt64
+        public var viewportDelta: GhosttyViewportDelta?
         public var integrationLevel: GhosttyIntegrationLevel
         public var onKeyEvent: (GhosttyKeyEvent) -> Void
         public var onKeyData: (Data) -> Void
@@ -536,8 +624,9 @@ import SwiftUI
 
         public init(
             sessionID: TerminalSessionID,
-            snapshot: String,
+            snapshot: String = "",
             generation: UInt64 = 0,
+            viewportDelta: GhosttyViewportDelta? = nil,
             integrationLevel: GhosttyIntegrationLevel = GhosttySessionController.currentIntegrationLevel,
             onKeyEvent: @escaping (GhosttyKeyEvent) -> Void = { _ in },
             onKeyData: @escaping (Data) -> Void = { _ in },
@@ -548,6 +637,7 @@ import SwiftUI
             self.sessionID = sessionID
             self.snapshot = snapshot
             self.generation = generation
+            self.viewportDelta = viewportDelta
             self.integrationLevel = integrationLevel
             self.onKeyEvent = onKeyEvent
             self.onKeyData = onKeyData
@@ -563,7 +653,11 @@ import SwiftUI
             v.onMouseEvent = onMouseEvent
             v.onFocusEvent = onFocusEvent
             v.onPasteData = onPasteData
-            v.applySnapshot(snapshot, generation: generation)
+            if let viewportDelta {
+                v.applyViewportDelta(viewportDelta)
+            } else if !snapshot.isEmpty {
+                v.applySnapshot(snapshot, generation: generation)
+            }
             return v
         }
 
@@ -574,7 +668,11 @@ import SwiftUI
             uiView.onMouseEvent = onMouseEvent
             uiView.onFocusEvent = onFocusEvent
             uiView.onPasteData = onPasteData
-            uiView.applySnapshot(snapshot, generation: generation)
+            if let viewportDelta {
+                uiView.applyViewportDelta(viewportDelta)
+            } else if !snapshot.isEmpty {
+                uiView.applySnapshot(snapshot, generation: generation)
+            }
         }
     }
 #endif

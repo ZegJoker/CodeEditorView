@@ -49,6 +49,43 @@ public struct GhosttyKeyEvent: Sendable, Hashable {
     }
 }
 
+/// Dirty-line viewport delta for host rendering (TER-N06).
+///
+/// Hosts apply only `dirtyLineIndices` rather than copying full scrollback
+/// strings on every chunk/poll.
+public struct GhosttyViewportDelta: Sendable, Hashable {
+    public var generation: UInt64
+    public var cols: Int
+    public var rows: Int
+    /// Full line table for the current viewport (row-major).
+    public var lines: [String]
+    /// Rows that changed since the previous pull (0-based).
+    public var dirtyLineIndices: [Int]
+    /// True when the entire grid should be replaced (first pull / resize).
+    public var fullRefresh: Bool
+
+    public init(
+        generation: UInt64,
+        cols: Int,
+        rows: Int,
+        lines: [String],
+        dirtyLineIndices: [Int],
+        fullRefresh: Bool
+    ) {
+        self.generation = generation
+        self.cols = cols
+        self.rows = rows
+        self.lines = lines
+        self.dirtyLineIndices = dirtyLineIndices
+        self.fullRefresh = fullRefresh
+    }
+
+    /// Joined plain text for accessibility / legacy callers only.
+    public var joinedPlainText: String {
+        lines.joined(separator: "\n")
+    }
+}
+
 /// Actor-isolated Ghostty surface controller (TER-N01 / TER-N02 / §21.4).
 ///
 /// Owns one surface handle and feeds ordered raw bytes without loss.
@@ -65,6 +102,8 @@ public actor GhosttySessionController {
     #if canImport(CGhosttyShim)
         private var surface: OpaquePointer?
     #endif
+    private var lastViewportLines: [String] = []
+    private var lastViewportGeneration: UInt64 = 0
 
     public init(
         id: TerminalSessionID = TerminalSessionID(),
@@ -117,6 +156,8 @@ public actor GhosttySessionController {
                 self.surface = nil
             }
         #endif
+        lastViewportLines = []
+        lastViewportGeneration = 0
     }
 
     /// Feed PTY→terminal bytes (ordered, no drop). Raw bytes only (TER-N05).
@@ -142,10 +183,6 @@ public actor GhosttySessionController {
     }
 
     /// Structured key encoding via Ghostty key encoder (TER-N04).
-    ///
-    /// Returns encoded host→PTY bytes. Arrow/nav/Fn keys with non-zero `event.key`
-    /// produce CSI/SS3 sequences when linked; never invents a production byte map
-    /// when unlinked (surface create already failed closed).
     public func encodeKey(_ event: GhosttyKeyEvent) throws -> Data {
         guard !isDestroyed else { throw TerminalError.notRunning }
         #if canImport(CGhosttyShim)
@@ -180,22 +217,82 @@ public actor GhosttySessionController {
         #endif
     }
 
-    /// Mouse report encoding when reporting mode is on (TER-N04).
+    /// Mouse report encoding via Ghostty mouse encoder (TER-N04 — not hand-built CSI).
     public func encodeMouse(_ event: GhosttyMouseEvent) throws -> Data {
         guard !isDestroyed else { throw TerminalError.notRunning }
-        return event.encode()
+        #if canImport(CGhosttyShim)
+            guard let surface else { throw TerminalError.notRunning }
+            var cEvent = ce_ghostty_mouse_event(
+                button: event.button.rawValue,
+                action: event.action.rawValue,
+                mods: event.mods,
+                col: Int32(event.col),
+                row: Int32(event.row),
+                reporting_mode: event.reportingMode.rawValue,
+                cell_width_px: 8,
+                cell_height_px: 16
+            )
+            var buf = [UInt8](repeating: 0, count: 256)
+            let n = ce_ghostty_surface_encode_mouse(surface, &cEvent, &buf, buf.count)
+            if n < 0 { throw TerminalError.startFailed("ghostty encode_mouse failed") }
+            if n == 0 { return Data() }
+            return Data(buf.prefix(Int(n)))
+        #else
+            throw TerminalError.startFailed("CGhosttyShim not available")
+        #endif
     }
 
-    /// Focus report encoding when reporting is enabled (TER-N04).
+    /// Focus report encoding via Ghostty focus encoder (TER-N04).
     public func encodeFocus(_ event: GhosttyFocusEvent) throws -> Data {
         guard !isDestroyed else { throw TerminalError.notRunning }
-        return event.encode()
+        #if canImport(CGhosttyShim)
+            guard let surface else { throw TerminalError.notRunning }
+            var buf = [UInt8](repeating: 0, count: 16)
+            let n = ce_ghostty_surface_encode_focus(
+                surface,
+                event.focused ? 1 : 0,
+                event.reportingEnabled ? 1 : 0,
+                &buf,
+                buf.count
+            )
+            if n < 0 { throw TerminalError.startFailed("ghostty encode_focus failed") }
+            if n == 0 { return Data() }
+            return Data(buf.prefix(Int(n)))
+        #else
+            throw TerminalError.startFailed("CGhosttyShim not available")
+        #endif
     }
 
-    /// Bracketed / plain paste payload (TER-N04).
+    /// Paste encoding via Ghostty paste encoder (TER-N04).
     public func encodePaste(_ text: String, bracketed: Bool) throws -> Data {
         guard !isDestroyed else { throw TerminalError.notRunning }
-        return GhosttyNativeInput.encodePaste(text, bracketed: bracketed)
+        #if canImport(CGhosttyShim)
+            guard let surface else { throw TerminalError.notRunning }
+            let byteCount = text.utf8.count
+            func encode(into buf: inout [UInt8]) -> Int32 {
+                if byteCount == 0 {
+                    return ce_ghostty_surface_encode_paste(
+                        surface, nil, 0, bracketed ? 1 : 0, &buf, buf.count
+                    )
+                }
+                return text.withCString { ptr in
+                    ce_ghostty_surface_encode_paste(
+                        surface, ptr, byteCount, bracketed ? 1 : 0, &buf, buf.count
+                    )
+                }
+            }
+            var buf = [UInt8](repeating: 0, count: max(64, byteCount + 32))
+            var n = encode(into: &buf)
+            if n < 0 {
+                buf = [UInt8](repeating: 0, count: max(byteCount + 64, 4096))
+                n = encode(into: &buf)
+            }
+            if n < 0 { throw TerminalError.startFailed("ghostty encode_paste failed") }
+            if n == 0 { return Data() }
+            return Data(buf.prefix(Int(n)))
+        #else
+            throw TerminalError.startFailed("CGhosttyShim not available")
+        #endif
     }
 
     public func resize(cols: Int, rows: Int, widthPx: Int = 0, heightPx: Int = 0) throws {
@@ -216,22 +313,84 @@ public actor GhosttySessionController {
                 throw TerminalError.startFailed("ghostty resize failed")
             }
             generation = ce_ghostty_surface_generation(surface)
+            // Resize invalidates line cache → full refresh next pull (TER-N06).
+            lastViewportLines = []
+            lastViewportGeneration = 0
         #endif
     }
 
     /// Plain-text viewport from Ghostty terminal state (not raw spool, TER-N05/N06).
+    /// Prefer ``pullViewportDelta()`` for dirty-line rendering.
     public func snapshotUTF8() throws -> String {
-        guard !isDestroyed else { return "" }
+        let delta = try pullViewportDelta()
+        return delta.joinedPlainText
+    }
+
+    /// Pull viewport lines and compute dirty indices (TER-N06).
+    ///
+    /// Does not allocate a growing scrollback string; returns the current grid
+    /// plus which lines changed since the previous successful pull.
+    public func pullViewportDelta() throws -> GhosttyViewportDelta {
+        guard !isDestroyed else {
+            return GhosttyViewportDelta(
+                generation: generation,
+                cols: cols,
+                rows: rows,
+                lines: [],
+                dirtyLineIndices: [],
+                fullRefresh: true
+            )
+        }
         #if canImport(CGhosttyShim)
-            guard let surface else { return "" }
-            var buf = [CChar](repeating: 0, count: 256 * 1024)
-            let n = ce_ghostty_surface_snapshot_utf8(surface, &buf, buf.count)
-            if n < 0 { throw TerminalError.startFailed("ghostty snapshot failed") }
-            if n == 0 { return "" }
-            let count = Int(n)
-            return String(decoding: buf.prefix(count).map { UInt8(bitPattern: $0) }, as: UTF8.self)
+            guard let surface else {
+                throw TerminalError.notRunning
+            }
+            var cCols: UInt32 = 0
+            var cRows: UInt32 = 0
+            if ce_ghostty_surface_grid_size(surface, &cCols, &cRows) != 0 {
+                throw TerminalError.startFailed("ghostty grid_size failed")
+            }
+            let rowCount = Int(cRows)
+            let colCount = Int(cCols)
+            var lines: [String] = []
+            lines.reserveCapacity(rowCount)
+            var lineBuf = [CChar](repeating: 0, count: max(256, colCount * 4 + 8))
+            for r in 0..<rowCount {
+                let n = ce_ghostty_surface_line_utf8(surface, UInt32(r), &lineBuf, lineBuf.count)
+                if n < 0 {
+                    throw TerminalError.startFailed("ghostty line_utf8 failed at row \(r)")
+                }
+                if n == 0 {
+                    lines.append("")
+                } else {
+                    lines.append(String(decoding: lineBuf.prefix(Int(n)).map { UInt8(bitPattern: $0) }, as: UTF8.self))
+                }
+            }
+            let gen = ce_ghostty_surface_generation(surface)
+            generation = gen
+            let full = lastViewportLines.isEmpty || lastViewportLines.count != lines.count
+            var dirty: [Int] = []
+            if full {
+                dirty = Array(0..<lines.count)
+            } else {
+                for i in 0..<lines.count {
+                    if i >= lastViewportLines.count || lastViewportLines[i] != lines[i] {
+                        dirty.append(i)
+                    }
+                }
+            }
+            lastViewportLines = lines
+            lastViewportGeneration = gen
+            return GhosttyViewportDelta(
+                generation: gen,
+                cols: colCount,
+                rows: rowCount,
+                lines: lines,
+                dirtyLineIndices: dirty,
+                fullRefresh: full
+            )
         #else
-            return ""
+            throw TerminalError.startFailed("CGhosttyShim not available")
         #endif
     }
 

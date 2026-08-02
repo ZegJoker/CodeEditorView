@@ -250,14 +250,26 @@ let package = Package(
             cSettings: ghosttyLinked ? [
                 .headerSearchPath("include"),
                 .define("CODEEDITOR_GHOSTTY_LINKED", to: "1"),
-                .headerSearchPath("../../Vendor/ghostty/include"),
+                // Textual include of libghostty-vt headers (avoid Vendor/ghostty modulemap GhosttyKit).
+                .unsafeFlags([
+                    "-fno-modules",
+                    "-IVendor/ghostty/include",
+                    "-IVendor/ghostty/zig-out/include",
+                ]),
             ] : [
                 .headerSearchPath("include"),
             ],
             linkerSettings: ghosttyLinked ? [
                 .linkedLibrary("ghostty-vt", .when(platforms: [.macOS])),
                 .linkedLibrary("util", .when(platforms: [.macOS])),
-                .unsafeFlags(["-LVendor/ghostty/zig-out/lib"], .when(platforms: [.macOS])),
+                .unsafeFlags(
+                    [
+                        "-LVendor/ghostty/zig-out/lib",
+                        "-Xlinker", "-rpath",
+                        "-Xlinker", "Vendor/ghostty/zig-out/lib",
+                    ],
+                    .when(platforms: [.macOS])
+                ),
             ] : [
                 .linkedLibrary("util", .when(platforms: [.macOS])),
             ]

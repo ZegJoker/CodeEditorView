@@ -19,6 +19,10 @@ public actor TerminalService {
         public var bytesReceived: UInt64
         public var viewportGeneration: UInt64
         public var lastExitReason: TerminalProcessExitReason?
+        /// Line-oriented viewport (TER-N06); empty until host pushes dirty lines.
+        public var viewportLines: [String]
+        /// Indices dirty on last `updateViewportLines` (TER-N06).
+        public var dirtyLineIndices: [Int]
 
         /// Compatibility: prefer `viewportPlainText`.
         public var snapshotUTF8: String { viewportPlainText }
@@ -50,6 +54,8 @@ public actor TerminalService {
         var eventHub: AsyncBroadcastHub<TerminalTransportEvent>
         var transportClass: TerminalTransportClass
         var caller: TerminalCallerRole
+        var viewportLines: [String]
+        var dirtyLineIndices: [Int]
     }
 
     private var sessions: [TerminalSessionID: Live] = [:]
@@ -88,7 +94,9 @@ public actor TerminalService {
                 viewportPlainText: live.viewportPlainText,
                 bytesReceived: live.bytesReceived,
                 viewportGeneration: live.viewportGeneration,
-                lastExitReason: live.lastExitReason
+                lastExitReason: live.lastExitReason,
+                viewportLines: live.viewportLines,
+                dirtyLineIndices: live.dirtyLineIndices
             )
         }
     }
@@ -154,7 +162,9 @@ public actor TerminalService {
             onOutput: onOutput,
             eventHub: hub,
             transportClass: transportClass,
-            caller: role
+            caller: role,
+            viewportLines: [],
+            dirtyLineIndices: []
         )
         let stream = transport.events
         live.pump = Task { [weak self] in
@@ -240,6 +250,34 @@ public actor TerminalService {
             live.viewportGeneration = generation
             sessions[id] = live
         }
+    }
+
+    /// Host pushes dirty-line viewport from Ghostty (TER-N06).
+    ///
+    /// Prefer this over repeatedly assigning full viewport strings. `lines` is the
+    /// current grid; `dirtyIndices` identifies rows that changed.
+    public func updateViewportLines(
+        lines: [String],
+        dirtyIndices: [Int],
+        generation: UInt64,
+        for id: TerminalSessionID
+    ) {
+        guard var live = sessions[id] else { return }
+        if generation >= live.viewportGeneration {
+            live.viewportLines = lines
+            live.dirtyLineIndices = dirtyIndices
+            live.viewportPlainText = lines.joined(separator: "\n")
+            live.viewportGeneration = generation
+            sessions[id] = live
+        }
+    }
+
+    public func viewportLines(for id: TerminalSessionID) -> [String]? {
+        sessions[id]?.viewportLines
+    }
+
+    public func dirtyLineIndices(for id: TerminalSessionID) -> [Int]? {
+        sessions[id]?.dirtyLineIndices
     }
 
     /// Compatibility shim for older callers — routes to `updateViewport`.

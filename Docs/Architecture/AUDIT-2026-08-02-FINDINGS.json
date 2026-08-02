@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "title": "defect gate trusts manually marked “fixed” rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "severity_raw": "P1 for the “durable” claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
     },
     {
       "id": "CORE-N03",
@@ -932,7 +932,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "severity_raw": "P1 for “gitignore-compatible” claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "verified",
@@ -1280,7 +1280,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_responseBeforeWaitCompletesWithoutEarlyMap",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_usesOneShotPromiseNotUnstructuredRegistrationTask"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N02",
@@ -1293,7 +1293,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_slowNotificationDoesNotStallResponse",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_stateOrderedNotificationsPreserveOrder"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N03",
@@ -1305,7 +1305,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N03_synchronizeRequiresBaseAndTransaction"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N04",
@@ -1330,7 +1330,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N05_streamGapTriggersFullResync"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N06",
@@ -1356,7 +1356,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateNotCommittedWhenNotifyFails",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateCommittedAfterSuccessfulSend"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N08",
@@ -1368,7 +1368,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N08_decodesChangesDocumentChangesAndResourceOps"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N09",
@@ -1393,7 +1393,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N10_unregisterExactRegistrationIDNotMethodCount"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N11",
@@ -1405,7 +1405,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N11_jsonValuePreservesScalarsArraysObjectsNull"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N12",
@@ -1417,13 +1417,13 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N12_diagnosticsCarryVersionGenerationSequenceAndBound"
       ],
-      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "title": "current “real LSP” gate is not an integration test",
       "phase": 6,
       "status": "verified",
       "regression_tests": [
@@ -1452,7 +1452,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as \u201cearly\u201d responses",
+      "title": "late responses are retained as “early” responses",
       "phase": 7,
       "status": "verified",
       "regression_tests": [
@@ -1501,7 +1501,7 @@
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N05_teardownDoesNotCrashAndEndsTerminated",
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N05_startFailureIsFailedNotForceUnwrap"
       ],
-      "notes": "State machine idle\u2192starting\u2192initializing\u2192\u2026\u2192terminating\u2192terminated/failed; requireConnection no force-unwrap."
+      "notes": "State machine idle→starting→initializing→…→terminating→terminated/failed; requireConnection no force-unwrap."
     },
     {
       "id": "DAP-N06",
@@ -1556,7 +1556,7 @@
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_requestCancellationSurfacesCancellationError",
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_reconnectionPolicyRespectsRestartBudget"
       ],
-      "notes": "2026-08-03 verifier residual: matrix + attach/timeout; adapter crash\u2192failed/crashed; malformed frame resync; request CancellationError; restart budget fail-closed reconnection."
+      "notes": "2026-08-03 verifier residual: matrix + attach/timeout; adapter crash→failed/crashed; malformed frame resync; request CancellationError; restart budget fail-closed reconnection."
     },
     {
       "id": "DAP-N10",
@@ -1589,7 +1589,7 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N01_productionCShimHasNoVTLessByteSpoolDefault",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N01_testSpoolLivesOnlyUnderTests"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual close: requireGhosttyLinked/requireLinked true; production C shim fail-closed; CGhosttyTestSpool test-only. libghostty-vt built via curl-seeded zig deps."
     },
     {
       "id": "TER-N02",
@@ -1601,9 +1601,11 @@
       "regression_tests": [
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N02_integrationClaimIsHonest",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N02_surfaceViewUnavailableWhenUnlinked",
-        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N02_surfaceViewAvailableLevelIsNotUnavailableClaim"
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N02_surfaceViewAvailableLevelIsNotUnavailableClaim",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N02_dirtyLineApplyDoesNotRequireFullStringPoll",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N02_workbenchUsesDirtyViewportNotFullSnapshotPoll"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual: honest VT-engine claim; dirty-line GhosttyViewportDelta apply; workbench pullViewportDelta not full snapshotUTF8 poll; NSTextView is CodeEditor host renderer not claimed as Ghostty Metal UI."
     },
     {
       "id": "TER-N03",
@@ -1618,7 +1620,7 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N03_legacyManagerStillFunctionsForMigration",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N03_workbenchUsesTerminalServiceNotLegacyManager"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "Legacy VTParser/TerminalScreen/TerminalSessionManager deprecated; TerminalService+Ghostty production facade; workbench uses TerminalService."
     },
     {
       "id": "TER-N04",
@@ -1636,12 +1638,15 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_bracketedPasteEncodesMarkerBytes",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_focusInOutEncodeCSI",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_mouseSGREncodeBytes",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_controllerRoutesMouseFocusPasteToGhosttyEncoder",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_imeCompositionDoesNotWriteUntilCommit",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_encodeKeyRequiresLinkedGhosttyAndAssertsBytesWhenLinked",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_shimExposesEncodeKey",
-        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_surfaceViewRoutesStructuredKeysNotCharactersAlone"
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N04_surfaceViewRoutesStructuredKeysNotCharactersAlone",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_mouseAndFocusEncodeWhenLinked",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_keyEncodeWhenLinked"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual: encodeKey/Mouse/Focus/Paste route via ce_ghostty_surface_encode_* (Ghostty encoders); offline maps only for unlinked unit tests; surface emits structured events only."
     },
     {
       "id": "TER-N05",
@@ -1656,21 +1661,23 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N05_updateViewportFromGhosttyOnly",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N05_onOutputReceivesRawChunksNotDecoded"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "Raw-byte onOutput feed into Ghostty; no String(data:encoding:) on process chunks."
     },
     {
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "title": "repeated full-string snapshots are O(n²)-prone",
       "phase": 8,
       "status": "fixed",
       "regression_tests": [
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N06_pagedScrollbackAPI",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N06_generationDirtyTracking",
-        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N06_serviceDoesNotAppendSnapshotOnEveryChunk"
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N06_serviceDoesNotAppendSnapshotOnEveryChunk",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N06_dirtyLineViewportAPI",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N06_ghosttyPullViewportDeltaWhenLinked"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual: pullViewportDelta dirty lines; updateViewportLines API; surface applyViewportDelta; workbench generation-only poll without full snapshotUTF8 every tick; paged scrollback retained."
     },
     {
       "id": "TER-N07",
@@ -1684,11 +1691,13 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_userTerminateIsCancelledNotExit0",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_processSupervisorRegistersPTY",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_localPTYTransportUsesHubAndSpool",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_realPTYSpawnEchoExitAndDescriptorLifecycle",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_realPTYUserCancelIsCancelledNotExit0",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_writeQueueBoundDocumented",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_writeQueueSerializesConcurrentEnqueues",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_localPTYDeniesWhenPolicyDisallows"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual: real LocalPTYTransport spawn of /bin/echo and /bin/cat; descriptor F_GETFL lifecycle; user cancel → cancelled; ProcessSupervisor+hub+spool+write queue."
     },
     {
       "id": "TER-N08",
@@ -1711,7 +1720,7 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N08_macOSDirectAllowsLocalPTYCreate",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N08_extensionTerminateDeniedLeavesSession"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "Profiles macOSDirect/iOS/MAS/extension; authorizeCreate/write/resize/terminate/read fail-closed."
     },
     {
       "id": "TER-N09",
@@ -1738,9 +1747,10 @@
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_soak100MiBWhenLinked",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_testSpoolAvailableForHarness",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_fixturesCorpusFilesExist",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_fixturesWrittenIntoGhosttyWhenLinked",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_inputMappingCorpusOffline"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual: fixtures written into Ghostty when linked; *WhenLinked corpus non-vacuous under CODEEDITOR_GHOSTTY_LINKED=1; default 100MiB soak (GHOSTTY_SOAK_MIB override); REQUIRE_GHOSTTY=1 hard; ABI 3 mouse/focus/paste/line."
     },
     {
       "id": "TER-N10",
@@ -1757,9 +1767,12 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_publicAPIUsesCodeEditorOwnedShimOnly",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_executesCheckGhosttyLinkedScriptSoftMode",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_abiProbeSymbolInHeader",
-        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N10_hardGateScriptExists"
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_linkedLibraryPresentWhenStampExists",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_gateScriptRequiresLinkedSymbolAndBehaviorProbes",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N10_hardGateScriptExists",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N10_linkedLibrarySymbolAndBehaviorWhenLinked"
       ],
-      "notes": "2026-08-03 verifier residual: TER-N04 full NSEvent\u2192GhosttyKey mapping (arrows/nav/Fn), flagsChanged, mouse SGR, focus CSI, bracketed paste, IME; encodeKey asserts bytes when linked. TER-N08 TerminalService.authorizeCreate/write/resize/terminate/read + profile enforcement tests. TER-N07 TerminalOutboundWriteQueue overflow+concurrency. TER-N09 fixtures + non-vacuous linked corpus (REQUIRE_GHOSTTY=1 hard); unlinked asserts fail-closed not soft-pass. TER-N10 ABI compile probe + light gate. Blocker: libghostty-vt build deps.files.ghostty.org 400 on this machine."
+      "notes": "2026-08-03 residual: linked C ABI+behavior probe against libghostty-vt; nm symbol checks; fixtures; pin; build-ghostty curl-seed; REQUIRE_GHOSTTY hard gate; no Ghostty types in public Swift."
     },
     {
       "id": "BROKER-N01",
@@ -1865,7 +1878,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process \u201cargsGlob\u201d is not a glob",
+      "title": "process “argsGlob” is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1935,7 +1948,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "title": "compatibility claims need levels, not one “passing” flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -2285,7 +2298,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],

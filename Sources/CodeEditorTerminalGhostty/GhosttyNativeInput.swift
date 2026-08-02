@@ -64,10 +64,11 @@ public struct GhosttyMouseEvent: Sendable, Hashable {
         self.reportingMode = reportingMode
     }
 
-    /// Encode SGR mouse report when reporting is enabled; empty when `.off`.
+    /// Offline CSI map for unlinked mapping tests only (TER-N04).
+    /// Production PTY bytes must come from ``GhosttySessionController/encodeMouse``.
     public func encode() -> Data {
         guard reportingMode != .off else { return Data() }
-        // SGR: CSI < Cb ; Cx ; Cy M/m
+        // Offline SGR map — not used by production encode path when Ghostty is linked.
         var cb = Int(button.rawValue)
         if mods & GhosttyKeyEvent.modShift != 0 { cb += 4 }
         if mods & GhosttyKeyEvent.modAlt != 0 { cb += 8 }
@@ -120,8 +121,11 @@ public enum GhosttyIMEEvent: Sendable, Hashable {
 
 /// Maps native platform events to Ghostty structured input (TER-N04).
 ///
-/// Does **not** invent PTY bytes; callers pass structured events to
-/// ``GhosttySessionController/encodeKey(_:)`` (or paste/mouse/focus encoders).
+/// Structured events are encoded by ``GhosttySessionController`` via the
+/// Ghostty C key/mouse/focus/paste encoders (`ce_ghostty_surface_encode_*`).
+/// Offline helpers below (`encodePaste` / `encodeFocus` / `encodeMouse`) exist
+/// only for mapping-layer unit tests without a linked surface — production
+/// must call the controller, never these offline byte maps for PTY write.
 public enum GhosttyNativeInput {
     /// macOS virtual key codes → Ghostty physical keys.
     public static func physicalKey(macOSKeyCode code: UInt16) -> GhosttyPhysicalKey {

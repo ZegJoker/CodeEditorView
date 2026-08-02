@@ -191,6 +191,7 @@ struct WorkbenchProblemsPanelView: View {
 public final class WorkbenchTerminalPanelModel: ObservableObject {
     @Published public private(set) var sessionID: TerminalSessionID?
     @Published public private(set) var snapshot: String = ""
+    @Published public private(set) var viewportDelta: GhosttyViewportDelta?
     @Published public private(set) var title: String = "Terminal"
     @Published public var errorMessage: String?
     @Published public private(set) var isRunning: Bool = false
@@ -221,7 +222,6 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
         private func startMacSession() async {
             do {
                 // Production path requires linked Ghostty (default requireLinked: true).
-                // Production path requires linked Ghostty (default requireLinked: true).
                 // Hard-unavailable when unlinked — never present a fake terminal as Ghostty (TER-N01/N02).
                 let ghostty = try GhosttySessionController(cols: 80, rows: 24, requireLinked: true)
                 self.controller = ghostty
@@ -240,16 +240,27 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                     transport: transport,
                     onOutput: { [weak self] data in
                         // TER-N05: raw bytes into Ghostty only — never String(data:encoding:).
+                        // TER-N06: dirty-line pullViewportDelta — not full snapshotUTF8 poll copy.
                         guard let self else { return }
                         do {
                             try await ghostty.write(data)
-                            let gen = await ghostty.currentGeneration()
-                            let snap = try await ghostty.snapshotUTF8()
+                            let delta = try await ghostty.pullViewportDelta()
                             if let sid = sessionBox.id {
-                                await self.service.updateViewport(plainText: snap, generation: gen, for: sid)
+                                await self.service.updateViewport(
+                                    plainText: delta.joinedPlainText,
+                                    generation: delta.generation,
+                                    for: sid
+                                )
+                                await self.service.updateViewportLines(
+                                    lines: delta.lines,
+                                    dirtyIndices: delta.dirtyLineIndices,
+                                    generation: delta.generation,
+                                    for: sid
+                                )
                             }
                             await MainActor.run {
-                                self.snapshot = snap
+                                self.viewportDelta = delta
+                                self.snapshot = delta.joinedPlainText
                                 self.isRunning = true
                             }
                         } catch {
@@ -265,7 +276,8 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                     self.title = GhosttySessionController.integrationClaim
                     self.isRunning = true
                     self.errorMessage = nil
-                    // Dirty generation pull — not a full O(n²) string rebuild (TER-N06).
+                    // Generation-only poll: pull dirty lines only when gen advances (TER-N06).
+                    // Never copy full snapshotUTF8 on every 50ms tick.
                     self.pollTask = Task { @MainActor in
                         var lastGen: UInt64 = 0
                         while !Task.isCancelled {
@@ -273,8 +285,9 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                                 let gen = await c.currentGeneration()
                                 if gen != lastGen {
                                     lastGen = gen
-                                    if let snap = try? await c.snapshotUTF8() {
-                                        self.snapshot = snap
+                                    if let delta = try? await c.pullViewportDelta() {
+                                        self.viewportDelta = delta
+                                        self.snapshot = delta.joinedPlainText
                                     }
                                 }
                             }
@@ -329,6 +342,40 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
             } else {
                 await MainActor.run {
                     self.errorMessage = "Terminal unavailable: Ghostty not linked"
+                }
+            }
+        }
+    }
+
+    /// Mouse → Ghostty mouse encoder → PTY (TER-N04; not hand-built CSI).
+    public func writeMouseEvent(_ event: GhosttyMouseEvent) {
+        guard let id = sessionID else { return }
+        Task {
+            if let c = controller {
+                do {
+                    let encoded = try await c.encodeMouse(event)
+                    if !encoded.isEmpty {
+                        try await service.write(encoded, to: id)
+                    }
+                } catch {
+                    await MainActor.run { self.errorMessage = String(describing: error) }
+                }
+            }
+        }
+    }
+
+    /// Focus → Ghostty focus encoder → PTY (TER-N04).
+    public func writeFocusEvent(_ event: GhosttyFocusEvent) {
+        guard let id = sessionID else { return }
+        Task {
+            if let c = controller {
+                do {
+                    let encoded = try await c.encodeFocus(event)
+                    if !encoded.isEmpty {
+                        try await service.write(encoded, to: id)
+                    }
+                } catch {
+                    await MainActor.run { self.errorMessage = String(describing: error) }
                 }
             }
         }
@@ -392,9 +439,16 @@ struct WorkbenchTerminalPanelView: View {
                     GhosttySurfaceRepresentable(
                         sessionID: id,
                         snapshot: model.snapshot,
+                        generation: model.viewportDelta?.generation ?? 0,
+                        viewportDelta: model.viewportDelta,
                         integrationLevel: GhosttySessionController.currentIntegrationLevel,
                         onKeyEvent: { model.writeKeyEvent($0) },
-                        onKeyData: { model.writeKey($0) }
+                        onKeyData: { model.writeKey($0) },
+                        onMouseEvent: { model.writeMouseEvent($0) },
+                        onFocusEvent: { model.writeFocusEvent($0) },
+                        onPasteData: { data in
+                            Task { try? await model.service.write(data, to: id) }
+                        }
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {

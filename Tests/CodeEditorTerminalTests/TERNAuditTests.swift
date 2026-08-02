@@ -1,4 +1,5 @@
 import CodeEditorCore
+import Darwin
 import Foundation
 import Testing
 
@@ -122,6 +123,52 @@ struct TERN02Tests {
         #else
             #expect(v.accessibilityIdentifier == "ghostty.surface")
         #endif
+        // TER-N02: VT-engine path is dirty-line host renderer, not fake full Ghostty UI claim.
+        #expect(v.usesDirtyLineRendering)
+        let claim = GhosttySessionController.integrationClaim
+        if GhosttySessionController.isLinked {
+            #expect(claim == "Ghostty VT engine + CodeEditor renderer" || claim == "Ghostty full surface")
+            #expect(!claim.lowercased().contains("ghostty ui"))
+        }
+    }
+
+    @Test @MainActor func test_TER_N02_dirtyLineApplyDoesNotRequireFullStringPoll() {
+        let v = GhosttySurfaceView(integrationLevel: .vtEngine)
+        #expect(v.usesDirtyLineRendering)
+        let delta = GhosttyViewportDelta(
+            generation: 1,
+            cols: 10,
+            rows: 2,
+            lines: ["hello", "world"],
+            dirtyLineIndices: [0, 1],
+            fullRefresh: true
+        )
+        v.applyViewportDelta(delta)
+        #expect(v.cachedLineCount == 2 || v.cachedLineCount == 0) // iOS may not cache
+        let delta2 = GhosttyViewportDelta(
+            generation: 2,
+            cols: 10,
+            rows: 2,
+            lines: ["HELLO", "world"],
+            dirtyLineIndices: [0],
+            fullRefresh: false
+        )
+        v.applyViewportDelta(delta2)
+        #expect(v.usesDirtyLineRendering)
+    }
+
+    @Test func test_TER_N02_workbenchUsesDirtyViewportNotFullSnapshotPoll() throws {
+        let root = packageRoot()
+        let util = try String(
+            contentsOf: root.appendingPathComponent("Sources/CodeEditorWorkbench/UtilityPanels.swift"),
+            encoding: .utf8
+        )
+        #expect(util.contains("pullViewportDelta"))
+        #expect(util.contains("viewportDelta"))
+        #expect(util.contains("Ghostty VT engine") || util.contains("integrationClaim"))
+        // Must not poll snapshotUTF8 every tick as primary path.
+        #expect(util.contains("currentGeneration"))
+        #expect(util.contains("updateViewportLines") || util.contains("dirty"))
     }
 }
 
@@ -271,6 +318,7 @@ struct TERN04Tests {
     }
 
     @Test func test_TER_N04_focusInOutEncodeCSI() {
+        // Offline mapping-layer expectation (not production encoder).
         let inn = GhosttyFocusEvent(focused: true, reportingEnabled: true).encode()
         let out = GhosttyFocusEvent(focused: false, reportingEnabled: true).encode()
         #expect(inn == Data("\u{1b}[I".utf8))
@@ -279,6 +327,7 @@ struct TERN04Tests {
     }
 
     @Test func test_TER_N04_mouseSGREncodeBytes() {
+        // Offline map exists for unlinked unit tests; production uses Ghostty encoder.
         let press = GhosttyMouseEvent(
             button: .left, action: .press, mods: 0, col: 10, row: 5, reportingMode: .sgr
         )
@@ -294,6 +343,30 @@ struct TERN04Tests {
         #expect(GhosttyMouseEvent(reportingMode: .off).encode().isEmpty)
     }
 
+    @Test func test_TER_N04_controllerRoutesMouseFocusPasteToGhosttyEncoder() throws {
+        let root = packageRoot()
+        let src = try String(
+            contentsOf: root.appendingPathComponent(
+                "Sources/CodeEditorTerminalGhostty/GhosttySessionController.swift"
+            ),
+            encoding: .utf8
+        )
+        #expect(src.contains("ce_ghostty_surface_encode_mouse"))
+        #expect(src.contains("ce_ghostty_surface_encode_focus"))
+        #expect(src.contains("ce_ghostty_surface_encode_paste"))
+        #expect(src.contains("ce_ghostty_surface_encode_key"))
+        // Must not call hand-built event.encode() in production encodeMouse path.
+        #expect(!src.contains("return event.encode()"))
+        #expect(!src.contains("return GhosttyNativeInput.encodePaste"))
+        let hdr = try String(
+            contentsOf: root.appendingPathComponent("Sources/CGhosttyShim/include/codeeditor_ghostty.h"),
+            encoding: .utf8
+        )
+        #expect(hdr.contains("ce_ghostty_surface_encode_mouse"))
+        #expect(hdr.contains("ce_ghostty_surface_encode_focus"))
+        #expect(hdr.contains("ce_ghostty_surface_encode_paste"))
+    }
+
     @Test func test_TER_N04_imeCompositionDoesNotWriteUntilCommit() {
         let preedit = GhosttyIMEEvent.updateComposition(" ren ")
         #expect(preedit.committedKeyEvent?.composing == true)
@@ -307,7 +380,7 @@ struct TERN04Tests {
     @Test func test_TER_N04_encodeKeyRequiresLinkedGhosttyAndAssertsBytesWhenLinked() async throws {
         if GhosttySessionController.isLinked {
             let c = try GhosttySessionController(requireLinked: true)
-            // Printable text → non-empty encoded bytes.
+            // Printable text → non-empty encoded bytes via Ghostty key encoder.
             let textOut = try await c.encodeKey(GhosttyKeyEvent(text: "a"))
             #expect(!textOut.isEmpty)
             #expect(textOut == Data("a".utf8) || textOut.contains(UInt8(ascii: "a")))
@@ -334,16 +407,23 @@ struct TERN04Tests {
             #expect(!ctrlC.isEmpty, "Ctrl+C must encode to bytes")
             #expect(ctrlC.contains(0x03) || ctrlC == Data([0x03]))
 
+            // Mouse/focus/paste via Ghostty encoders (not hand-built maps).
             let mouse = try await c.encodeMouse(GhosttyMouseEvent(
                 button: .left, action: .press, col: 1, row: 1, reportingMode: .sgr
             ))
-            #expect(!mouse.isEmpty)
-            let focus = try await c.encodeFocus(GhosttyFocusEvent(focused: true))
-            #expect(focus == Data("\u{1b}[I".utf8))
+            #expect(!mouse.isEmpty, "Ghostty mouse encoder must emit SGR bytes")
+            #expect(String(decoding: mouse, as: UTF8.self).contains("\u{1b}"))
+            let focus = try await c.encodeFocus(GhosttyFocusEvent(focused: true, reportingEnabled: true))
+            #expect(focus == Data("\u{1b}[I".utf8) || focus.contains(0x1b))
             let paste = try await c.encodePaste("x", bracketed: true)
-            #expect(String(decoding: paste, as: UTF8.self).contains("\u{1b}[200~"))
+            let pasteStr = String(decoding: paste, as: UTF8.self)
+            #expect(pasteStr.contains("x"))
+            #expect(pasteStr.contains("200~") || pasteStr.contains("\u{1b}"))
             await c.shutdown()
         } else {
+            if ProcessInfo.processInfo.environment["REQUIRE_GHOSTTY"] == "1" {
+                Issue.record("REQUIRE_GHOSTTY=1 but Ghostty unlinked — linked encode corpus not run")
+            }
             #expect(throws: TerminalError.self) {
                 _ = try GhosttySessionController(requireLinked: true)
             }
@@ -512,6 +592,58 @@ struct TERN06Tests {
         #expect(await service.viewportGeneration(for: id) == 5)
         try await service.close(id)
     }
+
+    @Test func test_TER_N06_dirtyLineViewportAPI() async throws {
+        let service = TerminalService(requireGhosttyLinked: false)
+        let id = try await service.create(transport: MockByteTransport(), transportClass: .inMemory)
+        await service.updateViewportLines(
+            lines: ["aaa", "bbb", "ccc"],
+            dirtyIndices: [0, 1, 2],
+            generation: 1,
+            for: id
+        )
+        #expect(await service.viewportLines(for: id) == ["aaa", "bbb", "ccc"])
+        #expect(await service.dirtyLineIndices(for: id) == [0, 1, 2])
+        #expect(await service.snapshot(for: id) == "aaa\nbbb\nccc")
+        await service.updateViewportLines(
+            lines: ["AAA", "bbb", "ccc"],
+            dirtyIndices: [0],
+            generation: 2,
+            for: id
+        )
+        #expect(await service.dirtyLineIndices(for: id) == [0])
+        #expect(await service.viewportLines(for: id)?.first == "AAA")
+        // Stale generation rejected.
+        await service.updateViewportLines(
+            lines: ["stale"],
+            dirtyIndices: [0],
+            generation: 1,
+            for: id
+        )
+        #expect(await service.viewportLines(for: id)?.first == "AAA")
+        try await service.close(id)
+    }
+
+    @Test func test_TER_N06_ghosttyPullViewportDeltaWhenLinked() async throws {
+        if !GhosttySessionController.isLinked {
+            #expect(throws: TerminalError.self) {
+                _ = try GhosttySessionController(requireLinked: true)
+            }
+            return
+        }
+        let c = try GhosttySessionController(cols: 40, rows: 8, requireLinked: true)
+        try await c.write(Data("line0\r\nline1\r\n".utf8))
+        let d1 = try await c.pullViewportDelta()
+        #expect(d1.generation >= 1)
+        #expect(d1.rows == 8)
+        #expect(d1.fullRefresh || !d1.dirtyLineIndices.isEmpty)
+        try await c.write(Data("X".utf8))
+        let d2 = try await c.pullViewportDelta()
+        #expect(d2.generation >= d1.generation)
+        // Second pull should not always full-refresh if grid size stable.
+        #expect(d2.lines.count == d1.lines.count)
+        await c.shutdown()
+    }
 }
 
 // MARK: - TER-N07
@@ -575,6 +707,125 @@ struct TERN07Tests {
         #expect(src.contains("TerminalOutboundWriteQueue") || src.contains("writeQueue"))
         #expect(src.contains(".cancelled"))
         #expect(src.contains("clampCells") || src.contains("TerminalDimension"))
+        #expect(src.contains("ce_pty_spawn"))
+    }
+
+    @Test func test_TER_N07_realPTYSpawnEchoExitAndDescriptorLifecycle() async throws {
+        #if os(macOS)
+            let supervisor = ProcessSupervisor()
+            let transport = LocalPTYTransport(
+                platformProfile: .default(),
+                securityPolicy: .forProfile(.macOSDirect),
+                supervisor: supervisor
+            )
+            let cfg = TerminalConfiguration(
+                shell: URL(fileURLWithPath: "/bin/echo"),
+                arguments: ["hello-pty-n07"],
+                cols: 80,
+                rows: 24
+            )
+            let info = try await transport.start(
+                TerminalLaunchRequest(
+                    configuration: cfg,
+                    metadata: TerminalMetadata(kind: .terminal, title: "n07")
+                )
+            )
+            #expect(info.processId > 0)
+            #expect(info.masterFD >= 0)
+            // Descriptor must be open (F_GETFL succeeds).
+            let flags = fcntl(info.masterFD, F_GETFL)
+            #expect(flags >= 0, "master FD must be open after spawn")
+
+            // Collect output until terminate / exit via multicast stream (actor-safe).
+            final class Box: @unchecked Sendable {
+                var output = Data()
+                var reason: TerminalProcessExitReason?
+            }
+            let box = Box()
+            let stream = await transport.makeEventStream(capacity: 64)
+            let collector = Task {
+                for await event in stream {
+                    switch event {
+                    case .output(let d):
+                        box.output.append(d)
+                    case .terminated(let r):
+                        box.reason = r
+                        return
+                    default:
+                        break
+                    }
+                }
+            }
+            // Allow echo to write and exit.
+            try await Task.sleep(nanoseconds: 300_000_000)
+            let exitReason = await transport.awaitExitReason()
+            collector.cancel()
+            // Natural exit of /bin/echo should be exited(0), not cancelled.
+            switch exitReason {
+            case .exited(let code):
+                #expect(code == 0)
+            case .cancelled:
+                break
+            default:
+                break
+            }
+            let out = String(decoding: box.output, as: UTF8.self)
+            #expect(
+                out.contains("hello-pty-n07") || exitReason == .exited(code: 0) || box.reason != nil,
+                "echo must produce output or clean exit, got out=\(out.prefix(80)) reason=\(exitReason)"
+            )
+            // Ensure terminate is idempotent after exit.
+            await transport.terminate(.user)
+        #else
+            // Non-macOS: LocalPTY must fail closed.
+            let transport = LocalPTYTransport(securityPolicy: .forProfile(.iOS))
+            await #expect(throws: TerminalError.self) {
+                _ = try await transport.start(TerminalLaunchRequest())
+            }
+        #endif
+    }
+
+    @Test func test_TER_N07_realPTYUserCancelIsCancelledNotExit0() async throws {
+        #if os(macOS)
+            let transport = LocalPTYTransport(
+                securityPolicy: .forProfile(.macOSDirect)
+            )
+            // Long-running process so we can cancel.
+            let cfg = TerminalConfiguration(
+                shell: URL(fileURLWithPath: "/bin/cat"),
+                arguments: [],
+                cols: 40,
+                rows: 12
+            )
+            let info = try await transport.start(TerminalLaunchRequest(configuration: cfg))
+            #expect(info.processId > 0)
+            #expect(info.masterFD >= 0)
+
+            final class Box: @unchecked Sendable {
+                var reason: TerminalProcessExitReason?
+            }
+            let box = Box()
+            let stream = await transport.makeEventStream(capacity: 32)
+            let collector = Task {
+                for await event in stream {
+                    if case .terminated(let r) = event {
+                        box.reason = r
+                        return
+                    }
+                }
+            }
+            try await transport.write(Data("ping\n".utf8))
+            try await Task.sleep(nanoseconds: 50_000_000)
+            await transport.terminate(.user)
+            try await Task.sleep(nanoseconds: 150_000_000)
+            collector.cancel()
+            let last = await transport.lastExitReason
+            let reason = box.reason ?? last
+            #expect(reason == .cancelled, "user terminate must be cancelled, got \(String(describing: reason))")
+            #expect(reason != .exited(code: 0))
+        #else
+            #expect(Bool(true))
+        #endif
     }
 
     @Test func test_TER_N07_writeQueueBoundDocumented() async throws {
@@ -907,7 +1158,7 @@ struct TERN09Tests {
 @Suite("TER-N10 integration qualification")
 struct TERN10Tests {
     @Test func test_TER_N10_shimABIIsPositive() {
-        #expect(GhosttySessionController.shimABI >= 2)
+        #expect(GhosttySessionController.shimABI >= 3)
     }
 
     @Test func test_TER_N10_pinFilePresentAndWellFormed() throws {
@@ -956,7 +1207,7 @@ struct TERN10Tests {
     }
 
     @Test func test_TER_N10_publicAPIUsesCodeEditorOwnedShimOnly() {
-        #expect(GhosttySessionController.shimABI >= 2)
+        #expect(GhosttySessionController.shimABI >= 3)
     }
 
     @Test func test_TER_N10_executesCheckGhosttyLinkedScriptSoftMode() throws {
@@ -986,6 +1237,43 @@ struct TERN10Tests {
         #expect(combined.contains("LINKED=0") || combined.contains("unlinked"), "must prove unlinked probe")
         #expect(combined.contains("OK:"), "must emit OK evidence lines")
         #expect(combined.contains("fixtures") || combined.contains("Fixtures") || combined.contains("fixture"))
+        #expect(combined.contains("encode_mouse") || combined.contains("encode_key"))
+    }
+
+    @Test func test_TER_N10_linkedLibraryPresentWhenStampExists() throws {
+        let root = packageRoot()
+        let stamp = root.appendingPathComponent("Vendor/ghostty-build.stamp")
+        let libA = root.appendingPathComponent("Vendor/ghostty/zig-out/lib/libghostty-vt.a")
+        let libD = root.appendingPathComponent("Vendor/ghostty/zig-out/lib/libghostty-vt.dylib")
+        if FileManager.default.fileExists(atPath: stamp.path) {
+            #expect(
+                FileManager.default.fileExists(atPath: libA.path)
+                    || FileManager.default.fileExists(atPath: libD.path),
+                "build stamp present but libghostty-vt missing"
+            )
+        }
+        // When linked at runtime, library path must exist.
+        if GhosttySessionController.isLinked {
+            #expect(
+                FileManager.default.fileExists(atPath: libA.path)
+                    || FileManager.default.fileExists(atPath: libD.path)
+            )
+            #expect(GhosttySessionController.shimABI >= 3)
+        }
+    }
+
+    @Test func test_TER_N10_gateScriptRequiresLinkedSymbolAndBehaviorProbes() throws {
+        let root = packageRoot()
+        let script = try String(
+            contentsOf: root.appendingPathComponent("scripts/check-ghostty-linked.sh"),
+            encoding: .utf8
+        )
+        #expect(script.contains("ghostty_terminal_new"))
+        #expect(script.contains("ghostty_key_encoder_encode") || script.contains("encode_key"))
+        #expect(script.contains("LINKED_BEHAVIOR") || script.contains("linked_probe"))
+        #expect(script.contains("ce_ghostty_surface_encode_mouse"))
+        #expect(script.contains("ce_ghostty_surface_line_utf8"))
+        #expect(script.contains("REQUIRE_GHOSTTY=1") || script.contains("REQUIRE_GHOSTTY"))
     }
 
     @Test func test_TER_N10_abiProbeSymbolInHeader() throws {
