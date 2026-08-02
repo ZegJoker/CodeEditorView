@@ -142,6 +142,10 @@ public actor GhosttySessionController {
     }
 
     /// Structured key encoding via Ghostty key encoder (TER-N04).
+    ///
+    /// Returns encoded host→PTY bytes. Arrow/nav/Fn keys with non-zero `event.key`
+    /// produce CSI/SS3 sequences when linked; never invents a production byte map
+    /// when unlinked (surface create already failed closed).
     public func encodeKey(_ event: GhosttyKeyEvent) throws -> Data {
         guard !isDestroyed else { throw TerminalError.notRunning }
         #if canImport(CGhosttyShim)
@@ -174,6 +178,24 @@ public actor GhosttySessionController {
         #else
             throw TerminalError.startFailed("CGhosttyShim not available")
         #endif
+    }
+
+    /// Mouse report encoding when reporting mode is on (TER-N04).
+    public func encodeMouse(_ event: GhosttyMouseEvent) throws -> Data {
+        guard !isDestroyed else { throw TerminalError.notRunning }
+        return event.encode()
+    }
+
+    /// Focus report encoding when reporting is enabled (TER-N04).
+    public func encodeFocus(_ event: GhosttyFocusEvent) throws -> Data {
+        guard !isDestroyed else { throw TerminalError.notRunning }
+        return event.encode()
+    }
+
+    /// Bracketed / plain paste payload (TER-N04).
+    public func encodePaste(_ text: String, bracketed: Bool) throws -> Data {
+        guard !isDestroyed else { throw TerminalError.notRunning }
+        return GhosttyNativeInput.encodePaste(text, bracketed: bracketed)
     }
 
     public func resize(cols: Int, rows: Int, widthPx: Int = 0, heightPx: Int = 0) throws {

@@ -225,4 +225,88 @@ public struct TerminalSecurityPolicy: Sendable, Hashable {
             )
         }
     }
+
+    /// Enforce transport + extension capability for session create (TER-N08).
+    public func authorizeCreate(
+        transport: TerminalTransportClass,
+        caller: TerminalCallerRole
+    ) throws {
+        if caller == .extensionClient {
+            try requireExtensionCapability(.create)
+        }
+        switch transport {
+        case .localPTY:
+            guard allowLocalPTY else {
+                throw TerminalError.startFailed("local PTY denied by security policy")
+            }
+        case .remote:
+            guard allowRemoteTransport else {
+                throw TerminalError.startFailed("remote terminal denied by security policy")
+            }
+        case .inMemory:
+            // Host/test harness only; extensions must not mint ambient in-memory terminals.
+            if caller == .extensionClient {
+                try requireExtensionCapability(.create)
+            }
+        }
+    }
+
+    /// Enforce write capability for extension callers (TER-N08).
+    public func authorizeWrite(caller: TerminalCallerRole) throws {
+        if caller == .extensionClient {
+            try requireExtensionCapability(.write)
+        }
+    }
+
+    /// Enforce resize capability for extension callers (TER-N08).
+    public func authorizeResize(caller: TerminalCallerRole) throws {
+        if caller == .extensionClient {
+            try requireExtensionCapability(.resize)
+        }
+    }
+
+    /// Enforce terminate capability for extension callers (TER-N08).
+    public func authorizeTerminate(caller: TerminalCallerRole) throws {
+        if caller == .extensionClient {
+            try requireExtensionCapability(.terminate)
+        }
+    }
+
+    /// Enforce read capability for extension callers (TER-N08).
+    public func authorizeRead(caller: TerminalCallerRole) throws {
+        if caller == .extensionClient {
+            try requireExtensionCapability(.read)
+        }
+    }
+
+    /// OSC / clipboard / hyperlink / notification actions — individually permissioned.
+    public func authorizeOSC52Write() throws {
+        guard allowsOSC52Write() else {
+            throw TerminalError.startFailed("OSC 52 clipboard write denied by security policy")
+        }
+    }
+
+    public func authorizeHyperlinkOpen() throws {
+        guard allowsHyperlinks() else {
+            throw TerminalError.startFailed("hyperlink open denied by security policy")
+        }
+    }
+
+    public func authorizeFileTransfer() throws {
+        guard allowsFileTransfer() else {
+            throw TerminalError.startFailed("file transfer denied by security policy")
+        }
+    }
+
+    public func authorizeDesktopNotification() throws {
+        guard allowsDesktopNotifications() else {
+            throw TerminalError.startFailed("desktop notification denied by security policy")
+        }
+    }
+
+    public func authorizeShellIntegrationInjection() throws {
+        guard allowsShellIntegrationInjection() else {
+            throw TerminalError.startFailed("shell integration injection denied by security policy")
+        }
+    }
 }

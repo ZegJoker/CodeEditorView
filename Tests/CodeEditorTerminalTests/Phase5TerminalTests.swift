@@ -61,7 +61,7 @@ struct Phase5TransportServiceTests {
         await service.updateViewport(plainText: "hi", generation: 1, for: id)
         let snap = await service.snapshot(for: id)
         #expect(snap?.contains("hi") == true)
-        await service.close(id)
+        try await service.close(id)
         #expect(await service.allSessions().isEmpty)
     }
 
@@ -138,7 +138,7 @@ struct Phase5GhosttyControllerTests {
             let c = try GhosttySessionController(cols: 40, rows: 12, requireLinked: true)
             try await c.write(Data("hello 世界\n".utf8))
             let snap = try await c.snapshotUTF8()
-            #expect(snap.contains("hello") || !snap.isEmpty || snap.isEmpty)
+            #expect(snap.contains("hello"), "linked snapshot must contain hello: \(snap.prefix(80))")
             try await c.resize(cols: 80, rows: 24)
             await c.shutdown()
         } else {

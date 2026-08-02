@@ -21,7 +21,6 @@ public actor LocalPTYTransport: TerminalByteTransport {
     private var readSource: DispatchSourceRead?
     private var writeSource: DispatchSourceWrite?
     private var writeContinuation: CheckedContinuation<Void, Error>?
-    private var pendingWrite = Data()
     private var writeInFlight = false
     private var finished = false
     private var cancelRequested = false
@@ -33,6 +32,7 @@ public actor LocalPTYTransport: TerminalByteTransport {
 
     private let hub = AsyncBroadcastHub<TerminalTransportEvent>(maxHistory: 128)
     private let inboundSpool: BoundedByteSpool
+    private let writeQueue: TerminalOutboundWriteQueue
     private let maxInboundBytes: Int
     private let maxWriteQueueBytes: Int
     private let supervisor: ProcessSupervisor?
@@ -58,9 +58,18 @@ public actor LocalPTYTransport: TerminalByteTransport {
         self.maxWriteQueueBytes = max(64 * 1024, maxWriteQueueBytes)
         self.supervisor = supervisor
         self.inboundSpool = BoundedByteSpool(maxBytes: self.maxInboundBytes, overflow: .rejectNewest)
+        self.writeQueue = TerminalOutboundWriteQueue(maxBytes: self.maxWriteQueueBytes)
         var c: AsyncThrowingStream<TerminalTransportEvent, Error>.Continuation!
         self.events = AsyncThrowingStream { c = $0 }
         self.streamContinuation = c
+    }
+
+    /// Bound for outbound write queue (TER-N07).
+    public var writeQueueCapacity: Int { maxWriteQueueBytes }
+
+    /// Current queued outbound bytes (TER-N07).
+    public func queuedWriteBytes() async -> Int {
+        await writeQueue.queuedBytes
     }
 
     /// Additional multicast subscriber (TER-N07 raw-byte multicast).
@@ -193,10 +202,8 @@ public actor LocalPTYTransport: TerminalByteTransport {
 
     public func write(_ bytes: Data) async throws {
         guard masterFD >= 0, !finished else { throw TerminalError.notRunning }
-        if pendingWrite.count + bytes.count > maxWriteQueueBytes {
-            throw TerminalError.startFailed("PTY write queue overflow (\(maxWriteQueueBytes) bytes)")
-        }
-        pendingWrite.append(bytes)
+        // Actor isolation serializes concurrent writers; queue fails closed on overflow (TER-N07).
+        try await writeQueue.enqueue(bytes)
         try await flushPendingWrite()
     }
 
@@ -363,25 +370,31 @@ public actor LocalPTYTransport: TerminalByteTransport {
 
     private func flushPendingWrite() async throws {
         guard masterFD >= 0 else { return }
-        while !pendingWrite.isEmpty {
-            let chunk = pendingWrite
-            let n: Int = chunk.withUnsafeBytes { raw in
-                guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
-                return Darwin.write(masterFD, base, chunk.count)
+        while await writeQueue.queuedBytes > 0 {
+            let chunk = await writeQueue.take(maxChunk: 64 * 1024)
+            if chunk.isEmpty { break }
+            var remaining = chunk
+            while !remaining.isEmpty {
+                let n: Int = remaining.withUnsafeBytes { raw in
+                    guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
+                    return Darwin.write(masterFD, base, remaining.count)
+                }
+                if n > 0 {
+                    remaining.removeFirst(n)
+                    continue
+                }
+                if n < 0 && errno == EINTR { continue }
+                if n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    // Re-queue unwritten tail before waiting.
+                    try await writeQueue.enqueue(remaining)
+                    try await waitWritable()
+                    break
+                }
+                if n < 0 {
+                    throw TerminalError.startFailed("write failed: \(errno)")
+                }
+                break
             }
-            if n > 0 {
-                pendingWrite.removeFirst(n)
-                continue
-            }
-            if n < 0 && errno == EINTR { continue }
-            if n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) {
-                try await waitWritable()
-                continue
-            }
-            if n < 0 {
-                throw TerminalError.startFailed("write failed: \(errno)")
-            }
-            break
         }
     }
 

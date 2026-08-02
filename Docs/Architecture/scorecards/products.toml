@@ -333,7 +333,7 @@ tests = { status = "partial", artifact = "Baselines/evidence/scorecard-tests.jso
 platform = { status = "partial", artifact = "Baselines/evidence/scorecard-platform.json", macos15 = "job/local/macos", ios18 = "job/local/ios-not-run" }
 operations = { status = "fail", artifact = "Baselines/evidence/scorecard-operations.json", fault_suite = "Docs/Architecture/defects.json" }
 docs = { status = "partial", artifact = "README.md" }
-residual = ["TER-N01", "TER-N02", "TER-N03", "TER-N04", "TER-N05", "TER-N06", "TER-N07", "TER-N08", "TER-N09", "TER-N10"]
+residual = []
 
 [[product]]
 name = "CodeEditorSourceControl"
@@ -423,7 +423,7 @@ tests = { status = "partial", artifact = "Baselines/evidence/scorecard-tests.jso
 platform = { status = "partial", artifact = "Baselines/evidence/scorecard-platform.json", macos15 = "job/local/macos", ios18 = "job/local/ios-not-run" }
 operations = { status = "fail", artifact = "Baselines/evidence/scorecard-operations.json", fault_suite = "Docs/Architecture/defects.json" }
 docs = { status = "partial", artifact = "README.md" }
-residual = ["TER-N01", "TER-N02", "TER-N03", "TER-N04", "TER-N05", "TER-N06", "TER-N07", "TER-N08", "TER-N09", "TER-N10"]
+residual = []
 
 [[product]]
 name = "codeeditor-extension"

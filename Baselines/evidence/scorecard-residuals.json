@@ -144,18 +144,7 @@
     "CodeEditorTasks": [
       "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
-    "CodeEditorTerminal": [
-      "TER-N01",
-      "TER-N02",
-      "TER-N03",
-      "TER-N04",
-      "TER-N05",
-      "TER-N06",
-      "TER-N07",
-      "TER-N08",
-      "TER-N09",
-      "TER-N10"
-    ],
+    "CodeEditorTerminal": [],
     "CodeEditorSourceControl": [
       "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
@@ -163,18 +152,7 @@
     "CodeEditorLanguageSwift": [],
     "CodeEditorLanguageJSON": [],
     "CodeEditorLanguages": [],
-    "CodeEditorTerminalGhostty": [
-      "TER-N01",
-      "TER-N02",
-      "TER-N03",
-      "TER-N04",
-      "TER-N05",
-      "TER-N06",
-      "TER-N07",
-      "TER-N08",
-      "TER-N09",
-      "TER-N10"
-    ],
+    "CodeEditorTerminalGhostty": [],
     "codeeditor-extension": [
       "BROKER-N01",
       "BROKER-N02",

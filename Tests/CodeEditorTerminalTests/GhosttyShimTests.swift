@@ -7,7 +7,7 @@ import Testing
 @Suite("Ghostty shim (TER-N01/N10)")
 struct GhosttyShimTests {
     @Test func shimABIIsPositive() {
-        #expect(GhosttySessionController.shimABI >= 1)
+        #expect(GhosttySessionController.shimABI >= 2)
     }
 
     @Test func surfaceWriteAndSnapshotRequiresLinkedGhostty() async throws {
@@ -15,13 +15,14 @@ struct GhosttyShimTests {
             let controller = try GhosttySessionController(cols: 40, rows: 12, requireLinked: true)
             try await controller.write(Data("hello ghostty\n".utf8))
             let snap = try await controller.snapshotUTF8()
-            #expect(snap.contains("hello") || !snap.isEmpty || snap.isEmpty)
+            #expect(snap.contains("hello"), "linked snapshot must contain hello: \(snap.prefix(80))")
             try await controller.resize(cols: 80, rows: 24)
             await controller.shutdown()
         } else {
             #expect(throws: TerminalError.self) {
                 _ = try GhosttySessionController(cols: 40, rows: 12, requireLinked: false)
             }
+            #expect(GhosttySessionController.currentIntegrationLevel == .unavailable)
         }
     }
 }

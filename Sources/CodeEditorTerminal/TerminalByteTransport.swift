@@ -107,6 +107,71 @@ public enum TerminalDimension {
     }
 }
 
+/// Transport classification for security policy enforcement (TER-N08).
+public enum TerminalTransportClass: String, Sendable, Hashable, Codable {
+    /// Local process PTY (macOS direct / trusted host only).
+    case localPTY
+    /// Remote byte transport (SSH / multiplexed host).
+    case remote
+    /// In-memory / test transport (host test harness only).
+    case inMemory
+}
+
+/// Who is performing the terminal operation (TER-N08).
+public enum TerminalCallerRole: String, Sendable, Hashable, Codable {
+    /// Host / workbench / IDE chrome — ambient access under host security policy.
+    case host
+    /// Extension guest — every capability must be explicitly granted.
+    case extensionClient
+}
+
+/// Serialized bounded outbound write queue for PTY/host transports (TER-N07).
+///
+/// Concurrent writers serialize on the actor; enqueue fails closed when
+/// `queuedBytes + chunk > maxBytes` (never silent drop).
+public actor TerminalOutboundWriteQueue {
+    public let maxBytes: Int
+    private var pending = Data()
+    private var writeCount: UInt64 = 0
+
+    public init(maxBytes: Int = 4 * 1024 * 1024) {
+        self.maxBytes = max(1, maxBytes)
+    }
+
+    public var queuedBytes: Int { pending.count }
+    public var totalWriteCount: UInt64 { writeCount }
+
+    /// Append bytes; throws ``TerminalError/startFailed`` on overflow.
+    public func enqueue(_ bytes: Data) throws {
+        if pending.count + bytes.count > maxBytes {
+            throw TerminalError.startFailed(
+                "PTY write queue overflow (\(maxBytes) bytes)"
+            )
+        }
+        pending.append(bytes)
+        writeCount &+= 1
+    }
+
+    /// Take up to `maxChunk` bytes from the front of the queue.
+    public func take(maxChunk: Int = Int.max) -> Data {
+        let n = min(max(0, maxChunk), pending.count)
+        guard n > 0 else { return Data() }
+        let out = pending.prefix(n)
+        pending.removeFirst(n)
+        return Data(out)
+    }
+
+    public func takeAll() -> Data {
+        let out = pending
+        pending = Data()
+        return out
+    }
+
+    public func clear() {
+        pending = Data()
+    }
+}
+
 /// In-memory transport for tests: echoes writes, never drops.
 public actor MockByteTransport: TerminalByteTransport {
     private var running = false

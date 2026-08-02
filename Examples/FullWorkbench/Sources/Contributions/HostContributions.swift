@@ -603,7 +603,7 @@ struct TerminalPanelView: View {
                 Button("Restart") {
                     Task {
                         if let id = host.terminalSessionID {
-                            await host.terminal.close(id)
+                            try? await host.terminal.close(id, asCaller: .host)
                             host.terminalSessionID = nil
                             host.terminalOutput = ""
                         }

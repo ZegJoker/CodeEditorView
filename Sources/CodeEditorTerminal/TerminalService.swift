@@ -48,6 +48,8 @@ public actor TerminalService {
         /// Optional Ghostty surface feed callback (ordered PTY output, raw bytes).
         var onOutput: (@Sendable (Data) async -> Void)?
         var eventHub: AsyncBroadcastHub<TerminalTransportEvent>
+        var transportClass: TerminalTransportClass
+        var caller: TerminalCallerRole
     }
 
     private var sessions: [TerminalSessionID: Live] = [:]
@@ -58,17 +60,21 @@ public actor TerminalService {
     public var isGhosttyLinked: @Sendable () -> Bool
     /// Bound for raw byte spool used only for paged diagnostics (not display model).
     public let maxRawSpoolBytes: Int
+    /// Default caller role for operations that omit an explicit role (host = ambient).
+    public var defaultCaller: TerminalCallerRole
 
     public init(
         securityPolicy: TerminalSecurityPolicy = .restricted,
         requireGhosttyLinked: Bool = true,
         isGhosttyLinked: @escaping @Sendable () -> Bool = { false },
-        maxRawSpoolBytes: Int = 4 * 1024 * 1024
+        maxRawSpoolBytes: Int = 4 * 1024 * 1024,
+        defaultCaller: TerminalCallerRole = .host
     ) {
         self.securityPolicy = securityPolicy
         self.requireGhosttyLinked = requireGhosttyLinked
         self.isGhosttyLinked = isGhosttyLinked
         self.maxRawSpoolBytes = max(64 * 1024, maxRawSpoolBytes)
+        self.defaultCaller = defaultCaller
     }
 
     public func allSessions() -> [SessionState] {
@@ -110,11 +116,15 @@ public actor TerminalService {
     }
 
     /// Create a session with the given transport factory (inject mock or LocalPTY).
+    ///
+    /// Enforces ``securityPolicy`` for transport class and extension capabilities (TER-N08).
     @discardableResult
     public func create(
         metadata: TerminalMetadata = .default,
         configuration: TerminalConfiguration = TerminalConfiguration(),
         transport: any TerminalByteTransport,
+        transportClass: TerminalTransportClass = .inMemory,
+        caller: TerminalCallerRole? = nil,
         onOutput: (@Sendable (Data) async -> Void)? = nil
     ) async throws -> TerminalSessionID {
         if requireGhosttyLinked && !isGhosttyLinked() {
@@ -122,6 +132,8 @@ public actor TerminalService {
                 "Ghostty not linked; refuse production terminal session (set CODEEDITOR_GHOSTTY_LINKED=1)"
             )
         }
+        let role = caller ?? defaultCaller
+        try securityPolicy.authorizeCreate(transport: transportClass, caller: role)
         let id = TerminalSessionID()
         let info = try await transport.start(
             TerminalLaunchRequest(configuration: configuration, metadata: metadata)
@@ -140,7 +152,9 @@ public actor TerminalService {
             lastExitReason: nil,
             rawSpool: BoundedByteSpool(maxBytes: maxRawSpoolBytes, overflow: .dropOldest),
             onOutput: onOutput,
-            eventHub: hub
+            eventHub: hub,
+            transportClass: transportClass,
+            caller: role
         )
         let stream = transport.events
         live.pump = Task { [weak self] in
@@ -159,6 +173,7 @@ public actor TerminalService {
 
     public func write(_ data: Data, to id: TerminalSessionID) async throws {
         guard let live = sessions[id] else { throw TerminalError.sessionNotFound }
+        try securityPolicy.authorizeWrite(caller: live.caller)
         try await live.transport.write(data)
     }
 
@@ -168,6 +183,7 @@ public actor TerminalService {
 
     public func resize(cols: Int, rows: Int, session id: TerminalSessionID) async throws {
         guard var live = sessions[id] else { throw TerminalError.sessionNotFound }
+        try securityPolicy.authorizeResize(caller: live.caller)
         let c = Int(TerminalDimension.clampCells(cols))
         let r = Int(TerminalDimension.clampCells(rows))
         try await live.transport.resize(cols: c, rows: r, widthPx: 0, heightPx: 0)
@@ -176,8 +192,19 @@ public actor TerminalService {
         sessions[id] = live
     }
 
-    public func close(_ id: TerminalSessionID, reason: TerminalTerminationReason = .user) async {
+    /// Close a session.
+    ///
+    /// - Parameter asCaller: `.host` always may close (IDE chrome). `.extensionClient`
+    ///   requires the terminate capability (TER-N08 fail-closed).
+    public func close(
+        _ id: TerminalSessionID,
+        reason: TerminalTerminationReason = .user,
+        asCaller: TerminalCallerRole = .host
+    ) async throws {
         guard let live = sessions[id] else { return }
+        if asCaller == .extensionClient {
+            try securityPolicy.authorizeTerminate(caller: .extensionClient)
+        }
         live.pump?.cancel()
         await live.transport.terminate(reason)
         sessions[id] = nil
@@ -186,11 +213,11 @@ public actor TerminalService {
         }
     }
 
-    /// Close every session (e.g. backend replacement §20.17).
+    /// Close every session (e.g. backend replacement §20.17). Host force-close.
     public func closeAll(reason: TerminalTerminationReason = .replaced) async {
         let ids = Array(sessions.keys)
         for id in ids {
-            await close(id, reason: reason)
+            try? await close(id, reason: reason, asCaller: .host)
         }
     }
 
@@ -226,8 +253,9 @@ public actor TerminalService {
         session id: TerminalSessionID,
         offset: UInt64,
         maxBytes: Int
-    ) async -> ScrollbackPage? {
+    ) async throws -> ScrollbackPage? {
         guard let live = sessions[id] else { return nil }
+        try securityPolicy.authorizeRead(caller: live.caller)
         let view = await live.rawSpool.read(from: offset, maxBytes: max(0, maxBytes))
         return ScrollbackPage(
             absoluteOffset: view.absoluteOffset,
@@ -236,6 +264,16 @@ public actor TerminalService {
             availableStart: view.availableStart,
             availableEnd: view.availableEnd
         )
+    }
+
+    /// Session caller role (for tests / diagnostics).
+    public func callerRole(for id: TerminalSessionID) -> TerminalCallerRole? {
+        sessions[id]?.caller
+    }
+
+    /// Session transport class (for tests / diagnostics).
+    public func transportClass(for id: TerminalSessionID) -> TerminalTransportClass? {
+        sessions[id]?.transportClass
     }
 
     public func subscribe(

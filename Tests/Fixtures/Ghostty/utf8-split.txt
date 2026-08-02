@@ -1,0 +1,7 @@
+# UTF-8 sequences to split at every byte boundary (TER-N09)
+# Ω = CE A9
+# € = E2 82 AC
+# 𐍈 = F0 90 8D 88
+CE A9
+E2 82 AC
+F0 90 8D 88

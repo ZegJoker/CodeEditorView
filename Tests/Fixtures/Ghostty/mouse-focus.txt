@@ -1,0 +1,12 @@
+# Mouse reporting + focus in/out (TER-N09)
+# Enable SGR mouse: CSI ? 1006 h
+# Enable focus: CSI ? 1004 h
+# Focus in: CSI I
+# Focus out: CSI O
+# SGR press: CSI < Cb ; Cx ; Cy M
+\x1b[?1006h
+\x1b[?1004h
+\x1b[I
+\x1b[<0;1;1M
+\x1b[<0;1;1m
+\x1b[O

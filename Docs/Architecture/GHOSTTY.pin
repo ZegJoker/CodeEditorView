@@ -18,7 +18,8 @@ GHOSTTY_COMMIT=aa21caeaa3a2feb6ef1251d20bd81b52f1da0940
 #   zig build -Dapp-runtime=none  (libghostty / ghostty-internal)
 
 LICENSE=MIT
-MINIMUM_ZIG=see Vendor/ghostty/build.zig.zon minimum_zig_version after checkout
+# Quote required: this file is `source`d by scripts/build-ghostty.sh
+MINIMUM_ZIG="see Vendor/ghostty/build.zig.zon minimum_zig_version after checkout"
 
 # Link flags for SwiftPM (when library is built):
 #   CODEEDITOR_GHOSTTY_LINKED=1

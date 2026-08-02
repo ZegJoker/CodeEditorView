@@ -1,0 +1,10 @@
+# ANSI/VT corpus for linked Ghostty (TER-N09)
+hello
+\x1b[31mred\x1b[0m
+\x1b[1mbold\x1b[0m
+\x1b[4munderline\x1b[0m
+\x1b[2J\x1b[H
+\x1b[?1049h
+alternate
+\x1b[?1049l
+\x1b[A\x1b[B\x1b[C\x1b[D

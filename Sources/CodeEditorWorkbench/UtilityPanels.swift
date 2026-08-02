@@ -337,7 +337,7 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
     public func killSession() {
         guard let id = sessionID else { return }
         Task {
-            await service.close(id, reason: .user)
+            try? await service.close(id, reason: .user, asCaller: .host)
             await controller?.shutdown()
             await MainActor.run {
                 self.sessionID = nil

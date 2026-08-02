@@ -1,0 +1,5 @@
+# Wide / combining / emoji cells (TER-N09)
+A🇯🇵B
+👨‍👩‍👧‍👦
+e\u0301
+中文
