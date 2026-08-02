@@ -48,7 +48,7 @@ jobs:
       - name: Accessibility surface (Phase 16 / REL-N04)
         run: ./scripts/check-accessibility.sh
       - name: Platform matrix evidence (UI-N08)
-        run: ./scripts/check-platform-matrix.sh
+        run: PLATFORM_MATRIX_XCODEBUILD=1 ./scripts/check-platform-matrix.sh
       - name: Grammar pins + committed sources (PKG-001)
         run: ./scripts/verify-grammars.sh
       - name: Licenses

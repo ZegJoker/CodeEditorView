@@ -80,6 +80,18 @@ extension EditorController {
         notifyCompletionSessionChange()
     }
 
+    /// VoiceOver / AX announcement for the currently selected completion (UI-N10).
+    public var completionAccessibilityAnnouncement: String? {
+        guard completionSession.isVisible,
+            let item = completionSession.selectedItem
+        else { return nil }
+        return EditorAccessibility.completionAnnouncement(
+            selectedLabel: item.label,
+            index: completionSession.selectedIndex,
+            total: completionSession.items.count
+        )
+    }
+
     public func applyCompletionSelection() {
         // Capture item before any dismiss clears the session.
         guard let item = completionSession.selectedItem else {

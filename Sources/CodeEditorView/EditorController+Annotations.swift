@@ -11,6 +11,22 @@ extension EditorController {
 
     /// Replace all annotations for the open document.
     public func setAnnotations(_ items: [LineAnnotation]) {
+        // Large-file mode disables diagnostics — fail closed (UI-N09).
+        guard largeFileMode.diagnosticsEnabled else {
+            if !items.isEmpty {
+                diagnosticChannel.report(
+                    EditorDiagnostic(
+                        domain: .largeFile,
+                        severity: .warning,
+                        message: "Diagnostics suppressed in large file mode"
+                    )
+                )
+            }
+            _annotationStore.clear()
+            applyAnnotationLayoutAndEmphasis()
+            onNeedsDisplay?()
+            return
+        }
         _annotationStore.setAnnotations(items)
         _annotationStore.clampLines(lineCount: max(1, layout.lineIndex.count))
         applyAnnotationLayoutAndEmphasis()

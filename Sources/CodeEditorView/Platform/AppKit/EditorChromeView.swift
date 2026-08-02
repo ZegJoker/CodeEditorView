@@ -30,6 +30,16 @@
             findBridge.controller = controller
             completionPanel.attach(controller: controller, editorView: editorView)
 
+            // Panel / focus landmarks for accessibility chrome (UI-N10).
+            setAccessibilityElement(false)
+            setAccessibilityRole(.group)
+            setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .editor))
+            scrollView.setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .editor))
+            editorView.setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .editor))
+            minimapView.setAccessibilityElement(true)
+            minimapView.setAccessibilityRole(.scrollArea)
+            minimapView.setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .minimap))
+
             scrollView.hasVerticalScroller = true
             scrollView.hasHorizontalScroller = !wrapLines
             scrollView.autohidesScrollers = true
@@ -122,6 +132,9 @@
             if findHosting != nil { return }
             let hosting = NSHostingView(rootView: FindPanelView(bridge: findBridge))
             hosting.translatesAutoresizingMaskIntoConstraints = false
+            hosting.setAccessibilityElement(true)
+            hosting.setAccessibilityRole(.group)
+            hosting.setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .findPanel))
             addSubview(hosting)
             let height = hosting.heightAnchor.constraint(equalToConstant: controller.findSession.panelHeight)
             findHeightConstraint = height
@@ -146,7 +159,8 @@
         }
 
         func syncMinimap() {
-            let show = controller.configuration.peripherals.showMinimap
+            // Honor large-file effective peripherals (UI-N09).
+            let show = controller.effectivePeripherals.showMinimap
             let hostW = max(bounds.width, 1)
             minimapView.setVisible(show)
             controller.updateMinimapTrailingInset(hostWidth: hostW)
@@ -158,7 +172,7 @@
         /// Place the minimap on the trailing edge of the *scroll view* rect so it always
         /// fills the editor height (find panel sits above the scroll view).
         private func layoutMinimapFrame() {
-            let show = controller.configuration.peripherals.showMinimap
+            let show = controller.effectivePeripherals.showMinimap
             guard show else {
                 minimapView.frame = .zero
                 return

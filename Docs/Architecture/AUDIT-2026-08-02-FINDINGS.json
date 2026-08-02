@@ -502,9 +502,10 @@
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_verticalMovePreservesPreferredXAcrossUnevenLines",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_verticalMoveDoesNotLandInsideGrapheme",
-        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_uiKitVerticalUsesEngineNotRawUTF16"
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_uiKitVerticalUsesEngineNotRawUTF16",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N01_appKitHostViewWiresVerticalMoveToEngine"
       ],
-      "notes": "2026-08-02: CaretNavigationEngine + EditorLayoutSnapshot; UIKit vertical uses engine not raw UTF-16."
+      "notes": "2026-08-03 residual: EditorController.visualCaretMove + move(.up/.down) use CaretNavigationEngine; UIKit UITextInput + AppKit moveDown host paths verified."
     },
     {
       "id": "UI-N02",
@@ -545,9 +546,10 @@
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_arabicParagraphResolvesRTLFromPlatformLayout",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_latinParagraphResolvesLTR",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_setBaseWritingDirectionIsNotNoOp",
-        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_mixedBidiUsesStoredOverrideOverHeuristic"
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_mixedBidiUsesStoredOverrideOverHeuristic",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N04_platformLayoutAPIIsCoreTextNotFirstStrongOnly"
       ],
-      "notes": "2026-08-02: WritingDirectionModel stores overrides; setBaseWritingDirection not no-op; UAX#9 paragraph resolve."
+      "notes": "2026-08-03 residual: platformBaseWritingDirection uses CoreText CTLine glyph-run status (not first-strong scan); overrides still win."
     },
     {
       "id": "UI-N05",
@@ -603,9 +605,10 @@
       "regression_tests": [
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_platformMatrixDocumentExists",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_platformMatrixScriptIsHardGate",
-        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_packagePlatformsMatchDocumentedMatrix"
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_packagePlatformsMatchDocumentedMatrix",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N08_matrixScriptExecutesRealBuildsAndWritesEvidence"
       ],
-      "notes": "2026-08-02: PLATFORM-MATRIX.md + Scripts/check-platform-matrix.sh hard gate; Apple silicon-only policy."
+      "notes": "2026-08-03 residual: check-platform-matrix.sh runs real macOS+iOS simulator swift builds + optional example xcodebuild; writes Baselines/evidence/platform-matrix.json; CI sets PLATFORM_MATRIX_XCODEBUILD=1."
     },
     {
       "id": "UI-N09",
@@ -618,9 +621,12 @@
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_thresholdActivatesExplicitMode",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_activeModeDisablesHeavyFeatures",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_controllerSurfacesLargeFileMode",
-        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_memoryPressureEscalatesMode"
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_memoryPressureEscalatesMode",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_enforcesHighlighterSuspendAndDiagnosticsReject",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_boundedUndoActuallyTrimsStack",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N09_autoRefreshOnLoadWithoutManualCall"
       ],
-      "notes": "2026-08-02: LargeFilePolicy/Mode explicit limitations; controller.refreshLargeFileMode + memory pressure."
+      "notes": "2026-08-03 residual: auto refresh on load/edit/policy; Highlighter.isSuspended; diagnostics reject; UndoCoordinator.maxGroups trim; folding/semantic tokens gated; effectivePeripherals."
     },
     {
       "id": "UI-N10",
@@ -633,10 +639,13 @@
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_lineColumnSelectionSummary",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_multiCursorAnnouncement",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_rotorSurfacesAreSemantic",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_controllerRotorUsesLiveBreakpointsAndSymbols",
         "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_completionAccessibilityAnnouncement",
-        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_panelLandmarksAndReducedMotion"
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_controllerCompletionAnnouncementIsLive",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_panelLandmarksAndReducedMotion",
+        "Tests/CodeEditorViewTests/UINAuditTests.swift::test_UI_N10_appKitHostExposesSemanticValueAndRotors"
       ],
-      "notes": "2026-08-02: Semantic line/col summary, rotor surfaces, multi-cursor, completion a11y, landmarks, reduced motion."
+      "notes": "2026-08-03 residual: AppKit/UIKit custom rotors wired; live breakpoint/symbol counts; completion panel announcements; chrome landmarks; systemReduceMotionEnabled + CursorBlinkController."
     },
     {
       "id": "WSP-N01",

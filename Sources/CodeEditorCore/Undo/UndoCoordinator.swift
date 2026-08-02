@@ -42,6 +42,17 @@ public final class UndoCoordinator {
     public var canUndo: Bool { !undoStack.isEmpty || (openGroup?.edits.isEmpty == false) }
     public var canRedo: Bool { !redoStack.isEmpty }
 
+    /// When set, only the newest `maxGroups` undo units are retained (UI-N09 large-file mode).
+    /// `nil` means unbounded.
+    public var maxGroups: Int? {
+        didSet { trimToMaxGroups() }
+    }
+
+    /// Number of closed undo groups currently on the stack (excludes the open typing group).
+    public var closedGroupCount: Int {
+        undoStack.count
+    }
+
     public init() {}
 
     public func beginGrouping() {
@@ -95,6 +106,7 @@ public final class UndoCoordinator {
         )
         redoStack.removeAll()
         breakNextGroup = true
+        trimToMaxGroups()
     }
 
     /// Undoes the last group as a whole. `group.edits` are in **undo application order**
@@ -147,6 +159,14 @@ public final class UndoCoordinator {
         openGroup = nil
     }
 
+    /// Drops oldest closed undo groups so `closedGroupCount <= maxGroups` when bounded (UI-N09).
+    public func trimToMaxGroups() {
+        guard let maxGroups, maxGroups > 0 else { return }
+        while undoStack.count > maxGroups {
+            undoStack.removeFirst()
+        }
+    }
+
     private func flushOpenGroup() {
         guard let group = openGroup, !group.edits.isEmpty else {
             openGroup = nil
@@ -154,6 +174,7 @@ public final class UndoCoordinator {
         }
         undoStack.append(group)
         openGroup = nil
+        trimToMaxGroups()
     }
 
     private func shouldStartNewGroup(for edit: TextEdit) -> Bool {

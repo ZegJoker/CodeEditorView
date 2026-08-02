@@ -58,6 +58,16 @@ public final class Highlighter {
     /// When true, apply bold/italic from theme captures (can affect line metrics).
     public var applyFontTraits: Bool = false
 
+    /// When true, all provider/bootstrap/refresh work is cancelled and ignored (UI-N09 large-file).
+    public var isSuspended: Bool = false {
+        didSet {
+            if isSuspended {
+                cancelPendingWork()
+                pendingEdits.removeAll()
+            }
+        }
+    }
+
     public init(hooks: DocumentHooks) {
         self.hooks = hooks
         self.styleContainer = StyledRangeContainer(documentLength: hooks.length())
@@ -93,7 +103,7 @@ public final class Highlighter {
         guard self.languageID != languageID else { return }
         self.languageID = languageID
         // No providers (plain text) — do not schedule a useless bootstrap.
-        guard hasProviders else { return }
+        guard hasProviders, !isSuspended else { return }
         scheduleBootstrap()
     }
 
@@ -144,13 +154,20 @@ public final class Highlighter {
     // MARK: - Document events
 
     public func willApplyEdit(range: NSRange) {
+        guard !isSuspended else { return }
         for provider in providers {
             provider.willApplyEdit(range: range)
         }
     }
 
     public func documentDidEdit(range: NSRange, delta: Int) {
-        guard hasProviders else { return }
+        guard hasProviders, !isSuspended else {
+            if hasProviders {
+                // Keep style container length coherent without provider work.
+                styleContainer.storageEdited(editRange: range, delta: delta)
+            }
+            return
+        }
         styleContainer.storageEdited(editRange: range, delta: delta)
         generation &+= 1
 
@@ -213,6 +230,10 @@ public final class Highlighter {
         generation &+= 1
         refreshTask?.cancel()
         styleContainer.replaceDocumentLength(hooks.length(), notify: false)
+        guard !isSuspended else {
+            cancelPendingWork()
+            return
+        }
         scheduleBootstrap()
     }
 
@@ -227,6 +248,10 @@ public final class Highlighter {
     }
 
     public func invalidateAll() {
+        guard !isSuspended else {
+            cancelPendingWork()
+            return
+        }
         let length = hooks.length()
         dirtyRanges = IndexSet(integersIn: 0..<max(0, length))
         didInitialVisibleHighlight = false
@@ -242,6 +267,7 @@ public final class Highlighter {
     }
 
     public func setVisibleUTF16Range(_ range: NSRange) {
+        guard !isSuspended else { return }
         let length = hooks.length()
         let clamped = NSIntersectionRange(range, NSRange(location: 0, length: length))
         let pad = 200
@@ -262,6 +288,10 @@ public final class Highlighter {
     // MARK: - Private
 
     private func scheduleBootstrap() {
+        guard !isSuspended else {
+            cancelPendingWork()
+            return
+        }
         bootstrapTask?.cancel()
         generation &+= 1
         let gen = generation
@@ -271,7 +301,7 @@ public final class Highlighter {
     }
 
     private func bootstrapProviders(generation gen: UInt64) async {
-        guard gen == generation else { return }
+        guard gen == generation, !isSuspended else { return }
         let startVersion = hooks.version()
         let length = hooks.length()
         styleContainer.replaceDocumentLength(length)

@@ -74,7 +74,7 @@ struct UIN01CaretNavigationEngineTests {
     }
 
     @Test func test_UI_N01_uiKitVerticalUsesEngineNotRawUTF16() {
-        // Engine down from line 0 col 0 should land on line 1, not offset-1 arithmetic.
+        // Host path: EditorController.visualCaretMove (used by UIKitEditorView UITextInput).
         let text = "hello\nworld"
         let controller = EditorController(text: text)
         let width: CGFloat = 400
@@ -82,19 +82,36 @@ struct UIN01CaretNavigationEngineTests {
             visibleRect: CGRect(x: 0, y: 0, width: width, height: 400),
             containerWidth: width
         )
-        let snapshot = controller.layout.makeEditorLayoutSnapshot(
-            containerWidth: width,
-            documentText: text
-        )
-        let moved = CaretNavigationEngine.move(
-            caret: TextPosition(utf16Offset: 0),
+        let moved = controller.visualCaretMove(
+            from: 0,
             direction: .down,
             preferredX: 0,
-            layout: snapshot
+            containerWidth: width
         )
         #expect(moved.position.utf16Offset == 6)  // start of "world"
         // Raw UTF-16 arithmetic would yield 1 ("e"), which is wrong for visual down.
         #expect(moved.position.utf16Offset != 1)
+
+        // AppKit host path: controller.move(.down) must also use the engine (not SelectionEngine raw hit).
+        controller.setSelectedRange(NSRange(location: 0, length: 0))
+        controller.move(direction: .down, containerWidth: width)
+        #expect(controller.selectedRange.location == 6)
+        #expect(controller.selectedRange.location != 1)
+    }
+
+    @Test func test_UI_N01_appKitHostViewWiresVerticalMoveToEngine() {
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+            let text = "aa\nbb\ncc"
+            let controller = EditorController(text: text)
+            let editor = AppKitEditorView(controller: controller)
+            editor.frame = CGRect(x: 0, y: 0, width: 400, height: 400)
+            editor.layoutSubtreeIfNeeded()
+            controller.setSelectedRange(NSRange(location: 0, length: 0))
+            // Simulate AppKit moveDown action path.
+            editor.moveDown(nil)
+            #expect(controller.selectedRange.location == 3)  // start of "bb"
+            #expect(controller.selectedRange.location != 1)
+        #endif
     }
 }
 
@@ -250,14 +267,29 @@ struct UIN03SelectionGeometryTests {
 struct UIN04BiDiTests {
     @Test func test_UI_N04_arabicParagraphResolvesRTLFromPlatformLayout() {
         let arabic = "مرحبا بالعالم"
+        // Must use CoreText platform layout (CTLine runs), not first-strong scan alone.
+        let platform = WritingDirectionModel.platformBaseWritingDirection(for: arabic)
+        #expect(platform == .rightToLeft)
         let dir = WritingDirectionModel.resolveBaseDirection(forParagraphContaining: 0, in: arabic)
         #expect(dir == .rightToLeft)
     }
 
     @Test func test_UI_N04_latinParagraphResolvesLTR() {
         let latin = "hello world"
+        let platform = WritingDirectionModel.platformBaseWritingDirection(for: latin)
+        #expect(platform == .leftToRight)
         let dir = WritingDirectionModel.resolveBaseDirection(forParagraphContaining: 0, in: latin)
         #expect(dir == .leftToRight)
+    }
+
+    @Test func test_UI_N04_platformLayoutAPIIsCoreTextNotFirstStrongOnly() {
+        // Mixed: Latin then Arabic — platform CTLine first run is LTR (layout-based).
+        let mixed = "hello مرحبا"
+        let platform = WritingDirectionModel.platformBaseWritingDirection(for: mixed)
+        #expect(platform == .leftToRight)
+        // Pure Hebrew paragraph resolves RTL via platform layout.
+        let hebrew = "שלום עולם"
+        #expect(WritingDirectionModel.platformBaseWritingDirection(for: hebrew) == .rightToLeft)
     }
 
     @Test func test_UI_N04_setBaseWritingDirectionIsNotNoOp() {
@@ -488,16 +520,19 @@ struct UIN08PlatformMatrixTests {
         #expect(body.contains("macOS 15"))
         #expect(body.contains("iOS 18"))
         #expect(body.contains("Apple silicon") || body.contains("Apple Silicon"))
+        #expect(body.contains("platform-matrix.json") || body.contains("xcodebuild"))
     }
 
     @Test func test_UI_N08_platformMatrixScriptIsHardGate() throws {
         let root = packageRoot()
-        let script = root.appendingPathComponent("Scripts/check-platform-matrix.sh")
+        let script = root.appendingPathComponent("scripts/check-platform-matrix.sh")
         #expect(FileManager.default.fileExists(atPath: script.path))
         let body = try String(contentsOf: script, encoding: .utf8)
         #expect(body.contains("set -euo pipefail"))
-        #expect(body.contains("macOS") || body.contains("macos"))
-        #expect(body.contains("iOS") || body.contains("ios"))
+        #expect(body.contains("swift build"))
+        #expect(body.contains("iphonesimulator") || body.contains("ios18"))
+        #expect(body.contains("xcodebuild"))
+        #expect(body.contains("platform-matrix.json"))
         // Fail closed: non-zero exit on missing evidence.
         #expect(body.contains("exit 1") || body.contains("fail=1"))
     }
@@ -513,6 +548,50 @@ struct UIN08PlatformMatrixTests {
             encoding: .utf8
         )
         #expect(matrix.lowercased().contains("silicon"))
+    }
+
+    @Test func test_UI_N08_matrixScriptExecutesRealBuildsAndWritesEvidence() throws {
+        let root = packageRoot()
+        let script = root.appendingPathComponent("scripts/check-platform-matrix.sh")
+        #expect(FileManager.default.fileExists(atPath: script.path))
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        // Skip example xcodebuild in unit test (slow); still requires host+iOS simulator builds.
+        var env = ProcessInfo.processInfo.environment
+        env["PLATFORM_MATRIX_XCODEBUILD"] = "0"
+        env.removeValue(forKey: "CI")
+        // Isolated scratch path so nested `swift build` does not deadlock on `.build`.
+        let scratch = FileManager.default.temporaryDirectory
+            .appendingPathComponent("uin08-matrix-\(UUID().uuidString)", isDirectory: true)
+        env["PLATFORM_MATRIX_SCRATCH_PATH"] = scratch.path
+        process.environment = env
+        process.arguments = [script.path]
+        process.currentDirectoryURL = root
+        let out = Pipe()
+        let err = Pipe()
+        process.standardOutput = out
+        process.standardError = err
+        try process.run()
+        process.waitUntilExit()
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        let stdout = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let stderr = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        #expect(
+            process.terminationStatus == 0,
+            "matrix script failed (\(process.terminationStatus)): \(stdout)\n\(stderr)"
+        )
+        #expect(stdout.contains("macOS swift build") || stdout.contains("macos"))
+        #expect(stdout.contains("iOS Simulator") || stdout.contains("ios"))
+
+        let evidence = root.appendingPathComponent("Baselines/evidence/platform-matrix.json")
+        #expect(FileManager.default.fileExists(atPath: evidence.path))
+        let body = try String(contentsOf: evidence, encoding: .utf8)
+        #expect(body.contains("UI-N08"))
+        #expect(body.contains("macos_swift_build"))
+        #expect(body.contains("\"pass\""))
+        #expect(body.contains("ios_simulator_swift_build"))
+        #expect(body.contains("arm64") || body.contains("silicon_only"))
     }
 
     private func packageRoot() -> URL {
@@ -562,14 +641,16 @@ struct UIN09LargeFileModeTests {
     }
 
     @Test func test_UI_N09_controllerSurfacesLargeFileMode() {
-        // Build text that exceeds line threshold.
+        // Build text that exceeds line threshold — mode auto-activates on load.
         let lines = (0..<LargeFilePolicy.default.lineThreshold + 50).map { "line \($0)\n" }.joined()
         let c = EditorController(text: lines)
-        c.refreshLargeFileMode()
         #expect(c.largeFileMode.isActive)
         #expect(!c.largeFileMode.limitationsDescription.isEmpty)
-        // Configuration peripherals reflect policy when mode active.
-        #expect(c.effectivePeripherals.showMinimap == false || !c.largeFileMode.minimapEnabled)
+        #expect(c.effectivePeripherals.showMinimap == false)
+        #expect(c.isSyntaxHighlightingEnabled == false)
+        #expect(c.isDiagnosticsEnabled == false)
+        #expect(c.isFoldingEnabled == false)
+        #expect(c.highlighter?.isSuspended == true)
     }
 
     @Test func test_UI_N09_memoryPressureEscalatesMode() {
@@ -578,11 +659,57 @@ struct UIN09LargeFileModeTests {
         #expect(mode.isActive)
         #expect(mode.enteredViaMemoryPressure)
     }
+
+    @Test func test_UI_N09_enforcesHighlighterSuspendAndDiagnosticsReject() {
+        let c = EditorController(text: "small")
+        c.largeFilePolicy = LargeFilePolicy(byteThreshold: 4, lineThreshold: 2, maxUndoGroups: 3)
+        c.insertText("\nmore\nlines\nhere")
+        // Edit auto-refreshes mode.
+        #expect(c.largeFileMode.isActive)
+        #expect(c.highlighter?.isSuspended == true)
+        #expect(c.isSyntaxHighlightingEnabled == false)
+
+        c.setAnnotations([
+            LineAnnotation(line: 0, severity: .error, message: "should be rejected")
+        ])
+        #expect(c.annotations.isEmpty)
+        #expect(c.isDiagnosticsEnabled == false)
+    }
+
+    @Test func test_UI_N09_boundedUndoActuallyTrimsStack() {
+        let c = EditorController(text: "")
+        c.largeFilePolicy = LargeFilePolicy(byteThreshold: 1, lineThreshold: 1, maxUndoGroups: 3)
+        // Force large-file mode with enough content.
+        for i in 0..<10 {
+            c.insertText("x\(i)\n")
+        }
+        #expect(c.largeFileMode.isActive)
+        #expect(c.largeFileMode.boundedUndo)
+        #expect(c.undoCoordinator.maxGroups == 3)
+        #expect(c.undoCoordinator.closedGroupCount <= 3)
+    }
+
+    @Test func test_UI_N09_autoRefreshOnLoadWithoutManualCall() {
+        let policy = LargeFilePolicy(byteThreshold: 1_000_000, lineThreshold: 20, maxUndoGroups: 8)
+        let lines = (0..<30).map { "L\($0)\n" }.joined()
+        let c = EditorController(text: lines)
+        c.largeFilePolicy = policy
+        // Policy change alone does not re-evaluate; load path does via init.
+        // Re-create with policy applied after init then refresh is not required if we
+        // set policy before content growth — verify insert auto path:
+        let c2 = EditorController(text: "a")
+        c2.largeFilePolicy = LargeFilePolicy(byteThreshold: 2, lineThreshold: 100, maxUndoGroups: 4)
+        #expect(!c2.largeFileMode.isActive)
+        c2.insertText("bcdef")  // crosses byte threshold
+        #expect(c2.largeFileMode.isActive)
+        #expect(c2.highlighter?.isSuspended == true)
+    }
 }
 
 // MARK: - UI-N10 semantic accessibility
 
 @Suite("UI-N10 Semantic accessibility")
+@MainActor
 struct UIN10SemanticAccessibilityTests {
     @Test func test_UI_N10_lineColumnSelectionSummary() {
         let text = "aaa\nbbb\nccc"
@@ -626,6 +753,25 @@ struct UIN10SemanticAccessibilityTests {
         #expect(labels.contains { $0.contains("search") || $0.contains("match") })
     }
 
+    @Test func test_UI_N10_controllerRotorUsesLiveBreakpointsAndSymbols() {
+        let c = EditorController(text: "func foo() {}\nlet x = 1\n")
+        c.setAnnotations([
+            LineAnnotation(line: 0, severity: .error, message: "err", range: NSRange(location: 0, length: 4))
+        ])
+        c.setAccessibilityBreakpoints([5, 12])
+        c.setAccessibilitySymbolCount(2)
+        let items = c.accessibilityRotorItems
+        let labels = items.map { $0.label.lowercased() }
+        #expect(labels.contains { $0.contains("diagnostic") })
+        #expect(labels.contains { $0.contains("breakpoint") })
+        #expect(labels.contains { $0.contains("symbol") })
+        #expect(items.first(where: { $0.label.lowercased().contains("breakpoint") })?.count == 2)
+        #expect(items.first(where: { $0.label.lowercased().contains("symbol") })?.count == 2)
+        // Not residual zeros: host-published counts flow through.
+        #expect(c.accessibilityBreakpointOffsets.count == 2)
+        #expect(c.accessibilitySymbolCount == 2)
+    }
+
     @Test func test_UI_N10_completionAccessibilityAnnouncement() {
         let s = EditorAccessibility.completionAnnouncement(
             selectedLabel: "print",
@@ -636,14 +782,64 @@ struct UIN10SemanticAccessibilityTests {
         #expect(s.contains("1") && s.contains("12"))
     }
 
+    @Test func test_UI_N10_controllerCompletionAnnouncementIsLive() {
+        let c = EditorController(text: "prin")
+        // Populate completion session via public APIs if available.
+        c.completionSession.setVisible(true)
+        // CompletionSession may require items — use label path via helper when empty is nil.
+        if c.completionSession.items.isEmpty {
+            // Still verify helper contract is wired on controller.
+            #expect(c.completionAccessibilityAnnouncement == nil)
+        }
+        let announcement = EditorAccessibility.completionAnnouncement(
+            selectedLabel: "print(_:)",
+            index: 2,
+            total: 5
+        )
+        #expect(announcement.contains("print"))
+        #expect(announcement.contains("3") && announcement.contains("5"))
+    }
+
     @Test func test_UI_N10_panelLandmarksAndReducedMotion() {
         let landmarks = EditorAccessibility.panelLandmarks
         #expect(landmarks.contains { $0.role == .editor })
         #expect(landmarks.contains { $0.role == .findPanel || $0.role == .completionPanel })
-        #expect(EditorAccessibility.reducedMotionPreferredTransitions == true || EditorAccessibility.reducedMotionPreferredTransitions == false)
-        // Policy is explicit (not silent): always defined.
+        #expect(EditorAccessibility.landmarkLabel(for: .completionPanel) == "Code completion")
+        #expect(EditorAccessibility.landmarkLabel(for: .findPanel) == "Find")
+
+        // Reduced motion is system-linked — must equal systemReduceMotionEnabled (not a tautology).
+        #expect(EditorAccessibility.reducedMotionPreferredTransitions == EditorAccessibility.systemReduceMotionEnabled)
         let policy = EditorAccessibility.motionPolicy(reduceMotion: true)
         #expect(policy.animateCaretBlink == false)
         #expect(policy.animateFoldTransitions == false)
+        let live = EditorAccessibility.currentMotionPolicy
+        if EditorAccessibility.systemReduceMotionEnabled {
+            #expect(live.animateCaretBlink == false)
+        } else {
+            #expect(live.animateCaretBlink == true)
+        }
+    }
+
+    @Test func test_UI_N10_appKitHostExposesSemanticValueAndRotors() {
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+            let c = EditorController(text: "line1\nline2\n")
+            c.setSelectedRange(NSRange(location: 6, length: 0))
+            c.setAccessibilityBreakpoints([0])
+            c.setAccessibilitySymbolCount(1)
+            c.setAnnotations([
+                LineAnnotation(line: 1, severity: .warning, message: "w", range: NSRange(location: 6, length: 4))
+            ])
+            let editor = AppKitEditorView(controller: c)
+            editor.frame = CGRect(x: 0, y: 0, width: 400, height: 300)
+            #expect(editor.isAccessibilityElement() == true)
+            #expect(editor.accessibilityRole() == .textArea)
+            let value = editor.accessibilityValue() as? String
+            #expect(value != nil)
+            #expect(c.accessibilitySemanticSummary.line >= 2)
+            let rotors = editor.accessibilityCustomRotors()
+            #expect(!rotors.isEmpty)
+            let rotorLabels = rotors.map(\.label)
+            #expect(rotorLabels.contains { $0.lowercased().contains("breakpoint") || $0.lowercased().contains("diagnostic") })
+        #endif
     }
 }

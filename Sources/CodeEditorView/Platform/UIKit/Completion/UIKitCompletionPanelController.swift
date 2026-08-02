@@ -59,6 +59,14 @@
             ensureContainer(in: editorView)
             hosting?.rootView = root
             positionPanel(in: editorView, controller: controller)
+            // Semantic completion accessibility announcement (UI-N10).
+            if let announcement = controller.completionAccessibilityAnnouncement {
+                container?.accessibilityLabel = announcement
+                container?.accessibilityTraits = [.adjustable, .updatesFrequently]
+                container?.isAccessibilityElement = true
+                UIAccessibility.post(notification: .layoutChanged, argument: container)
+            }
+            container?.accessibilityHint = EditorAccessibility.landmarkLabel(for: .completionPanel)
             container?.isHidden = false
         }
 

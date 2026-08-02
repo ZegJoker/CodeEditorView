@@ -1111,7 +1111,7 @@
             return CGRect(x: x, y: y, width: size.width, height: size.height)
         }
 
-        // MARK: - Accessibility
+        // MARK: - Accessibility (UI-N10 semantic surfaces)
 
         open override func isAccessibilityElement() -> Bool { true }
         open override func accessibilityRole() -> NSAccessibility.Role? { .textArea }
@@ -1129,6 +1129,7 @@
             controller.accessibilityLabelText
         }
         open override func accessibilityValue() -> Any? {
+            // Semantic line/column prefix + virtualized body (UI-N10).
             controller.accessibilityValueText
         }
         open override func accessibilitySelectedText() -> String? {
@@ -1139,13 +1140,19 @@
             controller.selectedRange
         }
         open override func accessibilityHelp() -> String? {
-            EditorAccessibility.multiCursorSummary(rangeCount: controller.selectedRanges.count)
+            var parts: [String] = []
+            if let multi = EditorAccessibility.multiCursorSummary(rangeCount: controller.selectedRanges.count) {
+                parts.append(multi)
+            }
+            let summary = controller.accessibilitySemanticSummary.announcement
+            if !summary.isEmpty { parts.append(summary) }
+            return parts.isEmpty ? nil : parts.joined(separator: ". ")
         }
         open override func accessibilityNumberOfCharacters() -> Int {
             controller.document.length
         }
         open override func accessibilityInsertionPointLineNumber() -> Int {
-            controller.layout.lineIndex.line(atUTF16Offset: controller.selectedRange.location)?.index ?? 0
+            max(0, controller.accessibilitySemanticSummary.line - 1)
         }
         open override func accessibilityFrame(for range: NSRange) -> NSRect {
             guard let caret = controller.layout.caretRect(atUTF16Offset: range.location, containerWidth: containerWidth)
@@ -1156,6 +1163,79 @@
         }
         open override func accessibilityString(for range: NSRange) -> String? {
             controller.document.substring(from: range)
+        }
+
+        /// Semantic rotors: diagnostics, folds, changes, breakpoints, symbols, search (UI-N10).
+        open override func accessibilityCustomRotors() -> [NSAccessibilityCustomRotor] {
+            let items = controller.accessibilityCustomRotorDescriptors
+            guard !items.isEmpty else { return super.accessibilityCustomRotors() }
+            // Rebuild retained delegates each query so AX keeps live targets.
+            rotorSearchDelegates.removeAll(keepingCapacity: true)
+            return items.map { item in
+                let target = rotorTargetOffset(category: item.label.lowercased())
+                    ?? controller.selectedRange.location
+                let delegate = EditorAccessibilityRotorSearchDelegate(
+                    editor: self,
+                    itemLabel: item.label,
+                    targetOffset: target
+                )
+                self.rotorSearchDelegates.append(delegate)
+                return NSAccessibilityCustomRotor(
+                    label: "\(item.label) (\(item.count))",
+                    itemSearchDelegate: delegate
+                )
+            }
+        }
+
+        /// Retains rotor search delegates (NSAccessibilityCustomRotor holds them weakly).
+        private var rotorSearchDelegates: [EditorAccessibilityRotorSearchDelegate] = []
+
+        private func rotorTargetOffset(category label: String) -> Int? {
+            if label.contains("breakpoint"), let first = controller.accessibilityBreakpointOffsets.first {
+                return first
+            }
+            if label.contains("search"), let match = controller.findSession.matches.first {
+                return match.location
+            }
+            if label.contains("diagnostic"), let ann = controller.annotations.first {
+                return ann.range?.location
+                    ?? controller.layout.lineIndex.line(atIndex: ann.line)?.utf16Offset
+            }
+            return controller.selectedRange.location
+        }
+    }
+
+    /// Search delegate for editor custom accessibility rotors (UI-N10).
+    ///
+    /// Captures a snapshot target offset when the rotor catalog is built (main actor).
+    final class EditorAccessibilityRotorSearchDelegate: NSObject, NSAccessibilityCustomRotorItemSearchDelegate {
+        /// Weak host view; AX search runs on main thread in practice.
+        nonisolated(unsafe) private weak var editor: AppKitEditorView?
+        private let itemLabel: String
+        private let targetOffset: Int
+
+        init(editor: AppKitEditorView, itemLabel: String, targetOffset: Int) {
+            self.editor = editor
+            self.itemLabel = itemLabel
+            self.targetOffset = targetOffset
+            super.init()
+        }
+
+        func rotor(
+            _ rotor: NSAccessibilityCustomRotor,
+            resultFor searchParameters: NSAccessibilityCustomRotor.SearchParameters
+        ) -> NSAccessibilityCustomRotor.ItemResult? {
+            guard let editor else { return nil }
+            let offset = targetOffset
+            let label = itemLabel
+            // Hop to main actor for EditorController mutation without crossing Sendable returns.
+            DispatchQueue.main.async {
+                editor.controller.setSelectedRange(NSRange(location: offset, length: 0))
+            }
+            _ = searchParameters
+            let result = NSAccessibilityCustomRotor.ItemResult(targetElement: editor)
+            result.customLabel = label
+            return result
         }
     }
 #endif

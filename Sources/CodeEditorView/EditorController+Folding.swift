@@ -101,6 +101,17 @@ extension EditorController {
     }
 
     func rebuildFolds() {
+        // Large-file mode disables folding work (UI-N09).
+        guard largeFileMode.foldingEnabled, effectivePeripherals.showFoldingRibbon || !_foldModel.collapsedFolds.isEmpty
+        else {
+            if !largeFileMode.foldingEnabled {
+                for fold in _foldModel.collapsedFolds {
+                    _foldModel.setCollapsed(false, forFold: fold)
+                }
+                syncFoldPlaceholdersAndHeights()
+            }
+            return
+        }
         let ctx = LineFoldProviderContext(
             document: document.fullString,
             indentOption: configuration.behavior.indentOption,
@@ -111,6 +122,7 @@ extension EditorController {
     }
 
     func noteFoldingEdit(range: NSRange, delta: Int) {
+        guard largeFileMode.foldingEnabled else { return }
         let shouldTrack =
             configuration.peripherals.showFoldingRibbon
             || !_foldModel.collapsedFolds.isEmpty

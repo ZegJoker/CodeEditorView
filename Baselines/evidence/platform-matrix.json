@@ -1,0 +1,16 @@
+{
+  "finding": "UI-N08",
+  "generated_at": "2026-08-02T16:52:16Z",
+  "host_arch": "arm64",
+  "host_os": "26.5.2",
+  "xcode_version": "Xcode 26.4 Build version 17E192",
+  "silicon_only_policy": true,
+  "package_platforms": ["macOS15", "iOS18"],
+  "results": {
+    "macos_swift_build": "pass",
+    "macos_swift_test_uin0": "delegated_to_swift_test",
+    "ios_simulator_swift_build": "pass",
+    "macos_example_xcodebuild": "skipped",
+    "ios_example_xcodebuild": "skipped"
+  }
+}

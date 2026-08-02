@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreText
 import Foundation
 
 #if canImport(UIKit)
@@ -10,7 +11,8 @@ import Foundation
 /// Explicit base writing-direction overrides + platform BiDi resolution (UI-N04).
 ///
 /// `setBaseWritingDirection` is **not** a no-op: overrides are stored and consulted
-/// before falling back to Unicode paragraph direction from the platform text stack.
+/// before falling back to Unicode paragraph direction from the **platform layout stack**
+/// (Core Text `CTLine` / glyph-run status), not a first-character-only heuristic.
 public struct WritingDirectionModel: Sendable, Equatable {
     public enum Direction: Sendable, Equatable {
         case leftToRight
@@ -70,10 +72,10 @@ public struct WritingDirectionModel: Sendable, Equatable {
         return Self.resolveBaseDirection(forParagraphContaining: utf16Offset, in: text)
     }
 
-    /// Unicode Bidirectional Algorithm paragraph level via Foundation (UI-N04).
+    /// Paragraph base writing direction via the platform text stack (UI-N04).
     ///
-    /// Uses `NSParagraphStyle` / string encoding direction — the platform text stack —
-    /// not a first-character heuristic alone.
+    /// Resolves the enclosing paragraph, then asks Core Text (`CTLine` glyph runs) for
+    /// right-to-left run status. This is **not** a first-strong-character scan.
     public static func resolveBaseDirection(forParagraphContaining offset: Int, in text: String) -> Direction {
         let ns = text as NSString
         let len = ns.length
@@ -85,71 +87,27 @@ public struct WritingDirectionModel: Sendable, Equatable {
         let paraLen = max(0, paraEnd - paraStart)
         guard paraLen > 0 else { return .leftToRight }
         let paragraph = ns.substring(with: NSRange(location: paraStart, length: paraLen))
-
-        // Platform API: NSString.defaultCStringEncoding is not BiDi; use CFString / writing direction.
-        #if canImport(UIKit) || canImport(AppKit)
-            let attrs: [NSAttributedString.Key: Any] = [:]
-            let attr = NSAttributedString(string: paragraph, attributes: attrs)
-            // Probe via natural writing direction of the attributed string's string.
-            if let dir = Self.platformBaseWritingDirection(for: paragraph) {
-                return dir
-            }
-            _ = attr
-        #endif
-
-        // Fallback: scan for first strong directional character (UAX #9 P2/P3).
-        for scalar in paragraph.unicodeScalars {
-            if let d = strongDirection(of: scalar) {
-                return d
-            }
-        }
-        return .leftToRight
+        return platformBaseWritingDirection(for: paragraph) ?? .leftToRight
     }
 
-    private static func strongDirection(of scalar: Unicode.Scalar) -> Direction? {
-        let v = scalar.value
-        // Bidi_Class R / AL blocks commonly used in code editors.
-        if (0x0590...0x05FF).contains(v)  // Hebrew
-            || (0x0600...0x06FF).contains(v)  // Arabic
-            || (0x0700...0x074F).contains(v)
-            || (0x0750...0x077F).contains(v)
-            || (0x08A0...0x08FF).contains(v)
-            || (0xFB1D...0xFDFF).contains(v)
-            || (0xFE70...0xFEFF).contains(v)
-        {
-            return .rightToLeft
-        }
-        // Strong L: Latin, Greek, Cyrillic, etc.
-        if CharacterSet.letters.contains(scalar),
-            !((0x0590...0x08FF).contains(v) || (0xFB1D...0xFEFF).contains(v))
-        {
-            // Exclude other RTL scripts already handled; remaining letters default LTR.
-            let biClass = scalar.properties.generalCategory
-            if biClass == .uppercaseLetter || biClass == .lowercaseLetter || biClass == .otherLetter
-                || biClass == .titlecaseLetter
-            {
-                // Arabic/Hebrew already returned; remaining otherLetter may still be RTL (Syriac etc.)
-                if (0x0700...0x074F).contains(v) { return .rightToLeft }
-                return .leftToRight
-            }
-        }
-        return nil
-    }
+    /// Platform layout resolution: CoreText typesets the paragraph and reports run direction.
+    public static func platformBaseWritingDirection(for paragraph: String) -> Direction? {
+        guard !paragraph.isEmpty else { return nil }
+        let attr = NSAttributedString(string: paragraph)
+        let line = CTLineCreateWithAttributedString(attr as CFAttributedString)
+        let runs = CTLineGetGlyphRuns(line) as NSArray
+        guard runs.count > 0 else { return nil }
 
-    private static func platformBaseWritingDirection(for paragraph: String) -> Direction? {
-        // Walk composed sequences; first strong directional character wins (UAX #9 P2/P3).
-        let encoded = paragraph as NSString
-        let len = encoded.length
-        var i = 0
-        while i < len {
-            let r = encoded.rangeOfComposedCharacterSequence(at: i)
-            let ch = encoded.substring(with: r)
-            for s in ch.unicodeScalars {
-                if let d = strongDirection(of: s) {
-                    return d
-                }
+        // Prefer the first non-empty run's direction (paragraph base from platform layout).
+        for case let runObj as CTRun in runs {
+            let glyphCount = CTRunGetGlyphCount(runObj)
+            guard glyphCount > 0 else { continue }
+            let status = CTRunGetStatus(runObj)
+            if status.contains(.rightToLeft) {
+                return .rightToLeft
             }
-            i = r.location + r.length
+            // Explicit LTR / neutral run from the typesetter.
+            return .leftToRight
         }
         return nil
     }

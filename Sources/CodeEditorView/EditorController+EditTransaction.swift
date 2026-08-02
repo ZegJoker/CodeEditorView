@@ -89,6 +89,8 @@ extension EditorController {
         }
 
         publishTextChange()
+        // Re-evaluate large-file thresholds after every content mutation (UI-N09).
+        refreshLargeFileMode()
         return applied
     }
 
@@ -142,5 +144,7 @@ extension EditorController {
         }
         publishTextChange()
         publishSelectionChange()
+        // Full replace can cross/exit large-file thresholds (UI-N09).
+        refreshLargeFileMode()
     }
 }

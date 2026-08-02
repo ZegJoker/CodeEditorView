@@ -111,6 +111,15 @@
                 }
             }
             positionPanel()
+            // Semantic completion accessibility announcement (UI-N10).
+            if let announcement = controller.completionAccessibilityAnnouncement {
+                tableView?.setAccessibilityLabel(announcement)
+                panel?.setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .completionPanel))
+                panel?.setAccessibilityRole(.list)
+                if let tableView {
+                    NSAccessibility.post(element: tableView, notification: .selectedChildrenChanged)
+                }
+            }
             panel?.orderFront(nil)
         }
 
@@ -137,6 +146,8 @@
             panel.hasShadow = true
             panel.isReleasedWhenClosed = false
             panel.becomesKeyOnlyIfNeeded = true
+            panel.setAccessibilityRole(.list)
+            panel.setAccessibilityLabel(EditorAccessibility.landmarkLabel(for: .completionPanel))
 
             let effect = NSVisualEffectView(frame: panel.contentView?.bounds ?? .zero)
             effect.material = .menu

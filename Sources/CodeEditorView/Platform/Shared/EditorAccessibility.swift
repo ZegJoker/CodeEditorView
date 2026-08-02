@@ -1,7 +1,14 @@
 import CodeEditorCore
 import Foundation
 
-/// Pure helpers for accessibility labels/values (testable without AppKit/UIKit).
+#if canImport(AppKit) && !targetEnvironment(macCatalyst)
+    import AppKit
+#endif
+#if canImport(UIKit)
+    import UIKit
+#endif
+
+/// Accessibility labels/values and semantic surfaces for platform hosts (UI-N10).
 public enum EditorAccessibility: Sendable {
     /// Maximum characters of **document body** exposed in accessibility value.
     public static let maxValueCharacters = 4_000
@@ -242,8 +249,25 @@ public enum EditorAccessibility: Sendable {
         PanelLandmark(role: .commandPalette, label: "Command palette"),
     ]
 
+    /// System "Reduce Motion" preference (UI-N10). Linked to platform accessibility settings.
+    /// Prefer calling from the main actor (UI hosts); safe to read for policy decisions.
+    @MainActor
+    public static var systemReduceMotionEnabled: Bool {
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+            return NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        #elseif canImport(UIKit)
+            return UIAccessibility.isReduceMotionEnabled
+        #else
+            return false
+        #endif
+    }
+
     /// When true, hosts should prefer reduced-motion-safe transitions (UI-N10).
-    public static let reducedMotionPreferredTransitions = true
+    /// Always mirrors the live system preference — not a hard-coded constant.
+    @MainActor
+    public static var reducedMotionPreferredTransitions: Bool {
+        systemReduceMotionEnabled
+    }
 
     public struct MotionPolicy: Sendable, Equatable {
         public var animateCaretBlink: Bool
@@ -256,5 +280,16 @@ public enum EditorAccessibility: Sendable {
             return MotionPolicy(animateCaretBlink: false, animateFoldTransitions: false, animateScroll: false)
         }
         return MotionPolicy(animateCaretBlink: true, animateFoldTransitions: true, animateScroll: true)
+    }
+
+    /// Live motion policy from the system accessibility preference (UI-N10).
+    @MainActor
+    public static var currentMotionPolicy: MotionPolicy {
+        motionPolicy(reduceMotion: systemReduceMotionEnabled)
+    }
+
+    /// Landmark label for a chrome role (UI-N10).
+    public static func landmarkLabel(for role: PanelLandmarkRole) -> String {
+        panelLandmarks.first(where: { $0.role == role })?.label ?? role.rawValue
     }
 }

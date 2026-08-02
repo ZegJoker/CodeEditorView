@@ -419,6 +419,9 @@ public final class EditorController {
         // Default command dispatcher with built-in edit/find/completion actions.
         let dispatcher = CommandDispatcher()
         builtInCommandRegistration = installBuiltInCommands(into: dispatcher)
+
+        // Auto-evaluate large-file mode on load (UI-N09) — never require a manual refresh.
+        refreshLargeFileMode()
     }
 
     deinit {
@@ -437,14 +440,27 @@ public final class EditorController {
     /// Call from hosts when the visible document UTF-16 range changes.
     public func setVisibleUTF16RangeForHighlighting(_ range: NSRange) {
         guard let highlighter else { return }
+        guard largeFileMode.syntaxHighlightingEnabled else {
+            highlighter.isSuspended = true
+            highlighter.cancelPendingWork()
+            return
+        }
         highlighter.updateHooks(makeHighlightHooks())
         highlighter.setVisibleUTF16Range(range)
     }
 
     /// Convenience: map a layout snapshot’s fragments to a UTF-16 highlight window.
     public func updateHighlighting(for snapshot: LayoutSnapshot) {
+        guard largeFileMode.syntaxHighlightingEnabled else {
+            highlighter?.isSuspended = true
+            highlighter?.cancelPendingWork()
+            return
+        }
         guard !snapshot.fragments.isEmpty else {
-            setVisibleUTF16RangeForHighlighting(NSRange(location: 0, length: document.length))
+            // Large docs still restrict to a bounded window when feasible (UI-N09).
+            let len = document.length
+            let window = min(len, 8_192)
+            setVisibleUTF16RangeForHighlighting(NSRange(location: 0, length: window))
             return
         }
         var minLoc = Int.max
@@ -589,17 +605,40 @@ public final class EditorController {
         )
     }
 
+    /// Host-supplied breakpoint UTF-16 offsets for accessibility rotors (UI-N10).
+    public private(set) var accessibilityBreakpointOffsets: [Int] = []
+
+    /// Host-supplied document symbol count for accessibility rotors (UI-N10).
+    public private(set) var accessibilitySymbolCount: Int = 0
+
+    /// Publish breakpoint markers for VoiceOver / rotor navigation (UI-N10).
+    public func setAccessibilityBreakpoints(_ offsets: [Int]) {
+        accessibilityBreakpointOffsets = offsets.filter { $0 >= 0 }
+        onNeedsDisplay?()
+    }
+
+    /// Publish document-symbol count for accessibility rotors (UI-N10).
+    public func setAccessibilitySymbolCount(_ count: Int) {
+        accessibilitySymbolCount = max(0, count)
+    }
+
     /// Rotor surfaces derived from live editor state (UI-N10).
     public var accessibilityRotorItems: [EditorAccessibility.RotorItem] {
-        let foldCount = foldModel.foldCache.allFolds.count
+        let foldCount = largeFileMode.foldingEnabled ? foldModel.foldCache.allFolds.count : 0
+        let diagnosticsCount = largeFileMode.diagnosticsEnabled ? annotations.count : 0
         return EditorAccessibility.rotorItems(
-            diagnosticsCount: annotations.count,
+            diagnosticsCount: diagnosticsCount,
             foldCount: foldCount,
             changeCount: textDocument.isDirty ? 1 : 0,
-            breakpointCount: 0,
-            symbolCount: 0,
+            breakpointCount: accessibilityBreakpointOffsets.count,
+            symbolCount: accessibilitySymbolCount,
             searchMatchCount: findSession.matches.count
         )
+    }
+
+    /// Platform hosts build custom rotors from this catalog (UI-N10).
+    public var accessibilityCustomRotorDescriptors: [EditorAccessibility.RotorItem] {
+        accessibilityRotorItems
     }
 
     private var liveCoordinators: [any EditorCoordinator] {
@@ -654,8 +693,13 @@ public final class EditorController {
     /// Explicit base writing direction overrides (UI-N04).
     public var writingDirectionModel = WritingDirectionModel()
 
-    /// Large-file policy thresholds (UI-N09).
-    public var largeFilePolicy: LargeFilePolicy = .default
+    /// Large-file policy thresholds (UI-N09). Changing policy re-evaluates mode immediately.
+    public var largeFilePolicy: LargeFilePolicy = .default {
+        didSet {
+            guard largeFilePolicy != oldValue else { return }
+            refreshLargeFileMode()
+        }
+    }
 
     /// Current large-file mode (explicit limitations; never silent) (UI-N09).
     public private(set) var largeFileMode: LargeFileMode = .inactive
@@ -670,7 +714,27 @@ public final class EditorController {
         return p
     }
 
-    /// Recompute large-file mode from document size (UI-N09).
+    /// True when syntax highlighting is allowed under the current large-file policy (UI-N09).
+    public var isSyntaxHighlightingEnabled: Bool {
+        largeFileMode.syntaxHighlightingEnabled
+    }
+
+    /// True when diagnostics annotations are accepted under large-file policy (UI-N09).
+    public var isDiagnosticsEnabled: Bool {
+        largeFileMode.diagnosticsEnabled
+    }
+
+    /// True when folding work is allowed under large-file policy (UI-N09).
+    public var isFoldingEnabled: Bool {
+        largeFileMode.foldingEnabled
+    }
+
+    /// True when semantic-token providers may run (UI-N09).
+    public var isSemanticTokensEnabled: Bool {
+        largeFileMode.semanticTokensEnabled
+    }
+
+    /// Recompute large-file mode from document size and **enforce** policy (UI-N09).
     public func refreshLargeFileMode() {
         let utf16 = document.length
         // Ensure line index exists for non-empty docs.
@@ -678,12 +742,63 @@ public final class EditorController {
             layout.invalidateAll()
         }
         let lineCount = max(layout.lineIndex.count, text.components(separatedBy: .newlines).count)
+        let previous = largeFileMode
         largeFileMode = LargeFileMode.evaluate(
             utf16Length: utf16,
             lineCount: lineCount,
             policy: largeFilePolicy
         )
-        if largeFileMode.isActive {
+        // Preserve memory-pressure escalation if already active.
+        if previous.enteredViaMemoryPressure {
+            largeFileMode = largeFileMode.applyingMemoryPressure(true, policy: largeFilePolicy)
+        }
+        applyLargeFileModeEffects(previousActive: previous.isActive)
+    }
+
+    /// Apply system memory-pressure escalation (UI-N09).
+    public func applyMemoryPressure(_ pressure: Bool) {
+        let previous = largeFileMode
+        largeFileMode = largeFileMode.applyingMemoryPressure(pressure, policy: largeFilePolicy)
+        applyLargeFileModeEffects(previousActive: previous.isActive)
+    }
+
+    /// Enforce large-file limitations on highlighter, undo, folds, diagnostics (UI-N09).
+    func applyLargeFileModeEffects(previousActive: Bool) {
+        // Syntax highlighting: suspend provider work when disabled (viewport-only when active is still off).
+        highlighter?.isSuspended = !largeFileMode.syntaxHighlightingEnabled
+        if !largeFileMode.syntaxHighlightingEnabled {
+            highlighter?.cancelPendingWork()
+        }
+
+        // Bounded undo: retain only the newest N groups.
+        if largeFileMode.boundedUndo {
+            undoCoordinator.maxGroups = largeFileMode.maxUndoGroups
+            undoCoordinator.trimToMaxGroups()
+        } else {
+            undoCoordinator.maxGroups = nil
+        }
+
+        // Folding: drop collapsed state / skip rebuilds when disabled.
+        if !largeFileMode.foldingEnabled {
+            for fold in foldModel.collapsedFolds {
+                _foldModel.setCollapsed(false, forFold: fold)
+            }
+        }
+
+        // Diagnostics: strip annotations when disabled.
+        if !largeFileMode.diagnosticsEnabled, !_annotationStore.items.isEmpty {
+            clearAnnotations()
+        }
+
+        // Semantic tokens: drop SemanticTokensHighlightAdapter when disabled.
+        if !largeFileMode.semanticTokensEnabled {
+            let filtered = highlightProviders.filter { !($0 is SemanticTokensHighlightAdapter) }
+            if filtered.count != highlightProviders.count {
+                setHighlightProviders(filtered)
+            }
+        }
+
+        if largeFileMode.isActive, !previousActive || largeFileMode.enteredViaMemoryPressure {
             diagnosticChannel.report(
                 EditorDiagnostic(
                     domain: .largeFile,
@@ -692,11 +807,7 @@ public final class EditorController {
                 )
             )
         }
-    }
-
-    /// Apply system memory-pressure escalation (UI-N09).
-    public func applyMemoryPressure(_ pressure: Bool) {
-        largeFileMode = largeFileMode.applyingMemoryPressure(pressure, policy: largeFilePolicy)
+        onNeedsDisplay?()
     }
 
     public func replaceCharacters(in range: NSRange, with string: String) {
@@ -1246,6 +1357,48 @@ public final class EditorController {
         extending: Bool = false,
         containerWidth: CGFloat
     ) {
+        // Vertical character moves use CaretNavigationEngine + layout snapshot (UI-N01).
+        if granularity == .character, direction == .up || direction == .down {
+            let visual: VisualDirection = direction == .up ? .up : .down
+            let width = containerWidth > 0 ? containerWidth : max(contentSize.width, 1)
+            _ = layoutViewport(
+                visibleRect: CGRect(x: 0, y: 0, width: width, height: max(layout.contentSize.height, 1)),
+                containerWidth: width
+            )
+            var nextRanges: [NSRange] = []
+            var preferredX: CGFloat?
+            for sel in selection.selections {
+                let head: Int
+                if extending {
+                    head = sel.end
+                } else if direction == .up {
+                    head = sel.range.location
+                } else {
+                    head = sel.end
+                }
+                let moved = visualCaretMove(
+                    from: head,
+                    direction: visual,
+                    preferredX: sel.preferredX,
+                    containerWidth: width
+                )
+                if preferredX == nil { preferredX = moved.preferredX }
+                if extending {
+                    let anchor = sel.range.location
+                    let loc = min(anchor, moved.position.utf16Offset)
+                    let len = abs(anchor - moved.position.utf16Offset)
+                    nextRanges.append(NSRange(location: loc, length: len))
+                } else {
+                    nextRanges.append(NSRange(location: moved.position.utf16Offset, length: 0))
+                }
+            }
+            if !nextRanges.isEmpty {
+                selection.setSelectedRanges(nextRanges, preferredX: preferredX)
+            }
+            updateScrollTarget(containerWidth: width)
+            publishSelectionChange()
+            return
+        }
         selection.move(
             direction: direction,
             granularity: granularity,
@@ -1254,6 +1407,23 @@ public final class EditorController {
         )
         updateScrollTarget(containerWidth: containerWidth)
         publishSelectionChange()
+    }
+
+    /// Platform-neutral visual caret step used by AppKit/UIKit hosts (UI-N01).
+    public func visualCaretMove(
+        from utf16Offset: Int,
+        direction: VisualDirection,
+        preferredX: CGFloat?,
+        containerWidth: CGFloat
+    ) -> CaretMovementResult {
+        let width = containerWidth > 0 ? containerWidth : max(contentSize.width, 1)
+        let snapshot = layout.makeEditorLayoutSnapshot(containerWidth: width, documentText: text)
+        return CaretNavigationEngine.move(
+            caret: TextPosition(utf16Offset: utf16Offset),
+            direction: direction,
+            preferredX: preferredX,
+            layout: snapshot
+        )
     }
 
     public func selectAll() {

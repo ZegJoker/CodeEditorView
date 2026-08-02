@@ -686,9 +686,11 @@
             from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int
         ) -> UITextPosition? {
             guard let pos = position as? EditorTextPosition else { return nil }
-            // Grapheme-aware left/right; vertical via CaretNavigationEngine + layout snapshot (UI-N01).
-            let text = controller.document.fullString
-            var utf16 = NativeInputPositions.clampedGraphemePosition(utf16Offset: pos.offset, in: text)
+            // Grapheme-aware left/right; vertical via EditorController.visualCaretMove → engine (UI-N01).
+            var utf16 = NativeInputPositions.clampedGraphemePosition(
+                utf16Offset: pos.offset,
+                in: controller.document.fullString
+            )
             let visual: VisualDirection
             switch direction {
             case .left: visual = .left
@@ -697,39 +699,17 @@
             case .down: visual = .down
             @unknown default: visual = .right
             }
-            switch visual {
-            case .left, .right:
-                do {
-                    for _ in 0..<max(0, offset) {
-                        let moved = CaretNavigationEngine.move(
-                            caret: TextPosition(utf16Offset: utf16),
-                            direction: visual,
-                            preferredX: nil,
-                            layout: controller.layout.makeEditorLayoutSnapshot(
-                                containerWidth: containerWidth > 0 ? containerWidth : bounds.width,
-                                documentText: text
-                            )
-                        )
-                        utf16 = moved.position.utf16Offset
-                    }
-                }
-            case .up, .down:
-                let width = containerWidth > 0 ? containerWidth : max(bounds.width, 1)
-                let snapshot = controller.layout.makeEditorLayoutSnapshot(
-                    containerWidth: width,
-                    documentText: text
+            let width = containerWidth > 0 ? containerWidth : max(bounds.width, 1)
+            var preferred = controller.selection.primarySelection.preferredX
+            for _ in 0..<max(0, offset) {
+                let moved = controller.visualCaretMove(
+                    from: utf16,
+                    direction: visual,
+                    preferredX: preferred,
+                    containerWidth: width
                 )
-                var preferred = controller.selection.primarySelection.preferredX
-                for _ in 0..<max(0, offset) {
-                    let moved = CaretNavigationEngine.move(
-                        caret: TextPosition(utf16Offset: utf16),
-                        direction: visual,
-                        preferredX: preferred,
-                        layout: snapshot
-                    )
-                    utf16 = moved.position.utf16Offset
-                    preferred = moved.preferredX
-                }
+                utf16 = moved.position.utf16Offset
+                preferred = moved.preferredX
             }
             return EditorTextPosition(offset: utf16)
         }
@@ -922,7 +902,15 @@
         }
 
         open override var accessibilityHint: String? {
-            get { EditorAccessibility.multiCursorSummary(rangeCount: controller.selectedRanges.count) }
+            get {
+                var parts: [String] = []
+                if let multi = EditorAccessibility.multiCursorSummary(rangeCount: controller.selectedRanges.count) {
+                    parts.append(multi)
+                }
+                let summary = controller.accessibilitySemanticSummary.announcement
+                if !summary.isEmpty { parts.append(summary) }
+                return parts.isEmpty ? nil : parts.joined(separator: ". ")
+            }
             set { _ = newValue }
         }
 
@@ -948,6 +936,41 @@
             set {
                 super.accessibilityCustomActions = newValue
             }
+        }
+
+        /// Semantic rotors wired to live editor state (UI-N10).
+        open override var accessibilityCustomRotors: [UIAccessibilityCustomRotor]? {
+            get {
+                let items = controller.accessibilityCustomRotorDescriptors
+                guard !items.isEmpty else { return super.accessibilityCustomRotors }
+                return items.map { item in
+                    UIAccessibilityCustomRotor(name: "\(item.label) (\(item.count))") { [weak self] predicate in
+                        guard let self else { return nil }
+                        let target = self.rotorTargetOffset(for: item)
+                        if let target {
+                            self.controller.setSelectedRange(NSRange(location: target, length: 0))
+                        }
+                        _ = predicate
+                        return UIAccessibilityCustomRotorItemResult(targetElement: self, targetRange: nil)
+                    }
+                }
+            }
+            set { super.accessibilityCustomRotors = newValue }
+        }
+
+        private func rotorTargetOffset(for item: EditorAccessibility.RotorItem) -> Int? {
+            let label = item.label.lowercased()
+            if label.contains("breakpoint"), let first = controller.accessibilityBreakpointOffsets.first {
+                return first
+            }
+            if label.contains("search"), let match = controller.findSession.matches.first {
+                return match.location
+            }
+            if label.contains("diagnostic"), let ann = controller.annotations.first {
+                return ann.range?.location
+                    ?? controller.layout.lineIndex.line(atIndex: ann.line)?.utf16Offset
+            }
+            return controller.selectedRange.location
         }
 
         /// Virtualized accessibility value: selection summary, not the entire document (a11y scale).
