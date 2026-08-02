@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorCommands
 
 @Suite("Context expressions")
@@ -13,8 +14,11 @@ struct ContextExpressionTests {
         #expect(ContextExpressionEvaluator.evaluate(.and([.editable, .hasDocument]), in: input))
         #expect(ContextExpressionEvaluator.evaluate(.or([.hasSelection, .editable]), in: input))
         #expect(ContextExpressionEvaluator.evaluate(.not(.hasSelection), in: input))
-        #expect(ContextExpressionEvaluator.evaluate(.language("swift"), in: ContextEvaluationInput(languageID: "swift")))
-        #expect(ContextExpressionEvaluator.evaluate(.key("completionVisible"), in: ContextEvaluationInput(flags: ["completionVisible": true])))
+        #expect(
+            ContextExpressionEvaluator.evaluate(.language("swift"), in: ContextEvaluationInput(languageID: "swift")))
+        #expect(
+            ContextExpressionEvaluator.evaluate(
+                .key("completionVisible"), in: ContextEvaluationInput(flags: ["completionVisible": true])))
     }
 }
 
@@ -111,7 +115,7 @@ struct CommandRegistryTests {
         _ = registry.register(EditorCommand.action(id: "codeeditor.edit.indent", title: "Indent", action: .indent))
         _ = registry.register(
             EditorCommand.action(
-                id: "hidden",
+                id: "test.hidden",
                 title: "Secret",
                 placement: .hiddenInPalette,
                 action: .undo

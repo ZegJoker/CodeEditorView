@@ -1,0 +1,26 @@
+# Ghostty pin (TER-001)
+#
+# Exact revision of Ghostty used by CodeEditorTerminalGhostty / CGhosttyShim.
+# Update only through a dedicated compatibility PR with terminal conformance results.
+#
+# Official: https://github.com/ghostty-org/ghostty
+# Embedding APIs: include/ghostty.h (full app surface), include/ghostty/vt.h (libghostty-vt)
+
+GHOSTTY_REPO=https://github.com/ghostty-org/ghostty
+GHOSTTY_COMMIT=aa21caeaa3a2feb6ef1251d20bd81b52f1da0940
+
+# Preferred production library for terminal state (VT/parser/screen):
+#   zig build -Demit-lib-vt=true -Doptimize=ReleaseFast
+# Install prefix used by scripts/build-ghostty.sh:
+#   Vendor/ghostty/zig-out
+#
+# Preferred full embeddable surface (macOS Metal path, when packaging supports it):
+#   zig build -Dapp-runtime=none  (libghostty / ghostty-internal)
+
+LICENSE=MIT
+MINIMUM_ZIG=see Vendor/ghostty/build.zig.zon minimum_zig_version after checkout
+
+# Link flags for SwiftPM (when library is built):
+#   CODEEDITOR_GHOSTTY_LINKED=1
+#   -LVendor/ghostty/zig-out/lib -lghostty-vt (or ghostty-internal)
+#   -IVendor/ghostty/include

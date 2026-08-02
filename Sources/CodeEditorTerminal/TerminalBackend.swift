@@ -1,6 +1,6 @@
-import Foundation
-import Darwin
 import CodeEditorCore
+import Darwin
+import Foundation
 
 public protocol TerminalBackend: Sendable {
     func start(configuration: TerminalConfiguration) async throws -> TerminalSessionHandle
@@ -35,7 +35,8 @@ public actor MockTerminalBackend: TerminalBackend {
     }
 
     public func resize(cols: Int, rows: Int, session: TerminalSessionID) async throws {
-        _ = cols; _ = rows
+        _ = cols
+        _ = rows
         guard sessions.contains(session) else { throw TerminalError.sessionNotFound }
     }
 
@@ -114,7 +115,8 @@ public actor ProcessTerminalBackend: TerminalBackend {
     }
 
     public func resize(cols: Int, rows: Int, session: TerminalSessionID) async throws {
-        _ = cols; _ = rows
+        _ = cols
+        _ = rows
         guard entries[session] != nil else { throw TerminalError.sessionNotFound }
         // Not a PTY — resize is a no-op by design for the legacy pipe backend.
     }

@@ -1,7 +1,7 @@
-import SwiftUI
-import Observation
 import CodeEditorCommands
 import CodeEditorWorkspace
+import Observation
+import SwiftUI
 
 public enum WorkbenchSlot: String, Hashable, Sendable, CaseIterable {
     case navigator
@@ -79,11 +79,11 @@ public protocol WorkbenchContribution: AnyObject, Identifiable {
     func makeBody(context: WorkbenchContributionContext) -> AnyView
 }
 
-public extension WorkbenchContribution {
-    var systemImage: String { "square.grid.2x2" }
-    var providerID: String { id }
+extension WorkbenchContribution {
+    public var systemImage: String { "square.grid.2x2" }
+    public var providerID: String { id }
 
-    func descriptor(
+    public func descriptor(
         availability: WorkbenchContributionAvailability = .available,
         faultMessage: String? = nil
     ) -> WorkbenchContributionDescriptor {

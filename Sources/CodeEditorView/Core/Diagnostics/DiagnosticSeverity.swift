@@ -2,9 +2,9 @@ import CoreGraphics
 import Foundation
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Severity for line annotations / diagnostics (CESE #297 aligned).
@@ -29,19 +29,19 @@ public enum DiagnosticSeverity: String, Sendable, Hashable, Codable, CaseIterabl
     /// Colours aligned with mchakravarty `Message.defaultTheme`.
     public var color: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        switch self {
-        case .error: return .systemRed
-        case .warning: return .systemYellow
-        case .info: return .systemCyan
-        case .live: return .systemGreen
-        }
+            switch self {
+            case .error: return .systemRed
+            case .warning: return .systemYellow
+            case .info: return .systemCyan
+            case .live: return .systemGreen
+            }
         #else
-        switch self {
-        case .error: return .systemRed
-        case .warning: return .systemYellow
-        case .info: return .systemCyan
-        case .live: return .systemGreen
-        }
+            switch self {
+            case .error: return .systemRed
+            case .warning: return .systemYellow
+            case .info: return .systemCyan
+            case .live: return .systemGreen
+            }
         #endif
     }
 }

@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Bash fold debug")
@@ -7,16 +8,16 @@ import Foundation
 struct BashFoldDebugTests {
     @Test func collapseOuterHidesEntireBody() {
         let text = """
-        greet() {
-          local name="$1"
-          echo "Hello, ${name}!"
-          if [[ -z "${name}" ]]; then
-            return 1
-            extra
-          fi
-        }
+            greet() {
+              local name="$1"
+              echo "Hello, ${name}!"
+              if [[ -z "${name}" ]]; then
+                return 1
+                extra
+              fi
+            }
 
-        """
+            """
         let controller = EditorController(
             text: text,
             configuration: EditorConfiguration(
@@ -62,15 +63,15 @@ struct BashFoldDebugTests {
 
     @Test func collapseIfOnlyHidesInnerBody() {
         let text = """
-        greet() {
-          local name="$1"
-          if [[ -z "${name}" ]]; then
-            return 1
-            noop
-          fi
-        }
+            greet() {
+              local name="$1"
+              if [[ -z "${name}" ]]; then
+                return 1
+                noop
+              fi
+            }
 
-        """
+            """
         let controller = EditorController(
             text: text,
             configuration: EditorConfiguration(

@@ -1,9 +1,10 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
 import CodeEditorLanguageServices
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 @Suite("Phase 15 execution policy")
@@ -151,11 +152,12 @@ struct Phase15RemoteFallbackTests {
             .appendingPathComponent("p15ls-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = CapabilityBroker(config: .init(
-            worktreeRoots: [tmp],
-            storageRoot: tmp.appendingPathComponent("s"),
-            toolCacheRoot: tmp.appendingPathComponent("c")
-        ))
+        let broker = CapabilityBroker(
+            config: .init(
+                worktreeRoots: [tmp],
+                storageRoot: tmp.appendingPathComponent("s"),
+                toolCacheRoot: tmp.appendingPathComponent("c")
+            ))
         let executor = LanguageServerLaunchPlanExecutor(
             broker: broker,
             platformProfile: .iOS
@@ -170,7 +172,7 @@ struct Phase15RemoteFallbackTests {
         do {
             _ = try await executor.start(
                 plan: plan,
-                extensionID: ExtensionID(rawValue: "com.example.x"),
+                extensionID: ExtensionID(rawValue: "com.example.x")!,
                 registry: LanguageServiceRegistry()
             )
             Issue.record("expected platform deny")
@@ -259,7 +261,7 @@ struct Phase15StoreInstallPolicyTests {
         """.write(to: pkg.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "1".write(to: pkg.appendingPathComponent(".codeeditor-native"), atomically: true, encoding: .utf8)
 
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             installPolicy: .shipping(.macAppStore)
         )
@@ -288,7 +290,7 @@ struct Phase15StoreInstallPolicyTests {
         [activation]
         events = ["startup"]
         """.write(to: pkg.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             installPolicy: .shipping(.macAppStore)
         )
@@ -314,7 +316,7 @@ struct Phase15StoreInstallPolicyTests {
         events = ["startup"]
         """.write(to: pkg.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "1".write(to: pkg.appendingPathComponent(".codeeditor-wasm-download"), atomically: true, encoding: .utf8)
-        let manager = ExtensionPackageManager(
+        let manager = ExtensionPackageManager.insecureForTests(
             installRoot: root,
             installPolicy: .shipping(.iOS)
         )

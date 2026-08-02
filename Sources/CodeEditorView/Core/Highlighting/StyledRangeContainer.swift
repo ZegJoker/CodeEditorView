@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorLanguageSupport
+import Foundation
 
 /// Merges highlight runs from multiple providers into a single style stream.
 @MainActor
@@ -69,7 +69,8 @@ public final class StyledRangeContainer {
             let intersection = NSIntersectionRange(highlight.range, clamped)
             guard intersection.length > 0 else { continue }
             // Prefer explicit capture; fall back to raw name mapping so tokens are not dropped.
-            let capture = highlight.capture
+            let capture =
+                highlight.capture
                 ?? highlight.rawCapture.flatMap { CaptureName.from(capture: $0) }
             guard let capture else { continue }
             store.set(value: capture, for: intersection)

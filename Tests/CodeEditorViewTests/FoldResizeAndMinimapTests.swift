@@ -1,6 +1,7 @@
-import Testing
-import Foundation
 import CoreGraphics
+import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Fold resize and minimap")
@@ -8,16 +9,16 @@ import CoreGraphics
 struct FoldResizeAndMinimapTests {
     @Test func invalidateAllPreservesCollapsedHeights() {
         let text = """
-        func greet(_ name: String) {
-            if name.isEmpty {
-                return
-                pass
+            func greet(_ name: String) {
+                if name.isEmpty {
+                    return
+                    pass
+                }
+                print(name)
+                print(name)
             }
-            print(name)
-            print(name)
-        }
 
-        """
+            """
         let controller = EditorController(
             text: text,
             configuration: EditorConfiguration(
@@ -49,17 +50,17 @@ struct FoldResizeAndMinimapTests {
 
     @Test func minimapSkipsCollapsedBodyLines() {
         let text = """
-        func greet(_ name: String) {
-            if name.isEmpty {
-                return
-                pass
+            func greet(_ name: String) {
+                if name.isEmpty {
+                    return
+                    pass
+                }
+                print(name)
+                print(name)
             }
-            print(name)
-            print(name)
-        }
-        greet("world")
+            greet("world")
 
-        """
+            """
         let controller = EditorController(
             text: text,
             configuration: EditorConfiguration(

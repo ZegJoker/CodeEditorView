@@ -3,9 +3,9 @@ import CoreText
 import Foundation
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Colors for the fold placeholder chip (theme-driven, Xcode-like).
@@ -31,9 +31,9 @@ public struct LineFoldPlaceholderStyle: Sendable {
         let invis = theme.invisibles.color.cgColor
         let bg = theme.background.cgColor
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        let accent = NSColor.controlAccentColor.cgColor
+            let accent = NSColor.controlAccentColor.cgColor
         #else
-        let accent = PlatformColor.systemBlue.cgColor
+            let accent = PlatformColor.systemBlue.cgColor
         #endif
         return LineFoldPlaceholderStyle(
             background: invis.copy(alpha: 0.22) ?? invis,

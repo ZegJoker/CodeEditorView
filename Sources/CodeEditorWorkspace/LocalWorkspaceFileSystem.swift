@@ -1,48 +1,56 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
-/// Local disk implementation of ``WorkspaceFileSystem`` with lazy directory reads.
+/// Actor-isolated local disk implementation of ``WorkspaceFileSystem`` (WSP-004 / §8.4).
 ///
-/// Intended to be used from a single concurrent context (e.g. MainActor workspace
-/// orchestration). Marked `@unchecked Sendable` for protocol conformance.
-public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sendable {
+/// All mutable root/watch/event state lives on the actor. FileManager work runs
+/// inside the actor with cooperative cancellation checks (WSP §8.5).
+public actor LocalWorkspaceFileSystem: WorkspaceFileSystem {
     private var rootList: [WorkspaceRoot] = []
     private var rootURLs: [WorkspaceRootID: URL] = [:]
     private var settings: WorkspaceSettings
     private var eventContinuations: [UUID: AsyncThrowingStream<WorkspaceFileEvent, Error>.Continuation] = [:]
-    private var watchSources: [WorkspaceRootID: DispatchSourceFileSystemObject] = [:]
-    private let watchQueue = DispatchQueue(label: "CodeEditorWorkspace.fsWatch")
     /// Counts how many times `children` hits the filesystem (tests assert laziness).
     public private(set) var directoryListCount: Int = 0
-    /// When true (default), install DispatchSource directory watches per root.
+    /// When true (default), install recursive watches per root.
     public var enablesDirectoryWatching: Bool
+    private let watcher: any WorkspaceFileWatchBackend
+    private var pathOptions: WorkspacePathResolveOptions
 
-    public init(settings: WorkspaceSettings = .default, enablesDirectoryWatching: Bool = true) {
+    public init(
+        settings: WorkspaceSettings = .default,
+        enablesDirectoryWatching: Bool = true,
+        watcher: (any WorkspaceFileWatchBackend)? = nil
+    ) {
         self.settings = settings
         self.enablesDirectoryWatching = enablesDirectoryWatching
+        self.watcher = watcher ?? FSEventsWorkspaceWatcher()
+        self.pathOptions = settings.pathResolveOptions
     }
 
     public init(
         rootDirectories: [URL],
         settings: WorkspaceSettings = .default,
-        enablesDirectoryWatching: Bool = true
-    ) throws {
+        enablesDirectoryWatching: Bool = true,
+        watcher: (any WorkspaceFileWatchBackend)? = nil
+    ) async throws {
         self.settings = settings
         self.enablesDirectoryWatching = enablesDirectoryWatching
+        self.watcher = watcher ?? FSEventsWorkspaceWatcher()
+        self.pathOptions = settings.pathResolveOptions
         for url in rootDirectories {
-            _ = try addRootSync(directoryURL: url)
+            _ = try await addRoot(directoryURL: url)
         }
     }
 
     deinit {
-        for (_, source) in watchSources {
-            source.cancel()
-        }
+        watcher.stopAll()
     }
 
     public var roots: [WorkspaceRoot] { rootList }
 
     public func children(of item: WorkspaceItemID) async throws -> [WorkspaceItem] {
+        try Task.checkCancellation()
         let url = try fileURL(for: item)
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else {
@@ -68,12 +76,19 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         for childURL in contents.sorted(by: {
             $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
         }) {
+            try Task.checkCancellation()
             let name = childURL.lastPathComponent
             if settings.excludedNames.contains(name) { continue }
             let values = try? childURL.resourceValues(forKeys: Set(keys))
             if !settings.followSymlinks, values?.isSymbolicLink == true { continue }
             let isDirectory = values?.isDirectory == true
             let childPath = WorkspacePath.join(item.path, name)
+            // Reject paths that fail security after join.
+            do {
+                _ = try RelativeWorkspacePath(validating: childPath)
+            } catch {
+                continue
+            }
             let childID = WorkspaceItemID(rootID: item.rootID, path: childPath)
             items.append(
                 WorkspaceItem(
@@ -87,18 +102,23 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         return items
     }
 
-    public func item(for uri: DocumentURI) -> WorkspaceItem? {
+    public func item(for uri: DocumentURI) async -> WorkspaceItem? {
         guard let fileURL = uri.fileURL?.standardizedFileURL else { return nil }
         for root in rootList {
             guard let rootURL = rootURLs[root.id] else { continue }
+            guard WorkspacePathSecurity.isContained(url: fileURL, inRoot: rootURL) else { continue }
             let rootPath = rootURL.standardizedFileURL.path
             let path = fileURL.path
-            guard path == rootPath || path.hasPrefix(rootPath + "/") else { continue }
             let relative: String
             if path == rootPath {
                 relative = ""
             } else {
                 relative = String(path.dropFirst(rootPath.count + 1))
+            }
+            do {
+                _ = try RelativeWorkspacePath(validating: relative)
+            } catch {
+                continue
             }
             var isDir: ObjCBool = false
             guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir) else { continue }
@@ -112,13 +132,14 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         return nil
     }
 
-    public func uri(for item: WorkspaceItemID) -> DocumentURI? {
+    public func uri(for item: WorkspaceItemID) async -> DocumentURI? {
         guard let url = try? fileURL(for: item) else { return nil }
         return DocumentURI(fileURL: url)
     }
 
     public func createFile(in parent: WorkspaceItemID, name: String, contents: Data) async throws -> WorkspaceItem {
         try validateName(name)
+        try Task.checkCancellation()
         let parentURL = try fileURL(for: parent)
         let dest = parentURL.appendingPathComponent(name)
         guard !FileManager.default.fileExists(atPath: dest.path) else {
@@ -136,6 +157,7 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
 
     public func createDirectory(in parent: WorkspaceItemID, name: String) async throws -> WorkspaceItem {
         try validateName(name)
+        try Task.checkCancellation()
         let parentURL = try fileURL(for: parent)
         let dest = parentURL.appendingPathComponent(name)
         do {
@@ -148,7 +170,9 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         return item
     }
 
-    public func move(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem {
+    public func move(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem
+    {
+        try Task.checkCancellation()
         let sourceURL = try fileURL(for: item)
         let name = newName ?? item.name
         if let newName { try validateName(newName) }
@@ -161,12 +185,15 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         }
         var isDir: ObjCBool = false
         _ = FileManager.default.fileExists(atPath: dest.path, isDirectory: &isDir)
-        let moved = makeItem(rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
+        let moved = makeItem(
+            rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
         yield(.renamed(from: item, to: moved))
         return moved
     }
 
-    public func copy(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem {
+    public func copy(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?) async throws -> WorkspaceItem
+    {
+        try Task.checkCancellation()
         let sourceURL = try fileURL(for: item)
         let name = newName ?? item.name
         if let newName { try validateName(newName) }
@@ -179,12 +206,14 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         }
         var isDir: ObjCBool = false
         _ = FileManager.default.fileExists(atPath: dest.path, isDirectory: &isDir)
-        let copied = makeItem(rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
+        let copied = makeItem(
+            rootID: parent.rootID, parentPath: parent.path, name: name, isDirectory: isDir.boolValue, url: dest)
         yield(.added(copied))
         return copied
     }
 
     public func delete(item: WorkspaceItemID) async throws {
+        try Task.checkCancellation()
         let url = try fileURL(for: item)
         do {
             try FileManager.default.removeItem(at: url)
@@ -195,31 +224,6 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
     }
 
     public func addRoot(directoryURL: URL) async throws -> WorkspaceRoot {
-        try addRootSync(directoryURL: directoryURL)
-    }
-
-    public func removeRoot(id: WorkspaceRootID) async throws {
-        guard rootURLs[id] != nil else { throw WorkspaceFileSystemError.rootNotFound }
-        stopWatching(rootID: id)
-        rootList.removeAll { $0.id == id }
-        rootURLs.removeValue(forKey: id)
-        yield(.rootRemoved(id))
-    }
-
-    public func events() -> AsyncThrowingStream<WorkspaceFileEvent, Error> {
-        let id = UUID()
-        return AsyncThrowingStream { [weak self] continuation in
-            self?.eventContinuations[id] = continuation
-            continuation.onTermination = { @Sendable [weak self] _ in
-                self?.eventContinuations[id] = nil
-            }
-        }
-    }
-
-    // MARK: - Private
-
-    @discardableResult
-    private func addRootSync(directoryURL: URL) throws -> WorkspaceRoot {
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: directoryURL.path, isDirectory: &isDir), isDir.boolValue else {
             throw WorkspaceFileSystemError.notADirectory
@@ -233,6 +237,43 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         return root
     }
 
+    public func removeRoot(id: WorkspaceRootID) async throws {
+        guard rootURLs[id] != nil else { throw WorkspaceFileSystemError.rootNotFound }
+        stopWatching(rootID: id)
+        rootList.removeAll { $0.id == id }
+        rootURLs.removeValue(forKey: id)
+        yield(.rootRemoved(id))
+    }
+
+    public func events() async -> AsyncThrowingStream<WorkspaceFileEvent, Error> {
+        let id = UUID()
+        return AsyncThrowingStream { continuation in
+            // Schedule registration on the actor.
+            Task { await self.registerContinuation(id: id, continuation: continuation) }
+            continuation.onTermination = { @Sendable _ in
+                Task { await self.unregisterContinuation(id: id) }
+            }
+        }
+    }
+
+    /// Inject a rescan signal (tests / overflow path).
+    public func signalRescan(rootID: WorkspaceRootID?) {
+        yield(.rescanRequired(rootID))
+    }
+
+    // MARK: - Private
+
+    private func registerContinuation(
+        id: UUID,
+        continuation: AsyncThrowingStream<WorkspaceFileEvent, Error>.Continuation
+    ) {
+        eventContinuations[id] = continuation
+    }
+
+    private func unregisterContinuation(id: UUID) {
+        eventContinuations[id] = nil
+    }
+
     private func yield(_ event: WorkspaceFileEvent) {
         for continuation in eventContinuations.values {
             continuation.yield(event)
@@ -243,7 +284,11 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
         guard let rootURL = rootURLs[item.rootID] else {
             throw WorkspaceFileSystemError.rootNotFound
         }
-        return try WorkspacePathSecurity.resolveUnderRoot(root: rootURL, relativePath: item.path)
+        return try WorkspacePathSecurity.resolveUnderRoot(
+            root: rootURL,
+            relativePath: item.path,
+            options: pathOptions
+        )
     }
 
     private func validateName(_ name: String) throws {
@@ -256,26 +301,27 @@ public final class LocalWorkspaceFileSystem: WorkspaceFileSystem, @unchecked Sen
     private func startWatching(rootID: WorkspaceRootID, url: URL) {
         guard enablesDirectoryWatching else { return }
         stopWatching(rootID: rootID)
-        let fd = open(url.path, O_EVTONLY)
-        guard fd >= 0 else { return }
-        let source = DispatchSource.makeFileSystemObjectSource(
-            fileDescriptor: fd,
-            eventMask: [.write, .rename, .delete, .extend, .attrib],
-            queue: watchQueue
-        )
-        source.setEventHandler { [weak self] in
-            self?.yield(.rescanRequired(rootID))
+        watcher.start(
+            rootID: rootID,
+            url: url,
+            excludedNames: settings.watchExcludedNames
+        ) { [weak self] signal in
+            Task { await self?.handleWatchSignal(signal) }
         }
-        source.setCancelHandler {
-            close(fd)
-        }
-        watchSources[rootID] = source
-        source.resume()
     }
 
     private func stopWatching(rootID: WorkspaceRootID) {
-        if let source = watchSources.removeValue(forKey: rootID) {
-            source.cancel()
+        watcher.stop(rootID: rootID)
+    }
+
+    private func handleWatchSignal(_ signal: WorkspaceWatchSignal) {
+        switch signal {
+        case .changed(let rootID):
+            yield(.rescanRequired(rootID))
+        case .overflow(let rootID):
+            yield(.rescanRequired(rootID))
+        case .stopped:
+            break
         }
     }
 

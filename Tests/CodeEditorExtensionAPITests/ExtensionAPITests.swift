@@ -1,7 +1,7 @@
-import Foundation
-import Testing
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import Foundation
+import Testing
 
 // MARK: - Fixture paths
 
@@ -46,7 +46,7 @@ struct S0PackageTests {
         let a = try ExtensionPackageDigest.compute(packageRoot: Fixtures.package("s0-basic"))
         let b = try ExtensionPackageDigest.compute(packageRoot: Fixtures.package("s0-basic"))
         #expect(a == b)
-        #expect(a.count == 64) // sha256 hex
+        #expect(a.count == 64)  // sha256 hex
     }
 }
 
@@ -81,7 +81,7 @@ struct S1DataTests {
 
         #expect(plan.grammars.count == 1)
         #expect(plan.grammars[0].repository != nil)
-        #expect(plan.queries.count >= 3) // highlights, brackets, indents
+        #expect(plan.queries.count >= 3)  // highlights, brackets, indents
         #expect(plan.queries.contains { $0.kind == "highlights" })
         #expect(!plan.assets.isEmpty)
     }
@@ -163,16 +163,16 @@ struct TOMLCorpusTests {
 
     @Test func parseInlineCapabilitiesAndPermissions() throws {
         let src = """
-        id = "com.example.caps"
-        name = "Caps"
-        version = "1.0.0"
-        schema_version = 1
-        api_version = "1.0"
-        capabilities = ["themes", "snippets"]
-        permissions = ["readWorkspace", "presentUI"]
-        [activation]
-        events = ["startup"]
-        """
+            id = "com.example.caps"
+            name = "Caps"
+            version = "1.0.0"
+            schema_version = 1
+            api_version = "1.0"
+            capabilities = ["themes", "snippets"]
+            permissions = ["readWorkspace", "presentUI"]
+            [activation]
+            events = ["startup"]
+            """
         let (m, _) = try ExtensionTOMLParser.parse(string: src)
         #expect(m.capabilities.contains("themes"))
         #expect(m.permissions.contains("presentUI"))
@@ -274,7 +274,7 @@ struct RegistryTests {
         )
         let snap = ImmutableContributionRegistry.build(packages: [b, a], generation: 1)
         #expect(snap.themes.count == 1)
-        #expect(snap.themes[0].displayName == "From B") // pkg.b > pkg.a lexicographically
+        #expect(snap.themes[0].displayName == "From B")  // pkg.b > pkg.a lexicographically
         #expect(snap.collisions.count == 1)
         #expect(snap.collisions[0].winnerPackageID.rawValue == "pkg.b")
         #expect(snap.collisions[0].loserPackageID.rawValue == "pkg.a")
@@ -291,7 +291,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let s0 = try await manager.install(from: Fixtures.package("s0-basic"))
         #expect(s0.packageID.rawValue == "com.codeeditor.fixtures.s0-basic")
@@ -321,14 +321,14 @@ struct PackageManagerTests {
         toml = toml.replacingOccurrences(of: "version = \"\(baselineVersion)\"", with: "version = \"\(nextVersion)\"")
         if !toml.contains("version = \"\(nextVersion)\"") {
             toml = """
-            id = "com.codeeditor.fixtures.s1-data"
-            name = "S1 Data Updated"
-            version = "\(nextVersion)"
-            schema_version = 1
-            api_version = "1.0"
-            [activation]
-            events = ["startup"]
-            """
+                id = "com.codeeditor.fixtures.s1-data"
+                name = "S1 Data Updated"
+                version = "\(nextVersion)"
+                schema_version = 1
+                api_version = "1.0"
+                [activation]
+                events = ["startup"]
+                """
         }
         try toml.write(to: updateDir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try await manager.update(id: s1.packageID, from: updateDir)
@@ -348,7 +348,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         _ = try await manager.install(from: Fixtures.package("s0-basic"))
 
@@ -356,14 +356,14 @@ struct PackageManagerTests {
         let devDir = root.appendingPathComponent("dev-s0", isDirectory: true)
         try FileManager.default.copyItem(at: Fixtures.package("s0-basic"), to: devDir)
         let toml = """
-        id = "com.codeeditor.fixtures.s0-basic"
-        name = "S0 Dev Shadow"
-        version = "9.9.9"
-        schema_version = 1
-        api_version = "1.0"
-        [activation]
-        events = ["startup"]
-        """
+            id = "com.codeeditor.fixtures.s0-basic"
+            name = "S0 Dev Shadow"
+            version = "9.9.9"
+            schema_version = 1
+            api_version = "1.0"
+            [activation]
+            events = ["startup"]
+            """
         try toml.write(to: devDir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
 
         let reloaded = try await manager.reloadDev(path: devDir)
@@ -379,7 +379,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let plan = try await manager.install(from: Fixtures.package("s0-basic"))
         // Wipe install path
@@ -396,7 +396,7 @@ struct PackageManagerTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root, maxEventBuffer: 8)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root, maxEventBuffer: 8)
         await manager.bootstrap()
         let stream = await manager.snapshots
         async let first: ExtensionContributionSnapshot? = {
@@ -430,13 +430,13 @@ struct AuthorAPISmokeTests {
 
     @Test func editorExtensionAlias() async throws {
         struct Mini: EditorExtension {
-            let manifest = ExtensionManifest(id: "mini", displayName: "Mini")
+            let manifest = ExtensionManifest(id: "test.mini", displayName: "Mini")
             func activate(in context: any ExtensionAuthorContext) async throws {
                 context.info("hi")
             }
         }
         let log = ExtensionLog()
-        let ctx = ExtensionContext(extensionID: "mini", grantedPermissions: [], log: log)
+        let ctx = ExtensionContext(extensionID: "test.mini", grantedPermissions: [], log: log)
         try await Mini().activate(in: ctx)
         #expect(log.events.contains { $0.message == "hi" })
     }

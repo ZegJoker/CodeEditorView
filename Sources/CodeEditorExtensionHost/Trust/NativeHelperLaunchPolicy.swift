@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Central native helper launch/install decision (Phase 15 — no soft path).
 public enum NativeHelperLaunchPolicy {
@@ -35,7 +35,8 @@ public enum NativeHelperLaunchPolicy {
             )
         }
         if origin == .workspaceDev,
-           policy.hostProfile.enterpriseOptions?.requireSignedNativeHelpers == true {
+            policy.hostProfile.enterpriseOptions?.requireSignedNativeHelpers == true
+        {
             reasons.append("enterprise requires signed native helpers")
         }
         switch trustClass {

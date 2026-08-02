@@ -1,8 +1,9 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
+import Testing
+
 @testable import CodeEditorLSP
 
 @Suite("LSP framing fuzz")
@@ -55,7 +56,7 @@ struct LSPPositionMapTests {
         let text = "ab\ncde\n\nfg"
         let map = LSPPositionMap(version: DocumentVersion(rawValue: 1), text: text)
         #expect(map.lineStarts.count == 4)
-        let p = map.position(utf16Offset: 5) // 'e'
+        let p = map.position(utf16Offset: 5)  // 'e'
         #expect(p.line == 1)
         #expect(p.character == 2)
         #expect(map.utf16Offset(line: 1, character: 2) == 5)
@@ -134,10 +135,11 @@ struct LSPBidirectionalTests {
         )
         let v: @Sendable () -> DocumentVersion = { DocumentVersion(rawValue: 1) }
 
-        #expect(!(try await host.completions(
-            for: CompletionRequest(document: doc, position: TextPosition(utf16Offset: 5), context: ctx),
-            currentVersion: v
-        )).items.isEmpty)
+        #expect(
+            !(try await host.completions(
+                for: CompletionRequest(document: doc, position: TextPosition(utf16Offset: 5), context: ctx),
+                currentVersion: v
+            )).items.isEmpty)
         #expect(try await host.hover(for: pos, currentVersion: v) != nil)
         #expect(!(try await host.definitions(for: pos, currentVersion: v)).isEmpty)
         #expect(!(try await host.declarations(for: pos, currentVersion: v)).isEmpty)
@@ -286,8 +288,8 @@ struct LSPBidirectionalTests {
                         "id": "reg-1",
                         "method": "textDocument/completion",
                         "registerOptions": [:] as [String: Any],
-                    ] as [String: Any],
-                ],
+                    ] as [String: Any]
+                ]
             ]
         )
         try await Task.sleep(nanoseconds: 50_000_000)

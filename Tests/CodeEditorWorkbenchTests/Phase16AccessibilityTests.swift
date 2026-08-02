@@ -1,4 +1,5 @@
 import Testing
+
 @testable import CodeEditorWorkbench
 
 @Suite("Phase 16 accessibility")

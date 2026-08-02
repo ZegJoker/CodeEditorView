@@ -1,11 +1,11 @@
+import CodeEditorLanguageSupport
 import CoreGraphics
 import Foundation
-import CodeEditorLanguageSupport
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Colors and text attributes for editor chrome and syntax highlighting.
@@ -131,7 +131,7 @@ public struct EditorTheme: Equatable {
         }
         switch capture {
         case .include, .constructor, .keyword, .boolean, .variableBuiltin,
-             .keywordReturn, .keywordFunction, .repeat, .conditional, .tag:
+            .keywordReturn, .keywordFunction, .repeat, .conditional, .tag:
             return keywords
         case .comment:
             return comments
@@ -199,21 +199,20 @@ public struct EditorTheme: Equatable {
         let attrs = attribute(for: capture)
         guard attrs.bold || attrs.italic else { return base }
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        var result = base
-        if attrs.bold {
-            result = NSFontManager.shared.convert(result, toHaveTrait: .boldFontMask)
-        }
-        if attrs.italic {
-            result = NSFontManager.shared.convert(result, toHaveTrait: .italicFontMask)
-        }
-        return result
+            var result = base
+            if attrs.bold {
+                result = NSFontManager.shared.convert(result, toHaveTrait: .boldFontMask)
+            }
+            if attrs.italic {
+                result = NSFontManager.shared.convert(result, toHaveTrait: .italicFontMask)
+            }
+            return result
         #else
-        var traits = base.fontDescriptor.symbolicTraits
-        if attrs.bold { traits.insert(.traitBold) }
-        if attrs.italic { traits.insert(.traitItalic) }
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(traits) else { return base }
-        return PlatformFont(descriptor: descriptor, size: base.pointSize)
+            var traits = base.fontDescriptor.symbolicTraits
+            if attrs.bold { traits.insert(.traitBold) }
+            if attrs.italic { traits.insert(.traitItalic) }
+            guard let descriptor = base.fontDescriptor.withSymbolicTraits(traits) else { return base }
+            return PlatformFont(descriptor: descriptor, size: base.pointSize)
         #endif
     }
 }
-

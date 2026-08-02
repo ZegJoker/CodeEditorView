@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorLanguageServices
 
 @Suite("LanguageServiceHost")
@@ -78,16 +79,18 @@ struct LanguageServiceHostTests {
 
     @Test func completionsMergeByPriority() async throws {
         let registry = LanguageServiceRegistry()
-        await registry.register(MockLanguageSuite(
-            id: "a",
-            priority: 1,
-            completionItems: [CompletionItem(label: "low")]
-        ) as any CompletionProvider)
-        await registry.register(MockLanguageSuite(
-            id: "b",
-            priority: 10,
-            completionItems: [CompletionItem(label: "high")]
-        ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "a",
+                priority: 1,
+                completionItems: [CompletionItem(label: "low")]
+            ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "b",
+                priority: 10,
+                completionItems: [CompletionItem(label: "high")]
+            ) as any CompletionProvider)
         let host = LanguageServiceHost(registry: registry)
         let list = try await host.completions(
             for: CompletionRequest(
@@ -137,16 +140,18 @@ struct LanguageServiceHostTests {
 
     @Test func selectorFiltersProviders() async throws {
         let registry = LanguageServiceRegistry()
-        await registry.register(MockLanguageSuite(
-            id: "swift.only",
-            selector: .languages("swift"),
-            completionItems: [CompletionItem(label: "swiftItem")]
-        ) as any CompletionProvider)
-        await registry.register(MockLanguageSuite(
-            id: "json.only",
-            selector: .languages("json"),
-            completionItems: [CompletionItem(label: "jsonItem")]
-        ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "swift.only",
+                selector: .languages("swift"),
+                completionItems: [CompletionItem(label: "swiftItem")]
+            ) as any CompletionProvider)
+        await registry.register(
+            MockLanguageSuite(
+                id: "json.only",
+                selector: .languages("json"),
+                completionItems: [CompletionItem(label: "jsonItem")]
+            ) as any CompletionProvider)
         let host = LanguageServiceHost(registry: registry)
         let list = try await host.completions(
             for: CompletionRequest(

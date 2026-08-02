@@ -1,7 +1,6 @@
-import SwiftUI
 import CodeEditorDocuments
 import CodeEditorWorkspace
-
+import SwiftUI
 
 /// Project navigator bound to ``Workspace/fileTree`` with Xcode-like interactions.
 public struct WorkspaceFileTreeView: View {
@@ -266,7 +265,8 @@ public struct WorkspaceFileTreeView: View {
                 Divider()
             }
             Button("New File…") {
-                createParent = isDirectory
+                createParent =
+                    isDirectory
                     ? item.id
                     : WorkspaceItemID(rootID: item.id.rootID, path: item.id.parentPath ?? "")
                 createParentIsDirectory = true
@@ -274,7 +274,8 @@ public struct WorkspaceFileTreeView: View {
                 isPresentingNewFile = true
             }
             Button("New Folder…") {
-                createParent = isDirectory
+                createParent =
+                    isDirectory
                     ? item.id
                     : WorkspaceItemID(rootID: item.id.rootID, path: item.id.parentPath ?? "")
                 createParentIsDirectory = true
@@ -291,10 +292,10 @@ public struct WorkspaceFileTreeView: View {
                 model.deleteItem(item.id)
             }
             #if os(macOS)
-            Divider()
-            Button("Reveal in Finder") {
-                model.revealInFinder(item.id)
-            }
+                Divider()
+                Button("Reveal in Finder") {
+                    model.revealInFinder(item.id)
+                }
             #endif
         }
     }
@@ -469,9 +470,12 @@ public struct WorkspaceFileTreeView: View {
     }
 
     private func resolvedCreateParent() -> WorkspaceItemID? {
-        guard let parent = createParent ?? model.selectedNavigatorItem ?? model.workspace.fileTree.roots.first.map({
-            WorkspaceItemID(rootID: $0.id, path: "")
-        }) else { return nil }
+        guard
+            let parent = createParent ?? model.selectedNavigatorItem
+                ?? model.workspace.fileTree.roots.first.map({
+                    WorkspaceItemID(rootID: $0.id, path: "")
+                })
+        else { return nil }
 
         // If the selection is a file, create beside it (in its parent folder).
         if !createParentIsDirectory, !parent.path.isEmpty {
@@ -508,7 +512,8 @@ public struct WorkspaceFileTreeView: View {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return defaultName }
         // Block path separators.
-        return trimmed
+        return
+            trimmed
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "-")
     }
@@ -524,7 +529,7 @@ public struct WorkspaceFileTreeView: View {
         for key in expansion where !key.hasPrefix("root:") {
             let parts = key.split(separator: "/", maxSplits: 1).map(String.init)
             guard parts.count == 2,
-                  let uuid = UUID(uuidString: parts[0])
+                let uuid = UUID(uuidString: parts[0])
             else { continue }
             let item = WorkspaceItemID(rootID: WorkspaceRootID(rawValue: uuid), path: parts[1])
             await loadChildren(item)
@@ -649,7 +654,7 @@ struct WorkbenchBreadcrumbBar: View {
 
     private var documentForThisPane: TextDocument? {
         guard let pane = model.workspace.panes[paneID],
-              let tab = pane.selectedTab
+            let tab = pane.selectedTab
         else { return nil }
         return model.workspace.documents.document(id: tab.documentID)
     }
@@ -691,31 +696,11 @@ struct WorkbenchStatusBar: View {
 
     private var lineColumnLabel: String {
         guard let session = model.activeSession,
-              let sel = session.selections.first,
-              let doc = model.activeDocument
+            let sel = session.selections.first,
+            let doc = model.activeDocument
         else { return "Ln — Col —" }
-        let text = doc.text as NSString
-        let loc = min(max(sel.location, 0), text.length)
-        var line = 1
-        var col = 1
-        var i = 0
-        while i < loc {
-            let ch = text.character(at: i)
-            if ch == 10 { // \n
-                line += 1
-                col = 1
-            } else if ch == 13 { // \r
-                line += 1
-                col = 1
-                if i + 1 < loc, text.character(at: i + 1) == 10 {
-                    i += 1
-                }
-            } else {
-                col += 1
-            }
-            i += 1
-        }
-        return "Ln \(line), Col \(col)"
+        // WB-013: O(log n) via LineIndex — never full-string scan per caret change.
+        return WorkbenchStatusMetrics.label(text: doc.text, utf16Offset: sel.location)
     }
 
     private var languageLabel: String? {

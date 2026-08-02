@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 public actor LanguageServerStatusStore {
     public private(set) var statuses: [String: LanguageServerStatus] = [:]

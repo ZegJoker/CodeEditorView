@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Immutable Sendable view of workspace state for concurrency / search / extensions.
 public struct WorkspaceSnapshot: Sendable, Hashable {

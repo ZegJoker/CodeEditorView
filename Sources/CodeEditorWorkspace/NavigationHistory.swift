@@ -1,7 +1,7 @@
-import CoreGraphics
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import CoreGraphics
+import Foundation
 
 public struct NavigationEntry: Codable, Sendable, Hashable {
     public var documentURI: DocumentURI

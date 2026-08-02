@@ -1,6 +1,7 @@
+import CodeEditorCore
 import Foundation
 import Testing
-import CodeEditorCore
+
 @testable import CodeEditorDocuments
 
 @Suite("Document IO safety")
@@ -194,5 +195,108 @@ struct TextDocumentRecoveryTests {
         #expect(ok)
         #expect(doc.text == "from-journal")
         #expect(doc.isDirty)
+    }
+}
+
+@Suite("Phase 2 document residual gates")
+struct Phase2DocumentResidualTests {
+    @Test func otherEncodingRejectedOnDecode() {
+        // `.other` must not silently become UTF-8.
+        #expect(throws: DocumentIOError.self) {
+            _ = try DocumentCodec.encode(
+                text: "hi",
+                encoding: .other("macroman"),
+                lineEndingPolicy: .preserve,
+                bomPolicy: .none
+            )
+        }
+    }
+
+    @Test func singlePassIdentityMatchesHash() async throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ce-id-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("f.txt")
+        let payload = Data("phase2-identity-check".utf8)
+        let io = LocalDocumentIO()
+        try await io.writeAtomically(data: payload, to: url)
+        let (data, identity) = try await io.readContentAndIdentity(url: url, maxBytes: 1024)
+        #expect(data == payload)
+        #expect(identity.contentHash == DocumentFileIdentity.hash(of: payload))
+        #expect(identity.size == UInt64(payload.count))
+    }
+
+    @Test func maxLoadBytesRejectsOversized() async throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ce-big-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("big.txt")
+        let io = LocalDocumentIO()
+        try await io.writeAtomically(data: Data(repeating: 0x61, count: 4096), to: url)
+        do {
+            _ = try await io.read(url: url, maxBytes: 100)
+            Issue.record("expected tooLarge")
+        } catch let error as DocumentIOError {
+            guard case .tooLarge = error else {
+                Issue.record("wrong error \(error)")
+                return
+            }
+        }
+    }
+
+    @Test func recoveryJournalChecksumRejectsTamper() async throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ce-jq-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("f.txt")
+        let io = LocalDocumentIO()
+        try await io.writeAtomically(data: Data("disk".utf8), to: url)
+        let journal = RecoveryJournal(directory: dir)
+        try await journal.write(text: "journal-text", forPrimary: url, io: io)
+        // Tamper the journal file bytes.
+        let jURL = journal.journalURL(forPrimary: url)
+        var raw = try await io.read(url: jURL)
+        if !raw.isEmpty { raw[raw.count / 2] ^= 0xFF }
+        try await io.writeAtomically(data: raw, to: jURL)
+        do {
+            _ = try await journal.read(forPrimary: url, io: io)
+            Issue.record("expected corrupt journal")
+        } catch let error as DocumentIOError {
+            guard case .corruptRecoveryJournal = error else {
+                Issue.record("wrong error \(error)")
+                return
+            }
+        }
+    }
+
+    @Test func conflictSaveDetectsExternalModify() async throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ce-cas-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("f.txt")
+        let io = LocalDocumentIO()
+        try await io.writeAtomically(data: Data("v1".utf8), to: url)
+        let provider = LocalFileDocumentProvider(io: io, policy: .default, useCoordinator: false)
+        let loaded = try await provider.load(uri: DocumentURI(fileURL: url))
+        // External writer.
+        try await io.writeAtomically(data: Data("external".utf8), to: url)
+        let result = try await provider.save(
+            DocumentSnapshot(version: .zero, text: "editor-v2"),
+            to: DocumentURI(fileURL: url),
+            encoding: .utf8,
+            expectedIdentity: loaded.fileIdentity,
+            policy: .requireHostDecision
+        )
+        guard case .conflict = result else {
+            Issue.record("expected conflict, got \(result)")
+            return
+        }
+        // Disk must still be external content.
+        let disk = try await io.read(url: url)
+        #expect(String(data: disk, encoding: .utf8) == "external")
     }
 }

@@ -1,6 +1,6 @@
+import CodeEditorDAP
 import Foundation
 import Testing
-import CodeEditorDAP
 
 @Suite("CodeEditorDAP framing")
 struct DAPFramingTests {

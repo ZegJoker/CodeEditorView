@@ -73,6 +73,16 @@ public final class KeybindingRegistry {
         }
     }
 
+    /// Whether any **longer** binding has `presses` as a strict prefix (chord ambiguity).
+    public func hasLongerPrefix(presses: [KeyPress], input: ContextEvaluationInput) -> Bool {
+        guard !presses.isEmpty else { return false }
+        return bindings.contains { entry in
+            guard entry.keybinding.chord.count > presses.count else { return false }
+            guard Array(entry.keybinding.chord.prefix(presses.count)) == presses else { return false }
+            return ContextExpressionEvaluator.evaluate(entry.keybinding.when, in: input)
+        }
+    }
+
     public func allBindings() -> [(commandID: CommandID, keybinding: Keybinding, source: KeybindingSource)] {
         bindings.map { ($0.commandID, $0.keybinding, $0.source) }
     }
@@ -94,15 +104,17 @@ public final class KeybindingRegistry {
         var result: [KeybindingConflict] = []
         for (chord, entries) in byChord where entries.count > 1 {
             guard let winner = pickWinner(entries) else { continue }
-            let shadowed = entries
+            let shadowed =
+                entries
                 .map(\.commandID)
                 .filter { $0 != winner.commandID }
                 .sorted { $0.rawValue < $1.rawValue }
-            result.append(KeybindingConflict(
-                chord: chord,
-                winnerCommandID: winner.commandID,
-                shadowedCommandIDs: shadowed
-            ))
+            result.append(
+                KeybindingConflict(
+                    chord: chord,
+                    winnerCommandID: winner.commandID,
+                    shadowedCommandIDs: shadowed
+                ))
         }
         return result.sorted { a, b in
             let aKey = a.chord.map(\.description).joined()

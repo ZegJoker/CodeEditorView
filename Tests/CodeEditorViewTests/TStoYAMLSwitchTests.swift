@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("TS to YAML switch")
 @MainActor
@@ -19,19 +19,19 @@ struct TStoYAMLSwitchTests {
 
     @Test func typescriptToYamlDoesNotHang() async throws {
         let ts = """
-        function greet(name: string): void {
-          console.log(`Hello, ${name}!`);
-        }
-        """
+            function greet(name: string): void {
+              console.log(`Hello, ${name}!`);
+            }
+            """
         let yaml = """
-        # YAML
-        name: CodeEditorView
-        version: 1
-        features:
-          - gutter
-          - highlight
-        enabled: true
-        """
+            # YAML
+            name: CodeEditorView
+            version: 1
+            features:
+              - gutter
+              - highlight
+            enabled: true
+            """
         let controller = EditorController(text: ts, language: .typescript)
         for _ in 0..<40 {
             await Task.yield()
@@ -54,7 +54,9 @@ struct TStoYAMLSwitchTests {
             if n >= 60 { break }
         }
         let elapsed = ContinuousClock.now - t0
-        print("yaml switch elapsed=\(elapsed) n=\(n) lang=\(controller.languageID ?? "?") providers=\(controller.highlightProviders.count)")
+        print(
+            "yaml switch elapsed=\(elapsed) n=\(n) lang=\(controller.languageID ?? "?") providers=\(controller.highlightProviders.count)"
+        )
         #expect(elapsed < .seconds(8))
         #expect(controller.languageID == "yaml" || controller.languageID == TreeSitterLanguageID.yaml.rawValue)
     }

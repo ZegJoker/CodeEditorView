@@ -32,7 +32,7 @@ struct FullWorkbenchApp: App {
     #endif
 
     init() {
-        CodeEditorLanguageSwift.register()
+        try? CodeEditorLanguageSwift.register()
     }
 
     var body: some Scene {

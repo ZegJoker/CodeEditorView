@@ -1,9 +1,9 @@
-import Foundation
 import CodeEditorCommands
+import Foundation
 
 public enum TaskCommands {
-    public static let run = CommandID(rawValue: "codeeditor.tasks.run")
-    public static let cancel = CommandID(rawValue: "codeeditor.tasks.cancel")
+    public static let run = CommandID(stringLiteral: "codeeditor.tasks.run")
+    public static let cancel = CommandID(stringLiteral: "codeeditor.tasks.cancel")
 
     @MainActor
     @discardableResult

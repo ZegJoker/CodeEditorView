@@ -9,7 +9,12 @@ public actor TerminalSessionManager {
 
     public init() {}
 
-    public func attach(backend: any TerminalBackend) {
+    /// Attach a backend. **Terminates existing sessions** first (audit §20.17).
+    public func attach(backend: any TerminalBackend) async {
+        let existing = Array(sessions.keys)
+        for id in existing {
+            await close(id)
+        }
         self.backend = backend
         pumpTask?.cancel()
         let stream = backend.output

@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorCore
 
 @MainActor
@@ -23,9 +24,9 @@ struct LineIndexTests {
         ) { _ in TestLine() }
 
         #expect(index.count == 3)
-        #expect(index.line(atIndex: 0)?.metrics.utf16Length == 2) // "a\n"
-        #expect(index.line(atIndex: 1)?.metrics.utf16Length == 2) // "b\n"
-        #expect(index.line(atIndex: 2)?.metrics.utf16Length == 1) // "c"
+        #expect(index.line(atIndex: 0)?.metrics.utf16Length == 2)  // "a\n"
+        #expect(index.line(atIndex: 1)?.metrics.utf16Length == 2)  // "b\n"
+        #expect(index.line(atIndex: 2)?.metrics.utf16Length == 1)  // "c"
         #expect(index.length == 5)
     }
 

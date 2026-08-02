@@ -14,8 +14,8 @@
 // highlight configurations must also link a language pack or the `CodeEditorLanguages`
 // umbrella (which bootstraps parsers into `LanguageRegistry`).
 
+@_exported import CodeEditorCommands
 @_exported import CodeEditorCore
 @_exported import CodeEditorDocuments
-@_exported import CodeEditorCommands
 @_exported import CodeEditorLanguageSupport
 @_exported import CodeEditorTreeSitter

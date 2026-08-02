@@ -1,18 +1,40 @@
-import Foundation
-import Observation
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
+import Observation
+
+public enum OpenQuicklyMode: String, Sendable, Hashable, CaseIterable {
+    case file
+    case symbol
+    case command
+}
 
 public struct OpenQuicklyItem: Identifiable, Hashable, Sendable {
-    public var id: DocumentURI { uri }
-    public var uri: DocumentURI
+    public var id: String
+    public var uri: DocumentURI?
     public var name: String
     public var path: String
+    public var mode: OpenQuicklyMode
+    /// Zero-based line when opened via `path:line:col` or symbol.
+    public var line: Int?
+    public var column: Int?
 
-    public init(uri: DocumentURI, name: String, path: String) {
+    public init(
+        id: String? = nil,
+        uri: DocumentURI?,
+        name: String,
+        path: String,
+        mode: OpenQuicklyMode = .file,
+        line: Int? = nil,
+        column: Int? = nil
+    ) {
         self.uri = uri
         self.name = name
         self.path = path
+        self.mode = mode
+        self.line = line
+        self.column = column
+        self.id = id ?? (uri?.rawValue ?? "\(mode.rawValue):\(path):\(name)")
     }
 }
 
@@ -26,6 +48,11 @@ public final class OpenQuicklyModel {
             }
         }
     }
+    public var mode: OpenQuicklyMode = .file {
+        didSet {
+            if mode != oldValue { scheduleFilter() }
+        }
+    }
     public private(set) var results: [OpenQuicklyItem] = []
     public private(set) var isScanning: Bool = false
     /// Keyboard / list highlight index into ``results``.
@@ -33,6 +60,10 @@ public final class OpenQuicklyModel {
     public var resultLimit: Int = 50
     /// Injected index service (default file-tree index).
     public var indexService: any WorkspaceIndexService = FileTreeIndexService()
+    /// Symbol catalog for symbol mode (host/LSP fills).
+    public var symbolItems: [OpenQuicklyItem] = []
+    /// Command catalog for command mode.
+    public var commandItems: [OpenQuicklyItem] = []
 
     private var allItems: [OpenQuicklyItem] = []
     private var scanTask: Task<Void, Never>?
@@ -44,6 +75,32 @@ public final class OpenQuicklyModel {
         query = ""
         selectedIndex = 0
         results = Array(allItems.prefix(resultLimit))
+    }
+
+    /// Parse `path:line` or `path:line:column` suffix (1-based line/col → 0-based stored).
+    public static func parseLocationQuery(_ raw: String) -> (path: String, line: Int?, column: Int?) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = trimmed.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 2 else { return (trimmed, nil, nil) }
+        // path:line:col
+        if parts.count >= 3,
+            let col = Int(parts[parts.count - 1]),
+            let line = Int(parts[parts.count - 2]),
+            col >= 0, line >= 1
+        {
+            let path = parts.dropLast(2).joined(separator: ":")
+            if !path.isEmpty {
+                return (path, line - 1, max(0, col - 1))
+            }
+        }
+        // path:line
+        if let line = Int(parts[parts.count - 1]), line >= 1 {
+            let path = parts.dropLast().joined(separator: ":")
+            if !path.isEmpty {
+                return (path, line - 1, nil)
+            }
+        }
+        return (trimmed, nil, nil)
     }
 
     /// Rebuilds the file index via ``indexService`` (cancellable).
@@ -97,17 +154,42 @@ public final class OpenQuicklyModel {
     }
 
     private func applyFilter() {
-        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        if q.isEmpty {
-            results = Array(allItems.prefix(resultLimit))
+        let raw = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let corpus: [OpenQuicklyItem]
+        switch mode {
+        case .file: corpus = allItems
+        case .symbol: corpus = symbolItems
+        case .command: corpus = commandItems
+        }
+        if raw.isEmpty {
+            results = Array(corpus.prefix(resultLimit))
             selectedIndex = 0
             return
         }
-        let ranked = allItems.compactMap { item -> (OpenQuicklyItem, Int)? in
+
+        // path:line:col handling (file mode)
+        var q = raw
+        var forcedLine: Int?
+        var forcedCol: Int?
+        if mode == .file {
+            let parsed = Self.parseLocationQuery(raw)
+            if parsed.line != nil {
+                q = parsed.path
+                forcedLine = parsed.line
+                forcedCol = parsed.column
+            }
+        }
+
+        let ranked = corpus.compactMap { item -> (OpenQuicklyItem, Int)? in
             guard let score = Self.fuzzyScore(query: q, name: item.name, path: item.path) else {
                 return nil
             }
-            return (item, score)
+            var copy = item
+            if let forcedLine {
+                copy.line = forcedLine
+                copy.column = forcedCol
+            }
+            return (copy, score)
         }
         .sorted { lhs, rhs in
             if lhs.1 != rhs.1 { return lhs.1 > rhs.1 }
@@ -129,11 +211,11 @@ public final class OpenQuicklyModel {
         let pathScore = subsequenceScore(query: q, in: path, baseBonus: 40)
 
         switch (nameScore, pathScore) {
-        case let (n?, p?):
+        case (let n?, let p?):
             return max(n, p)
-        case let (n?, nil):
+        case (let n?, nil):
             return n
-        case let (nil, p?):
+        case (nil, let p?):
             return p
         case (nil, nil):
             return nil

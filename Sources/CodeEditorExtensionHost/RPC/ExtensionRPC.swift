@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensions
+import Foundation
 
 public struct ExtensionRPCProtocolVersion: Hashable, Codable, Sendable {
     public var major: Int

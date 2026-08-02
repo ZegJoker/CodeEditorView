@@ -34,7 +34,8 @@ extension EditorController {
         // Skip blanks between header and first body line.
         var bodyIdx = lineIndex + 1
         while let body = layout.lineIndex.line(atIndex: bodyIdx) {
-            let snip = document.substring(from: body.utf16Range)?
+            let snip =
+                document.substring(from: body.utf16Range)?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if snip.isEmpty {
                 bodyIdx += 1
@@ -110,7 +111,8 @@ extension EditorController {
     }
 
     func noteFoldingEdit(range: NSRange, delta: Int) {
-        let shouldTrack = configuration.peripherals.showFoldingRibbon
+        let shouldTrack =
+            configuration.peripherals.showFoldingRibbon
             || !_foldModel.collapsedFolds.isEmpty
         guard shouldTrack else { return }
         let ctx = LineFoldProviderContext(
@@ -166,7 +168,8 @@ extension EditorController {
         var end = range.location + range.length
         for fold in _foldModel.collapsedFolds {
             let fr = fold.nsRange
-            let intersects = NSIntersectionRange(range, fr).length > 0
+            let intersects =
+                NSIntersectionRange(range, fr).length > 0
                 || (range.length == 0 && range.location > fr.location && range.location < fr.location + fr.length)
             // Also: selected fold bubble counts as selecting the fold body.
             let bubbleSelected = selectedFoldPlaceholderID == fold.id && range.length == 0
@@ -183,7 +186,8 @@ extension EditorController {
         for fold in _foldModel.collapsedFolds {
             if NSIntersectionRange(range, fold.nsRange).length > 0
                 || (range.location <= fold.range.lowerBound
-                    && range.location + range.length >= fold.range.upperBound) {
+                    && range.location + range.length >= fold.range.upperBound)
+            {
                 _foldModel.setCollapsed(false, forFold: fold)
                 removeFoldPlaceholder(for: fold)
                 changed = true
@@ -253,7 +257,7 @@ extension EditorController {
         // Short eased redraw pulse so collapse/expand doesn't hard-cut.
         foldAnimationTask = Task { @MainActor [weak self] in
             let steps = 10
-            let durationNs: UInt64 = 14_000_000 // ~140ms total
+            let durationNs: UInt64 = 14_000_000  // ~140ms total
             for step in 0...steps {
                 guard !Task.isCancelled else { return }
                 let t = CGFloat(step) / CGFloat(steps)

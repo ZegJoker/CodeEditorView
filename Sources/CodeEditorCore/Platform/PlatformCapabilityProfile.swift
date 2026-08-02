@@ -49,7 +49,7 @@ public struct PlatformCapabilityProfile: Sendable, Hashable {
                 kind: kind,
                 reason: "Profile \(name) is data-only for \(kind.rawValue)"
             )
-        case let .unavailable(reason):
+        case .unavailable(let reason):
             throw CodeEditorPlatformError.unsupportedCapability(kind: kind, reason: reason)
         }
     }

@@ -1,12 +1,12 @@
-import SwiftUI
 import CodeEditorDocuments
-import CodeEditorWorkspace
 import CodeEditorView
+import CodeEditorWorkspace
+import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Recursively renders the workspace editor layout tree.
@@ -177,8 +177,8 @@ private struct WorkbenchSplitDivider: View {
                             dragStartFractions = currentFractions
                         }
                         guard let base = dragStartFractions,
-                              base.indices.contains(dividerIndex),
-                              base.indices.contains(dividerIndex + 1)
+                            base.indices.contains(dividerIndex),
+                            base.indices.contains(dividerIndex + 1)
                         else { return }
                         let delta = isHorizontal ? value.translation.width : value.translation.height
                         let deltaFrac = Double(delta / max(available, 1))
@@ -199,17 +199,17 @@ private struct WorkbenchSplitDivider: View {
                     }
             )
             #if os(macOS)
-            .onHover { hovering in
-                if hovering {
-                    if isHorizontal {
-                        NSCursor.resizeLeftRight.set()
+                .onHover { hovering in
+                    if hovering {
+                        if isHorizontal {
+                            NSCursor.resizeLeftRight.set()
+                        } else {
+                            NSCursor.resizeUpDown.set()
+                        }
                     } else {
-                        NSCursor.resizeUpDown.set()
+                        NSCursor.arrow.set()
                     }
-                } else {
-                    NSCursor.arrow.set()
                 }
-            }
             #endif
     }
 }
@@ -257,9 +257,9 @@ public struct WorkbenchPaneView: View {
 
     private var paneBackground: Color {
         #if os(macOS)
-        Color(nsColor: .textBackgroundColor)
+            Color(nsColor: .textBackgroundColor)
         #else
-        Color(uiColor: .systemBackground)
+            Color(uiColor: .systemBackground)
         #endif
     }
 
@@ -270,8 +270,9 @@ public struct WorkbenchPaneView: View {
         let _ = selectedTabID
         ZStack {
             if let tab = pane.selectedTab,
-               let document = model.workspace.documents.document(id: tab.documentID),
-               let session = model.workspace.sessions[tab.sessionID] {
+                let document = model.workspace.documents.document(id: tab.documentID),
+                let session = model.workspace.sessions[tab.sessionID]
+            {
                 let context = DocumentViewContext(
                     workspace: model.workspace,
                     document: document,
@@ -344,8 +345,14 @@ struct WorkbenchTabBar: View {
                     }
                     Divider()
                     Button("Close Pane", role: .destructive) {
-                        withAnimation(WorkbenchMotion.pane) {
-                            model.workspace.closePane(pane.id)
+                        Task { @MainActor in
+                            let result = await model.requestClosePane(pane.id)
+                            if result == .closed {
+                                withAnimation(WorkbenchMotion.pane) {
+                                    // Layout already updated by requestClosePane.
+                                    _ = model.workspace.revision
+                                }
+                            }
                         }
                     }
                 } label: {
@@ -383,8 +390,11 @@ struct WorkbenchTabBar: View {
                     .transition(.scale.combined(with: .opacity))
             }
             Button {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeTab(tab.id, in: pane.id)
+                Task { @MainActor in
+                    let result = await model.workspace.requestCloseTab(tab.id, in: pane.id)
+                    if result == .closed {
+                        withAnimation(WorkbenchMotion.tab) {}
+                    }
                 }
             } label: {
                 Image(systemName: "xmark")
@@ -426,7 +436,7 @@ struct WorkbenchTabBar: View {
         }
         .onDrop(of: [.text], isTargeted: nil) { providers in
             guard let fromID = draggingTabID,
-                  let fromIndex = pane.tabs.firstIndex(where: { $0.id == fromID })
+                let fromIndex = pane.tabs.firstIndex(where: { $0.id == fromID })
             else { return false }
             var toIndex = index
             if fromIndex < toIndex {
@@ -455,18 +465,27 @@ struct WorkbenchTabBar: View {
                 }
             }
             Button("Close") {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeTab(tab.id, in: pane.id)
+                Task { @MainActor in
+                    let _: CloseTransactionResult = await model.workspace.requestCloseTab(
+                        tab.id,
+                        in: pane.id
+                    )
                 }
             }
             Button("Close Others") {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeOtherTabs(keeping: tab.id, in: pane.id)
+                Task { @MainActor in
+                    let _: CloseTransactionResult = await model.workspace.requestCloseOtherTabs(
+                        keeping: tab.id,
+                        in: pane.id
+                    )
                 }
             }
             Button("Close to the Right") {
-                withAnimation(WorkbenchMotion.tab) {
-                    model.workspace.closeTabsToTheRight(of: tab.id, in: pane.id)
+                Task { @MainActor in
+                    let _: CloseTransactionResult = await model.workspace.requestCloseTabsToTheRight(
+                        of: tab.id,
+                        in: pane.id
+                    )
                 }
             }
         }
@@ -474,14 +493,15 @@ struct WorkbenchTabBar: View {
 
     /// Disambiguate duplicate filenames with parent folder (Xcode-like).
     private func displayTitle(for tab: EditorTab) -> String {
-        let name = tab.documentURI.fileURL?.lastPathComponent
+        let name =
+            tab.documentURI.fileURL?.lastPathComponent
             ?? tab.documentURI.rawValue
         let sameNameCount = pane.tabs.filter {
             ($0.documentURI.fileURL?.lastPathComponent ?? $0.documentURI.rawValue) == name
         }.count
         guard sameNameCount > 1,
-              let parent = tab.documentURI.fileURL?.deletingLastPathComponent().lastPathComponent,
-              !parent.isEmpty
+            let parent = tab.documentURI.fileURL?.deletingLastPathComponent().lastPathComponent,
+            !parent.isEmpty
         else { return name }
         return "\(parent)/\(name)"
     }

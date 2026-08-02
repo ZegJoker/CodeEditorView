@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Zig to plain text")
 @MainActor
@@ -18,12 +18,12 @@ struct ZigToPlainTextTests {
 
     @Test func zigToPlainTextDoesNotHang() async throws {
         let zig = """
-        // Zig
-        const std = @import("std");
-        pub fn main() void {
-            std.debug.print("hi\\n", .{});
-        }
-        """
+            // Zig
+            const std = @import("std");
+            pub fn main() void {
+                std.debug.print("hi\\n", .{});
+            }
+            """
         let controller = EditorController(text: zig, language: .zig)
         let t0 = ContinuousClock.now
         for _ in 0..<40 {
@@ -31,7 +31,9 @@ struct ZigToPlainTextTests {
             try? await Task.sleep(for: .milliseconds(30))
             if ContinuousClock.now - t0 > .seconds(5) { break }
         }
-        print("zig settle \(ContinuousClock.now - t0) lang=\(controller.languageID ?? "nil") providers=\(controller.highlightProviders.count)")
+        print(
+            "zig settle \(ContinuousClock.now - t0) lang=\(controller.languageID ?? "nil") providers=\(controller.highlightProviders.count)"
+        )
 
         let t1 = ContinuousClock.now
         // Demo passes language: nil for plain text
@@ -47,7 +49,9 @@ struct ZigToPlainTextTests {
             )
             if ContinuousClock.now - t1 > .seconds(6) { break }
         }
-        print("plain switch \(ContinuousClock.now - t1) lang=\(controller.languageID ?? "nil") providers=\(controller.highlightProviders.count)")
+        print(
+            "plain switch \(ContinuousClock.now - t1) lang=\(controller.languageID ?? "nil") providers=\(controller.highlightProviders.count)"
+        )
         #expect(ContinuousClock.now - t1 < .seconds(6))
         #expect(controller.highlightProviders.isEmpty)
     }

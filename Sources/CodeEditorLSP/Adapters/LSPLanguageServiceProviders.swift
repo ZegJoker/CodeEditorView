@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
 import CodeEditorLanguageSupport
+import Foundation
 
 /// Disposable that unregisters LSP-backed providers.
 public final class LSPProviderRegistration: @unchecked Sendable {
@@ -65,154 +65,177 @@ public enum LSPClientProviders {
 
         if caps.completion {
             await add("completion") { id in
-                await registry.register(LSPCompletionAdapter(
-                    session: session,
-                    id: id,
-                    selector: selector,
-                    priority: priority,
-                    labelHook: completionLabelHook
-                ))
+                await registry.register(
+                    LSPCompletionAdapter(
+                        session: session,
+                        id: id,
+                        selector: selector,
+                        priority: priority,
+                        labelHook: completionLabelHook
+                    ))
             }
         }
         if caps.hover {
             await add("hover") { id in
-                await registry.register(LSPHoverAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPHoverAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.definition {
             await add("definition") { id in
-                await registry.register(LSPDefinitionAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPDefinitionAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.declaration {
             await add("declaration") { id in
-                await registry.register(LSPDeclarationAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPDeclarationAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.implementation {
             await add("implementation") { id in
-                await registry.register(LSPImplementationAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPImplementationAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.references {
             await add("references") { id in
-                await registry.register(LSPReferencesAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPReferencesAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.diagnostics {
             await add("diagnostics") { id in
-                await registry.register(LSPDiagnosticsAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPDiagnosticsAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.pullDiagnostics {
             await add("pullDiagnostics") { id in
-                await registry.register(LSPPullDiagnosticsAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPPullDiagnosticsAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.formatting || caps.rangeFormatting {
             await add("formatting") { id in
-                await registry.register(LSPFormattingAdapter(
-                    session: session,
-                    id: id,
-                    selector: selector,
-                    priority: priority,
-                    supportsDocument: caps.formatting,
-                    supportsRange: caps.rangeFormatting
-                ))
+                await registry.register(
+                    LSPFormattingAdapter(
+                        session: session,
+                        id: id,
+                        selector: selector,
+                        priority: priority,
+                        supportsDocument: caps.formatting,
+                        supportsRange: caps.rangeFormatting
+                    ))
             }
         }
         if caps.rename {
             await add("rename") { id in
-                await registry.register(LSPRenameAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPRenameAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.documentSymbol {
             await add("symbols") { id in
-                await registry.register(LSPDocumentSymbolAdapter(
-                    session: session,
-                    id: id,
-                    selector: selector,
-                    priority: priority,
-                    labelHook: symbolLabelHook
-                ))
+                await registry.register(
+                    LSPDocumentSymbolAdapter(
+                        session: session,
+                        id: id,
+                        selector: selector,
+                        priority: priority,
+                        labelHook: symbolLabelHook
+                    ))
             }
         }
         if caps.workspaceSymbol {
             await add("workspaceSymbols") { id in
-                await registry.register(LSPWorkspaceSymbolAdapter(
-                    session: session,
-                    id: id,
-                    selector: selector,
-                    priority: priority,
-                    labelHook: symbolLabelHook
-                ))
+                await registry.register(
+                    LSPWorkspaceSymbolAdapter(
+                        session: session,
+                        id: id,
+                        selector: selector,
+                        priority: priority,
+                        labelHook: symbolLabelHook
+                    ))
             }
         }
         if caps.semanticTokens {
             await add("semantic") { id in
-                await registry.register(LSPSemanticTokensAdapter(
-                    session: session,
-                    id: id,
-                    selector: selector,
-                    priority: priority,
-                    supportsRange: caps.semanticTokensRange
-                ))
+                await registry.register(
+                    LSPSemanticTokensAdapter(
+                        session: session,
+                        id: id,
+                        selector: selector,
+                        priority: priority,
+                        supportsRange: caps.semanticTokensRange
+                    ))
             }
         }
         if caps.codeAction {
             await add("codeAction") { id in
-                await registry.register(LSPCodeActionAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPCodeActionAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.signatureHelp {
             await add("signatureHelp") { id in
-                await registry.register(LSPSignatureHelpAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPSignatureHelpAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.inlayHint {
             await add("inlayHint") { id in
-                await registry.register(LSPInlayHintAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPInlayHintAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.foldingRange {
             await add("folding") { id in
-                await registry.register(LSPFoldingRangeAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPFoldingRangeAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.documentLink {
             await add("links") { id in
-                await registry.register(LSPDocumentLinkAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPDocumentLinkAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.documentColor {
             await add("colors") { id in
-                await registry.register(LSPDocumentColorAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPDocumentColorAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.documentHighlight {
             await add("highlights") { id in
-                await registry.register(LSPDocumentHighlightAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPDocumentHighlightAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.typeHierarchy {
             await add("typeHierarchy") { id in
-                await registry.register(LSPTypeHierarchyAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPTypeHierarchyAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.callHierarchy {
             await add("callHierarchy") { id in
-                await registry.register(LSPCallHierarchyAdapter(session: session, id: id, selector: selector, priority: priority))
+                await registry.register(
+                    LSPCallHierarchyAdapter(session: session, id: id, selector: selector, priority: priority))
             }
         }
         if caps.executeCommand {
             await add("executeCommand") { id in
-                await registry.register(LSPExecuteCommandAdapter(
-                    session: session,
-                    id: id,
-                    selector: selector,
-                    priority: priority,
-                    commands: Set(caps.supportedCommands)
-                ))
+                await registry.register(
+                    LSPExecuteCommandAdapter(
+                        session: session,
+                        id: id,
+                        selector: selector,
+                        priority: priority,
+                        commands: Set(caps.supportedCommands)
+                    ))
             }
         }
 
@@ -277,21 +300,27 @@ private enum LSPRequestHelpers {
         return []
     }
 
-    static func parseLocationLink(from dict: [String: Any], text: String) -> LocationLink? {
+    static func parseLocationLink(
+        from dict: [String: Any], textForURI: (DocumentURI) async -> String
+    ) async -> LocationLink? {
         if let targetUri = dict["targetUri"] as? String,
-           let targetRange = parseLSPRange(dict["targetRange"])
+            let targetRange = parseLSPRange(dict["targetRange"])
         {
+            let uri = DocumentURI(rawValue: targetUri)
+            let text = await textForURI(uri)
             let sel = parseLSPRange(dict["targetSelectionRange"]) ?? targetRange
             return LocationLink(
-                targetURI: DocumentURI(rawValue: targetUri),
+                targetURI: uri,
                 targetRange: LSPConvert.textRange(targetRange, in: text),
                 targetSelectionRange: LSPConvert.textRange(sel, in: text)
             )
         }
-        if let uri = dict["uri"] as? String, let range = parseLSPRange(dict["range"]) {
+        if let uriStr = dict["uri"] as? String, let range = parseLSPRange(dict["range"]) {
+            let uri = DocumentURI(rawValue: uriStr)
+            let text = await textForURI(uri)
             let tr = LSPConvert.textRange(range, in: text)
             return LocationLink(
-                targetURI: DocumentURI(rawValue: uri),
+                targetURI: uri,
                 targetRange: tr,
                 targetSelectionRange: tr
             )
@@ -299,32 +328,48 @@ private enum LSPRequestHelpers {
         return nil
     }
 
-    static func parseLocationLinks(_ result: LSPJSONObject, text: String) -> [LocationLink] {
+    static func parseLocationLinks(
+        _ result: LSPJSONObject,
+        textForURI: (DocumentURI) async -> String
+    ) async -> [LocationLink] {
         if let arr = result["_value"] as? [[String: Any]] {
-            return arr.compactMap { parseLocationLink(from: $0, text: text) }
+            var out: [LocationLink] = []
+            for dict in arr {
+                if let link = await parseLocationLink(from: dict, textForURI: textForURI) {
+                    out.append(link)
+                }
+            }
+            return out
         }
-        if let link = parseLocationLink(from: result.dictionary, text: text) {
+        if let link = await parseLocationLink(from: result.dictionary, textForURI: textForURI) {
             return [link]
         }
         return []
     }
 
-    static func parseLocations(_ result: LSPJSONObject, text: String) -> [Location] {
+    static func parseLocations(
+        _ result: LSPJSONObject,
+        textForURI: (DocumentURI) async -> String
+    ) async -> [Location] {
         if let arr = result["_value"] as? [[String: Any]] {
-            return arr.compactMap { dict -> Location? in
-                guard let uri = dict["uri"] as? String, let range = parseLSPRange(dict["range"]) else {
-                    return nil
+            var out: [Location] = []
+            for dict in arr {
+                guard let uriStr = dict["uri"] as? String, let range = parseLSPRange(dict["range"]) else {
+                    continue
                 }
-                return Location(uri: DocumentURI(rawValue: uri), range: LSPConvert.textRange(range, in: text))
+                let uri = DocumentURI(rawValue: uriStr)
+                let text = await textForURI(uri)
+                out.append(Location(uri: uri, range: LSPConvert.textRange(range, in: text)))
             }
+            return out
         }
         return []
     }
 
     static func parseLSPRange(_ any: Any?) -> LSPRange? {
         guard let dict = any as? [String: Any],
-              let start = dict["start"] as? [String: Any],
-              let end = dict["end"] as? [String: Any]
+            let start = dict["start"] as? [String: Any],
+            let end = dict["end"] as? [String: Any]
         else { return nil }
         func pos(_ d: [String: Any]) -> LSPPosition? {
             let line = (d["line"] as? Int) ?? (d["line"] as? NSNumber)?.intValue
@@ -406,10 +451,12 @@ struct LSPHoverAdapter: HoverProvider {
             text: request.document.text,
             map: map
         )
-        guard let hover: LSPHover = try await session.requestOptionalJSON(
-            "textDocument/hover",
-            params: LSPJSONObject(params)
-        ) else { return nil }
+        guard
+            let hover: LSPHover = try await session.requestOptionalJSON(
+                "textDocument/hover",
+                params: LSPJSONObject(params)
+            )
+        else { return nil }
         let text = request.document.text
         let section: HoverSection
         switch hover.contents {
@@ -480,7 +527,9 @@ extension LSPDefinitionAdapter {
             map: map
         )
         let result = try await session.requestDictionary(method, params: LSPJSONObject(params))
-        return LSPRequestHelpers.parseLocationLinks(result, text: request.document.text)
+        return await LSPRequestHelpers.parseLocationLinks(result) { uri in
+            await session.text(for: uri)
+        }
     }
 }
 
@@ -494,7 +543,9 @@ extension LSPDeclarationAdapter {
             map: map
         )
         let result = try await session.requestDictionary(method, params: LSPJSONObject(params))
-        return LSPRequestHelpers.parseLocationLinks(result, text: request.document.text)
+        return await LSPRequestHelpers.parseLocationLinks(result) { uri in
+            await session.text(for: uri)
+        }
     }
 }
 
@@ -508,7 +559,9 @@ extension LSPImplementationAdapter {
             map: map
         )
         let result = try await session.requestDictionary(method, params: LSPJSONObject(params))
-        return LSPRequestHelpers.parseLocationLinks(result, text: request.document.text)
+        return await LSPRequestHelpers.parseLocationLinks(result) { uri in
+            await session.text(for: uri)
+        }
     }
 }
 
@@ -534,7 +587,9 @@ struct LSPReferencesAdapter: ReferencesProvider {
             "textDocument/references",
             params: LSPJSONObject(params)
         )
-        return LSPRequestHelpers.parseLocations(result, text: request.document.text)
+        return await LSPRequestHelpers.parseLocations(result) { uri in
+            await session.text(for: uri)
+        }
     }
 }
 
@@ -561,7 +616,7 @@ struct LSPPullDiagnosticsAdapter: PullDiagnosticsProvider {
         let caps = await session.capabilities
         try LSPRequestHelpers.requireCapability(caps.pullDiagnostics, "textDocument/diagnostic")
         let params: [String: Any] = [
-            "textDocument": ["uri": request.context.uri?.rawValue ?? ""],
+            "textDocument": ["uri": request.context.uri?.rawValue ?? ""]
         ]
         let result = try await session.requestDictionary(
             "textDocument/diagnostic",
@@ -682,7 +737,7 @@ struct LSPDocumentSymbolAdapter: DocumentSymbolProvider {
 
     func documentSymbols(for request: DocumentRequest) async throws -> [DocumentSymbol] {
         let params: [String: Any] = [
-            "textDocument": ["uri": request.context.uri?.rawValue ?? ""],
+            "textDocument": ["uri": request.context.uri?.rawValue ?? ""]
         ]
         let result = try await session.requestDictionary(
             "textDocument/documentSymbol",
@@ -694,11 +749,11 @@ struct LSPDocumentSymbolAdapter: DocumentSymbolProvider {
         for dict in arr {
             guard let name = dict["name"] as? String else { continue }
             guard let rangeDict = dict["range"] as? [String: Any],
-                  let selDict = dict["selectionRange"] as? [String: Any],
-                  let rangeData = try? JSONSerialization.data(withJSONObject: rangeDict),
-                  let selData = try? JSONSerialization.data(withJSONObject: selDict),
-                  let range = try? JSONDecoder().decode(LSPRange.self, from: rangeData),
-                  let sel = try? JSONDecoder().decode(LSPRange.self, from: selData)
+                let selDict = dict["selectionRange"] as? [String: Any],
+                let rangeData = try? JSONSerialization.data(withJSONObject: rangeDict),
+                let selData = try? JSONSerialization.data(withJSONObject: selDict),
+                let range = try? JSONDecoder().decode(LSPRange.self, from: rangeData),
+                let sel = try? JSONDecoder().decode(LSPRange.self, from: selData)
             else { continue }
             let detail = dict["detail"] as? String
             var finalName = name
@@ -708,13 +763,14 @@ struct LSPDocumentSymbolAdapter: DocumentSymbolProvider {
                 finalName = t.0
                 finalDetail = t.1
             }
-            symbols.append(DocumentSymbol(
-                name: finalName,
-                detail: finalDetail,
-                kind: .function,
-                range: LSPConvert.textRange(range, in: text),
-                selectionRange: LSPConvert.textRange(sel, in: text)
-            ))
+            symbols.append(
+                DocumentSymbol(
+                    name: finalName,
+                    detail: finalDetail,
+                    kind: .function,
+                    range: LSPConvert.textRange(range, in: text),
+                    selectionRange: LSPConvert.textRange(sel, in: text)
+                ))
         }
         return symbols
     }
@@ -740,9 +796,9 @@ struct LSPWorkspaceSymbolAdapter: WorkspaceSymbolProvider {
         var symbols: [WorkspaceSymbol] = []
         for dict in arr {
             guard let name = dict["name"] as? String,
-                  let loc = dict["location"] as? [String: Any],
-                  let uri = loc["uri"] as? String,
-                  let range = LSPRequestHelpers.parseLSPRange(loc["range"])
+                let loc = dict["location"] as? [String: Any],
+                let uri = loc["uri"] as? String,
+                let range = LSPRequestHelpers.parseLSPRange(loc["range"])
             else { continue }
             let container = dict["containerName"] as? String
             var finalName = name
@@ -752,15 +808,18 @@ struct LSPWorkspaceSymbolAdapter: WorkspaceSymbolProvider {
                 finalName = t.0
                 finalContainer = t.2
             }
-            symbols.append(WorkspaceSymbol(
-                name: finalName,
-                kind: .function,
-                location: Location(
-                    uri: DocumentURI(rawValue: uri),
-                    range: LSPConvert.textRange(range, in: "")
-                ),
-                containerName: finalContainer
-            ))
+            let documentURI = DocumentURI(rawValue: uri)
+            let text = await session.text(for: documentURI)
+            symbols.append(
+                WorkspaceSymbol(
+                    name: finalName,
+                    kind: .function,
+                    location: Location(
+                        uri: documentURI,
+                        range: LSPConvert.textRange(range, in: text)
+                    ),
+                    containerName: finalContainer
+                ))
         }
         return symbols
     }
@@ -775,12 +834,14 @@ struct LSPSemanticTokensAdapter: SemanticTokensProvider {
 
     func semanticTokens(for request: DocumentRequest) async throws -> [SemanticTokenSpan] {
         let params: [String: Any] = [
-            "textDocument": ["uri": request.context.uri?.rawValue ?? ""],
+            "textDocument": ["uri": request.context.uri?.rawValue ?? ""]
         ]
-        guard let tokens: LSPSemanticTokens = try await session.requestOptionalJSON(
-            "textDocument/semanticTokens/full",
-            params: LSPJSONObject(params)
-        ) else {
+        guard
+            let tokens: LSPSemanticTokens = try await session.requestOptionalJSON(
+                "textDocument/semanticTokens/full",
+                params: LSPJSONObject(params)
+            )
+        else {
             return []
         }
         return decodeSemanticTokens(tokens.data, text: request.document.text)
@@ -878,7 +939,7 @@ struct LSPCodeActionAdapter: CodeActionProvider {
                     "message": d.message,
                     "severity": 2,
                 ]
-            },
+            }
         ]
         let result = try await session.requestDictionary(
             "textDocument/codeAction",
@@ -954,8 +1015,8 @@ struct LSPInlayHintAdapter: InlayHintProvider {
         let text = request.document.text
         return arr.compactMap { dict -> InlayHint? in
             guard let posDict = dict["position"] as? [String: Any],
-                  let line = posDict["line"] as? Int ?? (posDict["line"] as? NSNumber)?.intValue,
-                  let character = posDict["character"] as? Int ?? (posDict["character"] as? NSNumber)?.intValue
+                let line = posDict["line"] as? Int ?? (posDict["line"] as? NSNumber)?.intValue,
+                let character = posDict["character"] as? Int ?? (posDict["character"] as? NSNumber)?.intValue
             else { return nil }
             let label: String
             if let s = dict["label"] as? String {
@@ -988,7 +1049,7 @@ struct LSPFoldingRangeAdapter: FoldingRangeProvider {
 
     func foldingRanges(for request: DocumentRequest) async throws -> [FoldingRange] {
         let params: [String: Any] = [
-            "textDocument": ["uri": request.context.uri?.rawValue ?? ""],
+            "textDocument": ["uri": request.context.uri?.rawValue ?? ""]
         ]
         let result = try await session.requestDictionary(
             "textDocument/foldingRange",
@@ -997,7 +1058,7 @@ struct LSPFoldingRangeAdapter: FoldingRangeProvider {
         guard let arr = result["_value"] as? [[String: Any]] else { return [] }
         return arr.compactMap { dict -> FoldingRange? in
             guard let start = dict["startLine"] as? Int ?? (dict["startLine"] as? NSNumber)?.intValue,
-                  let end = dict["endLine"] as? Int ?? (dict["endLine"] as? NSNumber)?.intValue
+                let end = dict["endLine"] as? Int ?? (dict["endLine"] as? NSNumber)?.intValue
             else { return nil }
             return FoldingRange(
                 startLine: start,
@@ -1018,7 +1079,7 @@ struct LSPDocumentLinkAdapter: DocumentLinkProvider {
 
     func documentLinks(for request: DocumentRequest) async throws -> [DocumentLink] {
         let params: [String: Any] = [
-            "textDocument": ["uri": request.context.uri?.rawValue ?? ""],
+            "textDocument": ["uri": request.context.uri?.rawValue ?? ""]
         ]
         let result = try await session.requestDictionary(
             "textDocument/documentLink",
@@ -1042,7 +1103,7 @@ struct LSPDocumentColorAdapter: DocumentColorProvider {
 
     func documentColors(for request: DocumentRequest) async throws -> [ColorInformation] {
         let params: [String: Any] = [
-            "textDocument": ["uri": request.context.uri?.rawValue ?? ""],
+            "textDocument": ["uri": request.context.uri?.rawValue ?? ""]
         ]
         let result = try await session.requestDictionary(
             "textDocument/documentColor",
@@ -1052,10 +1113,10 @@ struct LSPDocumentColorAdapter: DocumentColorProvider {
         let text = request.document.text
         return arr.compactMap { dict -> ColorInformation? in
             guard let range = LSPRequestHelpers.parseLSPRange(dict["range"]),
-                  let color = dict["color"] as? [String: Any],
-                  let r = color["red"] as? Double,
-                  let g = color["green"] as? Double,
-                  let b = color["blue"] as? Double
+                let color = dict["color"] as? [String: Any],
+                let r = color["red"] as? Double,
+                let g = color["green"] as? Double,
+                let b = color["blue"] as? Double
             else { return nil }
             let a = color["alpha"] as? Double ?? 1
             return ColorInformation(
@@ -1124,9 +1185,9 @@ struct LSPTypeHierarchyAdapter: TypeHierarchyProvider {
         guard let arr = result["_value"] as? [[String: Any]] else { return [] }
         return arr.compactMap { dict -> HierarchyItem? in
             guard let name = dict["name"] as? String,
-                  let uri = dict["uri"] as? String,
-                  let range = LSPRequestHelpers.parseLSPRange(dict["range"]),
-                  let sel = LSPRequestHelpers.parseLSPRange(dict["selectionRange"])
+                let uri = dict["uri"] as? String,
+                let range = LSPRequestHelpers.parseLSPRange(dict["range"]),
+                let sel = LSPRequestHelpers.parseLSPRange(dict["selectionRange"])
             else { return nil }
             return HierarchyItem(
                 name: name,
@@ -1162,9 +1223,9 @@ struct LSPCallHierarchyAdapter: CallHierarchyProvider {
         let text = request.document.text
         return arr.compactMap { dict -> CallHierarchyItem? in
             guard let name = dict["name"] as? String,
-                  let uri = dict["uri"] as? String,
-                  let range = LSPRequestHelpers.parseLSPRange(dict["range"]),
-                  let sel = LSPRequestHelpers.parseLSPRange(dict["selectionRange"])
+                let uri = dict["uri"] as? String,
+                let range = LSPRequestHelpers.parseLSPRange(dict["range"]),
+                let sel = LSPRequestHelpers.parseLSPRange(dict["selectionRange"])
             else { return nil }
             return CallHierarchyItem(
                 name: name,
@@ -1190,8 +1251,8 @@ struct LSPExecuteCommandAdapter: ExecuteCommandProvider {
     func execute(_ request: ExecuteCommandRequest) async throws -> ExecuteCommandResult {
         var params: [String: Any] = ["command": request.command]
         if let json = request.argumentsJSON,
-           let data = json.data(using: .utf8),
-           let obj = try? JSONSerialization.jsonObject(with: data)
+            let data = json.data(using: .utf8),
+            let obj = try? JSONSerialization.jsonObject(with: data)
         {
             params["arguments"] = obj
         }

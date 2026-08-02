@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorLanguageServices
+import Foundation
 
 /// Adapts language-service ``FoldingRange`` values to the editor's line-scan ``LineFoldProvider``.
 @MainActor

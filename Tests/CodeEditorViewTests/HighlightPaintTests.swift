@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("Highlight paint")
 @MainActor
@@ -11,13 +11,13 @@ struct HighlightPaintTests {
 
     @Test func controllerAttributesAreContiguousForTokens() async throws {
         let source = """
-        static void Greet(string name) {
-            Console.WriteLine("hi");
-            if (string.IsNullOrEmpty(name)) {
-                return;
+            static void Greet(string name) {
+                Console.WriteLine("hi");
+                if (string.IsNullOrEmpty(name)) {
+                    return;
+                }
             }
-        }
-        """
+            """
         let controller = EditorController(text: source, language: .cSharp)
         // Allow async language load + highlight
         for _ in 0..<50 {

@@ -1,6 +1,7 @@
+import CodeEditorDocuments
 import Foundation
 import Testing
-import CodeEditorDocuments
+
 @testable import CodeEditorLanguageServices
 
 @Suite("DocumentSelector")
@@ -27,31 +28,36 @@ struct DocumentSelectorTests {
 
     @Test func matchesExtensionGlob() {
         let sel = DocumentSelector(pathGlobs: ["*.swift"])
-        #expect(sel.matches(
-            languageID: nil,
-            uri: DocumentURI(fileURL: URL(fileURLWithPath: "/tmp/Foo.swift"))
-        ))
-        #expect(!sel.matches(
-            languageID: nil,
-            uri: DocumentURI(fileURL: URL(fileURLWithPath: "/tmp/Foo.json"))
-        ))
+        #expect(
+            sel.matches(
+                languageID: nil,
+                uri: DocumentURI(fileURL: URL(fileURLWithPath: "/tmp/Foo.swift"))
+            ))
+        #expect(
+            !sel.matches(
+                languageID: nil,
+                uri: DocumentURI(fileURL: URL(fileURLWithPath: "/tmp/Foo.json"))
+            ))
     }
 
     @Test func matchesSuffixAndContains() {
         let suffix = DocumentSelector(pathGlobs: ["*/Package.swift"])
         // hasPrefix for trailing * and hasSuffix for leading *
         let prefix = DocumentSelector(pathGlobs: ["*/src/*"])
-        #expect(prefix.matches(
-            languageID: nil,
-            uri: DocumentURI(rawValue: "file:///app/src/main.swift")
-        ) || DocumentSelector(pathGlobs: ["*src*"]).matches(
-            languageID: nil,
-            uri: DocumentURI(rawValue: "file:///app/src/main.swift")
-        ))
-        #expect(DocumentSelector(pathGlobs: ["*Package.swift"]).matches(
-            languageID: nil,
-            uri: DocumentURI(fileURL: URL(fileURLWithPath: "/proj/Package.swift"))
-        ))
+        #expect(
+            prefix.matches(
+                languageID: nil,
+                uri: DocumentURI(rawValue: "file:///app/src/main.swift")
+            )
+                || DocumentSelector(pathGlobs: ["*src*"]).matches(
+                    languageID: nil,
+                    uri: DocumentURI(rawValue: "file:///app/src/main.swift")
+                ))
+        #expect(
+            DocumentSelector(pathGlobs: ["*Package.swift"]).matches(
+                languageID: nil,
+                uri: DocumentURI(fileURL: URL(fileURLWithPath: "/proj/Package.swift"))
+            ))
         _ = suffix
     }
 }

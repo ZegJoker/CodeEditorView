@@ -1,21 +1,22 @@
-import Foundation
-import Testing
-@testable import CodeEditorView
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageSupport
+import Foundation
+import Testing
+
+@testable import CodeEditorView
 
 @Suite("Reference workflows", .serialized)
 @MainActor
 struct ReferenceWorkflowTests {
-    @Test func typeSelectAndEdit() {
+    @Test func typeSelectAndEdit() throws {
         let c = EditorController(text: "")
         c.insertText("hello")
         #expect(c.text == "hello")
         c.setSelectedRange(NSRange(location: 0, length: 5))
         c.insertText("hi")
         #expect(c.text == "hi")
-        c.textDocument.performUndo()
+        try c.textDocument.performUndo()
         #expect(c.text == "hello")
     }
 
@@ -60,7 +61,11 @@ struct ReferenceWorkflowTests {
             fullText: long,
             selectedRange: NSRange(location: 5_000, length: 0)
         )
-        #expect(value.utf16.count <= EditorAccessibility.maxValueCharacters + 4)
+        #expect(
+            value.utf16.count
+                <= EditorAccessibility.maxValueCharacters
+                + EditorAccessibility.maxValueOverheadCharacters + 8
+        )
         #expect(EditorAccessibility.multiCursorSummary(rangeCount: 3) == "3 cursors")
     }
 

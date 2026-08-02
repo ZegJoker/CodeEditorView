@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Thread-safe registration of language service providers by capability.
 public actor LanguageServiceRegistry {

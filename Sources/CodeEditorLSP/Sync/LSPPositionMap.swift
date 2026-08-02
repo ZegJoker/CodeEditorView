@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Versioned UTF-16 line-start index for fast LSP position conversion.
 public struct LSPPositionMap: Sendable, Hashable {

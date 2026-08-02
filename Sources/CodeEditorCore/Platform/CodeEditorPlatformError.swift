@@ -4,7 +4,7 @@ public enum CodeEditorPlatformError: Error, Sendable, Equatable {
 
     public var localizedDescription: String {
         switch self {
-        case let .unsupportedCapability(kind, reason):
+        case .unsupportedCapability(let kind, let reason):
             return "Unsupported capability \(kind.rawValue): \(reason)"
         }
     }

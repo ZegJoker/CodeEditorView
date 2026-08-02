@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public actor SourceControlService {
     private var providers: [String: any SourceControlProvider] = [:]

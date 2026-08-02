@@ -1,7 +1,8 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
+import Testing
+
 @testable import CodeEditorWorkspace
 
 @Suite("Local workspace file system")
@@ -9,25 +10,25 @@ struct LocalFSTests {
     @Test func lazyChildrenOnlyListsWhenRequested() async throws {
         let root = try makeTempRoot(files: ["a.txt": "a", "sub/b.txt": "b"])
         defer { try? FileManager.default.removeItem(at: root) }
-        let fs = try LocalWorkspaceFileSystem(rootDirectories: [root])
-        #expect(fs.directoryListCount == 0)
-        let rootID = try #require(fs.roots.first).id
+        let fs = try await LocalWorkspaceFileSystem(rootDirectories: [root])
+        #expect(await fs.directoryListCount == 0)
+        let rootID = try #require(await fs.roots.first).id
         let rootItem = WorkspaceItemID(rootID: rootID, path: "")
         let kids = try await fs.children(of: rootItem)
-        #expect(fs.directoryListCount == 1)
+        #expect(await fs.directoryListCount == 1)
         #expect(kids.contains { $0.name == "a.txt" })
         #expect(kids.contains { $0.name == "sub" && $0.isDirectory })
         // Nested not listed until asked.
         let sub = try #require(kids.first { $0.name == "sub" })
         _ = try await fs.children(of: sub.id)
-        #expect(fs.directoryListCount == 2)
+        #expect(await fs.directoryListCount == 2)
     }
 
     @Test func createMoveCopyDelete() async throws {
         let root = try makeTempRoot(files: [:])
         defer { try? FileManager.default.removeItem(at: root) }
-        let fs = try LocalWorkspaceFileSystem(rootDirectories: [root])
-        let rootID = try #require(fs.roots.first).id
+        let fs = try await LocalWorkspaceFileSystem(rootDirectories: [root])
+        let rootID = try #require(await fs.roots.first).id
         let rootItem = WorkspaceItemID(rootID: rootID, path: "")
         let file = try await fs.createFile(in: rootItem, name: "x.txt", contents: Data("hi".utf8))
         #expect(file.name == "x.txt")
@@ -105,7 +106,8 @@ struct PreviewTabPolicyTests {
 
     @Test func pinPromotesPreview() {
         let pane = EditorPane()
-        let tab = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:x", preview: true)
+        let tab = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:x", preview: true)
         pane.pin(tab: tab.tab.id)
         #expect(pane.tabs[0].isPinned)
         #expect(!pane.tabs[0].isPreview)
@@ -218,9 +220,12 @@ struct PaneSplitAndTabsTests {
 
     @Test func moveTabReordersWithinPane() {
         let pane = EditorPane()
-        let a = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:a", preview: false)
-        let b = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:b", preview: false)
-        let c = pane.open(sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:c", preview: false)
+        let a = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:a", preview: false)
+        let b = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:b", preview: false)
+        let c = pane.open(
+            sessionID: EditorSessionID(), documentID: DocumentID(), documentURI: "inmemory:c", preview: false)
         #expect(pane.tabs.map(\.id) == [a.tab.id, b.tab.id, c.tab.id])
         pane.moveTab(from: 0, to: 2)
         #expect(pane.tabs.map(\.id) == [b.tab.id, c.tab.id, a.tab.id])
@@ -270,8 +275,10 @@ struct WorkspaceHeadlessTests {
         let root = try makeTempRoot(files: ["a.txt": "a", "b.txt": "b"])
         defer { try? FileManager.default.removeItem(at: root) }
         let workspace = try await Workspace.local(rootDirectories: [root])
-        _ = try await workspace.openInActivePane(uri: DocumentURI(fileURL: root.appendingPathComponent("a.txt")), preview: true)
-        _ = try await workspace.openInActivePane(uri: DocumentURI(fileURL: root.appendingPathComponent("b.txt")), preview: true)
+        _ = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: root.appendingPathComponent("a.txt")), preview: true)
+        _ = try await workspace.openInActivePane(
+            uri: DocumentURI(fileURL: root.appendingPathComponent("b.txt")), preview: true)
         let activeID = try #require(workspace.activePaneID)
         let pane = try #require(workspace.panes[activeID])
         #expect(pane.tabs.count == 1)
@@ -330,9 +337,9 @@ struct WorkspaceHeadlessTests {
         let uri = DocumentURI(fileURL: root.appendingPathComponent("r.txt"))
         let opened = try await workspace.openInActivePane(uri: uri)
         opened.session.selections = [CodeEditorCore.TextRange(location: 2, length: 0)]
-        let data = try WorkspaceRestoration.encode(workspace)
+        let data = try await WorkspaceRestoration.encode(workspace)
 
-        let fs = try LocalWorkspaceFileSystem(rootDirectories: [root])
+        let fs = try await LocalWorkspaceFileSystem(rootDirectories: [root])
         let state = try WorkspaceRestoration.decode(data)
         let restored = try await Workspace.restore(from: state, fileSystem: fs)
         #expect(restored.panes.count >= 1)

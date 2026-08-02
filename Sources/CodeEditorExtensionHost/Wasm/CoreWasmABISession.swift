@@ -1,8 +1,8 @@
-import Foundation
-import CodeEditorWasmEngine
+import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensionWasmGuest
-import CodeEditorExtensionAPI
+import CodeEditorWasmEngine
+import Foundation
 
 /// Host-side core-Wasm ABI v1 session: start/receive/poll/stop with CBOR envelopes.
 public actor CoreWasmABISession {
@@ -67,11 +67,12 @@ public actor CoreWasmABISession {
             linked = link
         }
 
-        let config = CBORCodec.encode(CBORValue.stringMap([
-            "schema": .text(ExtensionMethodCatalog.schemaHash),
-            "generation": .unsigned(generation),
-            "abi": .int(Int(CoreWasmABI.version)),
-        ]))
+        let config = CBORCodec.encode(
+            CBORValue.stringMap([
+                "schema": .text(ExtensionMethodCatalog.schemaHash),
+                "generation": .unsigned(generation),
+                "abi": .int(Int(CoreWasmABI.version)),
+            ]))
         let ptr = try await callI32(CoreWasmExport.alloc.rawValue, [.i32(Int32(config.count))])
         guard ptr != 0 else { throw WasmEngineError.trap("alloc failed") }
         try inst.memory.write(offset: Int(ptr), data: config)
@@ -122,7 +123,7 @@ public actor CoreWasmABISession {
             try await pushReceive(bytes)
             let deadline = Date().addingTimeInterval(Self.seconds(timeout))
             while Date() < deadline {
-                if pending[id] == nil { return } // resumed from handleGuestMessage
+                if pending[id] == nil { return }  // resumed from handleGuestMessage
                 try await pollOnce()
                 if pending[id] == nil { return }
                 try await Task.sleep(for: .milliseconds(1))
@@ -180,8 +181,7 @@ public actor CoreWasmABISession {
         switch env {
         case .response(let id, let result, let error, _):
             if let cont = pending.removeValue(forKey: id.rawValue) {
-                if let error { cont.resume(throwing: error) }
-                else { cont.resume(returning: result ?? Data()) }
+                if let error { cont.resume(throwing: error) } else { cont.resume(returning: result ?? Data()) }
             }
         default:
             break
@@ -230,7 +230,8 @@ final class MessageBox: @unchecked Sendable {
     init(limits: WasmResourceLimits) { self.limits = limits }
 
     func enqueue(_ data: Data) -> Int32 {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         if queue.count >= limits.maxHostSendQueueMessages || bytes + data.count > limits.maxHostSendQueueBytes {
             return CoreWasmABI.statusBackpressure
         }
@@ -240,7 +241,8 @@ final class MessageBox: @unchecked Sendable {
     }
 
     func dequeue() -> Data? {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard !queue.isEmpty else { return nil }
         let d = queue.removeFirst()
         bytes -= d.count
@@ -248,10 +250,14 @@ final class MessageBox: @unchecked Sendable {
     }
 
     func flagCancel() {
-        lock.lock(); hasCancel = true; lock.unlock()
+        lock.lock()
+        hasCancel = true
+        lock.unlock()
     }
 
     func log(_ s: String) {
-        lock.lock(); logs.append(s); lock.unlock()
+        lock.lock()
+        logs.append(s)
+        lock.unlock()
     }
 }

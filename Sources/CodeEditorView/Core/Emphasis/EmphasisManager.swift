@@ -45,7 +45,10 @@ public final class EmphasisManager {
     }
 
     public func emphases(overlapping range: NSRange) -> [Emphasis] {
-        items.filter { NSIntersectionRange($0.range, range).length > 0 || $0.range.length == 0 && NSLocationInRange($0.range.location, range) }
+        items.filter {
+            NSIntersectionRange($0.range, range).length > 0
+                || $0.range.length == 0 && NSLocationInRange($0.range.location, range)
+        }
     }
 
     private func scheduleFlashRemoval(id: UUID) {

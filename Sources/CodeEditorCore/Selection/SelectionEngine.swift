@@ -119,7 +119,12 @@ public final class SelectionEngine {
 
         let changes = working.map { TextChange(range: $0, replacement: string) }
         let transaction = EditTransaction(changes: changes, origin: .typing)
-        guard let applied = try? document.apply(transaction) else { return [] }
+        let applied: AppliedEditTransaction
+        do {
+            applied = try document.apply(transaction)
+        } catch {
+            return []
+        }
 
         var carets: [Int] = []
         carets.reserveCapacity(applied.textEdits.count)
@@ -191,7 +196,8 @@ public final class SelectionEngine {
 
         let preferred: CGFloat?
         if direction == .up || direction == .down {
-            preferred = selection.preferredX
+            preferred =
+                selection.preferredX
                 ?? layout.caretRect(atUTF16Offset: head, containerWidth: containerWidth)?.minX
         } else {
             preferred = layout.caretRect(atUTF16Offset: newHead, containerWidth: containerWidth)?.minX
@@ -224,7 +230,8 @@ public final class SelectionEngine {
             if end > 0, end <= document.length {
                 let prev = end - 1
                 if let ch = document.substring(from: NSRange(location: prev, length: 1)),
-                   ch == "\n" || ch == "\r" {
+                    ch == "\n" || ch == "\r"
+                {
                     return prev
                 }
             }
@@ -234,9 +241,11 @@ public final class SelectionEngine {
         case (.right, .document), (.down, .document):
             return document.length
         case (.up, .character), (.up, .word), (.up, .paragraph):
-            return verticalMove(from: head, direction: .up, preferredX: preferredX, containerWidth: containerWidth, layout: layout)
+            return verticalMove(
+                from: head, direction: .up, preferredX: preferredX, containerWidth: containerWidth, layout: layout)
         case (.down, .character), (.down, .word), (.down, .paragraph):
-            return verticalMove(from: head, direction: .down, preferredX: preferredX, containerWidth: containerWidth, layout: layout)
+            return verticalMove(
+                from: head, direction: .down, preferredX: preferredX, containerWidth: containerWidth, layout: layout)
         case (_, .paragraph):
             if direction == .left || direction == .up {
                 return document.findStartOfLine(containing: head)

@@ -8,6 +8,114 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 
 ## Unreleased
 
+### Changed — Audit remediation 2026-08 (pre-alpha reset)
+
+- **Phase 11 complete (QUAL-001…008 / §26 stabilization qualification):**
+  - `verify-stable.sh` **hard** master gate (no soft-skip): isolation, docs, defects, vacuous ban,
+    Xcode pin, API freeze, wasm fixture, a11y, security RC, full license map, perf budgets,
+    unchecked Sendable allowlist, real LSP/DAP probes, Core debug+release, full `swift test`,
+    ASan+TSan builds, fuzz/soak/mutation smokes, release evidence, source-archive rehearsal
+  - `Phase11QualificationTests` + `Phase11PerfSmokeTests` (measured `perf-smoke.json`)
+  - PERF budgets, unchecked Sendable inventory/allowlist, mutation smoke (isolated mutant kills Core)
+  - Tree-sitter `fullParse` awaits off-main engine (no fire-and-forget highlight race)
+  - MCP JSON-RPC register-before-send + early-response buffer (fixes full-suite hang; hang regression test)
+  - Hang-prone debug language-switch dump tests bounded/asserting
+  - README/CompatibilityProfile honesty (WasmKit real experimental; npm experimental)
+  - API freeze baselines refreshed; PHASE11-NOTES rewritten for qualification (not Wasm)
+- **Phase 10 complete (WB-010…016 / §10 Xcode-like workbench):**
+  - Navigator inventory (files/symbols/search/issues/tests/debug/SCM/breakpoints) with real models
+  - Scheme/run destination model; activity cancel; status line/col via LineIndex
+  - Open Quickly file/symbol/command modes + `path:line:col`; chrome command IDs
+  - FullWorkbench schemes/tasks/symbols/tests wiring; PHASE10-NOTES rewritten for workbench
+- **Phase 9 complete (WASM-001…009 / §16 real Swift-Wasm execution):**
+  - WasmKit executes submitted module bytes (factory ignored); dual abi_version proof
+  - Host imports read guest linear memory; wall-time + cancel interrupt for infinite poll
+  - Memory OOB/limit policy; hostile fixtures on WasmKit; simulation alias = LinkedGuest only
+  - Dual-run contract tests; `check-wasm-fixture.sh`; PHASE9-NOTES rewritten for Wasm
+- **Phase 8 complete (EXT-001…016 / §15 package-store-broker security):**
+  - ExtensionID corpus + `directoryKey` roots for broker storage/download/npm
+  - Sealed package digests; reject symlink/special/key material; publisher subject-swap deny
+  - Corrupt durable state store quarantine; recover re-verify
+  - TOML fail-closed unknown activation/capability/permission and api_version
+  - Storage overwrite-correct quota; durable settings; streaming download + redirect guard
+  - Host-owned npm materializer (local registry, no soft-stub); process path identity allowlist
+  - Multi-root worktree handles + read limits; `ExtensionSDKConformance` kit
+- **Phase 7 complete (TASK-001…005 / DAP-001…003 / SCM-001…002 / PROC-001 / WB-007 / §14, §18–19):**
+  - Shared `ProcessSupervisor` (`ProcessService`); cancel waits for process death before exclusive release
+  - Snapshot-accurate problem matchers; streaming/multiline chunk tests; no fabricated offsets
+  - Bounded output channel (single truncation marker); unresolved task variables fail closed
+  - `FakeTaskRunner` moved out of production product
+  - DAP register-before-send + ordered inbound; TCP `.connect` transport; lifecycle failed/terminated
+  - `runInTerminal` via Ghostty/`TerminalService` with untrusted deny
+  - Git porcelain fixtures; component path containment; trust fail-closed; per-op handles
+  - Workbench problems / SCM / debug models; `scripts/check-real-dap.sh`
+- **Phase 6 complete (LSP-001…009 / TS-001…002 / §12–13):**
+  - `LanguageDocumentActor` off-main Tree-sitter; generation-tagged highlights
+  - LSP register-before-send; ordered inbound; rapid-edit full-text matrix
+  - Position encoding negotiation; diagnostic store; dynamic registration tracking
+  - `scripts/check-real-lsp.sh` for real-server gate
+- **Phase 5 complete (TER-001…TER-008 / §20–21 Ghostty terminal):**
+  - `CGhosttyShim` + `ce_pty_spawn` (no Swift in child); `LocalPTYTransport` non-lossy
+  - `TerminalService` + `GhosttySessionController` + AppKit/SwiftUI surface
+  - Workbench terminal panel Ghostty-backed (not custom `TerminalScreen` dump)
+  - DAP `GhosttyRunInTerminalHandler`; security policy; a11y adapter
+  - Pin check script; fail-closed when `requireLinked` and Ghostty unlinked
+- **Phase 4 complete (WSP-001…WSP-007 / CMD-001…CMD-004 / §8–9) + TDD residual pass:**
+  - Dirty-close coordinator on all tab/pane/window paths; UI Close Pane → `requestClosePane`
+  - Workspace edit journal + fault matrix including `duringRollback` typed catastrophic
+  - `RelativeWorkspacePath` path security corpus; FS actor stress/cancel tests; FSEvents overflow
+  - Trust default restricted with capability gates; on-disk golden restoration fixtures
+  - `RegistrationBag` host lifetime; chord SM (prefix wait / timeout / Escape)
+  - `CommandContextSnapshot` from real focus/trust; typed notFound/disabled/unsupported
+- **Phase 3 complete (UI-001…UI-009 / TS-001 / §11):**
+  - MarkedTextSession provisional IME (no per-keystroke undo)
+  - AppKit replacementRange; grapheme delete; code subword navigation
+  - Drag move transaction; EditorTextServicesPolicy
+  - Tree-sitter runtime without nonisolated(unsafe) globals
+  - Layout max-width cache; virtualized a11y; signposts/harness
+- **Phase 2 complete (DOC-001…DOC-010 / §7.1–7.12):**
+  - Atomic multi-edit staging + overlap reject + property/fault tests
+  - Exact offset conversion (no EOF fallback); boundary policies
+  - Throwing undo/redo; dirty from `savedVersion`
+  - Conflict-safe save; streaming `readContentAndIdentity` (no full-file identity re-read)
+  - Encoding fidelity (reject `.other`); versioned recovery journal; bounded streams
+  - `DocumentStore` no longer `@unchecked Sendable`
+- **Withdrawn** Stable/1.0-Ready claims pending open P0/P1 closure (`Docs/Architecture/DEFECTS.md`)
+- DOC-001: atomic multi-edit with full prevalidation and staging buffer
+- DOC-002: throwing undo/redo; stack ownership only after successful apply; savedVersion tracking
+- DOC-003: exact UTF offset conversion; never map invalid interior offsets to EOF
+- EXT-001: validated `ExtensionID` grammar; filesystem uses `directoryKey` hash
+- EXT-002/003/004: package file-set equality, publisher binding, fail-closed install policy
+- WASM-001: WasmKit product documented as **simulation engine** (no bytecode execution)
+- IOS-001: removed duplicate UIKit accessibility overrides
+- LSP-001: debounced document sync uses full-text resync
+- CMD-001/002: retain contribution tokens; chord prefix ambiguity state machine
+- TASK-001: problem matchers keep line/column (no `line*200+col` fabrication)
+- SCM-001: Git rename porcelain dest/src; component-aware path containment
+- DAP-001: register DAP pending continuation before transport write
+- WSP-001: `requestCloseTab` + `WorkspaceCloseDelegate`; fail-closed without host decision
+- WSP-002: durable workspace-edit journal, byte-exact FS capture, rollback errors never swallowed
+- DOC-004: conflict-safe save (`expectedIdentity`, `SaveResult`); metadata-first bounded reads
+- PATH/TRUST/RESTORE: typed path security, trust defaults restricted, unknown schemas rejected
+- WB-001: real Output / Problems / Terminal utility panels (PTY-backed terminal UI)
+- TER-001 partial: non-lossy terminal stream; VT UTF-8 double-append fixed; OSC ST handling
+- CommandID validation + typed notFound/disabled results; chord ambiguity state machine
+- **Phase 1 complete (PKG-001 / CI-004 / CI-008 / CI-009 / CI-010 / CI-011):**
+  - Grammars committed in `Packages/CodeEditorGrammars` (deterministic path package); root has zero `Grammars/` targets
+  - Retired `filter-package-grammars.py` (fails if invoked)
+  - Hard `swift-format` + WASI SDK gates; `XCODE.pin` (26.4)
+  - Source-archive rehearsal script + CI job
+  - Real macOS/iOS example hosts with `xcodebuild test`
+  - Typed `LanguagePackError` for missing query resources
+- WASM-002: real WasmKit `parseWasm` / instantiate / export call path + RealWasmExecutionTests
+- TER-001: `CGhosttyShim` C ABI, `CodeEditorTerminalGhostty`, GHOSTTY.pin, workbench PTY terminal
+- LSP-003: `WorkspaceSnapshotResolver` for cross-file location text
+- TASK-002: rolling readiness window; background deps require `.ready`
+- TS-001: `TreeSitterLanguageRuntime` actor; off-main configuration load
+- UI-001: grapheme-aware UITextInput movement, selection rects, BiDi, marked subrange
+- CI-001: `scripts/generate-release-evidence.sh` emits commit/toolchain/test/defect evidence
+- Structured defect register: `Docs/Architecture/defects.json`
+
 ### Added
 
 - Phase 16: RC gates — API freeze baselines, product scorecards, DEFECTS register, S0–S4 conformance report
@@ -82,11 +190,15 @@ with stability tiers described in `Docs/Guides/API-STABILITY.md`.
 - `scripts/update-grammars.sh` copies sibling headers (e.g. Haskell `unicode.h`) and rewrites flattened `common/` includes for TypeScript/TSX/PHP/OCaml so a clean clone can build after grammar generation
 - Grammar updater checks out by immutable commit SHA when pinned
 
-## [1.0.0] — Ready
+## [1.0.0] — SUPERSEDED / NOT QUALIFIED
 
-First modular 1.0-ready release of the CodeEditorView package.
+> **Do not treat this entry as release readiness.** The 2026-08 deep audit found open P0/P1
+> defects (data integrity, security, fake Wasm path, terminal, CI honesty). The package remains
+> **pre-alpha** until `Docs/Architecture/DEFECTS.md` has no open P0/P1 and §26 gates pass.
 
-### Added
+Historical note: modular product split and ADRs 001–012 were landed under this label incorrectly.
+
+### Historical content (not a qualification claim)
 
 - Modular SwiftPM products for core, documents, commands, workspace, workbench, language services, extensions, extension host, LSP, search, tasks, terminal, and source control
 - Product isolation script (`scripts/check-product-isolation.sh`)
@@ -94,17 +206,6 @@ First modular 1.0-ready release of the CodeEditorView package.
 - Guides: product selection, migration, extension authoring, API audit, API stability
 - DocC landing pages for library products
 - Examples: SmallEditor, FullWorkbench (plus existing CodeEditorViewDemo)
-
-### Stability
-
-- **Stable:** Core, Documents, LanguageSupport, View, TreeSitter, language pack registration
-- **Evolving:** Commands, Workspace, Workbench, LanguageServices, Search, Tasks
-- **Experimental:** Extensions, ExtensionHost, LSP, Terminal, SourceControl
-
-### Notes
-
-- Tagging `1.0.0` on the remote remains a maintainer action; this entry documents readiness.
-- Experimental products may change in minor releases of 1.x.
 
 ## [0.x] — Pre-1.0 modularization
 

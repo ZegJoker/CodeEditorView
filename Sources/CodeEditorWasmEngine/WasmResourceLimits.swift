@@ -93,4 +93,6 @@ public enum WasmEngineError: Error, Sendable, Equatable {
     case logLimitExceeded
     case notSupported(String)
     case linkError(String)
+    case resourceLimit(String)
+    case instantiationFailed(String)
 }

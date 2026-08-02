@@ -119,8 +119,8 @@ package enum LineFragmentRenderer {
     }
 }
 
-private extension NSRange {
-    func intersection(_ other: NSRange) -> NSRange? {
+extension NSRange {
+    fileprivate func intersection(_ other: NSRange) -> NSRange? {
         let start = Swift.max(location, other.location)
         let end = Swift.min(location + length, other.location + other.length)
         guard end > start else { return nil }

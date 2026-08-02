@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// Routes language-service requests through the registry with merge policies,
 /// per-provider timeouts, cancellation, stale-revision checks, and failure isolation.
@@ -42,12 +42,14 @@ public struct LanguageServiceHost: Sendable {
         let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            guard let list = try await invoke(
-                id: provider.id,
-                requestVersion: request.document.version,
-                currentVersion: currentVersion,
-                work: { try await provider.completions(for: request) }
-            ) else { continue }
+            guard
+                let list = try await invoke(
+                    id: provider.id,
+                    requestVersion: request.document.version,
+                    currentVersion: currentVersion,
+                    work: { try await provider.completions(for: request) }
+                )
+            else { continue }
 
             var sanitized = list
             let cappedItems: [CompletionItem] = try LanguageServiceSanitize.capped(
@@ -90,12 +92,14 @@ public struct LanguageServiceHost: Sendable {
         let docLen = request.document.text.utf16.count
         for provider in providers {
             try Task.checkCancellation()
-            guard let maybeHover = try await invoke(
-                id: provider.id,
-                requestVersion: request.document.version,
-                currentVersion: currentVersion,
-                work: { try await provider.hover(for: request) }
-            ), let result = maybeHover else { continue }
+            guard
+                let maybeHover = try await invoke(
+                    id: provider.id,
+                    requestVersion: request.document.version,
+                    currentVersion: currentVersion,
+                    work: { try await provider.hover(for: request) }
+                ), let result = maybeHover
+            else { continue }
 
             let sections = result.sections.prefix(limits.maxHoverSections).map { section in
                 HoverSection(

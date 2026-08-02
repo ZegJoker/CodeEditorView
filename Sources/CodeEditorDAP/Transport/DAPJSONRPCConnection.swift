@@ -7,11 +7,18 @@ public actor DAPJSONRPCConnection {
         case string(String)
 
         init?(json: Any) {
-            if let i = json as? Int { self = .int(i); return }
-            if let n = json as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() {
-                self = .int(n.intValue); return
+            if let i = json as? Int {
+                self = .int(i)
+                return
             }
-            if let s = json as? String { self = .string(s); return }
+            if let n = json as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() {
+                self = .int(n.intValue)
+                return
+            }
+            if let s = json as? String {
+                self = .string(s)
+                return
+            }
             return nil
         }
 
@@ -102,30 +109,68 @@ public actor DAPJSONRPCConnection {
             message["arguments"] = arguments.dictionary
         }
         let body = try JSONSerialization.data(withJSONObject: message)
-        try await transport.send(DAPMessageFraming.encode(body))
+        let framed = DAPMessageFraming.encode(body)
 
+        // DAP-001 / §14.1: register-before-send on this actor (mirrors LSP-002).
         return try await withThrowingTaskGroup(of: Data.self) { group in
             group.addTask {
-                try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-                    Task { await self.registerPending(id: id, cont: cont) }
-                }
+                try await self.executeRegisteredRequest(id: id, framed: framed)
             }
             group.addTask {
                 try await Task.sleep(for: self.requestTimeout)
                 throw DAPError.timeout(method: command)
             }
-            let result = try await group.next()!
-            group.cancelAll()
-            return result
+            do {
+                let result = try await group.next()!
+                group.cancelAll()
+                return result
+            } catch {
+                group.cancelAll()
+                await self.failPending(id: id, error: error)
+                throw error
+            }
         }
     }
 
-    private func registerPending(id: RequestID, cont: CheckedContinuation<Data, Error>) {
+    /// Actor-isolated: install continuation, then write. Resume happens in dispatchMessage.
+    private func executeRegisteredRequest(id: RequestID, framed: Data) async throws -> Data {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            Task { await self.registerPendingThenSend(id: id, framed: framed, cont: cont) }
+        }
+    }
+
+    private func registerPendingThenSend(
+        id: RequestID,
+        framed: Data,
+        cont: CheckedContinuation<Data, Error>
+    ) async {
+        if closed {
+            cont.resume(throwing: DAPError.transportClosed)
+            return
+        }
         if let early = earlyResponses.removeValue(forKey: id) {
             cont.resume(returning: early)
             return
         }
+        // Register **before** any await on the wire (DAP-001).
         pending[id] = cont
+        do {
+            try await transport.send(framed)
+        } catch {
+            failPending(id: id, error: error)
+        }
+    }
+
+    private func failPending(id: RequestID, error: Error) {
+        if let cont = pending.removeValue(forKey: id) {
+            cont.resume(throwing: error)
+        }
+        earlyResponses.removeValue(forKey: id)
+    }
+
+    private func removePending(id: RequestID) {
+        pending.removeValue(forKey: id)
+        earlyResponses.removeValue(forKey: id)
     }
 
     public func close() async {
@@ -144,32 +189,45 @@ public actor DAPJSONRPCConnection {
         }
     }
 
+    /// Serial inbound chain (DAP-002 / §14.2) — preserve event order.
+    private var inboundChain: Task<Void, Never>?
+    private let maxEarlyResponses = 8
+    public private(set) var earlyResponseCount: Int = 0
+
     private func handleInbound(_ chunk: Data) {
         let messages = decoder.append(chunk)
         if let err = decoder.lastError {
             lastFramingError = err
             log.append(level: .warning, message: "framing: \(err)")
         }
-        for message in messages {
-            Task { await self.dispatchMessage(message) }
+        let previous = inboundChain
+        inboundChain = Task {
+            await previous?.value
+            for message in messages {
+                await self.dispatchMessage(message)
+            }
         }
     }
 
     private func dispatchMessage(_ body: Data) async {
         guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
-              let type = obj["type"] as? String
+            let type = obj["type"] as? String
         else { return }
 
         switch type {
         case "response":
-            let reqSeq = (obj["request_seq"] as? Int)
+            let reqSeq =
+                (obj["request_seq"] as? Int)
                 ?? (obj["request_seq"] as? NSNumber)?.intValue
             guard let reqSeq else { return }
             let id = RequestID.int(reqSeq)
             if let cont = pending.removeValue(forKey: id) {
                 cont.resume(returning: body)
             } else {
-                earlyResponses[id] = body
+                earlyResponseCount += 1
+                if earlyResponses.count < maxEarlyResponses {
+                    earlyResponses[id] = body
+                }
             }
         case "event":
             let event = obj["event"] as? String ?? ""

@@ -1,6 +1,6 @@
+import CodeEditorExtensionAPI
 import Foundation
 import Testing
-import CodeEditorExtensionAPI
 
 @Suite("Phase 12 language_servers TOML")
 struct LanguageServerTOMLTests {
@@ -10,22 +10,22 @@ struct LanguageServerTOMLTests {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         let toml = """
-        id = "com.example.ls"
-        name = "LS"
-        version = "1.0.0"
-        schema_version = 1
-        api_version = "1.0"
-        [activation]
-        events = ["startup"]
-        [language_servers.sourcekit-lsp]
-        name = "SourceKit"
-        languages = ["Swift"]
-        command = "sourcekit-lsp"
-        args = ["--log=info"]
-        download_url = "https://cdn.example/sk.zip"
-        download_digest = "abc"
-        weird_field = 1
-        """
+            id = "com.example.ls"
+            name = "LS"
+            version = "1.0.0"
+            schema_version = 1
+            api_version = "1.0"
+            [activation]
+            events = ["startup"]
+            [language_servers.sourcekit-lsp]
+            name = "SourceKit"
+            languages = ["Swift"]
+            command = "sourcekit-lsp"
+            args = ["--log=info"]
+            download_url = "https://cdn.example/sk.zip"
+            download_digest = "abc"
+            weird_field = 1
+            """
         try toml.write(to: dir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         let plan = try ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
         #expect(plan.languageServers.count == 1)

@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
 
 /// Cancellable workspace file index for Open Quickly / project views.
 public protocol WorkspaceIndexService: AnyObject, Sendable {
@@ -28,7 +28,7 @@ public final class FileTreeIndexService: WorkspaceIndexService, @unchecked Senda
     public func rebuild(workspace: Workspace) async throws -> [OpenQuicklyItem] {
         var collected: [OpenQuicklyItem] = []
         collected.reserveCapacity(min(1024, maxFiles))
-        for root in workspace.fileSystem.roots {
+        for root in await workspace.fileSystem.roots {
             try Task.checkCancellation()
             let rootItem = WorkspaceItemID(rootID: root.id, path: "")
             try await collect(

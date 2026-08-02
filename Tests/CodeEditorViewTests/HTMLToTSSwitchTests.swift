@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("HTML to TS switch")
 @MainActor
@@ -10,8 +10,8 @@ struct HTMLToTSSwitchTests {
     init() { CodeEditorLanguages.bootstrap() }
 
     @Test func htmlThenTypescriptDoesNotHang() async throws {
-        let html = DemoHTML
-        let ts = DemoTS
+        let html = demoHTML
+        let ts = demoTS
         let controller = EditorController(text: html, language: .html)
         let t0 = ContinuousClock.now
         for _ in 0..<30 {
@@ -68,28 +68,28 @@ struct HTMLToTSSwitchTests {
     }
 }
 
-private let DemoHTML = """
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>CodeEditorView</title>
-  </head>
-  <body>
-    <h1>Hello, world!</h1>
-    <!-- HTML demo -->
-  </body>
-</html>
-"""
+private let demoHTML = """
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <title>CodeEditorView</title>
+      </head>
+      <body>
+        <h1>Hello, world!</h1>
+        <!-- HTML demo -->
+      </body>
+    </html>
+    """
 
-private let DemoTS = """
-// TypeScript
-function greet(name: string): void {
-  console.log(`Hello, ${name}!`);
-  if (!name) {
-    return;
-  }
-}
-const message: string = "This is a deliberately long TypeScript string so soft-wrap can be verified when Wrap is enabled.";
-greet("world");
-"""
+private let demoTS = """
+    // TypeScript
+    function greet(name: string): void {
+      console.log(`Hello, ${name}!`);
+      if (!name) {
+        return;
+      }
+    }
+    const message: string = "This is a deliberately long TypeScript string so soft-wrap can be verified when Wrap is enabled.";
+    greet("world");
+    """

@@ -1,6 +1,6 @@
-import Foundation
-import CodeEditorLanguageSupport
 import CodeEditorCore
+import CodeEditorLanguageSupport
+import Foundation
 
 /// Orchestrates highlight providers, merges runs, and paints attributes into the document.
 @MainActor

@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("MainActor load stress")
 @MainActor
@@ -20,24 +20,26 @@ struct MainActorLoadStressTests {
         async let load: Void = provider.loadAsync(language: .yaml)
         // Immediately try to set text (bootstrap does this)
         try? await Task.sleep(for: .milliseconds(1))
-        await provider.setDocumentText("""
-        name: CodeEditorView
-        version: 1
-        features:
-          - gutter
-          - highlight
-        enabled: true
-        """)
+        await provider.setDocumentText(
+            """
+            name: CodeEditorView
+            version: 1
+            features:
+              - gutter
+              - highlight
+            enabled: true
+            """)
         await load
         // And again after load (languageConfig applyLanguageID bootstrap)
-        await provider.setDocumentText("""
-        name: CodeEditorView
-        version: 1
-        features:
-          - gutter
-          - highlight
-        enabled: true
-        """)
+        await provider.setDocumentText(
+            """
+            name: CodeEditorView
+            version: 1
+            features:
+              - gutter
+              - highlight
+            enabled: true
+            """)
         let elapsed = ContinuousClock.now - t0
         print("concurrent elapsed=\(elapsed)")
         #expect(elapsed < .seconds(5))

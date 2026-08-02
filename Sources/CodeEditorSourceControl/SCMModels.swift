@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 public enum SCMState: String, Sendable, Hashable, Codable, CaseIterable {
     case unmodified
@@ -224,27 +224,33 @@ public protocol SourceControlProvider: Sendable {
 public protocol SourceControlProviderDefaults {}
 
 // No silent no-ops: defaults throw unsupported.
-public extension SourceControlProvider {
-    func tags() async throws -> [SCMTag] { throw SCMError.unsupported("tags") }
-    func remotes() async throws -> [SCMRemote] { throw SCMError.unsupported("remotes") }
-    func log(limit: Int) async throws -> [SCMCommit] { throw SCMError.unsupported("log") }
-    func blame(uri: DocumentURI) async throws -> [SCMBlameLine] { throw SCMError.unsupported("blame") }
-    func diff(uri: DocumentURI) async throws -> SCMDiff { throw SCMError.unsupported("diff") }
-    func stage(uris: [DocumentURI]) async throws { throw SCMError.unsupported("stage") }
-    func unstage(uris: [DocumentURI]) async throws { throw SCMError.unsupported("unstage") }
-    func discard(uris: [DocumentURI]) async throws { throw SCMError.unsupported("discard") }
-    func stageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws { throw SCMError.unsupported("stageHunk") }
-    func unstageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws { throw SCMError.unsupported("unstageHunk") }
-    func discardHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws { throw SCMError.unsupported("discardHunk") }
-    func commit(message: String) async throws { throw SCMError.unsupported("commit") }
-    func checkout(branch: String) async throws { throw SCMError.unsupported("checkout") }
-    func createBranch(_ name: String) async throws { throw SCMError.unsupported("createBranch") }
-    func deleteBranch(_ name: String) async throws { throw SCMError.unsupported("deleteBranch") }
-    func fetch(remote: String?) async throws { throw SCMError.unsupported("fetch") }
-    func pull(remote: String?, branch: String?) async throws { throw SCMError.unsupported("pull") }
-    func push(remote: String?, branch: String?) async throws { throw SCMError.unsupported("push") }
-    func resolveConflict(uri: DocumentURI, side: SCMConflictSide) async throws {
+extension SourceControlProvider {
+    public func tags() async throws -> [SCMTag] { throw SCMError.unsupported("tags") }
+    public func remotes() async throws -> [SCMRemote] { throw SCMError.unsupported("remotes") }
+    public func log(limit: Int) async throws -> [SCMCommit] { throw SCMError.unsupported("log") }
+    public func blame(uri: DocumentURI) async throws -> [SCMBlameLine] { throw SCMError.unsupported("blame") }
+    public func diff(uri: DocumentURI) async throws -> SCMDiff { throw SCMError.unsupported("diff") }
+    public func stage(uris: [DocumentURI]) async throws { throw SCMError.unsupported("stage") }
+    public func unstage(uris: [DocumentURI]) async throws { throw SCMError.unsupported("unstage") }
+    public func discard(uris: [DocumentURI]) async throws { throw SCMError.unsupported("discard") }
+    public func stageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws {
+        throw SCMError.unsupported("stageHunk")
+    }
+    public func unstageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws {
+        throw SCMError.unsupported("unstageHunk")
+    }
+    public func discardHunk(_ hunk: SCMDiffHunk, uri: DocumentURI) async throws {
+        throw SCMError.unsupported("discardHunk")
+    }
+    public func commit(message: String) async throws { throw SCMError.unsupported("commit") }
+    public func checkout(branch: String) async throws { throw SCMError.unsupported("checkout") }
+    public func createBranch(_ name: String) async throws { throw SCMError.unsupported("createBranch") }
+    public func deleteBranch(_ name: String) async throws { throw SCMError.unsupported("deleteBranch") }
+    public func fetch(remote: String?) async throws { throw SCMError.unsupported("fetch") }
+    public func pull(remote: String?, branch: String?) async throws { throw SCMError.unsupported("pull") }
+    public func push(remote: String?, branch: String?) async throws { throw SCMError.unsupported("push") }
+    public func resolveConflict(uri: DocumentURI, side: SCMConflictSide) async throws {
         throw SCMError.unsupported("resolveConflict")
     }
-    func cancel() async {}
+    public func cancel() async {}
 }

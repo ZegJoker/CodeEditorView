@@ -6,7 +6,7 @@ import CodeEditorLanguageSwift
 @main
 struct SmallEditorApp: App {
     init() {
-        CodeEditorLanguageSwift.register()
+        try? CodeEditorLanguageSwift.register()
     }
 
     var body: some Scene {

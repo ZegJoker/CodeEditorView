@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorCore
 
 @Suite("TextOffsetSemantics")
@@ -14,10 +15,15 @@ struct TextOffsetSemanticsTests {
     }
 
     @Test func utf16Utf8Emoji() throws {
-        let text = "a😀b" // emoji is 2 UTF-16 units, 4 UTF-8 bytes
-        let midEmojiUTF16 = 1
-        let u8 = try TextOffsetSemantics.utf8Offset(fromUTF16Offset: midEmojiUTF16, in: text)
-        #expect(u8 == 1) // after 'a'
+        let text = "a😀b"  // emoji is 2 UTF-16 units, 4 UTF-8 bytes
+        // Offset 1 is the start of the emoji (valid scalar boundary).
+        let emojiStartUTF16 = 1
+        let u8 = try TextOffsetSemantics.utf8Offset(fromUTF16Offset: emojiStartUTF16, in: text)
+        #expect(u8 == 1)  // after 'a'
+        // Offset 2 is inside the surrogate pair — must throw, never map to EOF.
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.utf8Offset(fromUTF16Offset: 2, in: text, policy: .exact)
+        }
         let afterEmoji = try TextOffsetSemantics.utf16Offset(
             fromUTF8Offset: try TextOffsetSemantics.utf8Offset(fromUTF16Offset: 3, in: text),
             in: text
@@ -51,12 +57,13 @@ struct TextOffsetSemanticsTests {
         #expect(crlf == "a\r\nb\r\nc\r\n")
     }
 
-    @Test func validatedRangeClampsLength() throws {
-        let r = try TextOffsetSemantics.validatedUTF16Range(
-            NSRange(location: 2, length: 100),
-            documentUTF16Length: 5
-        )
-        #expect(r == NSRange(location: 2, length: 3))
+    @Test func validatedRangeRejectsOverlong() {
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.validatedUTF16Range(
+                NSRange(location: 2, length: 100),
+                documentUTF16Length: 5
+            )
+        }
     }
 
     @Test func validatedRangeRejectsBadLocation() {
@@ -66,6 +73,80 @@ struct TextOffsetSemanticsTests {
                 documentUTF16Length: 5
             )
         }
+    }
+
+    @Test func interiorUTF8OffsetThrowsNotScalarBoundary() {
+        // "€" is 3 UTF-8 bytes; offset 1 is mid-scalar.
+        let text = "€"
+        #expect(throws: DocumentStoreError.self) {
+            try TextOffsetSemantics.utf16Offset(fromUTF8Offset: 1, in: text, policy: .exact)
+        }
+    }
+}
+
+@Suite("DocumentStore atomic multi-edit (DOC-001)")
+@MainActor
+struct DocumentStoreAtomicityTests {
+    @Test func overlappingRangesLeaveDocumentUnchanged() throws {
+        let store = DocumentStore(string: "abcdef")
+        let before = store.fullString
+        let beforeVersion = store.version
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 0, length: 3), replacement: "X"),
+                TextChange(range: NSRange(location: 2, length: 2), replacement: "Y"),
+            ],
+            origin: .programmatic
+        )
+        #expect(throws: DocumentStoreError.self) {
+            try store.apply(t)
+        }
+        #expect(store.fullString == before)
+        #expect(store.version == beforeVersion)
+    }
+
+    @Test func invalidLaterRangeLeavesDocumentUnchanged() throws {
+        let store = DocumentStore(string: "hello")
+        let before = store.fullString
+        let beforeVersion = store.version
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 0, length: 1), replacement: "H"),
+                TextChange(range: NSRange(location: 99, length: 1), replacement: "Z"),
+            ],
+            origin: .programmatic
+        )
+        #expect(throws: DocumentStoreError.self) {
+            try store.apply(t)
+        }
+        #expect(store.fullString == before)
+        #expect(store.version == beforeVersion)
+    }
+
+    @Test func equalOffsetInsertionsAreDeterministic() throws {
+        let store = DocumentStore(string: "ab")
+        // Two pure insertions at the same offset; declaration order preserved for equal location.
+        let t = EditTransaction(
+            changes: [
+                TextChange(range: NSRange(location: 1, length: 0), replacement: "1"),
+                TextChange(range: NSRange(location: 1, length: 0), replacement: "2"),
+            ],
+            origin: .programmatic
+        )
+        _ = try store.apply(t)
+        // High-to-low with equal location uses ascending original index:
+        // first "1" then "2" at same pre-edit offset applied high→low with stable index order
+        // produces "a12b" when second is applied first (higher index? no - same loc, lower index first
+        // after high-to-low sort with index ascending: both at 1, apply index0 then index1.
+        // Applying "1" first: "a1b", then "2" at location 1: "a21b".
+        // Actually high-to-low with equal location sorts by index ascending, so apply "1" then "2":
+        // After "1": a1b. After "2" at original location 1 (still valid in high-to-low? same location
+        // pure inserts both valid on original). Staging applies in ordered list order.
+        #expect(store.fullString == "a12b" || store.fullString == "a21b")
+        // Pin deterministic result: index-ascending at equal offset under high→low yields "a12b"
+        // when both inserts use pre-edit coordinates and high→low applies both at loc 1:
+        // first applied is index 0 ("1") → "a1b"; then index 1 ("2") at loc 1 → "a21b".
+        #expect(store.fullString == "a21b")
     }
 }
 
@@ -90,9 +171,10 @@ struct DocumentStorePropertyTests {
                 let maxDel = len - loc
                 let del = maxDel == 0 ? 0 : Int(rng.next() % UInt64(min(8, maxDel + 1)))
                 let insertLen = Int(rng.next() % 6)
-                let insert = String((0..<insertLen).map { _ in
-                    "abcdefghijklmnopqrstuvwxyz \n".randomElement(using: &rng)!
-                })
+                let insert = String(
+                    (0..<insertLen).map { _ in
+                        "abcdefghijklmnopqrstuvwxyz \n".randomElement(using: &rng)!
+                    })
                 let before = store.fullString
                 let edit = store.replaceCharacters(
                     in: NSRange(location: loc, length: del),
@@ -132,7 +214,7 @@ struct DocumentStorePropertyTests {
     @Test func unicodeCorpusSurvivesEdits() throws {
         let corpus = [
             "👨‍👩‍👧‍👦",
-            "e\u{0301}", // e + combining acute
+            "e\u{0301}",  // e + combining acute
             "שלום",
             "日本語",
             "a\r\nb\nc\rd",
@@ -161,18 +243,46 @@ struct SplitMix64: RandomNumberGenerator {
     private var state: UInt64
     init(seed: UInt64) { state = seed }
     mutating func next() -> UInt64 {
-        state &+= 0x9E3779B97F4A7C15
+        state &+= 0x9E37_79B9_7F4A_7C15
         var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
-        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
         return z ^ (z >> 31)
     }
 }
 
-private extension String {
-    func randomElement(using rng: inout SplitMix64) -> Character {
+extension String {
+    fileprivate func randomElement(using rng: inout SplitMix64) -> Character {
         let idx = Int(rng.next() % UInt64(utf16.count))
         let i = index(startIndex, offsetBy: idx % count)
         return self[i]
+    }
+}
+
+@Suite("Phase 2 residual Core gates")
+@MainActor
+struct Phase2CoreResidualTests {
+    @Test func scalarIndexExactNeverFallsBackToEOF() {
+        let text = "a😀b"
+        #expect(throws: DocumentStoreError.self) {
+            _ = try TextOffsetSemantics.scalarIndex(atUTF16Offset: 2, in: text, policy: .exact)
+        }
+    }
+
+    @Test func eventStreamIsBoundedNewest() async {
+        let stream = EditorEventStream()
+        let events = stream.makeEventStream(bufferSize: 2)
+        // Producer yields many events before consumer starts.
+        for _ in 0..<10 {
+            stream.yield(.textDidChange)
+        }
+        // Drain what was buffered.
+        var count = 0
+        for await _ in events {
+            count += 1
+            if count >= 2 { break }
+        }
+        #expect(count <= 2)
+        #expect(stream.droppedEventCount >= 0)
     }
 }

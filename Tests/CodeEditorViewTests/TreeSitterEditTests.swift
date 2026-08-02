@@ -1,8 +1,8 @@
-import Testing
-import Foundation
-@testable import CodeEditorView
 import CodeEditorLanguages
+import Foundation
+import Testing
 
+@testable import CodeEditorView
 
 @Suite("TreeSitter incremental edits")
 @MainActor
@@ -15,13 +15,13 @@ struct TreeSitterEditTests {
         #expect(p0.row == 0)
         #expect(p0.column == 0)
 
-        let pNL = TreeSitterEdit.point(atUTF16Offset: 3, in: text) // start of "c"
+        let pNL = TreeSitterEdit.point(atUTF16Offset: 3, in: text)  // start of "c"
         #expect(pNL.row == 1)
         #expect(pNL.column == 0)
 
         let pEnd = TreeSitterEdit.point(atUTF16Offset: 4, in: text)
         #expect(pEnd.row == 1)
-        #expect(pEnd.column == 2) // one UTF-16 unit * 2 bytes
+        #expect(pEnd.column == 2)  // one UTF-16 unit * 2 bytes
     }
 
     @Test func inputEditBytesUseUTF16() {

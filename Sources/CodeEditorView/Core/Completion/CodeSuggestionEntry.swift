@@ -38,15 +38,15 @@ public enum SuggestionImageColorToken: String, Sendable, Hashable, Codable {
 }
 
 /// Default convenience values for simple completion entries.
-public extension CodeSuggestionEntry {
-    var detail: String? { nil }
-    var documentation: String? { nil }
-    var pathComponents: [String]? { nil }
-    var targetPosition: CursorPosition? { nil }
-    var sourcePreview: String? { nil }
-    var systemImage: String { "character.cursor.ibeam" }
-    var imageColorToken: SuggestionImageColorToken { .gray }
-    var deprecated: Bool { false }
+extension CodeSuggestionEntry {
+    public var detail: String? { nil }
+    public var documentation: String? { nil }
+    public var pathComponents: [String]? { nil }
+    public var targetPosition: CursorPosition? { nil }
+    public var sourcePreview: String? { nil }
+    public var systemImage: String { "character.cursor.ibeam" }
+    public var imageColorToken: SuggestionImageColorToken { .gray }
+    public var deprecated: Bool { false }
 }
 
 /// Simple concrete entry for demos and tests.

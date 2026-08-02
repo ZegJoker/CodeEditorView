@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Line annotation store")
@@ -54,9 +55,9 @@ struct LineAnnotationStoreTests {
         // Insert 5 chars at location 5 (length 0 insert).
         store.documentDidEdit(editedRange: NSRange(location: 5, length: 0), delta: 5)
         let ranges = store.items.compactMap(\.range).sorted { $0.location < $1.location }
-        #expect(ranges.contains { $0.location == 1 && $0.length == 2 }) // before unchanged
-        #expect(ranges.contains { $0.location == 15 && $0.length == 3 }) // after shifted
-        #expect(!store.items.contains { $0.message == "overlap" }) // overlapped dropped
+        #expect(ranges.contains { $0.location == 1 && $0.length == 2 })  // before unchanged
+        #expect(ranges.contains { $0.location == 15 && $0.length == 3 })  // after shifted
+        #expect(!store.items.contains { $0.message == "overlap" })  // overlapped dropped
     }
 
     @Test func clampLines() {
@@ -107,7 +108,7 @@ struct LineAnnotationLayoutTests {
                 severity: .error,
                 message: "unused",
                 range: NSRange(location: 4, length: 5)
-            ),
+            )
         ])
         let diags = controller.emphasis.items.filter { $0.group == EmphasisGroup.diagnostics }
         #expect(diags.count == 1)

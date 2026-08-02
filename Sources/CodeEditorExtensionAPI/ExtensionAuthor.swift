@@ -19,8 +19,8 @@ public protocol CodeEditorExtension: Sendable {
     func deactivate() async
 }
 
-public extension CodeEditorExtension {
-    func deactivate() async {}
+extension CodeEditorExtension {
+    public func deactivate() async {}
 }
 
 /// Preferred alias for authors.

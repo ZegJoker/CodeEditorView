@@ -31,7 +31,9 @@ public struct InProcessCoreWasmEngine: CodeEditorWasmEngine {
         let kind: GuestKind
         if module == WasmModuleBuilder.infiniteLoopModule() {
             kind = .infiniteLoop
-        } else if module == WasmModuleBuilder.missingExportModule() || module == WasmModuleBuilder.abiVersionOnlyModule() {
+        } else if module == WasmModuleBuilder.missingExportModule()
+            || module == WasmModuleBuilder.abiVersionOnlyModule()
+        {
             throw WasmEngineError.missingExport(CoreWasmExport.poll.rawValue)
         } else if module == WasmModuleBuilder.malformedModule() {
             throw WasmEngineError.invalidModule("malformed")
@@ -68,12 +70,14 @@ final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
     var memory: any WasmMemoryView { memoryView }
 
     var meters: WasmMeters {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _meters
     }
 
     var isInterrupted: Bool {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return interrupted
     }
 
@@ -105,7 +109,10 @@ final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
             return [.i32(guest.receive(args[0].i32 ?? 0, args[1].i32 ?? 0))]
         case CoreWasmExport.poll.rawValue:
             if kind == .infiniteLoop {
-                let ticks = withLock { _meters.pollTicks += 1; return _meters.pollTicks }
+                let ticks = withLock {
+                    _meters.pollTicks += 1
+                    return _meters.pollTicks
+                }
                 if ticks > limits.maxPollTicks {
                     interrupt()
                     throw WasmEngineError.interrupted
@@ -146,29 +153,33 @@ final class InProcessMemory: WasmMemoryView, @unchecked Sendable {
     private var storage: Data
     private let lock = NSLock()
     init(size: Int) { self.storage = Data(count: max(65536, size)) }
-    var size: Int { lock.lock(); defer { lock.unlock() }; return storage.count }
+    var size: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage.count
+    }
     func read(offset: Int, length: Int) throws -> Data {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard offset >= 0, length >= 0, offset + length <= storage.count else {
             throw WasmEngineError.trap("oob read")
         }
         return storage.subdata(in: offset..<(offset + length))
     }
     func write(offset: Int, data: Data) throws {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard offset >= 0, offset + data.count <= storage.count else {
             throw WasmEngineError.trap("oob write")
         }
         storage.replaceSubrange(offset..<(offset + data.count), with: data)
     }
     func grow(pages: Int) throws -> Int {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage.count / 65536
         storage.append(Data(count: pages * 65536))
         return old
-    }
-    func rawBuffer() -> UnsafeMutableRawBufferPointer {
-        storage.withUnsafeMutableBytes { $0 }
     }
 }
 
@@ -199,7 +210,10 @@ final class WasmGuestBridge: @unchecked Sendable {
         return Int32(p)
     }
 
-    func dealloc(_ p: Int32, _ l: Int32) { _ = p; _ = l }
+    func dealloc(_ p: Int32, _ l: Int32) {
+        _ = p
+        _ = l
+    }
 
     func start(_ ptr: Int32, _ len: Int32) -> Int32 {
         guard let memory, let data = try? memory.read(offset: Int(ptr), length: Int(len)) else {
@@ -216,7 +230,8 @@ final class WasmGuestBridge: @unchecked Sendable {
 
     func receive(_ ptr: Int32, _ len: Int32) -> Int32 {
         guard started, !stopped, let memory,
-              let data = try? memory.read(offset: Int(ptr), length: Int(len)) else { return 1 }
+            let data = try? memory.read(offset: Int(ptr), length: Int(len))
+        else { return 1 }
         inbound.append(data)
         return 0
     }

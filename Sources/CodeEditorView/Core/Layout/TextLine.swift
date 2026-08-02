@@ -1,6 +1,6 @@
+import CodeEditorCore
 import CoreGraphics
 import Foundation
-import CodeEditorCore
 
 /// A logical document line with cached typeset fragments.
 public final class TextLine: LinePayload, Identifiable {

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageSupport
+import Foundation
 
 /// Deterministic multi-capability mock for tests (no LSP).
 ///
@@ -355,9 +355,9 @@ extension MockLanguageSuite: PullDiagnosticsProvider {
 
 // MARK: - Fixtures
 
-public extension MockLanguageSuite {
+extension MockLanguageSuite {
     /// A small multi-capability fixture for smoke tests.
-    static func sample(
+    public static func sample(
         uri: DocumentURI = DocumentURI(rawValue: "inmemory:sample"),
         priority: Int = 10
     ) -> MockLanguageSuite {
@@ -378,19 +378,19 @@ public extension MockLanguageSuite {
                 CompletionItem(label: "world", kind: .variable, insertText: "world"),
             ],
             hover: Hover(sections: [
-                HoverSection(content: .markdown("**hello** sample"), range: range),
+                HoverSection(content: .markdown("**hello** sample"), range: range)
             ]),
             definitions: [
-                LocationLink(targetURI: uri, targetRange: range, targetSelectionRange: range),
+                LocationLink(targetURI: uri, targetRange: range, targetSelectionRange: range)
             ],
             declarations: [
-                LocationLink(targetURI: uri, targetRange: range),
+                LocationLink(targetURI: uri, targetRange: range)
             ],
             implementations: [
-                LocationLink(targetURI: uri, targetRange: range),
+                LocationLink(targetURI: uri, targetRange: range)
             ],
             references: [
-                Location(uri: uri, range: range),
+                Location(uri: uri, range: range)
             ],
             diagnostics: [
                 LanguageDiagnostic(
@@ -399,7 +399,7 @@ public extension MockLanguageSuite {
                     message: "sample warning",
                     code: "S001",
                     source: "mock"
-                ),
+                )
             ],
             documentSymbols: [
                 DocumentSymbol(
@@ -407,56 +407,58 @@ public extension MockLanguageSuite {
                     kind: .function,
                     range: range,
                     selectionRange: range
-                ),
+                )
             ],
             workspaceSymbols: [
                 WorkspaceSymbol(
                     name: "hello",
                     kind: .function,
                     location: Location(uri: uri, range: range)
-                ),
+                )
             ],
             formatEdits: [
-                TextEditPlan(range: range, newText: "hi "),
+                TextEditPlan(range: range, newText: "hi ")
             ],
             renamePlan: WorkspaceEditPlan(documentEdits: [
-                DocumentEditPlan(uri: uri, edits: [
-                    TextEditPlan(range: range, newText: "renamed"),
-                ]),
+                DocumentEditPlan(
+                    uri: uri,
+                    edits: [
+                        TextEditPlan(range: range, newText: "renamed")
+                    ])
             ]),
             codeActions: [
-                CodeAction(title: "Fix sample", kind: "quickfix", isPreferred: true),
+                CodeAction(title: "Fix sample", kind: "quickfix", isPreferred: true)
             ],
             semanticTokens: [
-                SemanticTokenSpan(range: range, capture: .function, rawType: "function"),
+                SemanticTokenSpan(range: range, capture: .function, rawType: "function")
             ],
             inlayHints: [
-                InlayHint(position: TextPosition(utf16Offset: 3), label: ": Int", kind: .type),
+                InlayHint(position: TextPosition(utf16Offset: 3), label: ": Int", kind: .type)
             ],
             foldingRanges: [
-                FoldingRange(startLine: 0, endLine: 2, kind: "region"),
+                FoldingRange(startLine: 0, endLine: 2, kind: "region")
             ],
             signatureHelp: SignatureHelp(
                 signatures: [
                     SignatureInformation(
                         label: "hello(name: String)",
                         parameters: [ParameterInformation(label: "name: String")]
-                    ),
+                    )
                 ],
                 activeSignature: 0,
                 activeParameter: 0
             ),
             documentLinks: [
-                DocumentLink(range: range, target: uri),
+                DocumentLink(range: range, target: uri)
             ],
             documentColors: [
                 ColorInformation(
                     range: range,
                     color: ColorValue(red: 1, green: 0, blue: 0, alpha: 1)
-                ),
+                )
             ],
             documentHighlights: [
-                DocumentHighlight(range: range, kind: .write),
+                DocumentHighlight(range: range, kind: .write)
             ],
             typeHierarchy: [
                 HierarchyItem(
@@ -465,7 +467,7 @@ public extension MockLanguageSuite {
                     uri: uri,
                     range: range,
                     selectionRange: range
-                ),
+                )
             ],
             callHierarchy: [
                 CallHierarchyItem(
@@ -474,7 +476,7 @@ public extension MockLanguageSuite {
                     uri: uri,
                     range: range,
                     selectionRange: range
-                ),
+                )
             ],
             executeCommandResult: ExecuteCommandResult(message: "ok"),
             supportedCommands: ["mock.sample"],
@@ -488,7 +490,7 @@ public extension MockLanguageSuite {
                         message: "sample warning",
                         code: "S001",
                         source: "mock"
-                    ),
+                    )
                 ]
             )
         )

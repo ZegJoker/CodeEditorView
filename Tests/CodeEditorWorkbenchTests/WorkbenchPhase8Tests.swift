@@ -1,9 +1,10 @@
-import Foundation
-import SwiftUI
-import Testing
 import CodeEditorCommands
 import CodeEditorDocuments
 import CodeEditorWorkspace
+import Foundation
+import SwiftUI
+import Testing
+
 @testable import CodeEditorWorkbench
 
 @Suite("Workbench lifecycle and windows")
@@ -51,7 +52,7 @@ struct WorkbenchLifecycleTests {
         #expect(decoded.windows.contains(where: { $0.isUtilityVisible }))
 
         let model2 = try await makeModel()
-        model2.applyRestoration(decoded)
+        try model2.applyRestoration(decoded)
         #expect(model2.isUtilityVisible)
         #expect(model2.activeUtilityID == "workbench.utility.terminal")
         #expect(model2.utilityHeight == 220)
@@ -92,10 +93,10 @@ struct WorkbenchFocusCommandTests {
         let workspace = try await Workspace.local(rootDirectories: [root])
         let model = WorkbenchModel(workspace: workspace)
         model.focus(.navigator)
-        #expect(!model.isCommandEnabled(CommandID(rawValue: "codeeditor.edit.undo")))
+        #expect(!model.isCommandEnabled(CommandID(stringLiteral: "codeeditor.edit.undo")))
         model.focus(.editor)
         // Still no client without open file
-        #expect(!model.isCommandEnabled(CommandID(rawValue: "codeeditor.edit.undo")))
+        #expect(!model.isCommandEnabled(CommandID(stringLiteral: "codeeditor.edit.undo")))
     }
 }
 
@@ -174,18 +175,22 @@ struct ToolingSurfaceTests {
         let workspace = try await Workspace.local(rootDirectories: [root])
         let model = try WorkbenchHostBuilder()
             .workspace(workspace)
-            .addToolingSurface(WorkbenchToolingSurface(
-                id: "lsp",
-                kind: .languageService,
-                title: "LSP",
-                status: .ready
-            ))
-            .addToolingSurface(WorkbenchToolingSurface(
-                id: "term",
-                kind: .terminal,
-                title: "Terminal",
-                status: .ready
-            ))
+            .addToolingSurface(
+                WorkbenchToolingSurface(
+                    id: "lsp",
+                    kind: .languageService,
+                    title: "LSP",
+                    status: .ready
+                )
+            )
+            .addToolingSurface(
+                WorkbenchToolingSurface(
+                    id: "term",
+                    kind: .terminal,
+                    title: "Terminal",
+                    status: .ready
+                )
+            )
             .build()
         model.toolingSurfaces.setStatus(id: "lsp", status: .failed(message: "crashed"))
         #expect(model.toolingSurfaces.surface(id: "term")?.status.isHealthy == true)
@@ -247,12 +252,14 @@ struct HostBuilderTests {
         let model = try WorkbenchHostBuilder()
             .workspace(workspace)
             .configuration(.xcodeLike)
-            .addToolingSurface(WorkbenchToolingSurface(
-                id: "scm",
-                kind: .scm,
-                title: "Git",
-                status: .unavailable(reason: "not configured")
-            ))
+            .addToolingSurface(
+                WorkbenchToolingSurface(
+                    id: "scm",
+                    kind: .scm,
+                    title: "Git",
+                    status: .unavailable(reason: "not configured")
+                )
+            )
             .build()
         #expect(model.lifecyclePhase == .active)
         #expect(model.toolingSurfaces.all().count == 1)

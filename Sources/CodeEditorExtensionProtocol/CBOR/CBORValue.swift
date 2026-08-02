@@ -5,7 +5,7 @@ public enum CBORValue: Sendable, Equatable {
     case null
     case bool(Bool)
     case unsigned(UInt64)
-    case negative(Int64) // stored as actual negative or -1...; encoded as major type 1
+    case negative(Int64)  // stored as actual negative or -1...; encoded as major type 1
     case bytes(Data)
     case text(String)
     case array([CBORValue])

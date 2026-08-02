@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import Foundation
 
 /// Encode/decode Phase 12 `ls.*` wire payloads (JSON, Codable plans).
 public enum LanguageServerWireCodec {
@@ -119,9 +119,10 @@ public enum LanguageServerWireCodec {
         case .lsWorkspaceConfiguration:
             let obj = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
             let serverID = obj?["serverID"] as? String ?? ""
-            let itemsData = (obj?["items"] as? [[String: Any]]).flatMap {
-                try? JSONSerialization.data(withJSONObject: $0)
-            } ?? Data("[]".utf8)
+            let itemsData =
+                (obj?["items"] as? [[String: Any]]).flatMap {
+                    try? JSONSerialization.data(withJSONObject: $0)
+                } ?? Data("[]".utf8)
             let items = decodeConfigurationItems(itemsData)
             let results = try await provider.workspaceConfiguration(serverID: serverID, items: items)
             return try encodeConfigurationResults(results)

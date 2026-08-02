@@ -1,11 +1,11 @@
-import SwiftUI
 import CodeEditorCommands
 import CodeEditorView
+import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Top-level SwiftUI workbench shell with Xcode-like chrome.
@@ -164,24 +164,24 @@ public struct WorkbenchView: View {
         Group {
             if model.isUtilityVisible {
                 #if os(macOS)
-                VSplitView {
-                    WorkbenchEditorArea(model: model)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .animation(reduceMotion ? nil : WorkbenchMotion.content, value: model.workspace.revision)
-                    utilityArea
-                        .frame(minHeight: 100)
-                        .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
-                        .accessibilityLabel(WorkbenchL10n.utility)
-                }
+                    VSplitView {
+                        WorkbenchEditorArea(model: model)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .animation(reduceMotion ? nil : WorkbenchMotion.content, value: model.workspace.revision)
+                        utilityArea
+                            .frame(minHeight: 100)
+                            .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
+                            .accessibilityLabel(WorkbenchL10n.utility)
+                    }
                 #else
-                VStack(spacing: 0) {
-                    WorkbenchEditorArea(model: model)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    utilityArea
-                        .frame(height: model.utilityHeight)
-                        .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
-                        .accessibilityLabel(WorkbenchL10n.utility)
-                }
+                    VStack(spacing: 0) {
+                        WorkbenchEditorArea(model: model)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        utilityArea
+                            .frame(height: model.utilityHeight)
+                            .accessibilityIdentifier(WorkbenchAccessibilityID.utility)
+                            .accessibilityLabel(WorkbenchL10n.utility)
+                    }
                 #endif
             } else {
                 WorkbenchEditorArea(model: model)
@@ -195,22 +195,22 @@ public struct WorkbenchView: View {
 
     private var windowBackground: Color {
         #if os(macOS)
-        Color(nsColor: .windowBackgroundColor)
+            Color(nsColor: .windowBackgroundColor)
         #else
-        Color(uiColor: .systemGroupedBackground)
+            Color(uiColor: .systemGroupedBackground)
         #endif
     }
 
     @ViewBuilder
     private var paneBackground: some View {
         #if os(macOS)
-        if model.configuration.navigatorStyle == .floating {
-            Rectangle().fill(.regularMaterial)
-        } else {
-            Color(nsColor: .controlBackgroundColor)
-        }
+            if model.configuration.navigatorStyle == .floating {
+                Rectangle().fill(.regularMaterial)
+            } else {
+                Color(nsColor: .controlBackgroundColor)
+            }
         #else
-        Color(uiColor: .secondarySystemBackground)
+            Color(uiColor: .secondarySystemBackground)
         #endif
     }
 

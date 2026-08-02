@@ -9,11 +9,11 @@ public enum HostPlatform: String, Sendable, Hashable, Codable, CaseIterable {
     /// Platform of the current process.
     public static var current: HostPlatform {
         #if os(macOS)
-        return .macOS
+            return .macOS
         #elseif os(iOS)
-        return .iOS
+            return .iOS
         #else
-        return .other
+            return .other
         #endif
     }
 }

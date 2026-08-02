@@ -1,5 +1,5 @@
-import SwiftUI
 import CodeEditorDocuments
+import SwiftUI
 
 /// Centered HUD for Open Quickly (Xcode-like floating panel, not a modal sheet).
 public struct OpenQuicklyView: View {
@@ -130,8 +130,8 @@ public struct OpenQuicklyView: View {
     }
 
     private func confirmSelection() {
-        guard let item = model.selectedItem else { return }
-        onSelect(item.uri)
+        guard let item = model.selectedItem, let uri = item.uri else { return }
+        onSelect(uri)
         onDismiss()
     }
 }

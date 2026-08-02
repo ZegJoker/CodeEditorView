@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// One running debug adapter connection.
 public actor DebugAdapterSession {
@@ -207,7 +207,8 @@ public actor DebugAdapterSession {
         )
         let arr = body["breakpoints"] as? [[String: Any]] ?? []
         return arr.map {
-            DAPBreakpoint(id: $0["id"] as? Int, verified: $0["verified"] as? Bool ?? false, message: $0["message"] as? String)
+            DAPBreakpoint(
+                id: $0["id"] as? Int, verified: $0["verified"] as? Bool ?? false, message: $0["message"] as? String)
         }
     }
 
@@ -304,7 +305,8 @@ public actor DebugAdapterSession {
         let arr = body["scopes"] as? [[String: Any]] ?? []
         return arr.compactMap { d in
             guard let name = d["name"] as? String,
-                  let ref = d["variablesReference"] as? Int else { return nil }
+                let ref = d["variablesReference"] as? Int
+            else { return nil }
             return DAPScope(name: name, variablesReference: ref, expensive: d["expensive"] as? Bool ?? false)
         }
     }
@@ -431,8 +433,8 @@ public actor DebugAdapterSession {
             )
         case .test(let factoryID):
             throw DAPError.unsupported("test factory \(factoryID) requires pool registration")
-        case .connect:
-            throw DAPError.unsupported("TCP connect transport: use custom factory in host")
+        case .connect(let host, let port):
+            return try DAPTCPConnectTransport(host: host, port: port)
         case .custom(let factory):
             return try await factory()
         }

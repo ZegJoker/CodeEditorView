@@ -1,10 +1,10 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorExtensionAPI
+import CodeEditorLSP
 import CodeEditorLanguageServices
 import CodeEditorLanguageSupport
-import CodeEditorLSP
+import Foundation
 
 public enum LaunchPlanError: Error, Sendable, Equatable {
     case diagnostic(LanguageServerDiagnostic)
@@ -57,22 +57,24 @@ public actor LanguageServerLaunchPlanExecutor {
         provider: (any LanguageServerProvider)? = nil
     ) async throws -> LanguageServerSession {
         let sid = plan.serverID
-        await statusStore.set(LanguageServerStatus(
-            serverID: sid,
-            extensionID: extensionID,
-            state: .resolving,
-            message: "resolving launch plan"
-        ))
+        await statusStore.set(
+            LanguageServerStatus(
+                serverID: sid,
+                extensionID: extensionID,
+                state: .resolving,
+                message: "resolving launch plan"
+            ))
 
         do {
             try await validate(plan: plan, extensionID: extensionID)
-            await statusStore.set(LanguageServerStatus(
-                serverID: sid,
-                extensionID: extensionID,
-                state: .installing,
-                message: "materializing binary",
-                progress: 0.3
-            ))
+            await statusStore.set(
+                LanguageServerStatus(
+                    serverID: sid,
+                    extensionID: extensionID,
+                    state: .installing,
+                    message: "materializing binary",
+                    progress: 0.3
+                ))
             let material = try await materialize(plan: plan, extensionID: extensionID, workspaceRoots: workspaceRoots)
 
             var initOpts = plan.initializationOptionsJSON
@@ -103,14 +105,15 @@ public actor LanguageServerLaunchPlanExecutor {
                 }
             )
 
-            await statusStore.set(LanguageServerStatus(
-                serverID: sid,
-                extensionID: extensionID,
-                state: .starting,
-                message: "starting language server",
-                progress: 0.6,
-                binaryPath: material.resolvedCommand
-            ))
+            await statusStore.set(
+                LanguageServerStatus(
+                    serverID: sid,
+                    extensionID: extensionID,
+                    state: .starting,
+                    message: "starting language server",
+                    progress: 0.6,
+                    binaryPath: material.resolvedCommand
+                ))
 
             let session = try await pool.server(for: definition)
 
@@ -126,7 +129,7 @@ public actor LanguageServerLaunchPlanExecutor {
                     let results = (try? await provider.workspaceConfiguration(serverID: sid, items: mapped)) ?? []
                     return results.map { data -> Any in
                         if let data,
-                           let obj = try? JSONSerialization.jsonObject(with: data)
+                            let obj = try? JSONSerialization.jsonObject(with: data)
                         {
                             return obj
                         }
@@ -167,38 +170,42 @@ public actor LanguageServerLaunchPlanExecutor {
                 workspaceRoots: workspaceRoots
             )
 
-            await statusStore.set(LanguageServerStatus(
-                serverID: sid,
-                extensionID: extensionID,
-                state: .running,
-                message: "running",
-                progress: 1.0,
-                binaryPath: material.resolvedCommand
-            ))
+            await statusStore.set(
+                LanguageServerStatus(
+                    serverID: sid,
+                    extensionID: extensionID,
+                    state: .running,
+                    message: "running",
+                    progress: 1.0,
+                    binaryPath: material.resolvedCommand
+                ))
             return session
         } catch let LaunchPlanError.diagnostic(d) {
             await statusStore.recordDiagnostic(d)
-            await statusStore.set(LanguageServerStatus(
-                serverID: sid,
-                extensionID: extensionID,
-                state: .failed,
-                lastError: d.message
-            ))
+            await statusStore.set(
+                LanguageServerStatus(
+                    serverID: sid,
+                    extensionID: extensionID,
+                    state: .failed,
+                    lastError: d.message
+                ))
             throw LaunchPlanError.diagnostic(d)
         } catch {
             let msg = String(describing: error)
-            await statusStore.set(LanguageServerStatus(
-                serverID: sid,
-                extensionID: extensionID,
-                state: .failed,
-                lastError: msg
-            ))
-            await statusStore.recordDiagnostic(LanguageServerDiagnostic(
-                code: .spawnFailed,
-                message: msg,
-                serverID: sid,
-                extensionID: extensionID
-            ))
+            await statusStore.set(
+                LanguageServerStatus(
+                    serverID: sid,
+                    extensionID: extensionID,
+                    state: .failed,
+                    lastError: msg
+                ))
+            await statusStore.recordDiagnostic(
+                LanguageServerDiagnostic(
+                    code: .spawnFailed,
+                    message: msg,
+                    serverID: sid,
+                    extensionID: extensionID
+                ))
             throw error
         }
     }
@@ -211,12 +218,13 @@ public actor LanguageServerLaunchPlanExecutor {
         if let session = await pool.sessionMatching(id: LanguageServerID(rawValue: serverID)) {
             await session.shutdown()
         }
-        await statusStore.set(LanguageServerStatus(
-            serverID: serverID,
-            extensionID: extensionID,
-            state: .stopped,
-            message: "stopped"
-        ))
+        await statusStore.set(
+            LanguageServerStatus(
+                serverID: serverID,
+                extensionID: extensionID,
+                state: .stopped,
+                message: "stopped"
+            ))
     }
 
     public func restart(serverID: String) async throws {
@@ -224,7 +232,9 @@ public actor LanguageServerLaunchPlanExecutor {
     }
 
     /// Restart using the stored plan (pool session recreate).
-    public func restartStored(serverID: String, registry: LanguageServiceRegistry) async throws -> LanguageServerSession? {
+    public func restartStored(
+        serverID: String, registry: LanguageServiceRegistry
+    ) async throws -> LanguageServerSession? {
         guard let stored = activePlans[serverID] else {
             try await pool.restart(id: LanguageServerID(rawValue: serverID))
             return await pool.sessionMatching(id: LanguageServerID(rawValue: serverID))
@@ -242,12 +252,13 @@ public actor LanguageServerLaunchPlanExecutor {
 
     private func validate(plan: LanguageServerLaunchPlan, extensionID: ExtensionID) async throws {
         if plan.serverID.isEmpty || plan.command.isEmpty {
-            throw LaunchPlanError.diagnostic(.init(
-                code: .planInvalid,
-                message: "serverID and command required",
-                serverID: plan.serverID,
-                extensionID: extensionID
-            ))
+            throw LaunchPlanError.diagnostic(
+                .init(
+                    code: .planInvalid,
+                    message: "serverID and command required",
+                    serverID: plan.serverID,
+                    extensionID: extensionID
+                ))
         }
         // Phase 15: profile-driven gate (not OS compile flags alone).
         let coordinator = RemoteToolingCoordinator(platformProfile: platformProfile)
@@ -255,46 +266,51 @@ public actor LanguageServerLaunchPlanExecutor {
         case .allowLocal:
             break
         case .useRemoteFallback(let reason):
-            throw LaunchPlanError.diagnostic(.init(
-                code: .platformDenied,
-                message: "use remote tooling fallback: \(reason)",
-                serverID: plan.serverID,
-                extensionID: extensionID
-            ))
+            throw LaunchPlanError.diagnostic(
+                .init(
+                    code: .platformDenied,
+                    message: "use remote tooling fallback: \(reason)",
+                    serverID: plan.serverID,
+                    extensionID: extensionID
+                ))
         case .deny(let reason):
-            throw LaunchPlanError.diagnostic(.init(
-                code: .platformDenied,
-                message: reason,
-                serverID: plan.serverID,
-                extensionID: extensionID
-            ))
+            throw LaunchPlanError.diagnostic(
+                .init(
+                    code: .platformDenied,
+                    message: reason,
+                    serverID: plan.serverID,
+                    extensionID: extensionID
+                ))
         }
         if !ExtensionPlatformInfo.current.processLaunchAllowed {
-            throw LaunchPlanError.diagnostic(.init(
-                code: .platformDenied,
-                message: "process launch not allowed on this platform profile",
-                serverID: plan.serverID,
-                extensionID: extensionID
-            ))
+            throw LaunchPlanError.diagnostic(
+                .init(
+                    code: .platformDenied,
+                    message: "process launch not allowed on this platform profile",
+                    serverID: plan.serverID,
+                    extensionID: extensionID
+                ))
         }
         switch plan.binarySource {
         case .absolute(let path):
             if path.contains("..") {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .pathEscape,
-                    message: "absolute path escape",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .pathEscape,
+                        message: "absolute path escape",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
         case .worktreeRelative(let path):
             if path.contains("..") {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .pathEscape,
-                    message: "worktree path escape",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .pathEscape,
+                        message: "worktree path escape",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
         default:
             break
@@ -328,14 +344,17 @@ public actor LanguageServerLaunchPlanExecutor {
             )
 
         case .systemPath(let name):
-            let path = try findOnPath(name) ?? {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "executable not found on PATH: \(name)",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
-            }()
+            let path =
+                try findOnPath(name)
+                ?? {
+                    throw LaunchPlanError.diagnostic(
+                        .init(
+                            code: .binaryNotFound,
+                            message: "executable not found on PATH: \(name)",
+                            serverID: plan.serverID,
+                            extensionID: extensionID
+                        ))
+                }()
             try await ensureProcessAllowed(executable: path, extensionID: extensionID, serverID: plan.serverID)
             return Materialized(
                 launch: .process(executable: URL(fileURLWithPath: path), arguments: plan.arguments),
@@ -344,13 +363,15 @@ public actor LanguageServerLaunchPlanExecutor {
             )
 
         case .absolute(let path):
-            guard FileManager.default.isExecutableFile(atPath: path) || FileManager.default.fileExists(atPath: path) else {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "absolute binary missing: \(path)",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+            guard FileManager.default.isExecutableFile(atPath: path) || FileManager.default.fileExists(atPath: path)
+            else {
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .binaryNotFound,
+                        message: "absolute binary missing: \(path)",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
             try await ensureProcessAllowed(executable: path, extensionID: extensionID, serverID: plan.serverID)
             return Materialized(
@@ -361,21 +382,23 @@ public actor LanguageServerLaunchPlanExecutor {
 
         case .worktreeRelative(let rel):
             guard let root = workspaceRoots.first else {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "no worktree root for relative binary",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .binaryNotFound,
+                        message: "no worktree root for relative binary",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
             let url = root.appendingPathComponent(rel)
             guard FileManager.default.fileExists(atPath: url.path) else {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .binaryNotFound,
-                    message: "worktree binary missing: \(rel)",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .binaryNotFound,
+                        message: "worktree binary missing: \(rel)",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
             try await ensureProcessAllowed(executable: url.path, extensionID: extensionID, serverID: plan.serverID)
             return Materialized(
@@ -390,7 +413,7 @@ public actor LanguageServerLaunchPlanExecutor {
                 // Prefer fixture path for tests when URL is file: or fixture scheme
                 let dest: URL
                 if urlString.hasPrefix("fixture://"),
-                   let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
+                    let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
                 {
                     dest = try await broker.downloadWriteFixture(
                         handle: handle.id,
@@ -428,12 +451,13 @@ public actor LanguageServerLaunchPlanExecutor {
                     workingDirectory: cwd
                 )
             } catch BrokerError.downloadDenied {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .downloadDenied,
-                    message: "download denied for \(urlString)",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .downloadDenied,
+                        message: "download denied for \(urlString)",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
 
         case .npm(let package, let version, let bin):
@@ -443,12 +467,13 @@ public actor LanguageServerLaunchPlanExecutor {
                 let exec = dest.appendingPathComponent(bin)
                 // Do not invent binaries — npm materialize must produce the declared bin.
                 guard FileManager.default.fileExists(atPath: exec.path) else {
-                    throw LaunchPlanError.diagnostic(.init(
-                        code: .binaryNotFound,
-                        message: "npm bin missing after install: \(bin)",
-                        serverID: plan.serverID,
-                        extensionID: extensionID
-                    ))
+                    throw LaunchPlanError.diagnostic(
+                        .init(
+                            code: .binaryNotFound,
+                            message: "npm bin missing after install: \(bin)",
+                            serverID: plan.serverID,
+                            extensionID: extensionID
+                        ))
                 }
                 try await ensureProcessAllowed(executable: exec.path, extensionID: extensionID, serverID: plan.serverID)
                 return Materialized(
@@ -457,12 +482,13 @@ public actor LanguageServerLaunchPlanExecutor {
                     workingDirectory: cwd
                 )
             } catch BrokerError.npmDenied {
-                throw LaunchPlanError.diagnostic(.init(
-                    code: .npmDenied,
-                    message: "npm denied for \(package)",
-                    serverID: plan.serverID,
-                    extensionID: extensionID
-                ))
+                throw LaunchPlanError.diagnostic(
+                    .init(
+                        code: .npmDenied,
+                        message: "npm denied for \(package)",
+                        serverID: plan.serverID,
+                        extensionID: extensionID
+                    ))
             }
         }
     }
@@ -471,21 +497,23 @@ public actor LanguageServerLaunchPlanExecutor {
         do {
             _ = try await broker.processHandle(extensionID: extensionID)
         } catch {
-            throw LaunchPlanError.diagnostic(.init(
-                code: .processDenied,
-                message: "process capability not granted for \(serverID)",
-                serverID: serverID,
-                extensionID: extensionID
-            ))
+            throw LaunchPlanError.diagnostic(
+                .init(
+                    code: .processDenied,
+                    message: "process capability not granted for \(serverID)",
+                    serverID: serverID,
+                    extensionID: extensionID
+                ))
         }
         let allowed = await broker.processAllowed(executable: executable)
         if !allowed {
-            throw LaunchPlanError.diagnostic(.init(
-                code: .processDenied,
-                message: "executable not on process allowlist: \(executable)",
-                serverID: serverID,
-                extensionID: extensionID
-            ))
+            throw LaunchPlanError.diagnostic(
+                .init(
+                    code: .processDenied,
+                    message: "executable not on process allowlist: \(executable)",
+                    serverID: serverID,
+                    extensionID: extensionID
+                ))
         }
     }
 

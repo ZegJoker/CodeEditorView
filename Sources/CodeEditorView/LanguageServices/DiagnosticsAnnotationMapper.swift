@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorLanguageServices
+import Foundation
 
 /// Maps language-service diagnostics to View ``LineAnnotation`` models.
 public enum DiagnosticsAnnotationMapper {

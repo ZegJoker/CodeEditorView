@@ -1,10 +1,11 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
 import CodeEditorLanguageServices
 import CodeEditorWasmEngine
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 @Suite("Phase 16 residual closure — Wasm stable host contract")

@@ -4,12 +4,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "======== grammar pins + hermetic verify ========"
-./scripts/check-grammar-pins.sh
-if [[ ! -d Grammars/src/swift ]]; then
-  echo "======== bootstrap grammars ========"
-  ./scripts/update-grammars.sh
-fi
+echo "======== Xcode pin ========"
+./scripts/check-xcode-pin.sh
+
+echo "======== grammar pins + committed sources (PKG-001) ========"
 ./scripts/verify-grammars.sh
 
 echo "======== isolation ========"
@@ -21,8 +19,11 @@ echo "======== docs ========"
 echo "======== licenses ========"
 ./scripts/check-licenses.sh
 
-echo "======== format ========"
+echo "======== format (hard) ========"
 ./scripts/check-format.sh
+
+echo "======== WASI pin (hard) ========"
+./scripts/check-wasi-sdk.sh
 
 echo "======== Phase 16 RC gates (subset without full examples) ========"
 ./scripts/check-product-scorecards.sh
@@ -35,3 +36,4 @@ swift test
 
 echo
 echo "verify-local: all gates passed (for full RC use ./scripts/verify-rc.sh)"
+echo "Phase 1 extras: ./scripts/export-source-archive-rehearsal.sh && ./scripts/check-examples.sh"

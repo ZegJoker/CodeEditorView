@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public struct RestoredTab: Codable, Sendable, Hashable {
     public var id: EditorTabID
@@ -82,35 +82,59 @@ public struct WorkspaceRestorationState: Codable, Sendable {
     }
 }
 
+public enum WorkspaceRestorationError: Error, Sendable, Equatable {
+    /// Unknown newer schema must not be clamped — that reinterprets fields incorrectly.
+    case unsupportedSchemaVersion(found: Int, supported: Int)
+    case corruptPayload(String)
+}
+
 public enum WorkspaceRestoration {
-    /// Forward-migrate older schemas; preserve unknown future schema by clamping to current.
-    public static func migrate(_ state: WorkspaceRestorationState) -> WorkspaceRestorationState {
-        var state = state
+    /// Migrate known older schemas. **Rejects** unknown future schemas (audit §8.9).
+    public static func migrate(_ state: WorkspaceRestorationState) throws -> WorkspaceRestorationState {
         if state.schemaVersion > WorkspaceRestorationState.currentSchemaVersion {
-            // Forward-compatible: keep payload, pin schema to current for writers.
-            state.schemaVersion = WorkspaceRestorationState.currentSchemaVersion
+            throw WorkspaceRestorationError.unsupportedSchemaVersion(
+                found: state.schemaVersion,
+                supported: WorkspaceRestorationState.currentSchemaVersion
+            )
         }
         if state.schemaVersion < 1 {
-            state.schemaVersion = 1
+            // Oldest known baseline is v1; anything older is corrupt/unsupported.
+            throw WorkspaceRestorationError.unsupportedSchemaVersion(
+                found: state.schemaVersion,
+                supported: WorkspaceRestorationState.currentSchemaVersion
+            )
         }
         // v1 is baseline; future versions migrate stepwise here.
-        if state.schemaVersion < 1 {
-            state.schemaVersion = 1
-        }
         return state
     }
 
     @MainActor
-    public static func encode(_ workspace: Workspace) throws -> Data {
-        let state = workspace.captureRestorationState()
+    public static func encode(_ workspace: Workspace) async throws -> Data {
+        let state = await workspace.captureRestorationStateAsync()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         return try encoder.encode(state)
     }
 
+    /// Decode and migrate; rejects unknown future schemas (audit §8.9).
     public static func decode(_ data: Data) throws -> WorkspaceRestorationState {
         let decoder = JSONDecoder()
-        let state = try decoder.decode(WorkspaceRestorationState.self, from: data)
-        return migrate(state)
+        do {
+            let state = try decoder.decode(WorkspaceRestorationState.self, from: data)
+            return try migrate(state)
+        } catch let error as WorkspaceRestorationError {
+            throw error
+        } catch {
+            throw WorkspaceRestorationError.corruptPayload(String(describing: error))
+        }
+    }
+
+    /// Decode without migration (preserves original payload for inspection).
+    public static func decodeRaw(_ data: Data) throws -> WorkspaceRestorationState {
+        do {
+            return try JSONDecoder().decode(WorkspaceRestorationState.self, from: data)
+        } catch {
+            throw WorkspaceRestorationError.corruptPayload(String(describing: error))
+        }
     }
 }

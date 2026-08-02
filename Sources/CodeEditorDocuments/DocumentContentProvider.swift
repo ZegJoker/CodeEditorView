@@ -1,5 +1,20 @@
-import Foundation
 import CodeEditorCore
+import Foundation
+
+/// Host decision when a conflict-safe save detects external modification (DOC-004).
+public enum SaveConflictPolicy: Sendable, Hashable, Codable {
+    case overwrite
+    case cancel
+    /// Host should open save-as UI; this layer throws ``DocumentProviderError/conflict``.
+    case requireHostDecision
+}
+
+/// Result of a conflict-aware save.
+public enum SaveResult: Sendable, Equatable {
+    case saved(DocumentFileIdentity?)
+    case conflict(live: DocumentFileIdentity?, change: DocumentFileChange)
+    case cancelled
+}
 
 /// Loads and saves document bytes for a URI scheme.
 public protocol DocumentContentProvider: Sendable {
@@ -9,6 +24,30 @@ public protocol DocumentContentProvider: Sendable {
         to uri: DocumentURI,
         encoding: DocumentEncoding
     ) async throws
+
+    /// Conflict-safe save with expected identity (DOC-004). Default bridges to `save`.
+    func save(
+        _ snapshot: DocumentSnapshot,
+        to uri: DocumentURI,
+        encoding: DocumentEncoding,
+        expectedIdentity: DocumentFileIdentity?,
+        policy: SaveConflictPolicy
+    ) async throws -> SaveResult
+}
+
+extension DocumentContentProvider {
+    public func save(
+        _ snapshot: DocumentSnapshot,
+        to uri: DocumentURI,
+        encoding: DocumentEncoding,
+        expectedIdentity: DocumentFileIdentity?,
+        policy: SaveConflictPolicy
+    ) async throws -> SaveResult {
+        _ = expectedIdentity
+        _ = policy
+        try await save(snapshot, to: uri, encoding: encoding)
+        return .saved(nil)
+    }
 }
 
 public enum DocumentProviderError: Error, Sendable, Equatable {
@@ -74,39 +113,34 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         guard let url = uri.fileURL else {
             throw DocumentProviderError.unsupportedURI(uri.rawValue)
         }
+        // DOC-005 / §7.5–7.6: single-pass stream + identity (no double full-file read).
         let data: Data
+        let resolvedIdentity: DocumentFileIdentity
         do {
-            data = try await io.read(url: url)
+            (data, resolvedIdentity) = try await io.readContentAndIdentity(
+                url: url,
+                maxBytes: policy.maxLoadBytes
+            )
         } catch let error as DocumentIOError {
             throw mapIO(error)
         } catch {
             throw DocumentProviderError.ioFailure(error.localizedDescription)
         }
-        if UInt64(data.count) > policy.maxLoadBytes {
-            throw DocumentProviderError.tooLarge(UInt64(data.count))
-        }
-        let decoded: (text: String, encoding: DocumentEncoding, bom: Bool)
+        let decoded: DocumentDecodeResult
         do {
             decoded = try DocumentCodec.decode(data)
+        } catch let error as DocumentIOError {
+            throw mapIO(error)
         } catch {
             throw DocumentProviderError.encodingFailed
         }
-        let identity = DocumentFileIdentity(
-            contentHash: DocumentFileIdentity.hash(of: data),
-            size: UInt64(data.count),
-            modificationTime: try? await io.resourceIdentity(at: url)?.modificationTime,
-            fileResourceIdentifier: try? await io.resourceIdentity(at: url)?.fileResourceIdentifier
-        )
-        // Prefer single resourceIdentity call
-        let live = try? await io.resourceIdentity(at: url)
-        let resolvedIdentity = live ?? identity
 
         return LoadedDocument(
             text: decoded.text,
             encoding: decoded.encoding,
             lineEnding: LineEnding.detect(in: decoded.text),
             fileIdentity: resolvedIdentity,
-            hadBOM: decoded.bom
+            hadBOM: decoded.hadBOM
         )
     }
 
@@ -115,20 +149,80 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         to uri: DocumentURI,
         encoding: DocumentEncoding
     ) async throws {
-        if policy.isReadOnly {
+        _ = try await save(
+            snapshot,
+            to: uri,
+            encoding: encoding,
+            expectedIdentity: nil,
+            policy: .overwrite
+        )
+    }
+
+    public func save(
+        _ snapshot: DocumentSnapshot,
+        to uri: DocumentURI,
+        encoding: DocumentEncoding,
+        expectedIdentity: DocumentFileIdentity?,
+        policy conflictPolicy: SaveConflictPolicy
+    ) async throws -> SaveResult {
+        if self.policy.isReadOnly {
             throw DocumentProviderError.readOnly
         }
         guard let url = uri.fileURL else {
             throw DocumentProviderError.unsupportedURI(uri.rawValue)
         }
+
+        // DOC-004: when requireIdentityForSave, nil identity is fail-closed unless overwrite.
+        if expectedIdentity == nil, policy.requireIdentityForSave, conflictPolicy != .overwrite {
+            throw DocumentProviderError.ioFailure(
+                "save requires expectedIdentity (set SaveConflictPolicy.overwrite to bypass)"
+            )
+        }
+
+        // DOC-004: compare-and-swap against expected identity before replacement.
+        if let expectedIdentity {
+            let change = try await detectChange(at: uri, known: expectedIdentity)
+            switch change {
+            case .unchanged:
+                break
+            case .deleted, .externalModified, .moved:
+                switch conflictPolicy {
+                case .cancel:
+                    return .cancelled
+                case .requireHostDecision:
+                    let live = try? await io.resourceIdentity(at: url)
+                    return .conflict(live: live, change: change)
+                case .overwrite:
+                    break
+                }
+            }
+            // Revalidate immediately before write to shrink the TOCTOU window.
+            let again = try await detectChange(at: uri, known: expectedIdentity)
+            if again != .unchanged, conflictPolicy != .overwrite {
+                let live = try? await io.resourceIdentity(at: url)
+                if conflictPolicy == .cancel { return .cancelled }
+                return .conflict(live: live, change: again)
+            }
+        }
+
+        let bomPolicy: BOMPolicy = {
+            switch self.policy.bomPolicy {
+            case .preserve:
+                return self.policy.bomPolicy
+            case .none, .whenEncodingSupports:
+                return self.policy.bomPolicy
+            }
+        }()
         let data: Data
         do {
             data = try DocumentCodec.encode(
                 text: snapshot.text,
                 encoding: encoding,
-                lineEndingPolicy: policy.lineEndingOnSave,
-                bomPolicy: policy.bomPolicy
+                lineEndingPolicy: self.policy.lineEndingOnSave,
+                bomPolicy: bomPolicy
             )
+        } catch let error as DocumentIOError {
+            throw mapIO(error)
         } catch {
             throw DocumentProviderError.encodingFailed
         }
@@ -139,6 +233,8 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         } catch {
             throw DocumentProviderError.ioFailure(error.localizedDescription)
         }
+        let identity = try? await io.resourceIdentity(at: url)
+        return .saved(identity)
     }
 
     /// Detect whether the on-disk file changed relative to `known`.
@@ -173,6 +269,9 @@ public struct LocalFileDocumentProvider: DocumentContentProvider {
         case .injectedFault(let p): return .ioFailure("injected fault: \(p.rawValue)")
         case .readOnly: return .readOnly
         case .encodingFailed: return .encodingFailed
+        case .unsupportedEncoding: return .encodingFailed
+        case .corruptRecoveryJournal(let s): return .ioFailure(s)
+        case .recoveryQuotaExceeded: return .ioFailure("recovery journal quota exceeded")
         }
     }
 }
@@ -216,12 +315,17 @@ extension TextDocument {
         }
 
         if let fileURL = target.fileURL,
-           let io,
-           let local = provider as? LocalFileDocumentProvider,
-           local.policy.writeRecoveryJournal,
-           isDirty {
-            let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
-            try await journal.write(text: text, forPrimary: fileURL, io: io)
+            let io,
+            let local = provider as? LocalFileDocumentProvider,
+            local.policy.writeRecoveryJournal,
+            isDirty
+        {
+            let journal = RecoveryJournal(
+                directory: fileURL.deletingLastPathComponent(),
+                maxBytesPerDocument: local.policy.recoveryMaxBytesPerDocument,
+                maxBytesGlobal: local.policy.recoveryMaxBytesGlobal
+            )
+            try await journal.write(text: text, forPrimary: fileURL, io: io, documentURI: target.rawValue)
         }
 
         try await provider.save(snapshot(), to: target, encoding: encoding)
@@ -232,7 +336,11 @@ extension TextDocument {
         if let fileURL = target.fileURL, let io {
             setFileIdentity(try await io.resourceIdentity(at: fileURL))
             if let local = provider as? LocalFileDocumentProvider, local.policy.writeRecoveryJournal {
-                let journal = RecoveryJournal(directory: fileURL.deletingLastPathComponent())
+                let journal = RecoveryJournal(
+                    directory: fileURL.deletingLastPathComponent(),
+                    maxBytesPerDocument: local.policy.recoveryMaxBytesPerDocument,
+                    maxBytesGlobal: local.policy.recoveryMaxBytesGlobal
+                )
                 try await journal.clear(forPrimary: fileURL, io: io)
             }
         }

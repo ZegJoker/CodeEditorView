@@ -1,8 +1,9 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
+import Testing
+
 @testable import CodeEditorLSP
 
 @Suite("LSP platform")
@@ -337,7 +338,7 @@ struct LSPClientE2ETests {
 struct LSPConvertTests {
     @Test func lineCharacterRoundTrip() {
         let text = "aa\nbbb\nc"
-        let pos = LSPConvert.lineCharacter(utf16Offset: 5, in: text) // start of b's? 0,1=a a, 2=\n, 3,4,5=b
+        let pos = LSPConvert.lineCharacter(utf16Offset: 5, in: text)  // start of b's? 0,1=a a, 2=\n, 3,4,5=b
         #expect(pos.line == 1)
         let back = LSPConvert.utf16Offset(line: pos.line, character: pos.character, in: text)
         #expect(back == 5)

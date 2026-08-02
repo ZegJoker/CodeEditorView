@@ -1,104 +1,69 @@
-# Phase 1 notes — CI, reproducibility, platform contracts
+# Phase 1 notes — Reproducible package & toolchain (complete)
 
 ## Goal
 
-Every PR can resolve from empty caches; process-backed APIs fail closed on unsupported platforms; grammar pins are immutable; CI enforces isolation/docs/tests/API smoke.
+A clean checkout is a valid, deterministic Swift package on the exact supported toolchains (Xcode 26.4 / Swift 6). Grammar C sources are committed; format and WASI are hard gates; real macOS/iOS example hosts pass `xcodebuild test`.
 
-## Deliverables status
+## Exit criteria (all met)
 
-| Source-plan item | Status |
+| Criterion | Evidence |
 |---|---|
-| macOS debug/release test matrix | `.github/workflows/ci.yml` jobs `macos-debug`, `macos-release` |
-| iOS Simulator build | job `ios-simulator` (SPM triple + iphonesimulator SDK) |
-| Strict concurrency build | job `strict-concurrency` (`-strict-concurrency=complete`, warnings-as-errors) |
-| Independent product smoke | `scripts/smoke-products.sh` + job `product-smoke` |
-| API diff / symbol graphs | `scripts/check-api-baseline.sh` + job `api-diff` |
-| Coverage | job `coverage` (`swift test --enable-code-coverage`) |
-| Docs / isolation / format / license | job `checks` + scripts |
-| Empty-cache resolve | job `resolve-empty-cache` |
-| Platform service abstractions | `Sources/CodeEditorCore/Platform/*` |
-| Process fail-closed | All five `Process()` sites + tests |
-| Immutable grammar pins | `scripts/grammars.tsv` 40-char SHAs; `check-grammar-pins.sh` |
-| Swift toolchain pin | `.swift-version`, `Docs/Architecture/TOOLCHAIN.md` |
-| Swift WASI SDK job | `Docs/Architecture/WASI-SDK.pin`, `scripts/check-wasi-sdk.sh`, job `wasi-sdk` |
+| Fresh clone `swift package resolve` without prior scripts | Root `Package.swift` has **no** `Grammars/` paths; sources in `Packages/CodeEditorGrammars` |
+| Core/View/Workbench build without grammar network | Independent products; path package sources committed |
+| Language packs use committed artifacts | `Packages/CodeEditorGrammars` + typed `LanguagePackError` for missing queries |
+| Source archive rehearsal | `./scripts/export-source-archive-rehearsal.sh` + CI job `source-archive-rehearsal` |
+| Exact Xcode 26 pin | `Docs/Architecture/XCODE.pin` + `./scripts/check-xcode-pin.sh` |
+| Hard format gate | `./scripts/check-format.sh` (no soft skip) |
+| Hard WASI gate | `./scripts/check-wasi-sdk.sh` installs from pin URL |
+| Real example hosts | `Examples/macOS/CodeEditorMacExample`, `Examples/iOS/CodeEditoriOSExample` + `xcodebuild test` |
+| Test resources | Core/Extensions/Wasm fixtures via `resources:` where needed |
 
-## Platform profiles (ADR-016)
+## PKG-001 design
 
-Implemented as `PlatformCapabilityProfile` presets:
+1. **Root package** declares zero `path: "Grammars/..."` targets.
+2. **`Packages/CodeEditorGrammars`** owns all `TreeSitter*Grammar` C targets and products.
+3. Language products depend via `.product(name: "TreeSitter…", package: "CodeEditorGrammars")`.
+4. `scripts/filter-package-grammars.py` is **retired** (fails if invoked).
+5. `./scripts/update-grammars.sh` regenerates into the committed package path (maintainer only).
+6. `./scripts/verify-grammars.sh` hard-checks pins + checksums (no network, no SKIP).
 
-| Preset | Name |
+## Toolchain
+
+See `Docs/Architecture/TOOLCHAIN.md`, `XCODE.pin`, `WASI-SDK.pin`.
+
+## CI jobs (Phase 1 additions)
+
+| Job | Role |
 |---|---|
-| Direct-distribution macOS | `.directMacOS` |
-| Mac App Store | `.macAppStore` |
-| iOS | `.iOS` |
-| Enterprise | `.enterprise` |
-| Test | `.test` |
-| Injected denial | `.processUnavailable` |
-
-`PlatformCapabilityProfile.default()` maps macOS → directMacOS, iOS → iOS.
-
-### Process() inventory (fail-closed)
-
-| Site | Capability |
-|---|---|
-| `LSPProcessTransport.init` | `.localLanguageServerProcess` |
-| `ProcessTaskRunner.run` | `.localProcess` |
-| `ProcessTerminalBackend.start` | `.localProcess` (PTY reserved for Phase 7) |
-| `GitCLIProvider.run` | `.localGitCLI` |
-| `ProcessRemoteExtensionTransport.init` | `.nativeExtensionProcess` |
-
-Each accepts optional `platformProfile:` (default `.default()`). Tests inject `.processUnavailable` and assert `CodeEditorPlatformError.unsupportedCapability` **before** process start.
-
-Service protocols: `ProcessLaunching`, `PTYAccess`, `FileSystemAccess`, `NetworkAccess` + `PlatformServices` bundle.
-
-## Grammar provenance
-
-- Format: `name|c_symbol|url|commit_sha|sha256_parser_c`
-- **39** languages pinned to full commit SHAs (no `main`/`master` pins)
-- `./scripts/check-grammar-pins.sh` fails on mutable refs
-- `./scripts/record-grammar-pins.sh` regenerates pins from clone cache
-- `./scripts/update-grammars.sh` checks out by SHA when pin is 40 hex chars
-
-## Toolchain / WASI
-
-See `Docs/Architecture/TOOLCHAIN.md` and `Docs/Architecture/WASI-SDK.pin`.
-
-- Package tools: Swift 6.0
-- WASI pin: `swift-6.3.3-RELEASE_wasm` (install validated in CI when `WASI_SDK_REQUIRED=1` + URL secret)
-
-## Native helper trust policy (Phase 1 record)
-
-Per ADR-015 / TOOLCHAIN.md:
-
-- Native process helpers are reliability boundaries only.
-- Default profiles: trusted-signed / workspace-dev; MAS and iOS deny `nativeExtensionProcess`.
-- Untrusted marketplace natives require OS sandbox (not claimed here).
+| `checks` | Xcode pin, isolation, verify-grammars, hard format, licenses, docs |
+| `resolve-empty-cache` | Resolve/build without network grammar bootstrap |
+| `source-archive-rehearsal` | `git archive` → empty dir → resolve/build products |
+| `macos-example-app` | `swift test` + `xcodebuild test` (macOS) |
+| `ios-example-app` | `xcodebuild test` (iOS Simulator) |
+| `wasi-sdk` | Hard install/verify of pinned WASM SDK |
 
 ## Local verification
 
 ```bash
-./scripts/verify-local.sh
-# or stepwise:
-./scripts/check-grammar-pins.sh
-./scripts/update-grammars.sh   # if Grammars/ missing
+./scripts/check-xcode-pin.sh
+./scripts/verify-grammars.sh
+./scripts/check-format.sh
+./scripts/check-wasi-sdk.sh
 ./scripts/check-product-isolation.sh
-./scripts/check-docs.sh
-./scripts/check-licenses.sh
-swift test
+swift package resolve
+swift build --product CodeEditorCore
+swift build --product CodeEditorView
+swift build --product CodeEditorWorkbench
+swift build --product CodeEditorLanguageSwift
+./scripts/export-source-archive-rehearsal.sh
+# Example hosts:
+(cd Examples/macOS/CodeEditorMacExample && swift test)
+# xcodebuild test for macOS + iOS examples — see scripts/check-examples.sh
 ```
 
-## Gate criteria
+## Explicit non-goals (later phases)
 
-| Criterion | Evidence |
-|---|---|
-| Empty-cache resolve path | CI job `resolve-empty-cache` |
-| No false iOS local process | Profile defaults + unit tests on all process products |
-| All Phase 1 deliverables landed | This document + scripts + workflow |
-
-## Follow-ups (not Phase 1 scope)
-
-- Phase 2: Core/Documents safety
-- Phase 7: real PTY (switch terminal guard to `.localPTY`)
-- Phase 11: Wasm guest runtime / ABI (WASI SDK **pin** is Phase 1)
-- Tighten `STRICT_API_BASELINE=1` / digester semantic diffs once baselines committed
-- `STRICT_FORMAT=1` once codebase is format-clean
+- DOC/WSP/EXT/WASM/TER functional depth beyond package/toolchain
+- Coverage threshold hard-fail (Phase 11)
+- Full real-LSP session matrix (Phase 6)
+- Optional Ghostty native library CDN build (pin required; link optional)

@@ -1,5 +1,5 @@
-import SwiftUI
 import CodeEditorLanguageSupport
+import SwiftUI
 
 /// SwiftUI entry point for the multiplatform code editor.
 public struct CodeEditor: View {

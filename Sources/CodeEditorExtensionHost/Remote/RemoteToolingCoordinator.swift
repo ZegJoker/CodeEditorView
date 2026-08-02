@@ -1,9 +1,9 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
 import CodeEditorLanguageServices
+import Foundation
 
 /// Selects remote tooling when local process/LSP capabilities are not available.
 ///
@@ -28,14 +28,15 @@ public struct RemoteToolingCoordinator: Sendable {
             return .allowLocal
         case .remote:
             if platformProfile.remoteToolingAvailable {
-                return .useRemoteFallback(reason: "localLanguageServerProcess is remote-only on \(platformProfile.name)")
+                return .useRemoteFallback(
+                    reason: "localLanguageServerProcess is remote-only on \(platformProfile.name)")
             }
             return .deny(reason: "remote tooling not available for language servers")
         case .hostProvided:
             return .deny(reason: "host must provide language server implementation")
         case .dataOnly:
             return .deny(reason: "language server is data-only on this profile")
-        case let .unavailable(reason):
+        case .unavailable(let reason):
             if platformProfile.remoteToolingAvailable {
                 return .useRemoteFallback(reason: reason)
             }
@@ -53,7 +54,7 @@ public struct RemoteToolingCoordinator: Sendable {
                 return .useRemoteFallback(reason: "localProcess is remote-only")
             }
             return .deny(reason: "localProcess remote without remote tooling")
-        case let .unavailable(reason):
+        case .unavailable(let reason):
             if platformProfile.remoteToolingAvailable {
                 return .useRemoteFallback(reason: reason)
             }

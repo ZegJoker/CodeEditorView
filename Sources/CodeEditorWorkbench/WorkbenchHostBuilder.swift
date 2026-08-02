@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCommands
 import CodeEditorDocuments
-import CodeEditorWorkspace
 import CodeEditorView
+import CodeEditorWorkspace
+import Foundation
 
 /// Fluent host configuration builder — hosts need not assemble Workbench internals manually.
 @MainActor
@@ -81,14 +81,16 @@ public final class WorkbenchHostBuilder {
         for provider in documentProviders {
             model.documentViewRegistry.register(provider)
         }
+        // CMD-001: retain registration tokens for host lifetime; discarding them
+        // would immediately unregister each contribution via RegistrationToken.deinit.
         for contribution in contributions {
-            _ = model.contributionRegistry.register(contribution)
+            model.retainContribution(contribution)
         }
         for surface in tooling {
             model.toolingSurfaces.upsert(surface)
         }
         if let restoration {
-            model.applyRestoration(restoration)
+            try model.applyRestoration(restoration)
         }
         return model
     }

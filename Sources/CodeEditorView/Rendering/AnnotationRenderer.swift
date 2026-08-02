@@ -1,11 +1,11 @@
+import CodeEditorCore
 import CoreGraphics
 import Foundation
-import CodeEditorCore
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif
 
 /// Draws trailing inline diagnostic chips (mchakravarty `MessageInlineView` style).
@@ -40,8 +40,8 @@ package enum AnnotationRenderer {
         for (lineIdx, anns) in annotationsByLine {
             if let excludingLine, lineIdx == excludingLine { continue }
             guard !anns.isEmpty,
-                  let line = lineIndex.line(atIndex: lineIdx),
-                  line.metrics.height >= 0.5
+                let line = lineIndex.line(atIndex: lineIdx),
+                line.metrics.height >= 0.5
             else { continue }
 
             let lineRect = CGRect(
@@ -75,8 +75,8 @@ package enum AnnotationRenderer {
         for (lineIdx, anns) in annotationsByLine {
             if let excludingLine, lineIdx == excludingLine { continue }
             guard !anns.isEmpty,
-                  let line = lineIndex.line(atIndex: lineIdx),
-                  line.metrics.height >= 0.5
+                let line = lineIndex.line(atIndex: lineIdx),
+                line.metrics.height >= 0.5
             else { continue }
             let lineRect = CGRect(
                 x: textLeading,
@@ -232,7 +232,8 @@ package enum AnnotationRenderer {
             s.draw(
                 with: drawRect,
                 options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
-                attributes: attrs
+                attributes: attrs,
+                context: nil
             )
         }
     }
@@ -245,14 +246,14 @@ package enum AnnotationRenderer {
 
     private static func withPlatformGraphics(context: CGContext, _ body: () -> Void) {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: true)
-        body()
-        NSGraphicsContext.restoreGraphicsState()
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: true)
+            body()
+            NSGraphicsContext.restoreGraphicsState()
         #else
-        UIGraphicsPushContext(context)
-        body()
-        UIGraphicsPopContext()
+            UIGraphicsPushContext(context)
+            body()
+            UIGraphicsPopContext()
         #endif
     }
 

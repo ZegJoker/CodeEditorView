@@ -59,42 +59,50 @@ public final class UndoCoordinator {
     }
 
     /// Undoes the last group. Prefer ``undoGroup`` so the host can apply one versioned transaction.
-    public func undo(apply: (TextEdit) -> Void) {
-        undoGroup { edits in
+    public func undo(apply: (TextEdit) throws -> Void) throws {
+        try undoGroup { edits in
             for edit in edits {
-                apply(edit)
+                try apply(edit)
             }
         }
     }
 
     /// Undoes the last group as a whole. `edits` are in **undo application order**
     /// (reverse of original registration order).
-    public func undoGroup(apply: ([TextEdit]) -> Void) {
+    ///
+    /// Stack ownership moves only after `apply` succeeds (DOC-002). Failed application
+    /// leaves both stacks unchanged. State flags are always cleared via `defer`.
+    public func undoGroup(apply: ([TextEdit]) throws -> Void) throws {
         flushOpenGroup()
-        guard let group = undoStack.popLast() else { return }
+        guard let group = undoStack.last else { return }
         isUndoing = true
-        apply(group.edits.reversed())
+        defer { isUndoing = false }
+        try apply(group.edits.reversed())
+        // Commit stack transition only after successful apply.
+        _ = undoStack.popLast()
         redoStack.append(group)
-        isUndoing = false
     }
 
     /// Redoes the last undone group. Prefer ``redoGroup`` for a single versioned transaction.
-    public func redo(apply: (TextEdit) -> Void) {
-        redoGroup { edits in
+    public func redo(apply: (TextEdit) throws -> Void) throws {
+        try redoGroup { edits in
             for edit in edits {
-                apply(edit)
+                try apply(edit)
             }
         }
     }
 
     /// Redoes the last group as a whole. `edits` are in original application order.
-    public func redoGroup(apply: ([TextEdit]) -> Void) {
+    ///
+    /// Stack ownership moves only after `apply` succeeds (DOC-002).
+    public func redoGroup(apply: ([TextEdit]) throws -> Void) throws {
         flushOpenGroup()
-        guard let group = redoStack.popLast() else { return }
+        guard let group = redoStack.last else { return }
         isRedoing = true
-        apply(group.edits)
+        defer { isRedoing = false }
+        try apply(group.edits)
+        _ = redoStack.popLast()
         undoStack.append(group)
-        isRedoing = false
     }
 
     public func clear() {

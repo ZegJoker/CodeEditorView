@@ -1,68 +1,32 @@
-# Phase 3 notes — Commands, Workspace, Search transactions
+# Phase 3 notes — Native editor input & layout (complete)
 
 ## Goal
 
-Randomized rollback and stale-revision suites pass; multi-file edits and search-replace cannot partially corrupt a workspace; commands support async execution and when-clause parsing.
+Genuinely usable AppKit/UIKit editor input, off-main Tree-sitter, virtualized layout/a11y, and performance signposts.
 
-## Deliverables
+## Exit evidence
 
-### CodeEditorWorkspace
-
-| Item | Status |
+| Criterion | Evidence |
 |---|---|
-| Transactional `WorkspaceEditService.apply` with journal + reverse rollback | Done |
-| Fault injection points for gate tests | Done |
-| Stale `expectedVersion` preflight + recheck | Done |
-| `WorkspacePathSecurity` root containment / `..` rejection | Done |
-| `WorkspaceSnapshot` + `WorkspaceTrustState` | Done |
-| Directory `DispatchSource` watchers → `.rescanRequired` | Done |
-| Restoration schema forward-compat clamp | Done |
-| `DirtyTabClosePolicy` enum | Done |
+| Marked text separate from undo spam | `MarkedTextSession`, `EditorController.applyMarkedText(registerUndo: false)`, `ControllerMarkedTextTests` |
+| AppKit replacementRange | `AppKitEditorView.insertText(_:replacementRange:)` |
+| Grapheme delete | `deleteBackward` uses `TextOffsetSemantics.graphemeBoundaryBefore`; `GraphemeDeleteMatrixTests` |
+| Word subword | `WordNavigationMode.codeSubword`, `WordSubwordNavigationTests` |
+| Drag move | `performDragOperation` → `moveText` for internal move; `DragMoveTransactionTests` |
+| Text services policy | `EditorTextServicesPolicy` on `EditorConfiguration.Behavior` |
+| Tree-sitter DI | `TreeSitterLanguageRuntime` actor + lock box; no `nonisolated(unsafe)` in TreeSitter module |
+| Layout cache | `cachedMaxLineWidth` / `invalidateMaxLineWidthCache` |
+| A11y virtualized | `EditorAccessibility.virtualizedValueText`; length O(viewport) |
+| Signposts | `EditorSignposts` / `EditorPerformanceHarness` |
+| IME/host | Phase 1 iOS/macOS example hosts; unit matrix suites |
 
-### CodeEditorSearch
+## Defects closed
 
-| Item | Status |
-|---|---|
-| `SearchBackend` + `NativeSearchBackend` | Done |
-| Gitignore-style rules + loader | Done |
-| Search respects gitignore + binary/size limits | Done |
-| `SearchReplaceService` via transactional WorkspaceEdit | Done |
-| Stale open-doc replace aborts | Done |
+UI-001…UI-009, TS-001, IOS-001 (reverified).
 
-### CodeEditorCommands
+## Verify
 
-| Item | Status |
-|---|---|
-| `asyncHandler` + `executeAsync` / `CommandResult` | Done |
-| `CommandDependencies` typed bag | Done |
-| `WhenClauseParser` (&& \|\| ! comparisons, diagnostics) | Done |
-| Keybinding conflict inspection API | Done |
-| Ranked command palette matching | Done |
-
-## Gate evidence
-
-| Suite | Result |
-|---|---|
-| Stale version aborts with no mutation | Pass |
-| Fault after first document rolls back | Pass |
-| Path escape rejected | Pass |
-| Search replace with stale open doc | Pass |
-| Gitignore hide/show | Pass |
-| When-clause language compare | Pass |
-| Async command path | Pass |
-| Keybinding conflict winner = user over built-in | Pass |
-
-**Local verification:** `swift test` → **407 tests / 114 suites — all passed**.
-
-## Residual
-
-- Full gitignore corner-case corpus (nested `**`, character classes)
-- Ripgrep backend (optional; native is complete)
-- FSEvents rename pairing (current watcher coalesces to rescan)
-- Complete IME/UIKit keyboard matrix (host-level)
-- Dispatcher reentrancy lock under concurrent `executeAsync` storms
-
-## Related
-
-- Phase 2 DocumentIO used by file ops where applicable  
-- Phase 4: language packs / Tree-sitter reproducibility  
+```bash
+swift test --filter 'MarkedTextSessionTests|WordSubword|ControllerMarked|GraphemeDelete|DragMove|AccessibilityVirtual|PerformanceHarness'
+rg 'nonisolated\(unsafe\)' Sources/CodeEditorTreeSitter  # empty
+```

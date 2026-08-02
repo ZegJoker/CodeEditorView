@@ -1,12 +1,13 @@
+import CodeEditorLanguageSupport
 import Foundation
 import SwiftTreeSitter
-import CodeEditorLanguageSupport
 
 /// Tree-sitter based ``HighlightProviding`` implementation with **incremental** edits.
 ///
-/// Language / query loading is performed off the main actor so switching languages does not ANR.
-/// Configurations are loaded only via ``TreeSitterLanguageEnvironment/configurationProvider`` —
-/// this type never imports grammar C targets.
+/// ## TS-001
+/// Parse/query work runs off the main actor (`Task.detached` / language actor). Only
+/// generation-tagged highlight results are applied for presentation.
+/// Configurations load via ``TreeSitterLanguageRuntime`` / environment provider.
 ///
 /// Edit pipeline (SwiftTreeSitter):
 /// 1. Build ``InputEdit`` from the UTF-16 mutation
@@ -16,8 +17,10 @@ import CodeEditorLanguageSupport
 @MainActor
 public final class TreeSitterHighlightProvider: HighlightProviding {
     private var configuration: LanguageConfiguration?
-    private var parser = Parser()
+    /// Off-main parse/query engine (TS-001).
+    private let engine = LanguageDocumentActor()
     private var tree: MutableTree?
+    private var parser = Parser()
     /// Last fully applied document text (matches `tree`).
     private var source: String = ""
     /// Text pushed after a document mutation, applied on the next ``applyEdit``.
@@ -33,6 +36,8 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
     private var loadDepth: Int = 0
     /// Waiters for “no load in flight” (avoids nested MainActor Task self-await freezes).
     private var loadWaiters: [CheckedContinuation<Void, Never>] = []
+    /// Generation of last published highlight result (stale discards).
+    public private(set) var highlightGeneration: UInt64 = 0
 
     public init() {}
 
@@ -100,6 +105,10 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         do {
             // Compile queries off the main actor — this is the expensive part.
             config = try await Task.detached(priority: .userInitiated) {
+                // Prefer actor-isolated runtime; fall back to legacy environment for tests.
+                if let provider = await TreeSitterLanguageRuntime.shared.resolveProvider() {
+                    return try provider.languageConfiguration(for: languageIDCopy)
+                }
                 guard let provider = TreeSitterLanguageEnvironment.resolveProvider() else {
                     return nil
                 }
@@ -128,6 +137,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
             do {
                 // setLanguage only installs a language pointer — cheap. Query compile already ran off-main.
                 try parser.setLanguage(config.language)
+                try await engine.configure(config)
             } catch {
                 configuration = nil
             }
@@ -144,7 +154,8 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         }
 
         if let languageID, languageID != self.languageID,
-           let language = Self.resolveLanguage(id: languageID) {
+            let language = Self.resolveLanguage(id: languageID)
+        {
             await loadAsync(language: language)
         }
     }
@@ -173,7 +184,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
             expectsIncrementalEdit = false
             if configuration != nil {
                 await Task.yield()
-                fullParse(text)
+                await fullParse(text)
             }
             return
         }
@@ -185,7 +196,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
             documentLength = (text as NSString).length
             pendingSource = nil
             await Task.yield()
-            fullParse(text)
+            await fullParse(text)
             return
         }
 
@@ -220,7 +231,7 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         guard let existingTree = tree else {
             source = newText
             documentLength = (newText as NSString).length
-            fullParse(newText)
+            await fullParse(newText)
             return IndexSet(integersIn: 0..<max(0, documentLength))
         }
 
@@ -238,6 +249,12 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
         documentLength = (newText as NSString).length
         let newTree = parser.parse(tree: oldTree, string: newText)
         tree = newTree
+
+        // Keep off-main engine in sync (TS-001).
+        if let result = try? await engine.applyEdit(range: range, delta: delta, newText: newText) {
+            highlightGeneration = result.generation
+            return result.invalid
+        }
 
         var invalid = IndexSet()
         if let newTree {
@@ -304,22 +321,40 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
 
     public func queryHighlights(in range: NSRange, text: String) async throws -> [HighlightRange] {
         try Task.checkCancellation()
+        // Prefer off-main engine (TS-001 / TS-002 generation discard).
+        do {
+            let pub = try await engine.queryHighlights(in: range)
+            guard await engine.isCurrent(generation: pub.generation) else {
+                return []  // stale
+            }
+            highlightGeneration = pub.generation
+            // If engine has no captures but the local tree was parsed, use legacy path once
+            // (should be rare after fullParse awaits engine.setText).
+            if !pub.highlights.isEmpty || tree == nil {
+                return pub.highlights
+            }
+        } catch LanguageDocumentActor.EngineError.queryMissing {
+            return []
+        } catch LanguageDocumentActor.EngineError.notConfigured {
+            // Fall through to main-actor tree path.
+        } catch {
+            // Fall through to legacy path if engine not configured yet.
+        }
         guard let configuration,
-              let highlightsQuery = configuration.queries[.highlights],
-              let tree,
-              range.length > 0,
-              !source.isEmpty else {
+            let highlightsQuery = configuration.queries[.highlights],
+            let tree,
+            range.length > 0,
+            !source.isEmpty
+        else {
             return []
         }
 
-        // Bound work per frame; large ranges are still OK for demos but stay cancellable.
         let cursor = highlightsQuery.execute(in: tree)
         cursor.setRange(range)
-
-        let named = cursor
+        let named =
+            cursor
             .resolve(with: Predicate.Context(string: source))
             .highlights()
-
         var results: [HighlightRange] = []
         results.reserveCapacity(min(named.count, 256))
         for namedRange in named {
@@ -327,16 +362,12 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
             let intersection = NSIntersectionRange(namedRange.range, range)
             guard intersection.length > 0 else { continue }
             let capture = CaptureName.from(capture: namedRange.name)
-            // Skip only explicit "none" captures (from() returns nil).
             if capture == nil, namedRange.name == "none" || namedRange.name.hasPrefix("none") {
                 continue
             }
             results.append(
                 HighlightRange(
-                    range: intersection,
-                    capture: capture,
-                    rawCapture: namedRange.name
-                )
+                    range: intersection, capture: capture, rawCapture: namedRange.name)
             )
         }
         return results
@@ -344,12 +375,26 @@ public final class TreeSitterHighlightProvider: HighlightProviding {
 
     // MARK: - Private
 
-    private func fullParse(_ text: String) {
-        guard configuration != nil else {
+    /// Full parse on the main-actor mirror **and** await the off-main engine (no fire-and-forget).
+    /// Race-free: ``queryHighlights`` after ``setDocumentText`` must see the same generation/tree.
+    private func fullParse(_ text: String) async {
+        guard let configuration else {
             tree = nil
             return
         }
+        // Main-actor mirror for identifierRange / legacy fallback.
         tree = parser.parse(text)
+        do {
+            _ = try await engine.setText(text)
+        } catch {
+            // Engine may not be configured yet (or was reset); configure then parse.
+            do {
+                try await engine.configure(configuration)
+                _ = try await engine.setText(text)
+            } catch {
+                // Leave main-actor tree; queryHighlights may use legacy path.
+            }
+        }
     }
 
     private static func resolveLanguage(id: String) -> CodeLanguage? {

@@ -1,0 +1,778 @@
+{
+  "schema_version": 1,
+  "program": "audit-2026-08-remediation",
+  "source": "CodeEditorView_Deep_Audit_Xcode26_Ghostty.md",
+  "updated": "2026-08-02",
+  "defects": [
+    {
+      "id": "PKG-001",
+      "severity": "P0",
+      "product": "Package",
+      "status": "fixed",
+      "summary": "Committed Packages/CodeEditorGrammars; root Package.swift has zero Grammars/ paths; archive rehearsal script"
+    },
+    {
+      "id": "CI-004",
+      "severity": "P1",
+      "product": "scripts",
+      "status": "fixed",
+      "summary": "check-format.sh and check-wasi-sdk.sh are hard gates; CI installs tools"
+    },
+    {
+      "id": "CI-008",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Examples/iOS/CodeEditoriOSExample + xcodebuild test job"
+    },
+    {
+      "id": "CI-009",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Docs/Architecture/XCODE.pin + check-xcode-pin.sh"
+    },
+    {
+      "id": "CI-010",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "export-source-archive-rehearsal.sh + CI source-archive-rehearsal"
+    },
+    {
+      "id": "CI-011",
+      "severity": "P1",
+      "product": "Examples",
+      "status": "fixed",
+      "summary": "macOS/iOS example packages with xcodebuild test jobs"
+    },
+    {
+      "id": "DOC-001",
+      "severity": "P0",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "Atomic multi-edit with staging buffer, overlap reject, equal-offset order, fault/property tests"
+    },
+    {
+      "id": "DOC-002",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Throwing undo/redo; stacks move only after success; dirty from savedVersion; no try? apply"
+    },
+    {
+      "id": "DOC-003",
+      "severity": "P0",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "Exact offsets; private scalarIndex throws; never EOF fallback"
+    },
+    {
+      "id": "DOC-004",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "CAS save with expectedIdentity + revalidate; conflict SaveResult"
+    },
+    {
+      "id": "WSP-001",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "All UI close paths use requestClose*; Close Pane wired; leases fail-closed"
+    },
+    {
+      "id": "WSP-002",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "Full fault matrix + duringRollback inject surfaces catastrophic/rollbackFailed"
+    },
+    {
+      "id": "EXT-001",
+      "severity": "P0",
+      "product": "CodeEditorExtensionAPI",
+      "status": "fixed",
+      "summary": "Validated ExtensionID + directoryKey path roots"
+    },
+    {
+      "id": "EXT-002",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "File-set equality; reject extra/missing"
+    },
+    {
+      "id": "EXT-003",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Publisher subject bound; subject-swap deny"
+    },
+    {
+      "id": "EXT-004",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "Fail-closed install + insecureForTests only for tests"
+    },
+    {
+      "id": "WASM-001",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineWasmKit",
+      "status": "fixed",
+      "summary": "WasmKit parse/instantiate/call; bytes determine behavior"
+    },
+    {
+      "id": "WASM-002",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Real module + interrupt/hostile containment tests"
+    },
+    {
+      "id": "IOS-001",
+      "severity": "P0",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Duplicate a11y removed; iOS example host from Phase 1"
+    },
+    {
+      "id": "LSP-001",
+      "severity": "P0",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Full-text debounce + rapid-edit matrix vs mock server"
+    },
+    {
+      "id": "TER-001",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "GhosttySessionController + TerminalService production path; pin; fail-closed unlinked"
+    },
+    {
+      "id": "CI-001",
+      "severity": "P1",
+      "product": "scripts",
+      "status": "fixed",
+      "summary": "generate-release-evidence.sh produces artifacts from tests"
+    },
+    {
+      "id": "CMD-001",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "RegistrationBag host lifetime; contributions survive build"
+    },
+    {
+      "id": "CMD-002",
+      "severity": "P1",
+      "product": "CodeEditorCommands",
+      "status": "fixed",
+      "summary": "Chord prefix wait + timeout short + Escape + layer tests"
+    },
+    {
+      "id": "LSP-002",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Register-before-send actor path; earlyResponses bounded"
+    },
+    {
+      "id": "LSP-003",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "WorkspaceSnapshotResolver; cross-file tests retained"
+    },
+    {
+      "id": "DAP-001",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "Register-before-send; ordered inbound; earlyResponses bounded"
+    },
+    {
+      "id": "TASK-001",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Snapshot-only range resolve; zero fabricated offsets"
+    },
+    {
+      "id": "TASK-002",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Streaming matcher across chunks + multiline EOF flush"
+    },
+    {
+      "id": "UI-001",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session"
+    },
+    {
+      "id": "SCM-001",
+      "severity": "P1",
+      "product": "CodeEditorSourceControl",
+      "status": "fixed",
+      "summary": "Porcelain -z rename/unicode/conflict/copy fixtures"
+    },
+    {
+      "id": "TS-001",
+      "severity": "P1",
+      "product": "CodeEditorTreeSitter",
+      "status": "fixed",
+      "summary": "LanguageDocumentActor off-main; provider delegates highlights"
+    },
+    {
+      "id": "WB-001",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Real utility panels"
+    },
+    {
+      "id": "DOC-005",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Streaming readContentAndIdentity; no Data(contentsOf) identity path"
+    },
+    {
+      "id": "DOC-006",
+      "severity": "P1",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "CoordinatedFileIO once-resume box; test-proven"
+    },
+    {
+      "id": "DOC-007",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "DocumentCodec rejects .other; no UTF-8 mojibake fallback; BOM preserve policy"
+    },
+    {
+      "id": "DOC-008",
+      "severity": "P0",
+      "product": "CodeEditorDocuments",
+      "status": "fixed",
+      "summary": "Versioned recovery journal with SHA-256 checksum, quotas, 0600, quarantine"
+    },
+    {
+      "id": "DOC-009",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "Bounded EditorEventStream/TextDocument streams (bufferingNewest)"
+    },
+    {
+      "id": "DOC-010",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "DocumentStore no longer @unchecked Sendable; main-actor-affine documented"
+    },
+    {
+      "id": "UI-002",
+      "severity": "P0",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "MarkedTextSession + applyMarkedText without undo registration"
+    },
+    {
+      "id": "UI-003",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "AppKit internal drag uses moveText transaction; external size guard"
+    },
+    {
+      "id": "UI-004",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "WordNavigationMode codeSubword/camelCase/snake/acronym"
+    },
+    {
+      "id": "UI-005",
+      "severity": "P2",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "EditorTextServicesPolicy code-editor defaults"
+    },
+    {
+      "id": "UI-006",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Layout max-width cache; invalidate on edit"
+    },
+    {
+      "id": "UI-007",
+      "severity": "P1",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "Virtualized accessibility value (viewport + line/col)"
+    },
+    {
+      "id": "UI-008",
+      "severity": "P2",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "EditorSignposts + EditorPerformanceHarness budgets"
+    },
+    {
+      "id": "UI-009",
+      "severity": "P0",
+      "product": "CodeEditorView",
+      "status": "fixed",
+      "summary": "AppKit insertText honors replacementRange"
+    },
+    {
+      "id": "WSP-003",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "RelativeWorkspacePath + symlink/volume corpus"
+    },
+    {
+      "id": "WSP-004",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "FS actor + concurrent stress + cancel tests"
+    },
+    {
+      "id": "WSP-005",
+      "severity": "P1",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "FSEvents recursive watcher with overflow/rescan + mock tests"
+    },
+    {
+      "id": "WSP-006",
+      "severity": "P0",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "DocumentLeaseRegistry ref-count; final release unregisters"
+    },
+    {
+      "id": "WSP-007",
+      "severity": "P1",
+      "product": "CodeEditorWorkspace",
+      "status": "fixed",
+      "summary": "On-disk golden fixtures v1/v999/corrupt; reject future schema"
+    },
+    {
+      "id": "CMD-003",
+      "severity": "P1",
+      "product": "CodeEditorCommands",
+      "status": "fixed",
+      "summary": "CommandContextSnapshot from real focus/document/trust"
+    },
+    {
+      "id": "CMD-004",
+      "severity": "P1",
+      "product": "CodeEditorCommands",
+      "status": "fixed",
+      "summary": "Typed notFound/disabled/unsupported; palette-path executeAsync proof"
+    },
+    {
+      "id": "TER-002",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "ce_pty_spawn C helper; LocalPTYTransport exclusive FD; EAGAIN wait"
+    },
+    {
+      "id": "TER-003",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "TerminalByteTransport ordered events; overflow fatal; no bufferingNewest drops"
+    },
+    {
+      "id": "TER-004",
+      "severity": "P0",
+      "product": "CodeEditorTerminalGhostty",
+      "status": "fixed",
+      "summary": "GhosttySurfaceView/Representable; workbench uses Ghostty surface"
+    },
+    {
+      "id": "TER-005",
+      "severity": "P1",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "TerminalService create/write/close/closeAll/restoration config-only"
+    },
+    {
+      "id": "TER-006",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "GhosttyRunInTerminalHandler \u2192 TerminalService debuggee sessions"
+    },
+    {
+      "id": "TER-007",
+      "severity": "P1",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "TerminalSecurityPolicy OSC52 deny; a11y adapter from Ghostty snapshot"
+    },
+    {
+      "id": "TER-008",
+      "severity": "P0",
+      "product": "CodeEditorTerminal",
+      "status": "fixed",
+      "summary": "Workbench live path no longer feeds TerminalScreen; custom VT legacy/tests only"
+    },
+    {
+      "id": "LSP-004",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Ordered inbound notification/request chain"
+    },
+    {
+      "id": "LSP-005",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "negotiatedPositionEncoding stored on session"
+    },
+    {
+      "id": "LSP-006",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "Dynamic registration tracks methods"
+    },
+    {
+      "id": "LSP-007",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "applyEdit plan path (WorkspaceEditPlan) retained + tests"
+    },
+    {
+      "id": "LSP-008",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "LSPDiagnosticStore version-aware clear on empty/server"
+    },
+    {
+      "id": "LSP-009",
+      "severity": "P1",
+      "product": "CodeEditorLSP",
+      "status": "fixed",
+      "summary": "scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1"
+    },
+    {
+      "id": "TS-002",
+      "severity": "P1",
+      "product": "CodeEditorTreeSitter",
+      "status": "fixed",
+      "summary": "Generation-tagged highlights; stale discarded"
+    },
+    {
+      "id": "TASK-003",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Cancel waits process death; exclusive slot held until exit"
+    },
+    {
+      "id": "TASK-004",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "Bounded output single marker; unresolved vars throw"
+    },
+    {
+      "id": "TASK-005",
+      "severity": "P1",
+      "product": "CodeEditorTasks",
+      "status": "fixed",
+      "summary": "FakeTaskRunner only in Tests/CodeEditorTasksTests"
+    },
+    {
+      "id": "DAP-002",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "Ordered inbound chain + lifecycle failed/terminated"
+    },
+    {
+      "id": "DAP-003",
+      "severity": "P1",
+      "product": "CodeEditorDAP",
+      "status": "fixed",
+      "summary": "runInTerminal Ghostty/TerminalService + trust deny"
+    },
+    {
+      "id": "SCM-002",
+      "severity": "P1",
+      "product": "CodeEditorSourceControl",
+      "status": "fixed",
+      "summary": "Trust-gated Git; per-op handles; component path check"
+    },
+    {
+      "id": "PROC-001",
+      "severity": "P1",
+      "product": "CodeEditorCore",
+      "status": "fixed",
+      "summary": "ProcessSupervisor alias; tasks/Git share ProcessService"
+    },
+    {
+      "id": "WB-007",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Problems/SCM/Debug models with unit tests"
+    },
+    {
+      "id": "EXT-005",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "Corrupt durable state quarantines store"
+    },
+    {
+      "id": "EXT-006",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "SBOM/broker digests fail closed never length"
+    },
+    {
+      "id": "EXT-007",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Reject symlink/special/key-material package entries"
+    },
+    {
+      "id": "EXT-008",
+      "severity": "P1",
+      "product": "CodeEditorExtensionAPI",
+      "status": "fixed",
+      "summary": "TOML fail-closed api_version + unknown required fields"
+    },
+    {
+      "id": "EXT-009",
+      "severity": "P0",
+      "product": "CodeEditorExtensions",
+      "status": "fixed",
+      "summary": "Recover re-verifies package generations"
+    },
+    {
+      "id": "EXT-010",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Storage quota overwrite-correct + directoryKey keys"
+    },
+    {
+      "id": "EXT-011",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Durable settings under storage root"
+    },
+    {
+      "id": "EXT-012",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Streaming download mid-stream caps + redirect guard"
+    },
+    {
+      "id": "EXT-013",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Host-owned npm materializer no soft-stub"
+    },
+    {
+      "id": "EXT-014",
+      "severity": "P0",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Process allowlist canonical/trusted-dir paths"
+    },
+    {
+      "id": "EXT-015",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Multi-root worktree + read limits + revoke"
+    },
+    {
+      "id": "EXT-016",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "ExtensionSDKConformance kit"
+    },
+    {
+      "id": "WASM-003",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineWasmKit",
+      "status": "fixed",
+      "summary": "Host imports read guest linear memory OOB-safe"
+    },
+    {
+      "id": "WASM-004",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineWasmKit",
+      "status": "fixed",
+      "summary": "Wall-time + cooperative cancel interrupt"
+    },
+    {
+      "id": "WASM-005",
+      "severity": "P1",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Memory limit/OOB enforcement"
+    },
+    {
+      "id": "WASM-006",
+      "severity": "P0",
+      "product": "CodeEditorWasmEngineTests",
+      "status": "fixed",
+      "summary": "Hostile fixture suite on WasmKit"
+    },
+    {
+      "id": "WASM-007",
+      "severity": "P1",
+      "product": "CodeEditorExtensionHost",
+      "status": "fixed",
+      "summary": "Dual-run contract LinkedGuest vs WasmKit"
+    },
+    {
+      "id": "WASM-008",
+      "severity": "P1",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Simulation alias = LinkedGuest; WasmKit is real"
+    },
+    {
+      "id": "WASM-009",
+      "severity": "P1",
+      "product": "CodeEditorWasmEngine",
+      "status": "fixed",
+      "summary": "Fixture gate script + session lifecycle"
+    },
+    {
+      "id": "WB-010",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Navigator set complete with models"
+    },
+    {
+      "id": "WB-011",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Tab pin/preview semantics + pane APIs"
+    },
+    {
+      "id": "WB-012",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Scheme/run destination + task routing"
+    },
+    {
+      "id": "WB-013",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Status LineIndex + activity cancel"
+    },
+    {
+      "id": "WB-014",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Chrome command ID matrix"
+    },
+    {
+      "id": "WB-015",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "Open Quickly modes + path:line:col"
+    },
+    {
+      "id": "WB-016",
+      "severity": "P1",
+      "product": "CodeEditorWorkbench",
+      "status": "fixed",
+      "summary": "FullWorkbench schemes/tasks/navigator wiring"
+    },
+    {
+      "id": "QUAL-001",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Vacuous tests banned via check-vacuous-tests.sh"
+    },
+    {
+      "id": "QUAL-002",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "verify-stable.sh \u00a726 master gate"
+    },
+    {
+      "id": "QUAL-003",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "check-release-evidence.sh validates JSON"
+    },
+    {
+      "id": "QUAL-004",
+      "severity": "P1",
+      "product": "Docs",
+      "status": "fixed",
+      "summary": "README/CompatibilityProfile honesty aligned Phases 7\u201310"
+    },
+    {
+      "id": "QUAL-005",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "API baselines refreshed; check-api-freeze"
+    },
+    {
+      "id": "QUAL-006",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "PERF-BUDGETS.md + check-perf-budgets.sh"
+    },
+    {
+      "id": "QUAL-007",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Unchecked Sendable inventory + allowlist"
+    },
+    {
+      "id": "QUAL-008",
+      "severity": "P1",
+      "product": "CI",
+      "status": "fixed",
+      "summary": "Full swift test in verify-stable with counts"
+    }
+  ]
+}

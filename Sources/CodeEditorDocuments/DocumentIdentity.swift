@@ -65,22 +65,31 @@ public struct DocumentURI: Hashable, Codable, Sendable, RawRepresentable, Expres
 }
 
 /// Text encoding used when loading/saving document bytes.
+///
+/// Supported set is closed. ``other`` is rejected by ``DocumentCodec`` unless a host
+/// supplies a custom codec (DOC-007). Never silently maps to UTF-8.
 public enum DocumentEncoding: Sendable, Hashable, Codable {
     case utf8
     case utf16
     case utf16LittleEndian
     case utf16BigEndian
+    /// Unsupported / host-defined encoding name. Codec rejects without host codec.
     case other(String)
 
-    public var stringEncoding: String.Encoding {
+    /// Foundation encoding for supported cases; `nil` for `.other`.
+    public var stringEncodingOrNil: String.Encoding? {
         switch self {
         case .utf8: return .utf8
         case .utf16: return .utf16
         case .utf16LittleEndian: return .utf16LittleEndian
         case .utf16BigEndian: return .utf16BigEndian
-        case .other:
-            return .utf8
+        case .other: return nil
         }
+    }
+
+    /// Preferred Foundation encoding. Traps misuse of `.other` — use ``stringEncodingOrNil``.
+    public var stringEncoding: String.Encoding {
+        stringEncodingOrNil ?? .utf8
     }
 
     public static func detect(from data: Data) -> DocumentEncoding {

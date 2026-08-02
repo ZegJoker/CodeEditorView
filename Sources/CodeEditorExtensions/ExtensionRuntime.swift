@@ -1,8 +1,8 @@
-import Foundation
-import CodeEditorExtensionAPI
 import CodeEditorCommands
-import CodeEditorLanguageSupport
+import CodeEditorExtensionAPI
 import CodeEditorLanguageServices
+import CodeEditorLanguageSupport
+import Foundation
 
 /// In-process extension lifecycle manager.
 public actor ExtensionRuntime {
@@ -198,7 +198,7 @@ public actor ExtensionRuntime {
             context.install(languages: LanguageContributionRegistrar(registry: langReg))
         }
         if environment.capabilities.contains(.languageServices),
-           let reg = services.languageServiceRegistry
+            let reg = services.languageServiceRegistry
         {
             context.install(
                 languageServices: LanguageServiceContributionRegistrar(

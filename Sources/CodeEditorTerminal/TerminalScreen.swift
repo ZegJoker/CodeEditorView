@@ -2,13 +2,14 @@ import Foundation
 
 public struct TerminalCell: Sendable, Hashable {
     public var character: Character
-    public var fg: Int? // SGR color index 0-255 or nil default
+    public var fg: Int?  // SGR color index 0-255 or nil default
     public var bg: Int?
     public var bold: Bool
     public var underline: Bool
     public var inverse: Bool
 
-    public static let empty = TerminalCell(character: " ", fg: nil, bg: nil, bold: false, underline: false, inverse: false)
+    public static let empty = TerminalCell(
+        character: " ", fg: nil, bg: nil, bold: false, underline: false, inverse: false)
 
     public init(
         character: Character,
@@ -181,15 +182,15 @@ public final class TerminalScreen: @unchecked Sendable {
             put(ch)
         case .execute(let b):
             switch b {
-            case 0x08: // BS
+            case 0x08:  // BS
                 cursorCol = max(0, cursorCol - 1)
-            case 0x09: // TAB
+            case 0x09:  // TAB
                 cursorCol = min(cols - 1, ((cursorCol / 8) + 1) * 8)
-            case 0x0A: // LF
+            case 0x0A:  // LF
                 lineFeed()
-            case 0x0D: // CR
+            case 0x0D:  // CR
                 cursorCol = 0
-            case 0x07: // BEL
+            case 0x07:  // BEL
                 break
             default:
                 break
@@ -209,37 +210,37 @@ public final class TerminalScreen: @unchecked Sendable {
         let p0 = params.first ?? 0
         let n = p0 == 0 ? 1 : p0
         switch final {
-        case 0x41: // CUU A
+        case 0x41:  // CUU A
             cursorRow = max(0, cursorRow - n)
-        case 0x42: // CUD B
+        case 0x42:  // CUD B
             cursorRow = min(rows - 1, cursorRow + n)
-        case 0x43: // CUF C
+        case 0x43:  // CUF C
             cursorCol = min(cols - 1, cursorCol + n)
-        case 0x44: // CUB D
+        case 0x44:  // CUB D
             cursorCol = max(0, cursorCol - n)
-        case 0x48, 0x66: // CUP H / HVP f
+        case 0x48, 0x66:  // CUP H / HVP f
             let row = max(1, params.count > 0 ? (params[0] == 0 ? 1 : params[0]) : 1) - 1
             let col = max(1, params.count > 1 ? (params[1] == 0 ? 1 : params[1]) : 1) - 1
             cursorRow = min(rows - 1, row)
             cursorCol = min(cols - 1, col)
-        case 0x4A: // ED J
+        case 0x4A:  // ED J
             eraseDisplay(mode: p0)
-        case 0x4B: // EL K
+        case 0x4B:  // EL K
             eraseLine(mode: p0)
-        case 0x6D: // SGR m
+        case 0x6D:  // SGR m
             applySGR(params.isEmpty ? [0] : params)
-        case 0x73: // SCP s save
+        case 0x73:  // SCP s save
             savedCursor = (cursorRow, cursorCol)
-        case 0x75: // RCP u restore
+        case 0x75:  // RCP u restore
             if let s = savedCursor {
                 cursorRow = s.row
                 cursorCol = s.col
             }
-        case 0x68: // SM h
+        case 0x68:  // SM h
             if params.contains(2004) { bracketedPaste = true }
             if params.contains(1) { applicationCursor = true }
             if params.contains(1049) { enterAlt() }
-        case 0x6C: // RM l
+        case 0x6C:  // RM l
             if params.contains(2004) { bracketedPaste = false }
             if params.contains(1) { applicationCursor = false }
             if params.contains(1049) { leaveAlt() }
@@ -277,7 +278,11 @@ public final class TerminalScreen: @unchecked Sendable {
             let p = params[i]
             switch p {
             case 0:
-                fg = nil; bg = nil; bold = false; underline = false; inverse = false
+                fg = nil
+                bg = nil
+                bold = false
+                underline = false
+                inverse = false
             case 1: bold = true
             case 4: underline = true
             case 7: inverse = true
@@ -358,17 +363,17 @@ public final class TerminalScreen: @unchecked Sendable {
     private func eraseDisplay(mode: Int) {
         var g = grid
         switch mode {
-        case 0: // cursor to end
+        case 0:  // cursor to end
             for c in cursorCol..<cols { g[cursorRow][c] = .empty }
             for r in (cursorRow + 1)..<rows {
                 g[r] = Array(repeating: .empty, count: cols)
             }
-        case 1: // start to cursor
+        case 1:  // start to cursor
             for r in 0..<cursorRow {
                 g[r] = Array(repeating: .empty, count: cols)
             }
             for c in 0...cursorCol where c < cols { g[cursorRow][c] = .empty }
-        default: // 2 entire
+        default:  // 2 entire
             g = Self.blankBuffer(cols: cols, rows: rows)
         }
         grid = g
@@ -417,10 +422,15 @@ public final class TerminalScreen: @unchecked Sendable {
             }
             // lead byte
             let need: Int
-            if b >> 5 == 0b110 { need = 2 }
-            else if b >> 4 == 0b1110 { need = 3 }
-            else if b >> 3 == 0b11110 { need = 4 }
-            else { break }
+            if b >> 5 == 0b110 {
+                need = 2
+            } else if b >> 4 == 0b1110 {
+                need = 3
+            } else if b >> 3 == 0b11110 {
+                need = 4
+            } else {
+                break
+            }
             let have = data.count - (i - 1)
             if have < need {
                 let complete = data.prefix(i - 1)

@@ -1,22 +1,24 @@
-import Foundation
-import Testing
 import CodeEditorCore
 import CodeEditorDAP
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensions
 import CodeEditorTasks
+import Foundation
+import Testing
+
 @testable import CodeEditorExtensionHost
 
 private func makeBroker(tmp: URL) -> CapabilityBroker {
-    CapabilityBroker(config: .init(
-        worktreeRoots: [tmp],
-        storageRoot: tmp.appendingPathComponent("storage"),
-        toolCacheRoot: tmp.appendingPathComponent("cache"),
-        processAllowlist: [.init(command: "**")],
-        downloadAllowlist: [.init(host: "cdn.example", pathPrefix: [])],
-        npmAllowlist: [.init(package: "**")]
-    ))
+    CapabilityBroker(
+        config: .init(
+            worktreeRoots: [tmp],
+            storageRoot: tmp.appendingPathComponent("storage"),
+            toolCacheRoot: tmp.appendingPathComponent("cache"),
+            processAllowlist: [.init(command: "**")],
+            downloadAllowlist: [.init(host: "cdn.example", pathPrefix: [])],
+            npmAllowlist: [.init(package: "**")]
+        ))
 }
 
 @Suite("Phase 13 DAP host")
@@ -83,15 +85,16 @@ struct Phase13DAPHostTests {
                         adapterID: "mock-dap",
                         configuration: DebugConfiguration(name: "Run", type: "mock", request: .launch),
                         confidence: 0.9
-                    ),
+                    )
                 ]
             }
         }
-        let matches = try await Loc().locate(context: DebugLocatorContext(
-            extensionID: "ext",
-            languageID: "swift",
-            workspaceRootPaths: ["/tmp"]
-        ))
+        let matches = try await Loc().locate(
+            context: DebugLocatorContext(
+                extensionID: "test.ext",
+                languageID: "swift",
+                workspaceRootPaths: ["/tmp"]
+            ))
         #expect(matches.count == 1)
         #expect(matches[0].adapterID == "mock-dap")
     }
@@ -123,6 +126,36 @@ struct Phase13MCPTests {
         await session.stop()
         await mock.stop()
     }
+
+    /// Regression: register-before-send must not leave never-resumed continuations that hang
+    /// the full suite after language-switch MainActor load (observed hang after Suite
+    /// "Language switch highlighting").
+    @Test func rapidSequentialSessionsDoNotHang() async throws {
+        let deadline = ContinuousClock.now + .seconds(10)
+        for i in 0..<8 {
+            #expect(ContinuousClock.now < deadline, "MCP session loop exceeded hang budget at i=\(i)")
+            let pair = MCPTestTransport.makePair()
+            let mock = MockMCPServer(transport: pair.server)
+            await mock.start()
+            let plan = MCPServerLaunchPlan(
+                serverID: "mock-mcp-\(i)",
+                displayName: "Mock \(i)",
+                command: "mock-mcp",
+                binarySource: .testFactory(id: "mcp-f-\(i)")
+            )
+            let pool = MCPServerPool()
+            let client = pair.client
+            await pool.registerTestFactory(id: "mcp-f-\(i)") { client }
+            let session = try await pool.start(plan: plan)
+            #expect(await session.state == .running)
+            let tools = await session.tools
+            #expect(tools.contains { ($0["name"] as? String) == "echo" })
+            _ = try await session.callTool(name: "echo")
+            await session.stop()
+            await mock.stop()
+        }
+        #expect(ContinuousClock.now < deadline)
+    }
 }
 
 @Suite("Phase 13 slash commands")
@@ -143,11 +176,12 @@ struct Phase13SlashCommandTests {
         }
         let svc = SlashCommandService()
         let ext: ExtensionID = "ext.slash"
-        await svc.registerContribution(SlashCommandContribution(
-            id: "explain",
-            name: "explain",
-            description: "d"
-        ))
+        await svc.registerContribution(
+            SlashCommandContribution(
+                id: "explain",
+                name: "explain",
+                description: "d"
+            ))
         await svc.registerProvider(Prov(), extensionID: ext)
         #expect(await svc.compatibilityStatus(for: "explain") == .stable)
         var chunks: [SlashCommandChunk] = []
@@ -170,7 +204,7 @@ struct Phase13SlashCommandTests {
             }
         }
         let svc = SlashCommandService()
-        let ext: ExtensionID = "ext"
+        let ext: ExtensionID = "test.ext"
         await svc.registerContribution(SlashCommandContribution(id: "x", name: "x", maxArgumentLength: 5))
         await svc.registerProvider(Prov(), extensionID: ext)
         do {
@@ -198,11 +232,12 @@ struct Phase13DocumentationTests {
         let file = docsRoot.appendingPathComponent("swift.md")
         try "# Swift\nHello docs body".write(to: file, atomically: true, encoding: .utf8)
 
-        let svc = DocumentationIndexService(config: .init(
-            storageRoot: tmp.appendingPathComponent("idx"),
-            maxBytes: 1024,
-            maxEntries: 100
-        ))
+        let svc = DocumentationIndexService(
+            config: .init(
+                storageRoot: tmp.appendingPathComponent("idx"),
+                maxBytes: 1024,
+                maxEntries: 100
+            ))
         let entries = try await svc.buildIndex(
             package: DocumentationPackageSuggestion(
                 id: "swift-std",
@@ -210,8 +245,8 @@ struct Phase13DocumentationTests {
                 languages: ["Swift"],
                 sourcePath: "docs/swift.md"
             ),
-            extensionID: "ext",
-            context: LanguageServerResolveContext(extensionID: "ext"),
+            extensionID: "test.ext",
+            context: LanguageServerResolveContext(extensionID: "test.ext"),
             worktreeRoot: tmp
         )
         #expect(entries.count >= 1)
@@ -223,8 +258,8 @@ struct Phase13DocumentationTests {
         do {
             _ = try await svc.buildIndex(
                 package: DocumentationPackageSuggestion(id: "missing", title: "M", sourcePath: "docs/nope.md"),
-                extensionID: "ext",
-                context: LanguageServerResolveContext(extensionID: "ext"),
+                extensionID: "test.ext",
+                context: LanguageServerResolveContext(extensionID: "test.ext"),
                 worktreeRoot: tmp
             )
             Issue.record("expected not found")
@@ -233,16 +268,17 @@ struct Phase13DocumentationTests {
         }
 
         // Quota
-        let tiny = DocumentationIndexService(config: .init(
-            storageRoot: tmp.appendingPathComponent("tiny"),
-            maxBytes: 4,
-            maxEntries: 100
-        ))
+        let tiny = DocumentationIndexService(
+            config: .init(
+                storageRoot: tmp.appendingPathComponent("tiny"),
+                maxBytes: 4,
+                maxEntries: 100
+            ))
         do {
             _ = try await tiny.buildIndex(
                 package: DocumentationPackageSuggestion(id: "big", title: "Big", sourcePath: "docs/swift.md"),
-                extensionID: "ext",
-                context: LanguageServerResolveContext(extensionID: "ext"),
+                extensionID: "test.ext",
+                context: LanguageServerResolveContext(extensionID: "test.ext"),
                 worktreeRoot: tmp
             )
             Issue.record("expected quota")
@@ -253,7 +289,8 @@ struct Phase13DocumentationTests {
 
     @Test func providerMustEmitEntries() async throws {
         struct EmptyProv: DocumentationIndexProvider {
-            func suggestPackages(context: LanguageServerResolveContext) async throws -> [DocumentationPackageSuggestion] {
+            func suggestPackages(context: LanguageServerResolveContext) async throws -> [DocumentationPackageSuggestion]
+            {
                 []
             }
             func buildIndex(
@@ -272,12 +309,12 @@ struct Phase13DocumentationTests {
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
         let svc = DocumentationIndexService(config: .init(storageRoot: tmp))
-        await svc.registerProvider(EmptyProv(), extensionID: "ext")
+        await svc.registerProvider(EmptyProv(), extensionID: "test.ext")
         do {
             _ = try await svc.buildIndex(
                 package: DocumentationPackageSuggestion(id: "empty", title: "Empty"),
-                extensionID: "ext",
-                context: LanguageServerResolveContext(extensionID: "ext"),
+                extensionID: "test.ext",
+                context: LanguageServerResolveContext(extensionID: "test.ext"),
                 worktreeRoot: nil
             )
             Issue.record("expected not found for empty provider")

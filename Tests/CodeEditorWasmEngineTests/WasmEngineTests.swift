@@ -1,7 +1,7 @@
+import CodeEditorExtensionProtocol
+import CodeEditorWasmEngine
 import Foundation
 import Testing
-import CodeEditorWasmEngine
-import CodeEditorExtensionProtocol
 
 @Suite("Wasm engine limits and modules")
 struct WasmEngineTests {

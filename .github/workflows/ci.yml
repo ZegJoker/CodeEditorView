@@ -19,6 +19,8 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Select / verify Xcode pin (CI-009)
+        run: ./scripts/check-xcode-pin.sh
       - name: Isolation
         run: ./scripts/check-product-isolation.sh
       - name: Docs inventory
@@ -33,47 +35,71 @@ jobs:
         run: ./scripts/check-api-freeze.sh
       - name: Accessibility surface (Phase 16)
         run: ./scripts/check-accessibility.sh
-      - name: Grammar pins
-        run: ./scripts/check-grammar-pins.sh
+      - name: Grammar pins + committed sources (PKG-001)
+        run: ./scripts/verify-grammars.sh
       - name: Licenses
         run: ./scripts/check-licenses.sh
-      - name: Format
+      - name: Install swift-format
+        run: |
+          if ! command -v swift-format >/dev/null 2>&1; then
+            brew install swift-format
+          fi
+          swift-format --version
+      - name: Format (hard)
         run: ./scripts/check-format.sh
+      - name: Ghostty pin present
+        run: test -f Docs/Architecture/GHOSTTY.pin && grep -E '^GHOSTTY_COMMIT=' Docs/Architecture/GHOSTTY.pin
 
   macos-debug:
     name: macOS debug test
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: swift test (debug)
         run: swift test
+      - name: Release evidence (CI-001)
+        run: ./scripts/generate-release-evidence.sh Baselines/evidence
+      - name: Upload evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-${{ github.sha }}
+          path: Baselines/evidence/
+          if-no-files-found: warn
+
+  ghostty-pin:
+    name: Ghostty pin metadata
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify GHOSTTY.pin
+        run: |
+          set -euo pipefail
+          test -f Docs/Architecture/GHOSTTY.pin
+          grep -E '^GHOSTTY_COMMIT=[0-9a-f]{40}$' Docs/Architecture/GHOSTTY.pin
+          grep -E '^GHOSTTY_REPO=https://' Docs/Architecture/GHOSTTY.pin
+          echo "Ghostty pin OK:"
+          cat Docs/Architecture/GHOSTTY.pin
+      - name: Optional libghostty-vt build
+        # Best-effort: Ghostty dep CDN can fail; pin verification is required, library build is optional.
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build-ghostty.sh scripts/link-ghostty-flags.sh
+          ./scripts/build-ghostty.sh vt
+          eval "$(./scripts/link-ghostty-flags.sh)"
+          if [[ "${CODEEDITOR_GHOSTTY_LINKED:-}" == "1" ]]; then
+            CODEEDITOR_GHOSTTY_LINKED=1 swift build --product CodeEditorTerminalGhostty
+          fi
 
   macos-release:
     name: macOS release test
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: swift test (release)
         run: swift test -c release
@@ -83,16 +109,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: Build with complete concurrency checking
         # Package already uses Swift 6 language mode; reinforce via frontend flags.
@@ -104,16 +121,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: Resolve package
         run: swift package resolve
@@ -132,9 +140,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: Clear SwiftPM / build caches
         run: |
@@ -151,16 +157,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: Smoke products
         run: ./scripts/smoke-products.sh
@@ -170,16 +167,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: LanguageServices tests
         run: swift test --filter CodeEditorLanguageServices
@@ -208,16 +196,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: Tasks / Terminal / SourceControl tests
         run: swift test --filter 'CodeEditorTasks|CodeEditorTerminal|CodeEditorSourceControl'
@@ -232,16 +211,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: swift test --enable-code-coverage
         run: swift test --enable-code-coverage
@@ -270,16 +240,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Cache grammars
-        uses: actions/cache@v4
-        with:
-          path: |
-            Grammars
-            ${{ runner.temp }}/codeeditorview-grammars
-          key: grammars-${{ hashFiles('scripts/grammars.tsv', 'scripts/update-grammars.sh') }}
-      - name: Bootstrap grammars
-        env:
-          TMPDIR: ${{ runner.temp }}
+      - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
       - name: Emit API baselines
         run: ./scripts/check-api-baseline.sh
@@ -289,18 +250,87 @@ jobs:
           path: Baselines/api
 
   wasi-sdk:
-    name: Swift WASI SDK pin
+    name: Swift WASI SDK pin (hard)
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Show Swift version
         run: swift --version
-      - name: Check WASI pin file + optional install
-        env:
-          # Soft by default so missing SDK does not block the whole matrix until
-          # the org publishes a stable CODEEDITOR_WASI_SDK_URL secret. Set
-          # repository variable WASI_SDK_REQUIRED=1 when install is automated.
-          WASI_SDK_REQUIRED: ${{ vars.WASI_SDK_REQUIRED || '0' }}
-          CODEEDITOR_WASI_SDK_URL: ${{ secrets.CODEEDITOR_WASI_SDK_URL || '' }}
-          CODEEDITOR_WASI_SDK_ID: ${{ vars.CODEEDITOR_WASI_SDK_ID || '' }}
+      - name: Install/verify pinned WASI SDK
         run: ./scripts/check-wasi-sdk.sh
+
+  source-archive-rehearsal:
+    name: Source archive rehearsal (PKG-001)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode pin
+        run: ./scripts/check-xcode-pin.sh
+      - name: Export archive + resolve/build
+        run: ./scripts/export-source-archive-rehearsal.sh Baselines/evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-archive-evidence-${{ github.sha }}
+          path: Baselines/evidence/source-archive.sha256
+          if-no-files-found: error
+
+  macos-example-app:
+    name: macOS example app (xcodebuild test)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode pin
+        run: ./scripts/check-xcode-pin.sh
+      - name: Verify grammars
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: swift test (example package)
+        run: |
+          cd Examples/macOS/CodeEditorMacExample
+          swift test
+      - name: xcodebuild test
+        run: |
+          set -euo pipefail
+          cd Examples/macOS/CodeEditorMacExample
+          DD=$(mktemp -d)
+          xcodebuild \
+            -scheme CodeEditorMacExample \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$DD" \
+            test
+          rm -rf "$DD"
+
+  ios-example-app:
+    name: iOS example app (xcodebuild test)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode pin
+        run: ./scripts/check-xcode-pin.sh
+      - name: Verify grammars
+        run: ./scripts/ci-bootstrap-grammars.sh
+      - name: xcodebuild test (iOS Simulator)
+        run: |
+          set -euo pipefail
+          cd Examples/iOS/CodeEditoriOSExample
+          DD=$(mktemp -d)
+          DEST="platform=iOS Simulator,name=iPhone 16"
+          if ! xcrun simctl list devices available 2>/dev/null | grep -q "iPhone 16"; then
+            # Pick first available iPhone simulator
+            NAME=$(xcrun simctl list devices available | awk -F'[()]' '/iPhone/{gsub(/^ +| +$/,"",$1); print $1; exit}')
+            if [[ -n "$NAME" ]]; then
+              DEST="platform=iOS Simulator,name=$NAME"
+            else
+              DEST="generic/platform=iOS Simulator"
+            fi
+          fi
+          echo "Using destination: $DEST"
+          # SPM resource bundles + package tests: disable codesign on simulator.
+          xcodebuild \
+            -scheme CodeEditoriOSExample \
+            -destination "$DEST" \
+            -derivedDataPath "$DD" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            test
+          rm -rf "$DD"

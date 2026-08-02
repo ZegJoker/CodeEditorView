@@ -1,15 +1,15 @@
 import CoreGraphics
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
-public typealias PlatformFont = NSFont
-public typealias PlatformColor = NSColor
-public typealias PlatformView = NSView
+    import AppKit
+    public typealias PlatformFont = NSFont
+    public typealias PlatformColor = NSColor
+    public typealias PlatformView = NSView
 #elseif canImport(UIKit)
-import UIKit
-public typealias PlatformFont = UIFont
-public typealias PlatformColor = UIColor
-public typealias PlatformView = UIView
+    import UIKit
+    public typealias PlatformFont = UIFont
+    public typealias PlatformColor = UIColor
+    public typealias PlatformView = UIView
 #endif
 
 public enum PlatformDefaults {
@@ -19,129 +19,129 @@ public enum PlatformDefaults {
 
     public static var textColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .labelColor
+            .labelColor
         #else
-        .label
+            .label
         #endif
     }
 
     public static var selectionColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .selectedTextBackgroundColor
+            .selectedTextBackgroundColor
         #else
-        .systemBlue.withAlphaComponent(0.3)
+            .systemBlue.withAlphaComponent(0.3)
         #endif
     }
 
     public static var caretColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .textColor
+            .textColor
         #else
-        .label
+            .label
         #endif
     }
 
     public static var editorBackground: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .textBackgroundColor
+            .textBackgroundColor
         #else
-        .systemBackground
+            .systemBackground
         #endif
     }
 
     public static var lineHighlight: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .selectedTextBackgroundColor.withSystemEffect(.disabled)
+            .selectedTextBackgroundColor.withSystemEffect(.disabled)
         #else
-        .systemGray.withAlphaComponent(0.15)
+            .systemGray.withAlphaComponent(0.15)
         #endif
     }
 
     public static var keywordColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemPink
+            .systemPink
         #else
-        .systemPink
+            .systemPink
         #endif
     }
 
     public static var typeColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemTeal
+            .systemTeal
         #else
-        .systemTeal
+            .systemTeal
         #endif
     }
 
     public static var stringColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemRed
+            .systemRed
         #else
-        .systemRed
+            .systemRed
         #endif
     }
 
     public static var numberColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemBlue
+            .systemBlue
         #else
-        .systemBlue
+            .systemBlue
         #endif
     }
 
     public static var valueColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemPurple
+            .systemPurple
         #else
-        .systemPurple
+            .systemPurple
         #endif
     }
 
     public static var commentColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .secondaryLabelColor
+            .secondaryLabelColor
         #else
-        .secondaryLabel
+            .secondaryLabel
         #endif
     }
 
     public static var variableColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemCyan
+            .systemCyan
         #else
-        .systemCyan
+            .systemCyan
         #endif
     }
 
     public static var attributeColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemBrown
+            .systemBrown
         #else
-        .systemBrown
+            .systemBrown
         #endif
     }
 
     public static var operatorColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .systemOrange
+            .systemOrange
         #else
-        .systemOrange
+            .systemOrange
         #endif
     }
 
     public static var punctuationColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .tertiaryLabelColor
+            .tertiaryLabelColor
         #else
-        .tertiaryLabel
+            .tertiaryLabel
         #endif
     }
 
     public static var reformattingGuideColor: PlatformColor {
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        .separatorColor
+            .separatorColor
         #else
-        .separator
+            .separator
         #endif
     }
 }

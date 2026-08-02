@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
+import Foundation
 
 /// Cooperative guest implementing core-Wasm ABI export semantics in Swift.
 public final class WasmGuestRuntime: @unchecked Sendable {
@@ -44,7 +44,8 @@ public final class WasmGuestRuntime: @unchecked Sendable {
     }
 
     public func dealloc(_ ptr: Int32, _ length: Int32) {
-        _ = ptr; _ = length
+        _ = ptr
+        _ = length
     }
 
     public func start(configPtr: Int32, configLen: Int32) -> Int32 {
@@ -175,7 +176,8 @@ public final class WasmGuestRuntime: @unchecked Sendable {
         case .echo:
             return payload
         case .completion:
-            return Data(#"{"items":[{"label":"conformanceHello","kind":"function","insertText":"conformanceHello()"}]}"#.utf8)
+            return Data(
+                #"{"items":[{"label":"conformanceHello","kind":"function","insertText":"conformanceHello()"}]}"#.utf8)
         case .hover:
             return Data(#"{"sections":[{"content":{"markdown":"**conformance** hover"}}]}"#.utf8)
         case .definition:
@@ -191,7 +193,7 @@ public final class WasmGuestRuntime: @unchecked Sendable {
                 "environment": [:] as [String: String],
                 "transport": "stdio",
                 "binarySource": [
-                    "testFactory": ["id": "mock-ls-factory"],
+                    "testFactory": ["id": "mock-ls-factory"]
                 ],
             ]
             // Prefer Swift Codable encode when available via JSON that decoder accepts.
@@ -230,7 +232,7 @@ public final class WasmGuestRuntime: @unchecked Sendable {
         case .lsTransformCompletionLabel:
             // Expect JSON {"label":"..."}; prefix with ext:
             if let obj = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
-               let label = obj["label"] as? String
+                let label = obj["label"] as? String
             {
                 var out = obj
                 out["label"] = label.hasPrefix("ext:") ? label : "ext:" + label
@@ -239,7 +241,7 @@ public final class WasmGuestRuntime: @unchecked Sendable {
             return payload
         case .lsTransformSymbolLabel:
             if let obj = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
-               let name = obj["name"] as? String
+                let name = obj["name"] as? String
             {
                 var out = obj
                 out["name"] = name.hasPrefix("ext:") ? name : "ext:" + name
@@ -251,8 +253,8 @@ public final class WasmGuestRuntime: @unchecked Sendable {
         case .lsRestart:
             return Data(#"{"ok":true}"#.utf8)
         case .dapResolveLaunchPlan, .dapResolveConfigurations, .dapLocate, .dapStatus, .dapRestart,
-             .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
-             .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate:
+            .mcpResolveLaunchPlan, .mcpStatus, .mcpRestart,
+            .slashExecute, .docsSuggest, .docsBuildIndex, .docsInvalidate:
             if let handler = methodHandlers[method] {
                 return handler(payload)
             }

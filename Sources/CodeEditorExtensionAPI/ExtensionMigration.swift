@@ -118,10 +118,10 @@ public enum ExtensionMigration {
                 let dir = languagesDir.appendingPathComponent(sanitizeFileName(lang.id), isDirectory: true)
                 try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
                 var cfg = """
-                name = "\(escapeTOML(lang.displayName))"
-                grammar = "\(escapeTOML(lang.tsName.isEmpty ? lang.id : lang.tsName))"
-                path_suffixes = [\(lang.fileExtensions.map { "\"\(escapeTOML($0))\"" }.joined(separator: ", "))]
-                """
+                    name = "\(escapeTOML(lang.displayName))"
+                    grammar = "\(escapeTOML(lang.tsName.isEmpty ? lang.id : lang.tsName))"
+                    path_suffixes = [\(lang.fileExtensions.map { "\"\(escapeTOML($0))\"" }.joined(separator: ", "))]
+                    """
                 if !lang.aliases.isEmpty {
                     cfg += "\naliases = [\(lang.aliases.map { "\"\(escapeTOML($0))\"" }.joined(separator: ", "))]"
                 }
@@ -129,7 +129,8 @@ public enum ExtensionMigration {
                     cfg += "\nline_comments = [\"\(escapeTOML(lang.lineComment))\"]"
                 }
                 if !lang.blockCommentStart.isEmpty {
-                    cfg += "\nblock_comment = [\"\(escapeTOML(lang.blockCommentStart))\", \"\(escapeTOML(lang.blockCommentEnd))\"]"
+                    cfg +=
+                        "\nblock_comment = [\"\(escapeTOML(lang.blockCommentStart))\", \"\(escapeTOML(lang.blockCommentEnd))\"]"
                 }
                 cfg += "\n"
                 try cfg.write(to: dir.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
@@ -137,7 +138,9 @@ public enum ExtensionMigration {
         }
 
         if !plan.keybindings.isEmpty {
-            todos.append("keybindings present in JSON (\(plan.keybindings.count)); review after migration — not auto-exported to TOML tables yet")
+            todos.append(
+                "keybindings present in JSON (\(plan.keybindings.count)); review after migration — not auto-exported to TOML tables yet"
+            )
         }
         todos.append("review unsupported procedural fields manually")
         todos.append("delete extension.json after validating extension.toml")
@@ -154,23 +157,23 @@ public enum ExtensionMigration {
         )
 
         let report = """
-        # Migration report
+            # Migration report
 
-        - source: extension.json
-        - target: extension.toml
-        - package: \(m.id.rawValue)
-        - version: \(m.version)
-        - themes exported: \(plan.themes.count)
-        - snippets exported: \(plan.snippets.count)
-        - icon themes exported: \(plan.iconThemes.count)
-        - languages exported: \(plan.languages.count)
-        - keybindings noted: \(plan.keybindings.count)
-        - parity: \(validated.parityProfile)
-        - digest: \(validated.digest ?? "n/a")
+            - source: extension.json
+            - target: extension.toml
+            - package: \(m.id.rawValue)
+            - version: \(m.version)
+            - themes exported: \(plan.themes.count)
+            - snippets exported: \(plan.snippets.count)
+            - icon themes exported: \(plan.iconThemes.count)
+            - languages exported: \(plan.languages.count)
+            - keybindings noted: \(plan.keybindings.count)
+            - parity: \(validated.parityProfile)
+            - digest: \(validated.digest ?? "n/a")
 
-        ## TODO
-        \(todos.map { "- \($0)" }.joined(separator: "\n"))
-        """
+            ## TODO
+            \(todos.map { "- \($0)" }.joined(separator: "\n"))
+            """
 
         return Result(
             packageID: m.id,
@@ -187,59 +190,60 @@ public enum ExtensionMigration {
         displayName: String
     ) throws {
         let packageSwift = """
-        // swift-tools-version: 6.0
-        import PackageDescription
+            // swift-tools-version: 6.0
+            import PackageDescription
 
-        let package = Package(
-            name: "\(sanitizeSwiftName(packageID.rawValue))",
-            platforms: [.macOS(.v15), .iOS(.v18)],
-            products: [
-                .library(name: "\(sanitizeSwiftName(packageID.rawValue))", targets: ["\(sanitizeSwiftName(packageID.rawValue))"]),
-            ],
-            dependencies: [
-                // .package(url: "https://github.com/your-org/CodeEditorView.git", from: "1.0.0"),
-            ],
-            targets: [
-                .target(
-                    name: "\(sanitizeSwiftName(packageID.rawValue))",
-                    dependencies: [
-                        // .product(name: "CodeEditorExtensionAPI", package: "CodeEditorView"),
-                    ]
-                ),
-            ]
-        )
-        """
+            let package = Package(
+                name: "\(sanitizeSwiftName(packageID.rawValue))",
+                platforms: [.macOS(.v15), .iOS(.v18)],
+                products: [
+                    .library(name: "\(sanitizeSwiftName(packageID.rawValue))", targets: ["\(sanitizeSwiftName(packageID.rawValue))"]),
+                ],
+                dependencies: [
+                    // .package(url: "https://github.com/your-org/CodeEditorView.git", from: "1.0.0"),
+                ],
+                targets: [
+                    .target(
+                        name: "\(sanitizeSwiftName(packageID.rawValue))",
+                        dependencies: [
+                            // .product(name: "CodeEditorExtensionAPI", package: "CodeEditorView"),
+                        ]
+                    ),
+                ]
+            )
+            """
         try packageSwift.write(
             to: root.appendingPathComponent("Package.swift"),
             atomically: true,
             encoding: .utf8
         )
 
-        let sources = root
+        let sources =
+            root
             .appendingPathComponent("Sources", isDirectory: true)
             .appendingPathComponent(sanitizeSwiftName(packageID.rawValue), isDirectory: true)
         try FileManager.default.createDirectory(at: sources, withIntermediateDirectories: true)
         let source = """
-        import CodeEditorExtensionAPI
+            import CodeEditorExtensionAPI
 
-        /// \(displayName) — data-only by default. Add procedural activation when needed.
-        public struct \(sanitizeSwiftName(packageID.rawValue)): EditorExtension {
-            public init() {}
+            /// \(displayName) — data-only by default. Add procedural activation when needed.
+            public struct \(sanitizeSwiftName(packageID.rawValue)): EditorExtension {
+                public init() {}
 
-            public var manifest: ExtensionManifest {
-                // Prefer loading from extension.toml at package root in production hosts.
-                ExtensionManifest(
-                    id: ExtensionID(rawValue: "\(packageID.rawValue)"),
-                    displayName: "\(escapeSwiftString(displayName))",
-                    activationEvents: [.startup]
-                )
+                public var manifest: ExtensionManifest {
+                    // Prefer loading from extension.toml at package root in production hosts.
+                    ExtensionManifest(
+                        id: try! ExtensionID(validating: "\(packageID.rawValue)"),
+                        displayName: "\(escapeSwiftString(displayName))",
+                        activationEvents: [.startup]
+                    )
+                }
+
+                public func activate(in context: any ExtensionAuthorContext) async throws {
+                    context.info("\\(manifest.displayName) activated")
+                }
             }
-
-            public func activate(in context: any ExtensionAuthorContext) async throws {
-                context.info("\\(manifest.displayName) activated")
-            }
-        }
-        """
+            """
         try source.write(
             to: sources.appendingPathComponent("\(sanitizeSwiftName(packageID.rawValue)).swift"),
             atomically: true,

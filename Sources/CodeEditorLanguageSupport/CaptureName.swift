@@ -60,7 +60,7 @@ public enum CaptureName: String, Sendable, Hashable, CaseIterable {
         let root = parts.first ?? normalized
         switch root {
         case "keyword", "conditional", "repeat", "include", "import", "export",
-             "storage", "directive", "preproc", "module":
+            "storage", "directive", "preproc", "module":
             return .keyword
         case "comment", "documentation":
             return .comment
@@ -69,12 +69,12 @@ public enum CaptureName: String, Sendable, Hashable, CaseIterable {
         case "number", "float", "integer":
             return .number
         case "type", "class", "struct", "enum", "interface", "namespace",
-             "constructor", "type_identifier":
+            "constructor", "type_identifier":
             return root == "constructor" ? .constructor : .type
         case "function", "method", "call", "procedure":
             return .function
         case "variable", "identifier", "constant", "field", "property",
-             "parameter", "argument", "symbol":
+            "parameter", "argument", "symbol":
             if root == "constant" { return .constant }
             if root == "property" || root == "field" { return .property }
             if root == "parameter" || root == "argument" { return .parameter }

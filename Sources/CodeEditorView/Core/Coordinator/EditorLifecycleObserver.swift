@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Receives immutable edit / selection lifecycle notifications without retaining
 /// ``EditorController``. Prefer this over ``EditorCoordinator`` for new code.
@@ -13,12 +13,12 @@ public protocol EditorLifecycleObserver: AnyObject {
 }
 
 @MainActor
-public extension EditorLifecycleObserver {
-    func editorDidAttach(_ context: EditorContext) {}
-    func editorWillApply(_ transaction: EditTransaction, snapshot: DocumentSnapshot) {}
-    func editorDidApply(_ result: AppliedEditTransaction) {}
-    func editorSelectionDidChange(_ event: SelectionChangeEvent) {}
-    func editorDidDetach(_ context: EditorContext) {}
+extension EditorLifecycleObserver {
+    public func editorDidAttach(_ context: EditorContext) {}
+    public func editorWillApply(_ transaction: EditTransaction, snapshot: DocumentSnapshot) {}
+    public func editorDidApply(_ result: AppliedEditTransaction) {}
+    public func editorSelectionDidChange(_ event: SelectionChangeEvent) {}
+    public func editorDidDetach(_ context: EditorContext) {}
 }
 
 /// Weak box so observer arrays do not retain the host.

@@ -1,6 +1,6 @@
+import CodeEditorDocuments
 import Foundation
 import Observation
-import CodeEditorDocuments
 
 /// Lazy in-memory cache of expanded workspace directories.
 @MainActor
@@ -14,11 +14,14 @@ public final class WorkspaceFileTree {
 
     public init(fileSystem: any WorkspaceFileSystem) {
         self.fileSystem = fileSystem
-        self.roots = fileSystem.roots
+        self.roots = []
+        // Roots are empty until ``refreshRoots()`` — call after construction
+        // (``Workspace.local`` and ``addRoot`` do this). Avoid fire-and-forget
+        // races that leave ``roots`` empty while tests/UI index immediately.
     }
 
-    public func refreshRoots() {
-        roots = fileSystem.roots
+    public func refreshRoots() async {
+        roots = await fileSystem.roots
     }
 
     public func isExpanded(_ id: WorkspaceItemID) -> Bool {

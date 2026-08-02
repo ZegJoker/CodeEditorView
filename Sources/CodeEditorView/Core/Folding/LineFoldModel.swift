@@ -58,7 +58,8 @@ public final class LineFoldModel {
     @discardableResult
     public func expandFolds(containing offset: Int) -> Bool {
         var changed = false
-        for fold in foldCache.collapsedFolds where fold.range.contains(offset)
+        for fold in foldCache.collapsedFolds
+        where fold.range.contains(offset)
             || (offset == fold.range.upperBound && fold.range.lowerBound < offset)
             || (fold.range.lowerBound <= offset && offset < fold.range.upperBound)
         {

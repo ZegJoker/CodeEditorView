@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
-# Populate Grammars/ from upstream tree-sitter grammar repos (not checked into git).
+# Maintainer tool: regenerate committed Tree-sitter C sources under
+# Packages/CodeEditorGrammars/Sources/<lang>/ from upstream pins.
 #
 # Prerequisites: git, network access.
-# Usage (from repo root or anywhere):
+# Usage (from repo root):
 #   ./scripts/update-grammars.sh
 #
 # Catalog: scripts/grammars.tsv
 #   name|c_symbol|url|commit_sha|sha256_parser_c
-#   (legacy 4-column name|…|ref still accepted; prefer immutable SHA pins)
 # Queries (.scm) live under Sources/CodeEditorLanguages/Resources/ — not here.
+# After running, commit Packages/CodeEditorGrammars and updated pin checksums.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 TMP="${TMPDIR:-/tmp}/codeeditorview-grammars"
-mkdir -p "$TMP" Grammars/src
+mkdir -p "$TMP" Packages/CodeEditorGrammars/Sources
 
 header_basename() {
   # Directory name → public header stem (c-sharp → c_sharp, go-mod → go_mod).
@@ -107,7 +108,7 @@ rewrite_relative_common_includes() {
 
 fetch_one() {
   local name="$1" c_symbol="$2" url="$3" pin="$4"
-  local dest="Grammars/src/$name"
+  local dest="Packages/CodeEditorGrammars/Sources/$name"
   mkdir -p "$dest"
   local clone="$TMP/$name"
   local is_sha=0
@@ -201,7 +202,7 @@ fetch_one() {
   # Fallback: any previously populated tree_sitter from another language.
   if [[ ! -f "$dest/tree_sitter/parser.h" ]]; then
     local sibling
-    for sibling in Grammars/src/*/tree_sitter/parser.h; do
+    for sibling in Packages/CodeEditorGrammars/Sources/*/tree_sitter/parser.h; do
       if [[ -f "$sibling" ]]; then
         mkdir -p "$dest/tree_sitter"
         cp -R "$(dirname "$sibling")/." "$dest/tree_sitter/"
@@ -239,6 +240,6 @@ if [[ "$failures" -gt 0 ]]; then
 fi
 
 echo
-echo "Done. Grammars/ is ready (gitignored — do not commit)."
-echo "Build language packs with:  swift build"
-echo "If Package.swift source lists drift, compare Grammars/src/*/ against targets."
+echo "Done. Sources written to Packages/CodeEditorGrammars/Sources/ (committed artifacts)."
+echo "Next: ./scripts/verify-grammars.sh && git add Packages/CodeEditorGrammars"
+echo "Build language packs with:  swift build --product CodeEditorLanguages"

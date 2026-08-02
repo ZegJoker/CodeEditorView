@@ -1,6 +1,6 @@
 import Testing
-@testable import CodeEditorLanguages
 
+@testable import CodeEditorLanguages
 
 @Suite("CodeEditorLanguages")
 struct CodeLanguagesTests {
@@ -11,9 +11,10 @@ struct CodeLanguagesTests {
         #expect(CodeLanguage.allLanguages.count >= 40)
         #expect(CodeLanguages.language(id: "swift")?.displayName == "Swift")
         #expect(CodeLanguages.language(id: "typescript")?.id == .typescript)
-        #expect(CodeLanguages.language(id: "cSharp")?.tsName == "c-sharp"
-            || CodeLanguages.language(id: "csharp") != nil
-            || CodeLanguages.language(id: "cs") != nil)
+        #expect(
+            CodeLanguages.language(id: "cSharp")?.tsName == "c-sharp"
+                || CodeLanguages.language(id: "csharp") != nil
+                || CodeLanguages.language(id: "cs") != nil)
     }
 
     @Test func registryResolvesExtensions() {

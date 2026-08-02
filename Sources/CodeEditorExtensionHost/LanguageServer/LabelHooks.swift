@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorExtensionAPI
 import CodeEditorLanguageServices
+import Foundation
 
 /// Applies extension label transforms to LSP-decoded items.
 public actor LanguageServerLabelHookRegistry {
@@ -30,12 +30,13 @@ public actor LanguageServerLabelHookRegistry {
 
     public func transformCompletion(serverID: String, item: CompletionItem) async -> CompletionItem {
         guard let hook = completionHooks[serverID] else { return item }
-        let t = await hook(CompletionLabelTransform(
-            label: item.label,
-            detail: item.detail,
-            insertText: item.insertText,
-            filterText: item.filterText
-        ))
+        let t = await hook(
+            CompletionLabelTransform(
+                label: item.label,
+                detail: item.detail,
+                insertText: item.insertText,
+                filterText: item.filterText
+            ))
         var copy = item
         copy.label = t.label
         copy.detail = t.detail
@@ -44,7 +45,9 @@ public actor LanguageServerLabelHookRegistry {
         return copy
     }
 
-    public func transformSymbol(serverID: String, name: String, detail: String?, container: String?) async -> (String, String?, String?) {
+    public func transformSymbol(
+        serverID: String, name: String, detail: String?, container: String?
+    ) async -> (String, String?, String?) {
         guard let hook = symbolHooks[serverID] else { return (name, detail, container) }
         let t = await hook(SymbolLabelTransform(name: name, detail: detail, containerName: container))
         return (t.name, t.detail, t.containerName)

@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCommands
-import CodeEditorLanguageSupport
 import CodeEditorExtensionAPI
+import CodeEditorLanguageSupport
+import Foundation
 
 // Re-export contribution value types from the author API.
 // Stores remain host-owned.
@@ -161,8 +161,8 @@ public final class IconThemeContributionStore: @unchecked Sendable {
 
 // MARK: - Language DTO helpers
 
-public extension LanguageDefinitionDTO {
-    func makeDefinition() -> LanguageDefinition {
+extension LanguageDefinitionDTO {
+    public func makeDefinition() -> LanguageDefinition {
         LanguageDefinition(
             id: LanguageID(rawValue: id),
             displayName: displayName,

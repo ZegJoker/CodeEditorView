@@ -24,7 +24,8 @@ public final class CommandPaletteModel {
         if q.isEmpty {
             return candidates.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         }
-        return candidates
+        return
+            candidates
             .compactMap { command -> (EditorCommand, Int)? in
                 let score = rank(command: command, query: q)
                 return score >= 0 ? (command, score) : nil

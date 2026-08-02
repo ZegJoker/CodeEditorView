@@ -1,7 +1,7 @@
+import CodeEditorCore
 import CoreGraphics
 import CoreText
 import Foundation
-import CodeEditorCore
 
 /// Builds and maintains line layout for a code document.
 @MainActor
@@ -30,6 +30,11 @@ public final class LayoutEngine {
     public private(set) var collapsedFolds: [FoldRange] = []
     /// Extra height under lines that show diagnostic annotation bands (Phase 12).
     public private(set) var annotationBandHeights: [Int: CGFloat] = [:]
+    /// Last viewport UTF-16 coverage from ``layoutViewport`` (UI-007 a11y).
+    public private(set) var latestVisibleUTF16Range: NSRange = NSRange(location: 0, length: 0)
+    /// Cached max content width; invalidated on edit/font/wrap (UI-006).
+    private var cachedMaxLineWidth: CGFloat = 0
+    private var maxLineWidthValid = false
 
     private var typesetter = Typesetter()
     private weak var document: DocumentStore?
@@ -85,6 +90,7 @@ public final class LayoutEngine {
     }
 
     public func invalidateAll() {
+        invalidateMaxLineWidthCache()
         if transactionDepth > 0 {
             needsFullRebuild = true
             return
@@ -104,6 +110,7 @@ public final class LayoutEngine {
 
     /// Reacts to a text replacement that already landed in the document store.
     public func documentDidReplace(range: NSRange, delta: Int) {
+        invalidateMaxLineWidthCache()
         attachments.shift(forEditAt: range.location, delta: delta, replacedLength: range.length)
         if transactionDepth > 0 {
             pendingEdits.append((range, delta))
@@ -141,7 +148,8 @@ public final class LayoutEngine {
             }
         }
 
-        let layoutWidth = wrapLines
+        let layoutWidth =
+            wrapLines
             ? max(1, containerWidth - edgeInsets.horizontal)
             : CGFloat.greatestFiniteMagnitude
 
@@ -192,10 +200,27 @@ public final class LayoutEngine {
             }
         }
 
+        // Track visible UTF-16 span for virtualized accessibility (UI-007).
+        if let first = laidOut.first, let last = laidOut.last,
+            let firstLine = lineIndex.line(atIndex: first.lineIndex),
+            let lastLine = lineIndex.line(atIndex: last.lineIndex)
+        {
+            let start = firstLine.utf16Offset + first.fragment.lineRelativeRange.location
+            let end =
+                lastLine.utf16Offset + last.fragment.lineRelativeRange.location
+                + last.fragment.lineRelativeRange.length
+            latestVisibleUTF16Range = NSRange(location: start, length: max(0, end - start))
+        }
+        // Update incremental max-width cache from laid-out fragments (UI-006).
+        if maxContentWidth > cachedMaxLineWidth {
+            cachedMaxLineWidth = maxContentWidth
+            maxLineWidthValid = true
+        }
         // Ensure content size is current after typesetting.
-        let width = wrapLines
+        let width =
+            wrapLines
             ? containerWidth
-            : max(containerWidth, maxContentWidth, maxLineWidth())
+            : max(containerWidth, maxContentWidth, cachedMaxLineWidthValue())
         contentSize = CGSize(width: width, height: lineIndex.height)
         return LayoutSnapshot(contentSize: contentSize, fragments: laidOut)
     }
@@ -207,9 +232,10 @@ public final class LayoutEngine {
             // Probe a few offsets inside the fold body.
             let mid = (fold.range.lowerBound + fold.range.upperBound) / 2
             if let line = lineIndex.line(atUTF16Offset: mid),
-               line.metrics.height >= 0.5,
-               isLineHiddenByCollapsedFold(line.utf16Range)
-                || isCloserLineHiddenByCollapsedFold(line.utf16Range, document: document) {
+                line.metrics.height >= 0.5,
+                isLineHiddenByCollapsedFold(line.utf16Range)
+                    || isCloserLineHiddenByCollapsedFold(line.utf16Range, document: document)
+            {
                 needsPass = true
                 break
             }
@@ -300,7 +326,8 @@ public final class LayoutEngine {
     func isCloserLineHiddenByCollapsedFold(_ lineRange: NSRange, document: NSString) -> Bool {
         for fold in collapsedFolds where fold.isCollapsed {
             if let info = closerLineInfo(for: fold, document: document),
-               info.lineRange.location == lineRange.location {
+                info.lineRange.location == lineRange.location
+            {
                 return true
             }
         }
@@ -325,7 +352,8 @@ public final class LayoutEngine {
             for att in item.fragment.attachments {
                 let rect = CGRect(x: x, y: item.frame.minY, width: att.width, height: item.frame.height)
                 if rect.insetBy(dx: -2, dy: -2).contains(point),
-                   let placeholder = att.attachment as? LineFoldPlaceholder {
+                    let placeholder = att.attachment as? LineFoldPlaceholder
+                {
                     return placeholder
                 }
                 x += att.width
@@ -458,7 +486,8 @@ public final class LayoutEngine {
         }
         // Fallback: last visible line at or below y.
         var best: LinePosition<TextLine>?
-        lineIndex.forEach { pos in
+        for index in 0..<lineIndex.count {
+            guard let pos = lineIndex.line(atIndex: index) else { continue }
             if pos.metrics.height >= 0.5, pos.yOffset <= y {
                 best = pos
             }
@@ -545,9 +574,10 @@ public final class LayoutEngine {
             return
         }
 
-        let substring = document.substring(
-            from: NSRange(location: newBlockStart, length: newBlockEnd - newBlockStart)
-        ) ?? ""
+        let substring =
+            document.substring(
+                from: NSRange(location: newBlockStart, length: newBlockEnd - newBlockStart)
+            ) ?? ""
         // Never append a trailing empty line for a localized slice — only full rebuilds do that.
         let newMetrics = LayoutInvalidation.splitLines(
             in: substring,
@@ -584,7 +614,8 @@ public final class LayoutEngine {
         var seenEmptyMid = false
         var seenBareMidLine = false
         let lineCount = lineIndex.count
-        lineIndex.forEach { pos in
+        for index in 0..<lineIndex.count {
+            guard let pos = lineIndex.line(atIndex: index) else { continue }
             if pos.utf16Offset != covered { ok = false }
             if pos.metrics.utf16Length == 0 {
                 // Trailing empty after final newline is OK; mid-document empty is not.
@@ -595,8 +626,9 @@ public final class LayoutEngine {
                 // Non-final line must consume a trailing line ending.
                 let r = pos.utf16Range
                 if r.location + r.length <= document.length,
-                   let text = document.substring(from: r),
-                   !(text.hasSuffix("\n") || text.hasSuffix("\r")) {
+                    let text = document.substring(from: r),
+                    !(text.hasSuffix("\n") || text.hasSuffix("\r"))
+                {
                     seenBareMidLine = true
                 }
             }
@@ -644,8 +676,9 @@ public final class LayoutEngine {
                 )
             }
         } else if let last = lineIndex.last,
-                  last.metrics.utf16Length == 0,
-                  lineIndex.count > 1 {
+            last.metrics.utf16Length == 0,
+            lineIndex.count > 1
+        {
             // Document no longer ends with a terminator — drop a stale trailing empty.
             lineIndex.remove(atIndex: lineIndex.count - 1)
         }
@@ -687,9 +720,9 @@ public final class LayoutEngine {
         // Use overflow-safe end check — `location + length` can trap on bogus metrics.
         let rangeEnd = range.location.addingReportingOverflow(max(0, range.length))
         guard range.location >= 0,
-              range.location <= document.length,
-              !rangeEnd.overflow,
-              rangeEnd.partialValue <= document.length
+            range.location <= document.length,
+            !rangeEnd.overflow,
+            rangeEnd.partialValue <= document.length
         else {
             // Self-heal: mark for rebuild on next edit rather than crashing draw.
             position.payload.applyTypeset(fragments: [], height: estimatedLineHeight * lineHeightMultiplier)
@@ -785,7 +818,9 @@ public final class LayoutEngine {
 
         // Prefer the line that begins at/after the fold end (typical endFold position).
         let probe = min(max(0, end), document.length - 1)
-        var lineStart = 0, lineEnd = 0, contentsEnd = 0
+        var lineStart = 0
+        var lineEnd = 0
+        var contentsEnd = 0
         document.getLineStart(
             &lineStart,
             end: &lineEnd,
@@ -878,17 +913,27 @@ public final class LayoutEngine {
             }
         }
         #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        estimatedLineHeight = max(font?.boundingRectForFont.height ?? 16, 1)
+            estimatedLineHeight = max(font?.boundingRectForFont.height ?? 16, 1)
         #elseif canImport(UIKit)
-        estimatedLineHeight = max(font?.lineHeight ?? 16, 1)
+            estimatedLineHeight = max(font?.lineHeight ?? 16, 1)
         #else
-        estimatedLineHeight = 16
+            estimatedLineHeight = 16
         #endif
     }
 
-    private func maxLineWidth() -> CGFloat {
+    /// Invalidate cached max width after structural layout changes.
+    public func invalidateMaxLineWidthCache() {
+        maxLineWidthValid = false
+        cachedMaxLineWidth = 0
+    }
+
+    private func cachedMaxLineWidthValue() -> CGFloat {
+        if maxLineWidthValid { return cachedMaxLineWidth }
+        // Recompute once; callers on the hot path should keep the cache warm via viewport layout.
         var maxWidth: CGFloat = 0
-        lineIndex.forEach { position in
+        let sampleLimit = min(lineIndex.count, 512)
+        for index in 0..<sampleLimit {
+            guard let position = lineIndex.line(atIndex: index) else { continue }
             for fragment in position.payload.fragments {
                 maxWidth = max(maxWidth, fragment.width + edgeInsets.horizontal)
             }
@@ -896,6 +941,12 @@ public final class LayoutEngine {
                 maxWidth = max(maxWidth, 100)
             }
         }
+        // Prefer last known content width if we only sampled.
+        if lineIndex.count > sampleLimit {
+            maxWidth = max(maxWidth, contentSize.width)
+        }
+        cachedMaxLineWidth = maxWidth
+        maxLineWidthValid = true
         return maxWidth
     }
 }
@@ -904,7 +955,7 @@ extension LayoutEngine: CaretLayoutQuerying {}
 
 // Platform font access for height estimation only — see PlatformTypes.
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #elseif canImport(UIKit)
-import UIKit
+    import UIKit
 #endif

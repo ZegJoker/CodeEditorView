@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorDocuments
 import CodeEditorLanguageServices
+import Foundation
 
 public actor TaskService {
     private var definitions: [TaskID: TaskDefinition] = [:]
@@ -82,9 +82,24 @@ public actor TaskService {
             let handle = try await startSingle(id: taskID)
             lastHandle = handle
             if definitions[taskID]?.isBackground == true {
+                // TASK-002: only "ready" unblocks dependents. Failed/completed-before-ready
+                // is a typed dependency failure — never silently continue the graph.
+                var sawReady = false
+                var completedWithoutReady = false
                 for await event in handle.events {
-                    if case .ready = event { break }
-                    if case .completed = event { break }
+                    switch event {
+                    case .ready:
+                        sawReady = true
+                    case .completed:
+                        completedWithoutReady = !sawReady
+                    default:
+                        break
+                    }
+                    if sawReady { break }
+                    if completedWithoutReady { break }
+                }
+                if !sawReady {
+                    throw TaskError.dependencyFailed(taskID.rawValue)
                 }
                 continue
             }
@@ -114,9 +129,19 @@ public actor TaskService {
         for taskID in order {
             let handle = try await startSingle(id: taskID)
             if definitions[taskID]?.isBackground == true {
+                var sawReady = false
+                var completedWithoutReady = false
                 for await event in handle.events {
-                    if case .ready = event { break }
-                    if case .completed = event { break }
+                    switch event {
+                    case .ready: sawReady = true
+                    case .completed: completedWithoutReady = !sawReady
+                    default: break
+                    }
+                    if sawReady { break }
+                    if completedWithoutReady { break }
+                }
+                if !sawReady {
+                    throw TaskError.dependencyFailed(taskID.rawValue)
                 }
                 last = handle.run
                 continue
@@ -141,11 +166,9 @@ public actor TaskService {
             run.state = .cancelled
             runs[runID] = run
         }
+        // Signal cancel only — exclusive concurrency groups are released when
+        // the handle completes (process death), not here (TASK-003 / §18.4).
         handles[runID]?.cancel()
-        // Release concurrency locks held by this run
-        for (group, holder) in groupLocks where holder == runID {
-            groupLocks[group] = nil
-        }
     }
 
     public func runSnapshot(id: UUID) -> TaskRun? {
@@ -159,7 +182,7 @@ public actor TaskService {
         guard var def = definitions[id] else {
             throw TaskError.notFound(id.rawValue)
         }
-        def = TaskVariableResolver.resolveDefinition(def, extraVariables: extraVariables)
+        def = try TaskVariableResolver.resolveDefinition(def, extraVariables: extraVariables)
 
         if let group = def.concurrencyGroup {
             if let holder = groupLocks[group], def.isExclusive || handles[holder]?.run.state == .running {

@@ -1,8 +1,8 @@
-import Testing
 import Foundation
 import SwiftTreeSitter
-@testable import CodeEditorLanguages
+import Testing
 
+@testable import CodeEditorLanguages
 
 @Suite("TS and Markdown load")
 struct TSMarkdownLoadTests {
@@ -33,14 +33,18 @@ struct TSMarkdownLoadTests {
     @Test func markdownConfigLoadTime() throws {
         let t0 = ContinuousClock.now
         let config = try CodeLanguages.languageConfiguration(for: .markdown)
-        print("Markdown config elapsed=\(ContinuousClock.now - t0) patterns=\(config?.queries[.highlights]?.patternCount ?? -1)")
+        print(
+            "Markdown config elapsed=\(ContinuousClock.now - t0) patterns=\(config?.queries[.highlights]?.patternCount ?? -1)"
+        )
         #expect(config != nil)
     }
 
     @Test func markdownInlineConfigLoadTime() throws {
         let t0 = ContinuousClock.now
         let config = try CodeLanguages.languageConfiguration(for: .markdownInline)
-        print("MarkdownInline config elapsed=\(ContinuousClock.now - t0) patterns=\(config?.queries[.highlights]?.patternCount ?? -1)")
+        print(
+            "MarkdownInline config elapsed=\(ContinuousClock.now - t0) patterns=\(config?.queries[.highlights]?.patternCount ?? -1)"
+        )
         #expect(config != nil)
     }
 

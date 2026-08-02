@@ -1,9 +1,9 @@
-import Foundation
+import CodeEditorCore
+import CodeEditorDocuments
 import CodeEditorExtensionAPI
 import CodeEditorExtensionGuest
 import CodeEditorLanguageServices
-import CodeEditorCore
-import CodeEditorDocuments
+import Foundation
 
 /// Representative Swift extension used for dual-run (in-process + native helper) conformance.
 public struct ConformanceExtension: CodeEditorExtension {
@@ -46,7 +46,7 @@ extension ExtensionGuestRuntime {
     func installDefaultLanguageHandlers() {
         completionHandler = { _ in
             let list = CompletionList(items: [
-                CompletionItem(label: "conformanceHello", kind: .function, insertText: "conformanceHello()"),
+                CompletionItem(label: "conformanceHello", kind: .function, insertText: "conformanceHello()")
             ])
             return try JSONEncoder().encode(list)
         }

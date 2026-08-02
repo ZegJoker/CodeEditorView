@@ -12,8 +12,16 @@ public final class CommandRegistry {
 
     public init() {}
 
+    /// Registers a command. Throws ``CommandIdentityError/duplicateRegistration`` when
+    /// an existing entry would be silently replaced (audit §9.3).
     @discardableResult
-    public func register(_ command: EditorCommand) -> any CommandDisposable {
+    public func register(_ command: EditorCommand, replaceExisting: Bool = false) throws -> any CommandDisposable {
+        guard CommandID.isValid(command.id.rawValue) else {
+            throw CommandIdentityError.invalidID(command.id.rawValue)
+        }
+        if entries[command.id] != nil, !replaceExisting {
+            throw CommandIdentityError.duplicateRegistration(command.id.rawValue)
+        }
         let tokenID = UUID()
         entries[command.id] = Entry(command: command, tokenID: tokenID)
         return RegistrationToken { [weak self] in
@@ -24,6 +32,12 @@ public final class CommandRegistry {
                 }
             }
         }
+    }
+
+    /// Soft register for migration: replaces existing without throwing.
+    @discardableResult
+    public func register(_ command: EditorCommand) -> any CommandDisposable {
+        (try? register(command, replaceExisting: true)) ?? RegistrationToken {}
     }
 
     public func unregister(id: CommandID) {

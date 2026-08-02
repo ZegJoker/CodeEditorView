@@ -38,7 +38,8 @@ public enum LineFoldCalculator {
 
         let infos: [LineInfo] = lineRanges.map { line in
             let indent = leadingWhitespaceLength(in: line.range, text: text)
-            let isBlank = indent >= line.range.length
+            let isBlank =
+                indent >= line.range.length
                 || isWhitespaceOnly(line.range, text: text)
             return LineInfo(
                 number: line.lineNumber,
@@ -155,7 +156,9 @@ public enum LineFoldCalculator {
         var location = 0
         let length = ns.length
         while location < length {
-            var lineStart = 0, lineEnd = 0, contentsEnd = 0
+            var lineStart = 0
+            var lineEnd = 0
+            var contentsEnd = 0
             ns.getLineStart(
                 &lineStart,
                 end: &lineEnd,

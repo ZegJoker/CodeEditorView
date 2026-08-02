@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 /// Events emitted by a shared ``TextDocument``.
 public enum TextDocumentEvent: Sendable {

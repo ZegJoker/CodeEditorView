@@ -1,7 +1,7 @@
 import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #endif
 
 /// Compact find / replace panel (CESE-inspired, functional parity).

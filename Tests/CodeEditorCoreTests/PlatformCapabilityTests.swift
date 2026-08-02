@@ -1,5 +1,5 @@
-import Testing
 import CodeEditorCore
+import Testing
 
 @Suite("Platform capabilities")
 struct PlatformCapabilityTests {
@@ -55,9 +55,9 @@ struct PlatformCapabilityTests {
     @Test func defaultMatchesOS() {
         let profile = PlatformCapabilityProfile.default()
         #if os(iOS)
-        #expect(profile.name == PlatformCapabilityProfile.iOS.name)
+            #expect(profile.name == PlatformCapabilityProfile.iOS.name)
         #elseif os(macOS)
-        #expect(profile.name == PlatformCapabilityProfile.directMacOS.name)
+            #expect(profile.name == PlatformCapabilityProfile.directMacOS.name)
         #endif
     }
 

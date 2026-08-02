@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Line indentation fold provider")
@@ -17,12 +18,12 @@ struct LineIndentationFoldProviderTests {
 
     @Test func nestedIndentProducesFold() {
         let text = """
-        func f() {
-            let x = 1
-            let y = 2
-        }
+            func f() {
+                let x = 1
+                let y = 2
+            }
 
-        """
+            """
         let ctx = context(text)
         let lines = LineFoldCalculator.lineRanges(in: text)
         let raw = LineFoldCalculator.buildRawFolds(context: ctx, lineRanges: lines, provider: provider)
@@ -34,20 +35,23 @@ struct LineIndentationFoldProviderTests {
     @Test func twoSpaceIndentStillFoldsWithFourSpaceConfig() {
         // Bash-style 2-space indent while editor indent option is 4 spaces.
         let text = """
-        greet() {
-          local name="$1"
-          echo hi
-        }
+            greet() {
+              local name="$1"
+              echo hi
+            }
 
-        """
+            """
         let ctx = context(text, indent: .spaces(count: 4))
         let lines = LineFoldCalculator.lineRanges(in: text)
         let raw = LineFoldCalculator.buildRawFolds(context: ctx, lineRanges: lines, provider: provider)
         #expect(!raw.isEmpty, "2-space nested body must still produce a fold")
         // Fold should start on the `greet() {` line (after `{`).
         let openBrace = (text as NSString).range(of: "{").location
-        #expect(raw.contains { $0.range.lowerBound > openBrace || $0.range.lowerBound == openBrace + 1
-            || abs($0.range.lowerBound - (openBrace + 1)) <= 1 })
+        #expect(
+            raw.contains {
+                $0.range.lowerBound > openBrace || $0.range.lowerBound == openBrace + 1
+                    || abs($0.range.lowerBound - (openBrace + 1)) <= 1
+            })
     }
 
     @Test func blankLinesDoNotStartFolds() {

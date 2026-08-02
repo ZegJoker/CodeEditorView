@@ -43,12 +43,13 @@ public struct GitIgnoreRules: Sendable, Hashable {
                 directoryOnly = true
                 pattern = String(pattern.dropLast())
             }
-            rules.append(Rule(
-                pattern: pattern,
-                isNegation: negation,
-                directoryOnly: directoryOnly,
-                basePath: basePath
-            ))
+            rules.append(
+                Rule(
+                    pattern: pattern,
+                    isNegation: negation,
+                    directoryOnly: directoryOnly,
+                    basePath: basePath
+                ))
         }
         return GitIgnoreRules(rules: rules)
     }
@@ -80,7 +81,8 @@ public struct GitIgnoreRules: Sendable, Hashable {
                 pathForMatch = ""
             } else {
                 let prefix = rule.basePath + "/"
-                pathForMatch = relativePath.hasPrefix(prefix)
+                pathForMatch =
+                    relativePath.hasPrefix(prefix)
                     ? String(relativePath.dropFirst(prefix.count))
                     : relativePath
             }
@@ -142,16 +144,19 @@ public enum GitIgnoreLoader {
         var combined = GitIgnoreRules()
         let rootIgnore = root.appendingPathComponent(".gitignore")
         if let data = try? Data(contentsOf: rootIgnore),
-           let text = String(data: data, encoding: .utf8) {
+            let text = String(data: data, encoding: .utf8)
+        {
             combined.append(contentsOf: .parse(fileContents: text, basePath: ""))
         }
 
         var count = 1
-        guard let enumerator = FileManager.default.enumerator(
-            at: root,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard
+            let enumerator = FileManager.default.enumerator(
+                at: root,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            )
+        else {
             return combined
         }
         while let url = enumerator.nextObject() as? URL {
@@ -159,7 +164,8 @@ public enum GitIgnoreLoader {
             guard url.lastPathComponent == ".gitignore" else { continue }
             if url.path == rootIgnore.path { continue }
             guard let data = try? Data(contentsOf: url),
-                  let text = String(data: data, encoding: .utf8) else { continue }
+                let text = String(data: data, encoding: .utf8)
+            else { continue }
             let rel = String(url.deletingLastPathComponent().path.dropFirst(root.path.count))
                 .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             combined.append(contentsOf: .parse(fileContents: text, basePath: rel))

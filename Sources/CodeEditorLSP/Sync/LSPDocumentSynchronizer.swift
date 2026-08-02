@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 public struct LSPSyncOptions: Sendable, Hashable {
     /// Debounce for change notifications (0 = immediate).
@@ -107,6 +107,9 @@ public actor LSPDocumentSynchronizer {
         uri: DocumentURI,
         applied: AppliedEditTransaction
     ) async {
+        // LSP-001: debouncing must not cancel semantic edits while keeping only the newest
+        // delta against a stale base. After any coalesced burst, send one full-text
+        // replacement with the latest document version (simplest correct debounce).
         pendingChangeTasks[uri]?.cancel()
         let delay = options.changeDebounceNanoseconds
         pendingChangeTasks[uri] = Task {
@@ -114,40 +117,20 @@ public actor LSPDocumentSynchronizer {
                 try? await Task.sleep(nanoseconds: delay)
             }
             guard !Task.isCancelled else { return }
-            await self.flushChange(document: document, uri: uri, applied: applied)
+            await self.flushChangeFullText(document: document, uri: uri)
         }
+        // Keep applied referenced so call sites stay valid; incremental path retired for debounce.
+        _ = applied
     }
 
-    private func flushChange(
+    /// Full-text didChange after debounce — always matches the live document (LSP-001).
+    private func flushChangeFullText(
         document: TextDocument,
-        uri: DocumentURI,
-        applied: AppliedEditTransaction
+        uri: DocumentURI
     ) async {
         let snapshot = await MainActor.run { document.snapshot() }
         let fullText = snapshot.text
-        let caps = await session.capabilities
-        let preText = lastSyncedText[uri] ?? fullText
-
-        let contentChanges: [[String: Any]]
-        if options.preferIncremental && caps.incrementalSync {
-            contentChanges = applied.transaction.changes.map { change in
-                let range = change.replacedRange
-                let start = LSPConvert.lineCharacter(utf16Offset: range.location, in: preText)
-                let end = LSPConvert.lineCharacter(
-                    utf16Offset: range.location + range.length,
-                    in: preText
-                )
-                return [
-                    "range": [
-                        "start": ["line": start.line, "character": start.character],
-                        "end": ["line": end.line, "character": end.character],
-                    ] as [String: Any],
-                    "text": change.replacement,
-                ] as [String: Any]
-            }
-        } else {
-            contentChanges = [["text": fullText]]
-        }
+        let contentChanges: [[String: Any]] = [["text": fullText]]
 
         do {
             try await session.didChangeRaw(
@@ -158,7 +141,9 @@ public actor LSPDocumentSynchronizer {
             )
             lastSyncedText[uri] = fullText
         } catch {
-            // Session may have crashed; leave document untouched.
+            // Transport failure: leave lastSyncedText so the next successful sync can
+            // still force a full resync (do not pretend the server has newer text).
+            lastSyncedText[uri] = nil
         }
     }
 }

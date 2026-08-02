@@ -26,12 +26,12 @@ public protocol EditorCoordinator: AnyObject {
 }
 
 @MainActor
-public extension EditorCoordinator {
-    func controllerDidAppear(controller: EditorController) {}
-    func controllerDidDisappear(controller: EditorController) {}
-    func textDidChange(controller: EditorController) {}
-    func selectionDidChange(controller: EditorController, cursors: [CursorPosition]) {}
-    func destroy() {}
+extension EditorCoordinator {
+    public func controllerDidAppear(controller: EditorController) {}
+    public func controllerDidDisappear(controller: EditorController) {}
+    public func textDidChange(controller: EditorController) {}
+    public func selectionDidChange(controller: EditorController, cursors: [CursorPosition]) {}
+    public func destroy() {}
 }
 
 /// Weak box so coordinator arrays don't create retain cycles with the controller.

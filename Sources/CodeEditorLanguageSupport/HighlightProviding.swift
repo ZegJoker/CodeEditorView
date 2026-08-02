@@ -32,10 +32,10 @@ public protocol HighlightProviding: AnyObject {
 }
 
 @MainActor
-public extension HighlightProviding {
-    func willApplyEdit(range: NSRange) {}
+extension HighlightProviding {
+    public func willApplyEdit(range: NSRange) {}
 
-    func setUp(documentLength: Int, languageID: String?) async {}
+    public func setUp(documentLength: Int, languageID: String?) async {}
 
-    func setDocumentText(_ text: String) async {}
+    public func setDocumentText(_ text: String) async {}
 }

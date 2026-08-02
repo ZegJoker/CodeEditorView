@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorDocuments
+import Foundation
 
 /// Parses machine-safe Git status / diff output.
 public enum GitPorcelain {
@@ -13,38 +13,28 @@ public enum GitPorcelain {
             let chunk = parts[i]
             i += 1
             guard chunk.count >= 3 else { continue }
-            guard let line = String(data: chunk, encoding: .utf8)
-                    ?? String(data: chunk, encoding: .isoLatin1) else { continue }
+            guard
+                let line = String(data: chunk, encoding: .utf8)
+                    ?? String(data: chunk, encoding: .isoLatin1)
+            else { continue }
             guard line.count >= 3 else { continue }
             let x = line[line.startIndex]
             let y = line[line.index(line.startIndex, offsetBy: 1)]
+            // Porcelain v1 -z: `XY <path>\0` or for rename/copy `XY <dest>\0<source>\0`.
+            // First path field is the destination (current path); second is the source (original).
             var path = String(line.dropFirst(3))
             var original: String?
-            // rename/copy may be followed by previous path in next NUL field
             if x == "R" || x == "C" || y == "R" || y == "C" {
                 if i < parts.count {
-                    if let origData = Optional(parts[i]),
-                       let orig = String(data: origData, encoding: .utf8)
-                        ?? String(data: origData, encoding: .isoLatin1)
-                    {
-                        original = path
-                        path = orig
-                        // Actually porcelain -z rename: "R100\0new\0old" or "R  new\0old"?
-                        // Format: XY path NUL [orig path NUL]
-                        // First path is the current path for renames in -z with --porcelain=v1 it's:
-                        // "R  newpath\0oldpath\0"
-                        original = orig
-                        // In standard -z porcelain v1: entry is `XY path\0` and for rename `XY dest\0src\0`
-                        // First field after XY is destination (path), second is source (original).
-                        // Our first path already is dest; second is source.
-                        original = String(data: parts[i], encoding: .utf8)
-                            ?? String(data: parts[i], encoding: .isoLatin1)
+                    let src =
+                        String(data: parts[i], encoding: .utf8)
+                        ?? String(data: parts[i], encoding: .isoLatin1)
+                    if let src, !src.isEmpty {
+                        original = src
                         i += 1
-                        // swap: path is dest (already), original is source
                     }
                 }
             }
-            // Fix rename parsing: line after XY is the path; for R the first NUL field is path, second orig.
             let (state, staged) = mapXY(x, y)
             let url = repositoryRoot.appendingPathComponent(path)
             results.append(
@@ -105,11 +95,21 @@ public enum GitPorcelain {
         var staged = false
         var state: SCMState = .unmodified
         switch x {
-        case "M": state = .modified; staged = true
-        case "A": state = .added; staged = true
-        case "D": state = .deleted; staged = true
-        case "R": state = .renamed; staged = true
-        case "C": state = .copied; staged = true
+        case "M":
+            state = .modified
+            staged = true
+        case "A":
+            state = .added
+            staged = true
+        case "D":
+            state = .deleted
+            staged = true
+        case "R":
+            state = .renamed
+            staged = true
+        case "C":
+            state = .copied
+            staged = true
         default: break
         }
         switch y {
@@ -118,16 +118,28 @@ public enum GitPorcelain {
         case "A": state = .added
         default: break
         }
-        if x == " " && y == "M" { staged = false; state = .modified }
-        if x == "M" && y == " " { staged = true; state = .modified }
-        if x == "A" && y == " " { staged = true; state = .added }
+        if x == " " && y == "M" {
+            staged = false
+            state = .modified
+        }
+        if x == "M" && y == " " {
+            staged = true
+            state = .modified
+        }
+        if x == "A" && y == " " {
+            staged = true
+            state = .added
+        }
         return (state, staged)
     }
 
     public static func parseDiff(_ raw: String, path: String) -> SCMDiff {
         var hunks: [SCMDiffHunk] = []
         var currentHeader = ""
-        var oldStart = 0, oldCount = 0, newStart = 0, newCount = 0
+        var oldStart = 0
+        var oldCount = 0
+        var newStart = 0
+        var newCount = 0
         var lines: [String] = []
         let hunkRe = try! NSRegularExpression(
             pattern: #"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@"#,
@@ -155,10 +167,12 @@ public enum GitPorcelain {
                 flush()
                 currentHeader = line
                 oldStart = Int(ns.substring(with: m.range(at: 1))) ?? 0
-                oldCount = m.range(at: 2).location != NSNotFound
+                oldCount =
+                    m.range(at: 2).location != NSNotFound
                     ? Int(ns.substring(with: m.range(at: 2))) ?? 0 : 1
                 newStart = Int(ns.substring(with: m.range(at: 3))) ?? 0
-                newCount = m.range(at: 4).location != NSNotFound
+                newCount =
+                    m.range(at: 4).location != NSNotFound
                     ? Int(ns.substring(with: m.range(at: 4))) ?? 0 : 1
             } else if line.hasPrefix("+") || line.hasPrefix("-") || line.hasPrefix(" ") {
                 lines.append(line)
@@ -188,16 +202,38 @@ public enum GitRepositoryDiscovery {
     }
 
     public static func validateRelativePath(_ path: String, root: URL) throws -> String {
-        if path.hasPrefix("/") || path.contains("\0") {
+        if path.isEmpty || path.hasPrefix("/") || path.contains("\0") {
             throw SCMError.pathEscape(path)
         }
+        // Reject `.` / `..` path components and absolute Windows-style segments.
+        let segments = path.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        for segment in segments {
+            if segment.isEmpty || segment == "." || segment == ".." {
+                throw SCMError.pathEscape(path)
+            }
+            if segment.contains("\\") {
+                throw SCMError.pathEscape(path)
+            }
+        }
         let standardized = (path as NSString).standardizingPath
-        if standardized.hasPrefix("..") || standardized.contains("/../") {
+        if standardized.hasPrefix("..") || standardized.contains("/../") || standardized.hasPrefix("/") {
             throw SCMError.pathEscape(path)
         }
         let full = root.appendingPathComponent(standardized).standardizedFileURL
-        let rootPath = root.standardizedFileURL.path
-        if full.path != rootPath && !full.path.hasPrefix(rootPath.hasSuffix("/") ? rootPath : rootPath + "/") {
+        let rootURL = root.standardizedFileURL
+        // Component-aware containment: string prefix alone accepts `/repo-other` for root `/repo`.
+        let rootPath = rootURL.path
+        let fullPath = full.path
+        let rootPrefix = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
+        if fullPath != rootPath && !fullPath.hasPrefix(rootPrefix) {
+            throw SCMError.pathEscape(path)
+        }
+        // Extra defense: require standardized relative path under root via path components.
+        let rootComponents = rootURL.pathComponents
+        let fullComponents = full.pathComponents
+        guard fullComponents.count >= rootComponents.count,
+            Array(fullComponents.prefix(rootComponents.count)) == rootComponents
+        else {
             throw SCMError.pathEscape(path)
         }
         return standardized

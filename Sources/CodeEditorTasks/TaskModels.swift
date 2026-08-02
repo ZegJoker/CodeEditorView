@@ -194,21 +194,27 @@ public enum TaskError: Error, Sendable, Equatable {
 // MARK: - Variable resolution
 
 public enum TaskVariableResolver {
+    /// Resolve `${name}` placeholders. Unresolved names throw (TASK-004 / §18.8).
     public static func resolve(
         _ text: String,
         variables: [String: String],
-        environment: [String: String] = ProcessInfo.processInfo.environment
-    ) -> String {
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        allowEmpty: Bool = false
+    ) throws -> String {
         var result = text
-        // ${workspaceFolder} style
         let pattern = try! NSRegularExpression(pattern: #"\$\{([A-Za-z0-9_.-]+)\}"#, options: [])
         let ns = result as NSString
         let matches = pattern.matches(in: result, options: [], range: NSRange(location: 0, length: ns.length))
         for match in matches.reversed() {
             guard match.numberOfRanges >= 2 else { continue }
             let key = ns.substring(with: match.range(at: 1))
-            let value = variables[key] ?? environment[key] ?? ""
-            result = (result as NSString).replacingCharacters(in: match.range, with: value)
+            if let value = variables[key] ?? environment[key] {
+                result = (result as NSString).replacingCharacters(in: match.range, with: value)
+            } else if allowEmpty {
+                result = (result as NSString).replacingCharacters(in: match.range, with: "")
+            } else {
+                throw TaskError.invalidDefinition("unresolved variable: \(key)")
+            }
         }
         return result
     }
@@ -216,18 +222,18 @@ public enum TaskVariableResolver {
     public static func resolveDefinition(
         _ definition: TaskDefinition,
         extraVariables: [String: String] = [:]
-    ) -> TaskDefinition {
+    ) throws -> TaskDefinition {
         var vars = definition.variables
         for (k, v) in extraVariables { vars[k] = v }
         if let cwd = definition.cwd {
             vars["workspaceFolder"] = vars["workspaceFolder"] ?? cwd.path
         }
         var copy = definition
-        copy.executable = resolve(definition.executable, variables: vars)
-        copy.arguments = definition.arguments.map { resolve($0, variables: vars) }
+        copy.executable = try resolve(definition.executable, variables: vars)
+        copy.arguments = try definition.arguments.map { try resolve($0, variables: vars) }
         var env: [String: String] = [:]
         for (k, v) in definition.environment {
-            env[resolve(k, variables: vars)] = resolve(v, variables: vars)
+            env[try resolve(k, variables: vars)] = try resolve(v, variables: vars)
         }
         copy.environment = env
         return copy

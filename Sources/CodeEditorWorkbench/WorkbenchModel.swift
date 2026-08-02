@@ -1,14 +1,14 @@
-import Foundation
-import CoreGraphics
-import Observation
-import CodeEditorCore
 import CodeEditorCommands
+import CodeEditorCore
 import CodeEditorDocuments
-import CodeEditorWorkspace
 import CodeEditorView
+import CodeEditorWorkspace
+import CoreGraphics
+import Foundation
+import Observation
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-import AppKit
+    import AppKit
 #endif
 
 @MainActor
@@ -24,6 +24,15 @@ public final class WorkbenchModel {
     public let commandPalette: CommandPaletteModel
     public let windowRegistry: WorkbenchWindowRegistry
     public let toolingSurfaces: WorkbenchToolingSurfaceRegistry
+    /// Phase 10 chrome models (scheme, activity, navigators).
+    public let schemes: WorkbenchSchemeModel
+    public let activity: WorkbenchActivityModel
+    public let symbols: WorkbenchSymbolsModel
+    public let breakpoints: WorkbenchBreakpointsModel
+    public let tests: WorkbenchTestsModel
+    public let debugSessions: WorkbenchDebugModel
+    public let scmModel: WorkbenchSCMModel
+    public let problemsBridge: WorkbenchTaskProblemsBridge
 
     /// Explicit lifecycle phase for the primary session owner.
     public private(set) var lifecyclePhase: WorkbenchLifecyclePhase = .creating
@@ -83,10 +92,21 @@ public final class WorkbenchModel {
         }
     }
 
-    private var contributionTokens: [any CommandDisposable] = []
+    /// Owns contribution / command registration tokens for host lifetime (CMD-001).
+    public let registrationBag = RegistrationBag()
     private var builtInCommandToken: (any CommandDisposable)?
     /// Serializes async opens so the latest request wins (avoids selection lag races).
     private var openGeneration: UInt64 = 0
+    /// Real focus/document/trust snapshot for command enablement (CMD-003).
+    public private(set) var commandContextSnapshot: CommandContextSnapshot = .empty
+
+    /// Registers a contribution and retains its token for the workbench lifetime (CMD-001).
+    @discardableResult
+    public func retainContribution(_ contribution: any WorkbenchContribution) -> any CommandDisposable {
+        let token = contributionRegistry.register(contribution)
+        registrationBag.retain(token)
+        return token
+    }
 
     public init(
         workspace: Workspace,
@@ -103,6 +123,14 @@ public final class WorkbenchModel {
         self.commandPalette = CommandPaletteModel()
         self.windowRegistry = WorkbenchWindowRegistry()
         self.toolingSurfaces = WorkbenchToolingSurfaceRegistry()
+        self.schemes = WorkbenchSchemeModel()
+        self.activity = WorkbenchActivityModel()
+        self.symbols = WorkbenchSymbolsModel()
+        self.breakpoints = WorkbenchBreakpointsModel()
+        self.tests = WorkbenchTestsModel()
+        self.debugSessions = WorkbenchDebugModel()
+        self.scmModel = WorkbenchSCMModel()
+        self.problemsBridge = WorkbenchTaskProblemsBridge()
         self.isNavigatorVisible = configuration.showsNavigator
         self.isInspectorVisible = configuration.showsInspector
         self.isUtilityVisible = configuration.showsUtilityArea
@@ -113,39 +141,34 @@ public final class WorkbenchModel {
         documentViewRegistry.register(ImageDocumentViewProvider())
         documentViewRegistry.register(TextDocumentViewProvider())
 
-        // Built-in contributions
-        contributionTokens.append(
-            contributionRegistry.register(FileTreeNavigatorContribution())
-        )
-        contributionTokens.append(
-            contributionRegistry.register(StatusBarContribution())
-        )
-        // Breadcrumbs are rendered per-pane in WorkbenchPaneView (not a global accessory).
-        // Placeholder utility panes so the debug area looks Xcode-like before hosts wire real UI.
-        contributionTokens.append(contributionRegistry.register(UtilityPlaceholderContribution(
-            id: "workbench.utility.output",
-            title: "Output",
-            systemImage: "list.bullet.rectangle",
-            priority: 10,
-            emptyDescription: "Task and build output appears here."
-        )))
-        contributionTokens.append(contributionRegistry.register(UtilityPlaceholderContribution(
-            id: "workbench.utility.problems",
-            title: "Problems",
-            systemImage: "exclamationmark.triangle",
-            priority: 20,
-            emptyDescription: "Diagnostics and problem matchers appear here."
-        )))
-        contributionTokens.append(contributionRegistry.register(UtilityPlaceholderContribution(
-            id: "workbench.utility.terminal",
-            title: "Terminal",
-            systemImage: "terminal",
-            priority: 30,
-            emptyDescription: "Host-owned terminal sessions appear here."
-        )))
+        // Built-in contributions — retained in RegistrationBag for host lifetime (CMD-001).
+        registrationBag.retain(contributionRegistry.register(FileTreeNavigatorContribution()))
+        registrationBag.retain(contributionRegistry.register(StatusBarContribution()))
+        // Phase 10 navigators (real models; empty list is a valid empty state, not a stub).
+        for contrib in WorkbenchDefaultNavigatorContributions.all {
+            registrationBag.retain(contributionRegistry.register(contrib))
+        }
+        // Real utility panels (WB-001) — not ContentUnavailable placeholders.
+        registrationBag.retain(contributionRegistry.register(WorkbenchOutputPanelContribution()))
+        registrationBag.retain(contributionRegistry.register(WorkbenchProblemsPanelContribution()))
+        registrationBag.retain(contributionRegistry.register(WorkbenchTerminalPanelContribution()))
 
         activeNavigatorID = "workbench.navigator.files"
         activeUtilityID = "workbench.utility.problems"
+
+        // Default scheme so build/run commands have a target.
+        schemes.setSchemes([
+            WorkbenchScheme(
+                id: "default",
+                name: "Default",
+                buildTaskID: "build",
+                testTaskID: "test",
+                runTaskID: "run"
+            )
+        ])
+        schemes.setDestinations([
+            WorkbenchRunDestination(id: "my-mac", name: "My Mac")
+        ])
 
         // Primary window for multi-window hosts.
         _ = windowRegistry.create(
@@ -155,6 +178,10 @@ public final class WorkbenchModel {
 
         // Catalog of editor commands for the palette (executed via active client).
         builtInCommandToken = EditorController.installBuiltInCommandCatalog(into: self.commandDispatcher)
+        if let builtInCommandToken {
+            registrationBag.retain(builtInCommandToken)
+        }
+        refreshCommandContextSnapshot()
         lifecyclePhase = .active
     }
 
@@ -163,19 +190,19 @@ public final class WorkbenchModel {
     public func enterBackground() {
         guard lifecyclePhase == .active else { return }
         lifecyclePhase = .background
+        refreshCommandContextSnapshot()
     }
 
     public func enterForeground() {
         if lifecyclePhase == .background || lifecyclePhase == .restoring {
             lifecyclePhase = .active
         }
+        refreshCommandContextSnapshot()
     }
 
     public func beginTearDown() {
         lifecyclePhase = .tearingDown
-        for token in contributionTokens { token.dispose() }
-        contributionTokens.removeAll()
-        builtInCommandToken?.dispose()
+        registrationBag.disposeAll()
         builtInCommandToken = nil
     }
 
@@ -277,10 +304,66 @@ public final class WorkbenchModel {
     // MARK: - Commands / open
 
     public func makeCommandContext() -> CommandContext? {
+        refreshCommandContextSnapshot()
         guard let client = editorClientRegistry.activeClient(workspace: workspace) else {
             return nil
         }
-        return CommandContext.make(from: client)
+        return CommandContext.make(from: client, snapshot: commandContextSnapshot)
+    }
+
+    /// Rebuild ``commandContextSnapshot`` from real focus / document / trust (CMD-003).
+    public func refreshCommandContextSnapshot() {
+        let client = editorClientRegistry.activeClient(workspace: workspace)
+        let part: String
+        switch focusedTarget {
+        case .editor: part = "editor"
+        case .navigator: part = "navigator"
+        case .inspector: part = "inspector"
+        case .utility: part = "utility"
+        case .commandPalette: part = "commandPalette"
+        case .openQuickly: part = "openQuickly"
+        case .toolbar: part = "toolbar"
+        }
+        let doc = client.flatMap { c in
+            c.documentID.flatMap { workspace.documents.document(id: $0) }
+        }
+        let selections = client?.selections ?? []
+        let hasSelection = selections.contains { $0.length > 0 }
+        let isEditorFocused = focusedTarget == .editor && client != nil
+        commandContextSnapshot = CommandContextSnapshot(
+            activePart: part,
+            documentURI: doc?.uri,
+            documentID: client?.documentID,
+            sessionID: client?.sessionID,
+            languageID: client?.languageID,
+            isEditable: (client?.isEditable ?? false) && isEditorFocused,
+            isFocused: isEditorFocused,
+            isDirty: doc?.isDirty ?? false,
+            hasSelection: hasSelection,
+            hasDocument: doc != nil,
+            workspaceTrust: workspace.trust.level.rawValue,
+            isDebugActive: false,
+            isTaskRunning: false,
+            flags: client?.contextFlags ?? [:],
+            selections: selections
+        )
+        // Context change clears pending chords (CMD-002).
+        commandDispatcher.clearChordOnContextChange()
+    }
+
+    /// Window / workspace close aggregates dirty docs through the coordinator (WSP-001 / §10.2).
+    @discardableResult
+    public func requestCloseWindow(policy: DirtyTabClosePolicy? = nil) async -> CloseTransactionResult {
+        await workspace.requestCloseAllTabs(policy: policy)
+    }
+
+    /// Pane close through the dirty-close coordinator (WSP-001 / §10.2).
+    @discardableResult
+    public func requestClosePane(
+        _ id: EditorPaneID,
+        policy: DirtyTabClosePolicy? = nil
+    ) async -> CloseTransactionResult {
+        await workspace.requestClosePane(id, policy: policy)
     }
 
     public func presentCommandPalette() {
@@ -373,9 +456,9 @@ public final class WorkbenchModel {
         try WorkbenchRestoration.encode(captureRestorationState())
     }
 
-    public func applyRestoration(_ state: WorkbenchRestorationState) {
+    public func applyRestoration(_ state: WorkbenchRestorationState) throws {
         lifecyclePhase = .restoring
-        let migrated = WorkbenchRestoration.migrate(state)
+        let migrated = try WorkbenchRestoration.migrate(state)
         windowRegistry.applyRestoration(migrated)
         if let focused = windowRegistry.focused() {
             applyWindowState(focused)
@@ -487,15 +570,17 @@ public final class WorkbenchModel {
     }
 
     public func revealInFinder(_ id: WorkspaceItemID) {
-        guard let uri = workspace.fileSystem.uri(for: id),
-              let url = uri.fileURL
-        else {
-            navigatorError = "Cannot reveal item"
-            return
+        Task {
+            guard let uri = await workspace.fileSystem.uri(for: id),
+                let url = uri.fileURL
+            else {
+                navigatorError = "Cannot reveal item"
+                return
+            }
+            #if os(macOS)
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            #endif
         }
-        #if os(macOS)
-        NSWorkspace.shared.activateFileViewerSelecting([url])
-        #endif
     }
 
     private func resolveCreateParent(_ parent: WorkspaceItemID?) async throws -> WorkspaceItemID {
@@ -515,8 +600,9 @@ public final class WorkbenchModel {
         if item.path.isEmpty {
             return item
         }
-        if let uri = workspace.fileSystem.uri(for: item),
-           let meta = workspace.fileSystem.item(for: uri) {
+        if let uri = await workspace.fileSystem.uri(for: item),
+            let meta = await workspace.fileSystem.item(for: uri)
+        {
             return meta.isDirectory
                 ? item
                 : WorkspaceItemID(rootID: item.rootID, path: item.parentPath ?? "")
@@ -530,7 +616,7 @@ public final class WorkbenchModel {
     public var activeDocument: TextDocument? {
         _ = workspace.revision
         guard let paneID = workspace.activePaneID,
-              let tab = workspace.panes[paneID]?.selectedTab
+            let tab = workspace.panes[paneID]?.selectedTab
         else { return nil }
         return workspace.documents.document(id: tab.documentID)
     }
@@ -538,7 +624,7 @@ public final class WorkbenchModel {
     public var activeSession: EditorSession? {
         _ = workspace.revision
         guard let paneID = workspace.activePaneID,
-              let tab = workspace.panes[paneID]?.selectedTab
+            let tab = workspace.panes[paneID]?.selectedTab
         else { return nil }
         return workspace.sessions[tab.sessionID]
     }

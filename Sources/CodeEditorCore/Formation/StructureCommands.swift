@@ -32,7 +32,9 @@ public enum StructureCommands: Sendable {
             var probe = loc
             while true {
                 let p = min(probe, max(0, length - 1))
-                var lineStart = 0, lineEnd = 0, contentsEnd = 0
+                var lineStart = 0
+                var lineEnd = 0
+                var contentsEnd = 0
                 ns.getLineStart(
                     &lineStart,
                     end: &lineEnd,
@@ -48,7 +50,9 @@ public enum StructureCommands: Sendable {
         }
 
         return lineStarts.sorted().map { start in
-            var lineStart = 0, lineEnd = 0, contentsEnd = 0
+            var lineStart = 0
+            var lineEnd = 0
+            var contentsEnd = 0
             ns.getLineStart(
                 &lineStart,
                 end: &lineEnd,
@@ -138,7 +142,9 @@ public enum StructureCommands: Sendable {
 
         if up {
             guard first.location > 0 else { return nil }
-            var prevStart = 0, prevEnd = 0, prevContents = 0
+            var prevStart = 0
+            var prevEnd = 0
+            var prevContents = 0
             ns.getLineStart(
                 &prevStart,
                 end: &prevEnd,
@@ -157,7 +163,9 @@ public enum StructureCommands: Sendable {
         } else {
             let blockEnd = block.location + block.length
             guard blockEnd < length else { return nil }
-            var nextStart = 0, nextEnd = 0, nextContents = 0
+            var nextStart = 0
+            var nextEnd = 0
+            var nextContents = 0
             ns.getLineStart(
                 &nextStart,
                 end: &nextEnd,

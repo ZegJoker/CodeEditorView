@@ -1,9 +1,9 @@
-import Foundation
 import CodeEditorCommands
+import Foundation
 
 public enum SearchCommands {
-    public static let findInFiles = CommandID(rawValue: "codeeditor.search.findInFiles")
-    public static let replaceInFiles = CommandID(rawValue: "codeeditor.search.replaceInFiles")
+    public static let findInFiles = CommandID(stringLiteral: "codeeditor.search.findInFiles")
+    public static let replaceInFiles = CommandID(stringLiteral: "codeeditor.search.replaceInFiles")
 
     @MainActor
     @discardableResult

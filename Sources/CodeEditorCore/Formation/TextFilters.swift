@@ -119,13 +119,15 @@ public enum TextFilters: Sendable {
     ) -> NewlineInsertion {
         let base = leadingWhitespace(ofLine: lineTextBeforeCaret)
         let trimmed = lineTextBeforeCaret.trimmingCharacters(in: .whitespaces)
-        let opensBlock = trimmed.hasSuffix("{") || trimmed.hasSuffix("[") || trimmed.hasSuffix("(")
+        let opensBlock =
+            trimmed.hasSuffix("{") || trimmed.hasSuffix("[") || trimmed.hasSuffix("(")
             || trimmed.hasSuffix(":")
 
         // Split `{|}` / `[|]` / `(|)` so the closer is not dragged onto the indented middle line.
         if let next = nextCharacter,
-           isClosingPair(next),
-           opensBlock || pairOpen(for: next).map({ lineTextBeforeCaret.hasSuffix(String($0)) }) == true {
+            isClosingPair(next),
+            opensBlock || pairOpen(for: next).map({ lineTextBeforeCaret.hasSuffix(String($0)) }) == true
+        {
             let inner = base + indent.string
             // "\n" + inner + "\n" + base  → caret after inner
             let payload = "\n" + inner + "\n" + base
@@ -155,7 +157,7 @@ public enum TextFilters: Sendable {
         guard location > 0 else { return nil }
         let ns = document as NSString
         let prev = ns.character(at: location - 1)
-        if prev == 0x0A { // \n
+        if prev == 0x0A {  // \n
             if location >= 2, ns.character(at: location - 2) == 0x0D {
                 return NSRange(location: location - 2, length: 2)
             }
@@ -184,7 +186,9 @@ public enum TextFilters: Sendable {
         let length = ns.length
         guard length > 0 else { return nil }
         let probe = min(max(0, location), length - 1)
-        var lineStart = 0, lineEnd = 0, contentsEnd = 0
+        var lineStart = 0
+        var lineEnd = 0
+        var contentsEnd = 0
         ns.getLineStart(
             &lineStart,
             end: &lineEnd,
@@ -228,7 +232,8 @@ public enum TextFilters: Sendable {
         // CodeEditTextView: extend selection by one composed character backward.
         let baseRange: NSRange
         if let ending = lineEndingRangeBefore(location: caret, in: document),
-           ending.location + ending.length == caret {
+            ending.location + ending.length == caret
+        {
             baseRange = ending
         } else {
             baseRange = ns.rangeOfComposedCharacterSequences(
@@ -239,11 +244,12 @@ public enum TextFilters: Sendable {
         // CodeEditSourceEditor DeleteWhitespaceFilter: collapse indent units.
         // Only for space indents; only when the single deleted unit sits in leading whitespace.
         if case .spaces(let indentLength) = indent,
-           indentLength > 0,
-           baseRange.length == 1,
-           let leading = leadingWhitespaceRange(containing: baseRange.location, in: document),
-           baseRange.location >= leading.location,
-           baseRange.location < leading.location + leading.length {
+            indentLength > 0,
+            baseRange.length == 1,
+            let leading = leadingWhitespaceRange(containing: baseRange.location, in: document),
+            baseRange.location >= leading.location,
+            baseRange.location < leading.location + leading.length
+        {
             var numberOfExtraSpaces = leading.length % indentLength
             if numberOfExtraSpaces == 0 {
                 numberOfExtraSpaces = indentLength

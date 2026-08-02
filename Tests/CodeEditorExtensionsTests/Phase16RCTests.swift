@@ -1,6 +1,7 @@
+import CodeEditorExtensionAPI
 import Foundation
 import Testing
-import CodeEditorExtensionAPI
+
 @testable import CodeEditorExtensions
 
 private enum P16Store {
@@ -8,15 +9,15 @@ private enum P16Store {
         let dir = root.appendingPathComponent("\(id)-\(version)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let toml = """
-        id = "\(id)"
-        name = "\(id)"
-        version = "\(version)"
-        schema_version = 1
-        api_version = "1.0"
-        license = "MIT"
-        [activation]
-        events = ["startup"]
-        """
+            id = "\(id)"
+            name = "\(id)"
+            version = "\(version)"
+            schema_version = 1
+            api_version = "1.0"
+            license = "MIT"
+            [activation]
+            events = ["startup"]
+            """
         try toml.write(to: dir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "MIT".write(to: dir.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
         return dir
@@ -46,12 +47,13 @@ struct Phase16MigrationRehearsalTests {
         #expect(!plan.hasErrors)
 
         let tel = StoreTelemetrySink(fileURL: pkg.appendingPathComponent(".codeeditor/telemetry.ndjson"))
-        tel.append(StoreTelemetryEvent(
-            event: "migration.json_to_toml",
-            packageID: plan.packageID.rawValue,
-            success: true,
-            todos: result.todos.count
-        ))
+        tel.append(
+            StoreTelemetryEvent(
+                event: "migration.json_to_toml",
+                packageID: plan.packageID.rawValue,
+                success: true,
+                todos: result.todos.count
+            ))
         let events = try tel.readAll()
         #expect(events.contains { $0.event == "migration.json_to_toml" && $0.success })
     }
@@ -65,7 +67,7 @@ struct Phase16RollbackRehearsalTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let v1 = try P16Store.makePackage(id: "com.example.rc", version: "1.0.0", root: root)
         let plan = try await manager.install(from: v1)
@@ -80,15 +82,17 @@ struct Phase16RollbackRehearsalTests {
         #expect(await manager.package(id: plan.packageID)?.currentVersion == "1.0.0")
         #expect(FileManager.default.fileExists(atPath: dataDir.appendingPathComponent("prefs.txt").path))
 
-        let staging = root.appendingPathComponent("packages/com.example.rc/.staging-rc")
+        let staging = root.appendingPathComponent(
+            "packages/109973770aefe76e1955af6c3b8bcbe7b9181e7e142a552a023d84bac951189d/.staging-rc")
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
         try "x".write(to: staging.appendingPathComponent("junk"), atomically: true, encoding: .utf8)
         await manager.recoverCorruptedState()
         #expect(!FileManager.default.fileExists(atPath: staging.path))
 
-        try await manager.setRevocationList(RevocationListDocument(entries: [
-            RevocationEntry(packageID: "com.example.rc", version: "*", reason: "rc-rehearsal"),
-        ]))
+        try await manager.setRevocationList(
+            RevocationListDocument(entries: [
+                RevocationEntry(packageID: "com.example.rc", version: "*", reason: "rc-rehearsal")
+            ]))
         do {
             try await manager.assertCanActivate(id: plan.packageID)
             Issue.record("expected revoke deny after rehearsal")
@@ -106,7 +110,7 @@ struct Phase16SoakTests {
             .appendingPathComponent("p16soak-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
 
         let id = "com.example.soak"
@@ -114,14 +118,14 @@ struct Phase16SoakTests {
         for i in 0..<iterations {
             do {
                 let a = try P16Store.makePackage(id: id, version: "1.0.\(i)", root: root)
-                if await manager.package(id: ExtensionID(rawValue: id)) == nil {
+                if await manager.package(id: ExtensionID(rawValue: id)!) == nil {
                     _ = try await manager.install(from: a)
                 } else {
-                    try await manager.update(id: ExtensionID(rawValue: id), from: a)
+                    try await manager.update(id: ExtensionID(rawValue: id)!, from: a)
                 }
                 let b = try P16Store.makePackage(id: id, version: "1.1.\(i)", root: root)
-                try await manager.update(id: ExtensionID(rawValue: id), from: b)
-                try await manager.rollback(id: ExtensionID(rawValue: id))
+                try await manager.update(id: ExtensionID(rawValue: id)!, from: b)
+                try await manager.rollback(id: ExtensionID(rawValue: id)!)
             } catch {
                 failures += 1
             }
@@ -187,14 +191,14 @@ struct Phase16PerformanceTests {
             .appendingPathComponent("p16perf2-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
-        let manager = ExtensionPackageManager(installRoot: root)
+        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let t0 = CFAbsoluteTimeGetCurrent()
         let v1 = try P16Store.makePackage(id: "com.example.perf", version: "1.0.0", root: root)
         _ = try await manager.install(from: v1)
         let v2 = try P16Store.makePackage(id: "com.example.perf", version: "1.1.0", root: root)
-        try await manager.update(id: ExtensionID(rawValue: "com.example.perf"), from: v2)
-        try await manager.rollback(id: ExtensionID(rawValue: "com.example.perf"))
+        try await manager.update(id: ExtensionID(rawValue: "com.example.perf")!, from: v2)
+        try await manager.rollback(id: ExtensionID(rawValue: "com.example.perf")!)
         let ms = (CFAbsoluteTimeGetCurrent() - t0) * 1000
         #expect(ms < budget, "store lifecycle \(ms)ms exceeds \(budget)ms")
     }

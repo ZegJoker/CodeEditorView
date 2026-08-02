@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Enter after blank lines")
@@ -31,7 +32,9 @@ struct EnterAfterBlanksTests {
         #expect(pos != nil)
         // New line (not same line with column+1 for the terminator).
         #expect((pos?.line ?? -1) > lineBefore)
-        #expect(pos?.column == 0, "caret should be at column 0 of the new line, got \(pos?.column ?? -1); before col=\(colBefore)")
+        #expect(
+            pos?.column == 0,
+            "caret should be at column 0 of the new line, got \(pos?.column ?? -1); before col=\(colBefore)")
     }
 
     @Test func secondEnterAlsoWorks() {

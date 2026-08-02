@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorLanguageSupport
+import Foundation
 
 public struct PanelContribution: Sendable, Hashable, Identifiable {
     public var id: String

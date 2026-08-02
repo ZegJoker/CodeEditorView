@@ -183,7 +183,8 @@ extension EditorController {
             return
         }
 
-        let atLimit = forwards
+        let atLimit =
+            forwards
             ? current == findSession.matches.count - 1
             : current == 0
         if atLimit, !findSession.wrapAround {
@@ -201,8 +202,8 @@ extension EditorController {
 
     public func replaceCurrentMatch() {
         guard configuration.isEditable,
-              let index = findSession.currentMatchIndex,
-              findSession.matches.indices.contains(index)
+            let index = findSession.currentMatchIndex,
+            findSession.matches.indices.contains(index)
         else { return }
 
         var matches = findSession.matches
@@ -293,7 +294,8 @@ extension EditorController {
             findSession.currentMatchIndex = nil
         } else if selectCurrent {
             let caret = selectedRange.location
-            findSession.currentMatchIndex = FindEngine.nearestMatchIndex(matches: matches, toCaret: caret)
+            findSession.currentMatchIndex =
+                FindEngine.nearestMatchIndex(matches: matches, toCaret: caret)
                 ?? 0
         } else if let current = findSession.currentMatchIndex {
             findSession.currentMatchIndex = min(current, matches.count - 1)

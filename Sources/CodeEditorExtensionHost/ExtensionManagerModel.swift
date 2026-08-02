@@ -1,7 +1,7 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import Foundation
 
 /// UI-free manager model for workbench / settings screens.
 @MainActor
@@ -34,7 +34,7 @@ public final class ExtensionManagerModel {
             trustItems = await manager.trustStatusItems()
             pendingTrustPrompts = []
             for item in trustItems where !item.quarantined {
-                if let prompt = await manager.trustPromptIfNeeded(for: ExtensionID(rawValue: item.packageID)) {
+                if let prompt = await manager.trustPromptIfNeeded(for: ExtensionID(rawValue: item.packageID)!) {
                     pendingTrustPrompts.append(prompt)
                 }
             }

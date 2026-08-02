@@ -1,7 +1,7 @@
+import CodeEditorCore
 import CoreGraphics
 import Foundation
 import Observation
-import CodeEditorCore
 
 /// Per-view find panel state (independent of other sessions on the same document).
 public struct EditorFindState: Equatable, Hashable, Sendable, Codable {

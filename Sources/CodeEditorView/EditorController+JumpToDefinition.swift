@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorTreeSitter
+import Foundation
 
 // MARK: - Jump to definition (Phase 11)
 
@@ -68,8 +68,8 @@ extension EditorController {
 
         // Prefer a non-empty UTF-16 range that still lies in the document.
         if position.range.length > 0,
-           position.range.location >= 0,
-           position.range.location + position.range.length <= docLen
+            position.range.location >= 0,
+            position.range.location + position.range.length <= docLen
         {
             return position.range
         }
@@ -77,8 +77,8 @@ extension EditorController {
         // Empty range with an explicit location (caret) — trust when in bounds.
         // Exception: (0,0) alone is ambiguous with “unset”; fall through to line/column.
         if position.range.length == 0,
-           position.range.location > 0,
-           position.range.location <= docLen
+            position.range.location > 0,
+            position.range.location <= docLen
         {
             return NSRange(location: position.range.location, length: 0)
         }
@@ -101,7 +101,7 @@ extension EditorController {
     func identifierRangeFromTreeSitter(atUTF16Offset location: Int) -> NSRange? {
         for provider in highlightProviders {
             if let ts = provider as? TreeSitterHighlightProvider,
-               let range = ts.identifierRange(atUTF16Offset: location)
+                let range = ts.identifierRange(atUTF16Offset: location)
             {
                 return range
             }

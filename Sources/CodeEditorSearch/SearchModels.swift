@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorDocuments
+import Foundation
 
 /// How the find pattern is interpreted (Xcode-style textual match modes).
 public enum SearchMatchMode: String, Sendable, Hashable, Codable, CaseIterable, Identifiable {

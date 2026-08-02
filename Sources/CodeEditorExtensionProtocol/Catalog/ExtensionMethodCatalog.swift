@@ -1,6 +1,7 @@
 import Foundation
+
 #if canImport(CryptoKit)
-import CryptoKit
+    import CryptoKit
 #endif
 
 /// Versioned method identifiers for the extension wire protocol.
@@ -100,12 +101,12 @@ public enum ExtensionMethodCatalog {
     private static func computeSchemaHash() -> String {
         let data = Data(canonicalSchemaText.utf8)
         #if canImport(CryptoKit)
-        let digest = SHA256.hash(data: data)
-        return digest.map { String(format: "%02x", $0) }.joined()
+            let digest = SHA256.hash(data: data)
+            return digest.map { String(format: "%02x", $0) }.joined()
         #else
-        var hash: UInt64 = 5381
-        for b in data { hash = ((hash << 5) &+ hash) &+ UInt64(b) }
-        return String(format: "%016llx", hash)
+            var hash: UInt64 = 5381
+            for b in data { hash = ((hash << 5) &+ hash) &+ UInt64(b) }
+            return String(format: "%016llx", hash)
         #endif
     }
 }

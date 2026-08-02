@@ -1,6 +1,7 @@
+import CodeEditorCore
 import Foundation
 import Testing
-import CodeEditorCore
+
 @testable import CodeEditorDocuments
 
 @Suite("TextDocument")
@@ -27,10 +28,10 @@ struct TextDocumentTests {
         )
         #expect(doc.text == "ab")
         let afterInsert = doc.version
-        doc.performUndo()
+        try doc.performUndo()
         #expect(doc.text == "a")
         #expect(doc.version > afterInsert)
-        doc.performRedo()
+        try doc.performRedo()
         #expect(doc.text == "ab")
     }
 

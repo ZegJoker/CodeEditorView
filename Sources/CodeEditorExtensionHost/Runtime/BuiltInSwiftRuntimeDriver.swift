@@ -1,11 +1,11 @@
-import Foundation
+import CodeEditorCore
+import CodeEditorDAP
+import CodeEditorDocuments
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensions
 import CodeEditorLanguageServices
-import CodeEditorCore
-import CodeEditorDocuments
-import CodeEditorDAP
+import Foundation
 
 public struct BuiltInSwiftRuntimeDriver: ExtensionRuntimeDriver {
     public let kind: ExtensionRuntimeKind = .builtIn
@@ -167,7 +167,7 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
             return Data()
         case .completion:
             let list = CompletionList(items: [
-                CompletionItem(label: "conformanceHello", kind: .function, insertText: "conformanceHello()"),
+                CompletionItem(label: "conformanceHello", kind: .function, insertText: "conformanceHello()")
             ])
             return try JSONEncoder().encode(list)
         case .hover:
@@ -191,7 +191,7 @@ public actor BuiltInExtensionInstance: ExtensionInstance {
             withUnsafeBytes(of: &pid) { data.append(contentsOf: $0) }
             return data
         case .lsResolveLaunchPlan, .lsInitializationOptions, .lsWorkspaceConfiguration,
-             .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
+            .lsTransformCompletionLabel, .lsTransformSymbolLabel, .lsStatus, .lsRestart:
             guard let provider = languageServerProvider else {
                 throw ExtensionWireError.methodNotFound
             }

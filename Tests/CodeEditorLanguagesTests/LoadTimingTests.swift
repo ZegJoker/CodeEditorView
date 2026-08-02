@@ -1,7 +1,7 @@
-import Testing
 import Foundation
-@testable import CodeEditorLanguages
+import Testing
 
+@testable import CodeEditorLanguages
 
 @Suite("Load timing")
 struct LoadTimingTests {

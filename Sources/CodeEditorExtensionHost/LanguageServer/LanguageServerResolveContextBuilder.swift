@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Builds a fully populated ``LanguageServerResolveContext`` from broker handles (§8.5).
 public enum LanguageServerResolveContextBuilder {
@@ -25,10 +25,11 @@ public enum LanguageServerResolveContextBuilder {
         if let wh = try? await broker.worktreeHandle(extensionID: extensionID) {
             worktree = WorktreeHandleID(rawValue: wh.id.rawValue)
             if !environmentNames.isEmpty {
-                environmentValues = (try? await broker.worktreeEnvironment(
-                    handle: wh.id,
-                    names: environmentNames
-                )) ?? [:]
+                environmentValues =
+                    (try? await broker.worktreeEnvironment(
+                        handle: wh.id,
+                        names: environmentNames
+                    )) ?? [:]
             }
             for name in whichNames {
                 if let path = try? await broker.worktreeWhich(handle: wh.id, name: name) {

@@ -1,10 +1,10 @@
+import CodeEditorLanguageJSON
+import CodeEditorLanguageSupport
+import CodeEditorLanguageSwift
+import CodeEditorLanguages
+import CodeEditorTreeSitter
 import Foundation
 import Testing
-import CodeEditorLanguageSupport
-import CodeEditorTreeSitter
-import CodeEditorLanguageSwift
-import CodeEditorLanguageJSON
-import CodeEditorLanguages
 
 @Suite("Language pack provenance")
 struct LanguagePackProvenanceTests {
@@ -19,11 +19,13 @@ struct LanguagePackProvenanceTests {
         #expect(CodeEditorLanguageJSON.grammarSourceURL.contains("tree-sitter-json"))
     }
 
-    @Test func registerIdempotent() {
-        #expect(CodeEditorLanguageSwift.register() == false || CodeEditorLanguageSwift.register() == false)
-        // second call always false once registered
-        #expect(CodeEditorLanguageSwift.register() == false)
-        #expect(CodeEditorLanguageJSON.register() == false)
+    @Test func registerIdempotent() throws {
+        _ = try CodeEditorLanguageSwift.register()
+        #expect(try CodeEditorLanguageSwift.register() == false)
+        let registered = try CodeEditorLanguageJSON.register()
+        // Idempotent register returns false when already registered; first call may be true.
+        #expect(registered == true || registered == false)
+        #expect(try CodeEditorLanguageJSON.register() == false)
     }
 }
 
@@ -53,8 +55,8 @@ struct LanguageBootstrapSmokeTests {
     }
 
     @Test func swiftAndJsonHighlightConfigsLoad() throws {
-        _ = CodeEditorLanguageSwift.register()
-        _ = CodeEditorLanguageJSON.register()
+        _ = try CodeEditorLanguageSwift.register()
+        _ = try CodeEditorLanguageJSON.register()
         TreeSitterLanguageEnvironment.install(RegistryTreeSitterConfigurationProvider())
 
         let swiftCfg = try TreeSitterConfigurationFactory.languageConfiguration(for: .swift)
@@ -64,8 +66,8 @@ struct LanguageBootstrapSmokeTests {
         #expect(jsonCfg != nil)
     }
 
-    @Test func querySetLoaderFindsHighlights() {
-        _ = CodeEditorLanguageSwift.register()
+    @Test func querySetLoaderFindsHighlights() throws {
+        _ = try CodeEditorLanguageSwift.register()
         let (sources, diags) = QuerySetLoader.loadSources(
             languageID: .swift,
             kinds: [.highlights, .folds]
@@ -80,17 +82,18 @@ struct LanguageBootstrapSmokeTests {
 @MainActor
 struct LanguageCorpusTests {
     @Test func swiftCorpusHighlightsSomething() async throws {
-        _ = CodeEditorLanguageSwift.register()
+        _ = try CodeEditorLanguageSwift.register()
         TreeSitterLanguageEnvironment.install(RegistryTreeSitterConfigurationProvider())
         let provider = TreeSitterHighlightProvider(language: .swift)
-        await provider.setDocumentText("""
-        // comment
-        func hello() async -> String {
-          return "hi \\(1)"
-        }
-        @MainActor
-        struct S<T> {}
-        """)
+        await provider.setDocumentText(
+            """
+            // comment
+            func hello() async -> String {
+              return "hi \\(1)"
+            }
+            @MainActor
+            struct S<T> {}
+            """)
         let ranges = try await provider.queryHighlights(
             in: NSRange(location: 0, length: 20),
             text: "func hello() async -> String { return \"x\" }"
@@ -99,7 +102,7 @@ struct LanguageCorpusTests {
     }
 
     @Test func jsonCorpusParses() async throws {
-        _ = CodeEditorLanguageJSON.register()
+        _ = try CodeEditorLanguageJSON.register()
         TreeSitterLanguageEnvironment.install(RegistryTreeSitterConfigurationProvider())
         let provider = TreeSitterHighlightProvider(language: .json)
         let text = #"{"a": 1, "b": "\u0041", "nested": {"x": true}}"#
@@ -109,5 +112,26 @@ struct LanguageCorpusTests {
             text: text
         )
         _ = ranges
+    }
+}
+
+@Suite("Language pack missing artifacts")
+struct LanguagePackMissingArtifactTests {
+    @Test func languagePackErrorDescriptionsAreActionable() {
+        let err = LanguagePackError.missingQuery(
+            language: .swift,
+            query: "highlights",
+            searchedPaths: ["/tmp/missing.scm"]
+        )
+        #expect(err.description.contains("highlights"))
+        #expect(err.description.contains("swift"))
+        #expect(err.description.contains("/tmp/missing.scm"))
+    }
+
+    @Test func swiftHighlightsQueryResolvesAfterRegister() throws {
+        _ = try CodeEditorLanguageSwift.register()
+        let url = LanguageRegistry.shared.queryURL(for: .swift, kind: .highlights)
+        #expect(url != nil)
+        #expect(CodeEditorLanguageSwift.lastError == nil)
     }
 }

@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorCore
+import Foundation
 
 public protocol TaskRunner: Sendable {
     /// Start a task and return a live execution handle.
@@ -9,8 +9,8 @@ public protocol TaskRunner: Sendable {
     func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult
 }
 
-public extension TaskRunner {
-    func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult {
+extension TaskRunner {
+    public func run(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskRunResult {
         let handle = try await start(definition, output: output)
         return try await handle.wait()
     }
@@ -30,6 +30,10 @@ public final class TaskExecutionHandle: @unchecked Sendable {
     private var waiters: [CheckedContinuation<TaskRunResult, Error>] = []
     private var readiness: NSRegularExpression?
     private var becameReady = false
+    /// Rolling UTF-8 decode window so readiness regex can match across chunk boundaries (TASK-002).
+    private var readinessWindow = ""
+    private let readinessWindowMaxChars = 16_384
+    private var utf8Carry = Data()
 
     public init(
         run: TaskRun,
@@ -53,6 +57,13 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         }
     }
 
+    /// Whether readiness was observed (background deps).
+    public var isReady: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return becameReady
+    }
+
     /// Host/fake runner completion without a process.
     public static func completed(
         run: TaskRun,
@@ -69,14 +80,34 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         return handle
     }
 
+    /// Cancel the task. For process-backed runs, signals the process and
+    /// **does not** complete until process death is observed by `pump`
+    /// (TASK-003 / §18.4 — exclusive slots stay held until death).
     public func cancel() {
-        processHandle?.cancel()
-        let snapshot = markCancelled()
+        lock.lock()
+        let hasProcess = processHandle != nil && !finished
+        if !finished {
+            var r = run
+            r.state = .cancelled
+            // endedAt set when process actually exits (or immediately if no process).
+            if processHandle == nil {
+                r.endedAt = Date()
+            }
+            run = r
+        }
+        lock.unlock()
+
+        if hasProcess {
+            processHandle?.cancel()
+            return
+        }
+
+        let snapshot = markCancelledIfNeeded()
         guard let snapshot else { return }
         complete(run: snapshot.run, stdout: snapshot.stdout, stderr: snapshot.stderr)
     }
 
-    nonisolated private func markCancelled() -> (run: TaskRun, stdout: String, stderr: String)? {
+    nonisolated private func markCancelledIfNeeded() -> (run: TaskRun, stdout: String, stderr: String)? {
         lock.lock()
         if finished {
             lock.unlock()
@@ -84,7 +115,7 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         }
         var r = run
         r.state = .cancelled
-        r.endedAt = Date()
+        if r.endedAt == nil { r.endedAt = Date() }
         run = r
         let out = stdout
         let err = stderr
@@ -130,12 +161,14 @@ public final class TaskExecutionHandle: @unchecked Sendable {
     }
 
     public var collectedStdout: String {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return stdout
     }
 
     public var collectedStderr: String {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return stderr
     }
 
@@ -245,11 +278,35 @@ public final class TaskExecutionHandle: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         guard !becameReady, let readiness else { return }
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        if readiness.firstMatch(in: text, options: [], range: range) != nil {
+        // Append to rolling window (may include previous incomplete chunk tail).
+        readinessWindow += text
+        if readinessWindow.count > readinessWindowMaxChars {
+            readinessWindow = String(readinessWindow.suffix(readinessWindowMaxChars))
+        }
+        let range = NSRange(readinessWindow.startIndex..<readinessWindow.endIndex, in: readinessWindow)
+        if readiness.firstMatch(in: readinessWindow, options: [], range: range) != nil {
             becameReady = true
             continuation?.yield(.ready)
         }
+    }
+
+    /// Feed raw process bytes through a streaming UTF-8 decoder before readiness matching.
+    nonisolated func emitDecodedStdout(_ data: Data) {
+        lock.lock()
+        utf8Carry.append(data)
+        // Decode complete prefix
+        var end = utf8Carry.count
+        while end > 0 {
+            if let s = String(data: utf8Carry.prefix(end), encoding: .utf8) {
+                let remainder = Data(utf8Carry.suffix(from: end))
+                utf8Carry = remainder
+                lock.unlock()
+                emit(stdout: s)
+                return
+            }
+            end -= 1
+        }
+        lock.unlock()
     }
 }
 
@@ -257,7 +314,8 @@ public final class TaskExecutionHandle: @unchecked Sendable {
 
 public struct ProcessTaskRunner: TaskRunner {
     public let platformProfile: PlatformCapabilityProfile
-    public let processService: ProcessService
+    /// Shared process supervisor (PROC-001) — same API used by Git / helpers.
+    public let processService: ProcessSupervisor
     public var defaultTimeout: Duration?
 
     public init(
@@ -265,13 +323,13 @@ public struct ProcessTaskRunner: TaskRunner {
         defaultTimeout: Duration? = nil
     ) {
         self.platformProfile = platformProfile
-        self.processService = ProcessService(profile: platformProfile)
+        self.processService = ProcessSupervisor(profile: platformProfile)
         self.defaultTimeout = defaultTimeout
     }
 
     public func start(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskExecutionHandle {
         try Task.checkCancellation()
-        let resolved = TaskVariableResolver.resolveDefinition(definition)
+        let resolved = try TaskVariableResolver.resolveDefinition(definition)
         var run = TaskRun(definitionID: resolved.id, state: .starting, startedAt: Date())
         if resolved.presentation.echo {
             output.append(text: "> \(resolved.executable) \(resolved.arguments.joined(separator: " "))")
@@ -339,7 +397,7 @@ public struct HostTaskRunner: TaskRunner {
     }
 
     public func start(_ definition: TaskDefinition, output: OutputChannel) async throws -> TaskExecutionHandle {
-        let resolved = TaskVariableResolver.resolveDefinition(definition)
+        let resolved = try TaskVariableResolver.resolveDefinition(definition)
         let result = try await executor.execute(resolved)
         output.append(text: result.stdout, isError: false)
         output.append(text: result.stderr, isError: true)
@@ -348,73 +406,5 @@ public struct HostTaskRunner: TaskRunner {
             stdout: result.stdout,
             stderr: result.stderr
         )
-    }
-}
-
-/// In-process fake for tests (streaming + cancel + readiness).
-public struct FakeTaskRunner: TaskRunner, Sendable {
-    public var stdoutChunks: [String]
-    public var stderrChunks: [String]
-    public var exitCode: Int32
-    public var chunkDelayNanoseconds: UInt64
-    public var hangUntilCancelled: Bool
-
-    public init(
-        stdoutChunks: [String] = ["ok\n"],
-        stderrChunks: [String] = [],
-        exitCode: Int32 = 0,
-        chunkDelayNanoseconds: UInt64 = 0,
-        hangUntilCancelled: Bool = false
-    ) {
-        self.stdoutChunks = stdoutChunks
-        self.stderrChunks = stderrChunks
-        self.exitCode = exitCode
-        self.chunkDelayNanoseconds = chunkDelayNanoseconds
-        self.hangUntilCancelled = hangUntilCancelled
-    }
-
-    public func start(
-        _ definition: TaskDefinition,
-        output: OutputChannel
-    ) async throws -> TaskExecutionHandle {
-        let run = TaskRun(definitionID: definition.id, state: .running, startedAt: Date())
-        let handle = TaskExecutionHandle(
-            run: run,
-            processHandle: nil,
-            readinessPattern: definition.readinessPattern
-        )
-        let chunks = stdoutChunks
-        let errChunks = stderrChunks
-        let delay = chunkDelayNanoseconds
-        let hang = hangUntilCancelled
-        let code = exitCode
-        Task {
-            if hang {
-                while true {
-                    try? await Task.sleep(nanoseconds: 20_000_000)
-                    if handle.run.state == .cancelled { return }
-                }
-            }
-            var out = ""
-            var err = ""
-            for chunk in chunks {
-                if delay > 0 { try? await Task.sleep(nanoseconds: delay) }
-                if handle.run.state == .cancelled { return }
-                handle.emit(stdout: chunk)
-                output.append(text: chunk, isError: false)
-                out += chunk
-            }
-            for chunk in errChunks {
-                handle.emit(stderr: chunk)
-                output.append(text: chunk, isError: true)
-                err += chunk
-            }
-            var done = handle.run
-            done.state = code == 0 ? .succeeded : .failed
-            done.exitCode = Int(code)
-            done.endedAt = Date()
-            handle.complete(run: done, stdout: out, stderr: err)
-        }
-        return handle
     }
 }

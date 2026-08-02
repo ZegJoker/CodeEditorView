@@ -1,6 +1,6 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
+import Foundation
 
 public enum MCPLaunchPlanError: Error, Sendable, Equatable {
     case diagnostic(String)
@@ -47,7 +47,8 @@ public actor MCPLaunchPlanExecutor {
             default: break
             }
 
-            setStatus(MCPServerStatus(serverID: sid, extensionID: extensionID, state: .starting, message: "materializing"))
+            setStatus(
+                MCPServerStatus(serverID: sid, extensionID: extensionID, state: .starting, message: "materializing"))
             let material = try await materialize(plan: plan, extensionID: extensionID, workspaceRoots: workspaceRoots)
 
             // Register process factory when not test factory
@@ -104,12 +105,13 @@ public actor MCPLaunchPlanExecutor {
             setStatus(MCPServerStatus(serverID: sid, extensionID: extensionID, state: .running, message: "running"))
             return session
         } catch {
-            setStatus(MCPServerStatus(
-                serverID: sid,
-                extensionID: extensionID,
-                state: .failed,
-                lastError: String(describing: error)
-            ))
+            setStatus(
+                MCPServerStatus(
+                    serverID: sid,
+                    extensionID: extensionID,
+                    state: .failed,
+                    lastError: String(describing: error)
+                ))
             throw error
         }
     }
@@ -119,7 +121,9 @@ public actor MCPLaunchPlanExecutor {
         setStatus(MCPServerStatus(serverID: serverID, extensionID: extensionID, state: .stopped, message: "stopped"))
     }
 
-    public func restart(serverID: String, extensionID: ExtensionID, workspaceRoots: [URL] = []) async throws -> MCPClientSession {
+    public func restart(
+        serverID: String, extensionID: ExtensionID, workspaceRoots: [URL] = []
+    ) async throws -> MCPClientSession {
         guard let existing = await pool.session(serverID: serverID) else {
             throw MCPLaunchPlanError.diagnostic("no session \(serverID)")
         }
@@ -142,7 +146,8 @@ public actor MCPLaunchPlanExecutor {
         extensionID: ExtensionID,
         workspaceRoots: [URL]
     ) async throws -> Materialized {
-        let cwd = plan.workingDirectoryRelative.flatMap { workspaceRoots.first?.appendingPathComponent($0) }
+        let cwd =
+            plan.workingDirectoryRelative.flatMap { workspaceRoots.first?.appendingPathComponent($0) }
             ?? workspaceRoots.first
         var env = plan.environment
         // Resolve secret references from settings (named secrets only — no Keychain dump)
@@ -178,7 +183,7 @@ public actor MCPLaunchPlanExecutor {
             let handle = try await broker.downloadHandle(extensionID: extensionID)
             let dest: URL
             if urlString.hasPrefix("fixture://"),
-               let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
+                let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
             {
                 dest = try await broker.downloadWriteFixture(
                     handle: handle.id, host: "cdn.example", path: "/\(cacheKey)", data: b64, expectedDigest: digest

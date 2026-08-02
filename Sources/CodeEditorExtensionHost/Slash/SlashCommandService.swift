@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Host registry for slash commands (compatibility surface).
 public actor SlashCommandService {

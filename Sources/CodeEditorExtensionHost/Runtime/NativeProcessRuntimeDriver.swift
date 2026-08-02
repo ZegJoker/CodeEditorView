@@ -1,8 +1,8 @@
-import Foundation
 import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import CodeEditorExtensions
+import Foundation
 
 public struct NativeProcessRuntimeDriver: ExtensionRuntimeDriver {
     public let kind: ExtensionRuntimeKind = .nativeProcess
@@ -143,7 +143,8 @@ public actor NativeProcessExtensionInstance: ExtensionInstance {
         }
         await connection.start()
 
-        let guestHandshake: ExtensionWireHandshake = try await withThrowingTaskGroup(of: ExtensionWireHandshake.self) { group in
+        let guestHandshake: ExtensionWireHandshake = try await withThrowingTaskGroup(of: ExtensionWireHandshake.self) {
+            group in
             group.addTask {
                 try await handshakeBox.wait()
             }
@@ -157,7 +158,7 @@ public actor NativeProcessExtensionInstance: ExtensionInstance {
         }
 
         if handshake.requireSchemaMatch,
-           guestHandshake.schemaHash != ExtensionMethodCatalog.schemaHash
+            guestHandshake.schemaHash != ExtensionMethodCatalog.schemaHash
         {
             let reject = ExtensionWireHandshakeResult(
                 accepted: false,

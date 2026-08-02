@@ -1,6 +1,6 @@
-import Foundation
-import CoreGraphics
 import CodeEditorView
+import CoreGraphics
+import Foundation
 
 /// How the project navigator is presented relative to the editor.
 public enum WorkbenchNavigatorStyle: String, Sendable, Equatable, Hashable, CaseIterable {

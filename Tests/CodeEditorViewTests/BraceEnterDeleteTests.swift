@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import CodeEditorView
 
 @Suite("Brace enter and delete")
@@ -72,8 +73,9 @@ struct BraceEnterDeleteTests {
         #expect(controller.text.contains("{"), "opening brace must survive blank-line delete")
         // Caret must NOT jump to column 0 of `}` — it stays after `{`.
         let openEnd = (controller.text as NSString).range(of: "{").location + 1
-        #expect(controller.selectedRange.location == openEnd,
-                "caret should remain after '{{', got \(controller.selectedRange.location)")
+        #expect(
+            controller.selectedRange.location == openEnd,
+            "caret should remain after '{{', got \(controller.selectedRange.location)")
         // One more delete at that caret (now between { and \n) removes nothing useful from middle...
         // Move to column 0 of `}` and join.
         let closer = (controller.text as NSString).range(of: "}").location

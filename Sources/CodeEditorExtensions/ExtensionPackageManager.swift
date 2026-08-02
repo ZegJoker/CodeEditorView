@@ -1,5 +1,5 @@
-import Foundation
 import CodeEditorExtensionAPI
+import Foundation
 
 /// Host package lifecycle with **immutable version directories**, durable state, recovery, and user-data preservation.
 public actor ExtensionPackageManager {
@@ -44,6 +44,52 @@ public actor ExtensionPackageManager {
         }
     }
 
+    /// Production initializer — **requires** verifier and install policy (EXT-004 fail-closed).
+    public init(
+        installRoot: URL,
+        policy: ShippingInstallPolicy,
+        verifier: any PackageVerifying,
+        maxEventBuffer: Int = 32,
+        telemetry: StoreTelemetrySink? = nil
+    ) {
+        self.installRoot = installRoot
+        self.maxEventBuffer = max(4, maxEventBuffer)
+        self.verifier = verifier
+        self.telemetry = telemetry
+        self.installPolicy = policy
+        var cont: AsyncStream<ExtensionContributionSnapshot>.Continuation!
+        self.snapshots = AsyncStream(bufferingPolicy: .bufferingNewest(maxEventBuffer)) { cont = $0 }
+        self.continuation = cont
+        Self.ensureLayout(at: installRoot)
+        if telemetry == nil {
+            let tel =
+                installRoot
+                .appendingPathComponent("telemetry", isDirectory: true)
+                .appendingPathComponent("migration-events.ndjson")
+            self.telemetry = StoreTelemetrySink(fileURL: tel)
+        }
+    }
+
+    /// Test-only initializer with optional verifier/policy. **Do not use in production hosts.**
+    public static func insecureForTests(
+        installRoot: URL,
+        maxEventBuffer: Int = 32,
+        verifier: (any PackageVerifying)? = nil,
+        telemetry: StoreTelemetrySink? = nil,
+        installPolicy: ShippingInstallPolicy? = nil
+    ) -> ExtensionPackageManager {
+        ExtensionPackageManager(
+            installRoot: installRoot,
+            maxEventBuffer: maxEventBuffer,
+            verifier: verifier,
+            telemetry: telemetry,
+            installPolicy: installPolicy,
+            allowMissingSecurity: true
+        )
+    }
+
+    /// Legacy convenience retained for migration — prefer production `init(installRoot:policy:verifier:)`
+    /// or ``insecureForTests``. Missing verifier/policy **fail closed** on install (EXT-004).
     public init(
         installRoot: URL,
         maxEventBuffer: Int = 32,
@@ -51,15 +97,46 @@ public actor ExtensionPackageManager {
         telemetry: StoreTelemetrySink? = nil,
         installPolicy: ShippingInstallPolicy? = nil
     ) {
+        self.init(
+            installRoot: installRoot,
+            maxEventBuffer: maxEventBuffer,
+            verifier: verifier,
+            telemetry: telemetry,
+            installPolicy: installPolicy,
+            allowMissingSecurity: false
+        )
+    }
+
+    private init(
+        installRoot: URL,
+        maxEventBuffer: Int,
+        verifier: (any PackageVerifying)?,
+        telemetry: StoreTelemetrySink?,
+        installPolicy: ShippingInstallPolicy?,
+        allowMissingSecurity: Bool
+    ) {
         self.installRoot = installRoot
         self.maxEventBuffer = max(4, maxEventBuffer)
         self.verifier = verifier
         self.telemetry = telemetry
         self.installPolicy = installPolicy
+        self.allowMissingSecurity = allowMissingSecurity
         var cont: AsyncStream<ExtensionContributionSnapshot>.Continuation!
         self.snapshots = AsyncStream(bufferingPolicy: .bufferingNewest(maxEventBuffer)) { cont = $0 }
         self.continuation = cont
-        // Layout sync is safe; durable load is async-only — call `bootstrap()` after init.
+        Self.ensureLayout(at: installRoot)
+        if telemetry == nil {
+            let tel =
+                installRoot
+                .appendingPathComponent("telemetry", isDirectory: true)
+                .appendingPathComponent("migration-events.ndjson")
+            self.telemetry = StoreTelemetrySink(fileURL: tel)
+        }
+    }
+
+    private var allowMissingSecurity: Bool = false
+
+    private static func ensureLayout(at installRoot: URL) {
         for dir in [
             installRoot.appendingPathComponent("packages", isDirectory: true),
             installRoot.appendingPathComponent("state", isDirectory: true),
@@ -70,19 +147,47 @@ public actor ExtensionPackageManager {
         ] {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
-        if telemetry == nil {
-            let tel = installRoot
-                .appendingPathComponent("telemetry", isDirectory: true)
-                .appendingPathComponent("migration-events.ndjson")
-            self.telemetry = StoreTelemetrySink(fileURL: tel)
+    }
+
+    /// Filesystem directory for an extension — hash key, never the raw ID (EXT-001).
+    public func packageDirectory(for id: ExtensionID) -> URL {
+        packagesRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
+    }
+
+    /// Store-wide quarantine when durable trust state cannot be loaded safely (EXT-005 / §15.5).
+    public private(set) var storeQuarantined: Bool = false
+    public private(set) var storeQuarantineReason: String?
+
+    /// Load durable state and revocation list (call once after init).
+    /// Corrupt state enters **quarantined store** mode — never an empty permissive allow.
+    public func bootstrap() {
+        ensureLayout()
+        do {
+            try loadDurableState()
+        } catch {
+            storeQuarantined = true
+            storeQuarantineReason = "corrupt durable state: \(error)"
+            packages.removeAll()
+            rebuildSnapshot()
+        }
+        do {
+            try loadRevocationList()
+        } catch {
+            storeQuarantined = true
+            let prior = storeQuarantineReason.map { $0 + "; " } ?? ""
+            storeQuarantineReason = prior + "corrupt revocation list: \(error)"
+            // Fail closed: clear revocation and deny activation until repaired.
+            revocation = RevocationListDocument()
         }
     }
 
-    /// Load durable state and revocation list (call once after init).
-    public func bootstrap() {
-        ensureLayout()
-        try? loadDurableState()
-        try? loadRevocationList()
+    /// Clear store quarantine after operator repair (re-runs bootstrap load).
+    public func repairStoreBootstrap() throws {
+        storeQuarantined = false
+        storeQuarantineReason = nil
+        packages.removeAll()
+        try loadDurableState()
+        try loadRevocationList()
     }
 
     public func setVerifier(_ verifier: (any PackageVerifying)?) {
@@ -112,7 +217,8 @@ public actor ExtensionPackageManager {
     public func install(from source: URL, asDev: Bool = false) throws -> ValidatedContributionPlan {
         let plan = try ExtensionPackageLoader.load(directory: source)
         if plan.hasErrors {
-            throw ExtensionError.dataLoad("package has errors: \(plan.diagnostics.map(\.message).joined(separator: "; "))")
+            throw ExtensionError.dataLoad(
+                "package has errors: \(plan.diagnostics.map(\.message).joined(separator: "; "))")
         }
         let version = plan.version.description
         try assertNotRevoked(packageID: plan.packageID.rawValue, version: version)
@@ -147,11 +253,14 @@ public actor ExtensionPackageManager {
             try ensureUserDataDir(id: plan.packageID)
             try persistDurableState()
             rebuildSnapshot()
-            record(.init(event: "package.install", packageID: plan.packageID.rawValue, toVersion: version, success: true, reason: "dev"))
+            record(
+                .init(
+                    event: "package.install", packageID: plan.packageID.rawValue, toVersion: version, success: true,
+                    reason: "dev"))
             return plan
         }
 
-        let idRoot = packagesRoot.appendingPathComponent(plan.packageID.rawValue, isDirectory: true)
+        let idRoot = packageDirectory(for: plan.packageID)
         let versionDir = idRoot.appendingPathComponent(version, isDirectory: true)
         let staging = idRoot.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: idRoot, withIntermediateDirectories: true)
@@ -199,13 +308,14 @@ public actor ExtensionPackageManager {
         try ensureUserDataDir(id: plan.packageID)
         try persistDurableState()
         rebuildSnapshot()
-        record(.init(
-            event: previous == nil ? "package.install" : "package.update",
-            packageID: plan.packageID.rawValue,
-            fromVersion: previous?.currentVersion,
-            toVersion: version,
-            success: true
-        ))
+        record(
+            .init(
+                event: previous == nil ? "package.install" : "package.update",
+                packageID: plan.packageID.rawValue,
+                fromVersion: previous?.currentVersion,
+                toVersion: version,
+                success: true
+            ))
         return stored
     }
 
@@ -251,10 +361,13 @@ public actor ExtensionPackageManager {
             packages[id] = pkg
             try persistDurableState()
             rebuildSnapshot()
-            record(.init(event: "package.rollback", packageID: id.rawValue, toVersion: prevVer, success: true, reason: "dev"))
+            record(
+                .init(
+                    event: "package.rollback", packageID: id.rawValue, toVersion: prevVer, success: true, reason: "dev")
+            )
             return
         }
-        let idRoot = packagesRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+        let idRoot = packageDirectory(for: id)
         let prevDir = idRoot.appendingPathComponent(prevVer, isDirectory: true)
         guard FileManager.default.fileExists(atPath: prevDir.path) else {
             throw ExtensionError.dataLoad("previous version directory missing: \(prevVer)")
@@ -275,13 +388,14 @@ public actor ExtensionPackageManager {
         packages[id] = pkg
         try persistDurableState()
         rebuildSnapshot()
-        record(.init(
-            event: "package.rollback",
-            packageID: id.rawValue,
-            fromVersion: oldCurrent,
-            toVersion: prevVer,
-            success: true
-        ))
+        record(
+            .init(
+                event: "package.rollback",
+                packageID: id.rawValue,
+                fromVersion: oldCurrent,
+                toVersion: prevVer,
+                success: true
+            ))
     }
 
     public func uninstall(id: ExtensionID, purgeData: Bool = false) throws {
@@ -289,7 +403,7 @@ public actor ExtensionPackageManager {
             throw ExtensionError.notRegistered
         }
         if !pkg.isDev {
-            let idRoot = packagesRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+            let idRoot = packageDirectory(for: id)
             if FileManager.default.fileExists(atPath: idRoot.path) {
                 try FileManager.default.removeItem(at: idRoot)
             }
@@ -302,7 +416,10 @@ public actor ExtensionPackageManager {
         }
         try persistDurableState()
         rebuildSnapshot()
-        record(.init(event: "package.uninstall", packageID: id.rawValue, success: true, reason: purgeData ? "purge" : "keep-data"))
+        record(
+            .init(
+                event: "package.uninstall", packageID: id.rawValue, success: true,
+                reason: purgeData ? "purge" : "keep-data"))
     }
 
     public func reloadDev(path: URL) throws -> ValidatedContributionPlan {
@@ -310,6 +427,7 @@ public actor ExtensionPackageManager {
     }
 
     /// Recover interrupted staging and reconcile durable state with filesystem.
+    /// EXT-009: never activate a generation that fails live re-verify.
     public func recoverCorruptedState() {
         // Remove leftover staging dirs
         if let idDirs = try? FileManager.default.contentsOfDirectory(
@@ -318,10 +436,12 @@ public actor ExtensionPackageManager {
             options: [.skipsHiddenFiles]
         ) {
             for idDir in idDirs {
-                guard let children = try? FileManager.default.contentsOfDirectory(
-                    at: idDir,
-                    includingPropertiesForKeys: nil
-                ) else { continue }
+                guard
+                    let children = try? FileManager.default.contentsOfDirectory(
+                        at: idDir,
+                        includingPropertiesForKeys: nil
+                    )
+                else { continue }
                 for child in children where child.lastPathComponent.hasPrefix(".staging-") {
                     try? FileManager.default.removeItem(at: child)
                 }
@@ -332,8 +452,15 @@ public actor ExtensionPackageManager {
         for (id, pkg) in packages {
             if pkg.quarantined { continue }
             if !pkg.isDev {
-                let idRoot = packagesRoot.appendingPathComponent(id.rawValue, isDirectory: true)
-                if let rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: pkg) {
+                let idRoot = packageDirectory(for: id)
+                if var rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: pkg) {
+                    // Re-verify staged tree before trusting it as active.
+                    if let v = try? runVerify(packageRoot: rebuilt.installPath), v.quarantined {
+                        rebuilt.quarantined = true
+                        rebuilt.quarantineReason = v.error ?? "recover re-verify failed"
+                        rebuilt.enabled = false
+                        rebuilt.state = .quarantined
+                    }
                     packages[id] = rebuilt
                     continue
                 }
@@ -352,11 +479,12 @@ public actor ExtensionPackageManager {
             options: [.skipsHiddenFiles]
         ) {
             for idDir in idDirs {
-                let id = ExtensionID(rawValue: idDir.lastPathComponent)
+                // Directory names are directoryKey hashes; only rebuild when durable state
+                // already mapped them, or when extension.toml is present and validates.
+                guard let rebuilt = loadInstalledFromPointersByRoot(idRoot: idDir) else { continue }
+                let id = rebuilt.plan.packageID
                 if packages[id] != nil { continue }
-                if let rebuilt = loadInstalledFromPointers(id: id, idRoot: idDir, base: nil) {
-                    packages[id] = rebuilt
-                }
+                packages[id] = rebuilt
             }
         }
 
@@ -373,8 +501,10 @@ public actor ExtensionPackageManager {
         guard let current = try? readPointer(idRoot: idRoot, name: "current") else { return nil }
         let dir = idRoot.appendingPathComponent(current, isDirectory: true)
         guard FileManager.default.fileExists(atPath: dir.path),
-              var plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
+            var plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
         else { return nil }
+        // Reject directory/identity mismatch (EXT-001).
+        guard plan.packageID == id || idRoot.lastPathComponent == id.directoryKey else { return nil }
         plan.packageRoot = dir
         var previousPlan: ValidatedContributionPlan?
         var previousVersion: String?
@@ -405,6 +535,18 @@ public actor ExtensionPackageManager {
         )
     }
 
+    /// Discover a package from a filesystem root by reading pointers and validating the manifest ID.
+    private func loadInstalledFromPointersByRoot(idRoot: URL) -> InstalledPackage? {
+        guard let current = try? readPointer(idRoot: idRoot, name: "current") else { return nil }
+        let dir = idRoot.appendingPathComponent(current, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: dir.path),
+            let plan = try? ExtensionPackageLoader.load(directory: dir, options: .init(computeDigest: false))
+        else { return nil }
+        // Directory must match the canonical directoryKey of the package ID.
+        guard idRoot.lastPathComponent == plan.packageID.directoryKey else { return nil }
+        return loadInstalledFromPointers(id: plan.packageID, idRoot: idRoot, base: nil)
+    }
+
     public func quarantine(id: ExtensionID, reason: String) throws {
         guard var pkg = packages[id] else { throw ExtensionError.notRegistered }
         pkg.quarantined = true
@@ -418,6 +560,11 @@ public actor ExtensionPackageManager {
     }
 
     public func assertCanActivate(id: ExtensionID) throws {
+        if storeQuarantined {
+            recordDenied(id: id, reason: "store_quarantined")
+            throw ExtensionError.dataLoad(
+                "store quarantined: \(storeQuarantineReason ?? "untrusted state")")
+        }
         guard let pkg = packages[id] else { throw ExtensionError.notRegistered }
         if pkg.quarantined {
             recordDenied(id: id, reason: "quarantined")
@@ -451,12 +598,13 @@ public actor ExtensionPackageManager {
     }
 
     private func recordDenied(id: ExtensionID, reason: String) {
-        record(.init(
-            event: "activation.denied",
-            packageID: id.rawValue,
-            success: false,
-            reason: reason
-        ))
+        record(
+            .init(
+                event: "activation.denied",
+                packageID: id.rawValue,
+                success: false,
+                reason: reason
+            ))
     }
 
     public func installedPackages() -> [InstalledPackage] {
@@ -468,7 +616,7 @@ public actor ExtensionPackageManager {
     }
 
     public func userDataDir(id: ExtensionID) -> URL {
-        dataRoot.appendingPathComponent(id.rawValue, isDirectory: true)
+        dataRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
     }
 
     public func trustStatusItems() -> [ExtensionTrustStatusItem] {
@@ -549,19 +697,27 @@ public actor ExtensionPackageManager {
         if let verifier {
             return try verifier.verify(packageRoot: packageRoot)
         }
-        // No verifier: treat as workspaceDev (tests that only care about FS layout)
-        return PackageVerifyResult(trustClass: .workspaceDev, publisher: nil, quarantined: false, error: nil)
+        if allowMissingSecurity {
+            return PackageVerifyResult(trustClass: .workspaceDev, publisher: nil, quarantined: false, error: nil)
+        }
+        // EXT-004: fail closed — production installs require an explicit verifier.
+        throw ExtensionError.dataLoad("extension package verifier is required (fail-closed)")
     }
 
     private func assertInstallPolicy(plan: ValidatedContributionPlan, source: URL, asDev: Bool) throws {
-        guard let policy = installPolicy else { return }
+        guard let policy = installPolicy else {
+            if allowMissingSecurity { return }
+            // EXT-004: fail closed — production installs require an explicit policy.
+            throw ExtensionError.dataLoad("extension install policy is required (fail-closed)")
+        }
         if policy.dynamicInstallation == .disabled {
-            record(.init(
-                event: "install.denied",
-                packageID: plan.packageID.rawValue,
-                success: false,
-                reason: "dynamicInstallation=disabled"
-            ))
+            record(
+                .init(
+                    event: "install.denied",
+                    packageID: plan.packageID.rawValue,
+                    success: false,
+                    reason: "dynamicInstallation=disabled"
+                ))
             throw ExtensionError.dataLoad(
                 "install disabled on shipping profile \(policy.shippingProfileID.rawValue)"
             )
@@ -581,12 +737,13 @@ public actor ExtensionPackageManager {
 
         if forceNative || hasNativeHelperBinary {
             if !policy.allowNativeHelpers {
-                record(.init(
-                    event: "install.denied",
-                    packageID: plan.packageID.rawValue,
-                    success: false,
-                    reason: "native_helpers"
-                ))
+                record(
+                    .init(
+                        event: "install.denied",
+                        packageID: plan.packageID.rawValue,
+                        success: false,
+                        reason: "native_helpers"
+                    ))
                 throw ExtensionError.dataLoad(
                     "native helper install denied on \(policy.shippingProfileID.rawValue)"
                 )
@@ -594,24 +751,26 @@ public actor ExtensionPackageManager {
         }
         if forceDownloadWasm || hasWasm {
             if !policy.allowDownloadableWasm && !asDev {
-                record(.init(
-                    event: "install.denied",
-                    packageID: plan.packageID.rawValue,
-                    success: false,
-                    reason: "downloadable_wasm"
-                ))
+                record(
+                    .init(
+                        event: "install.denied",
+                        packageID: plan.packageID.rawValue,
+                        success: false,
+                        reason: "downloadable_wasm"
+                    ))
                 throw ExtensionError.dataLoad(
                     "downloadable Wasm install denied on \(policy.shippingProfileID.rawValue)"
                 )
             }
         }
         if policy.dataOnlyOnly && (forceNative || forceDownloadWasm || hasNativeHelperBinary) {
-            record(.init(
-                event: "install.denied",
-                packageID: plan.packageID.rawValue,
-                success: false,
-                reason: "data_only_policy"
-            ))
+            record(
+                .init(
+                    event: "install.denied",
+                    packageID: plan.packageID.rawValue,
+                    success: false,
+                    reason: "data_only_policy"
+                ))
             throw ExtensionError.dataLoad(
                 "executable package install denied (data-only policy) on \(policy.shippingProfileID.rawValue)"
             )
@@ -633,7 +792,7 @@ public actor ExtensionPackageManager {
     private func publisherKeyID(for pkg: InstalledPackage) -> String? {
         let pub = pkg.installPath.appendingPathComponent("publisher.json")
         guard let data = try? Data(contentsOf: pub),
-              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String]
+            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else { return nil }
         return obj["key_id"]
     }
@@ -699,16 +858,15 @@ public actor ExtensionPackageManager {
         let data = try Data(contentsOf: url)
         let state = try JSONDecoder().decode(DurableState.self, from: data)
         for rec in state.packages {
-            let id = ExtensionID(rawValue: rec.id)
+            guard let id = ExtensionID(rawValue: rec.id) else { continue }
             let path = URL(fileURLWithPath: rec.path)
             guard FileManager.default.fileExists(atPath: path.path),
-                  var plan = try? ExtensionPackageLoader.load(directory: path, options: .init(computeDigest: false))
+                var plan = try? ExtensionPackageLoader.load(directory: path, options: .init(computeDigest: false))
             else { continue }
             plan.packageRoot = path
             var previousPlan: ValidatedContributionPlan?
             if let prev = rec.previousVersion, !rec.isDev {
-                let prevDir = packagesRoot
-                    .appendingPathComponent(rec.id, isDirectory: true)
+                let prevDir = packageDirectory(for: id)
                     .appendingPathComponent(prev, isDirectory: true)
                 if var pp = try? ExtensionPackageLoader.load(directory: prevDir, options: .init(computeDigest: false)) {
                     pp.packageRoot = prevDir
@@ -786,7 +944,7 @@ public final class StoreTelemetrySink: @unchecked Sendable {
         let enc = JSONEncoder()
         enc.dateEncodingStrategy = .iso8601
         guard let data = try? enc.encode(event),
-              var line = String(data: data, encoding: .utf8)
+            var line = String(data: data, encoding: .utf8)
         else { return }
         line.append("\n")
         if let handle = try? FileHandle(forWritingTo: fileURL) {
