@@ -1158,7 +1158,7 @@
       "severity_raw": "P1 extension correctness",
       "title": "duplicate language registration overwrites ownership",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_unregisterOneOwnerDoesNotRemoveOtherReplacement",
         "Tests/CodeEditorLanguageSupportTests/LANGN01RegistrationTests.swift::test_LANG_N01_disposeWinnerPromotesRemainingOwner",
@@ -1174,7 +1174,7 @@
       "severity_raw": "P1",
       "title": "malformed queries can be silently omitted",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_presentUnreadableQueryThrows",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N02_malformedHighlightsQueryThrowsTypedError",
@@ -1191,7 +1191,7 @@
       "severity_raw": "P1",
       "title": "dual parser/tree state paths can diverge",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_parseSessionIsSoleStateOwner",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N03_staleHighlightSnapshotDiscarded",
@@ -1206,7 +1206,7 @@
       "severity_raw": "P1 memory safety",
       "title": "parser/language pointer lifetime is unclear",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_languageRefDocumentsStaticOwnership",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N04_registryLanguageRefNilWithoutParser",
@@ -1221,7 +1221,7 @@
       "severity_raw": "P1",
       "title": "Tree-sitter direct test ownership is inadequate",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_incrementalEditBeforeInsideAfterMultibyte",
         "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift::test_LANG_N05_malformedSourceDoesNotCrashSession",
@@ -1241,7 +1241,7 @@
       "severity_raw": "P1 before Stable",
       "title": "language packs need generated conformance fixtures",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_allShippedParsersLoad",
         "Tests/CodeEditorLanguagesTests/LANGN06ConformanceTests.swift::test_LANG_N06_highlightQueriesPresentAndReadable",
@@ -1259,7 +1259,7 @@
       "severity_raw": "P2",
       "title": "global bootstrap side effects are not ideal Stable API",
       "phase": 6,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_hostRegistryIsolatedFromShared",
         "Tests/CodeEditorLanguageSupportTests/LANGN07HostRegistryTests.swift::test_LANG_N07_twoHostRegistriesAreIndependent",

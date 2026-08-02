@@ -18,7 +18,7 @@
 | 5a | search | 9 | verified |
 | 5b | tasks | 8 | verified |
 | 5c | SCM | 9 | verified |
-| 6a | language/Tree-sitter | 7 | fixed |
+| 6a | language/Tree-sitter | 7 | verified |
 | 6b | LSP | 13 | open |
 | 7 | DAP | 10 | open |
 | 8 | terminal/Ghostty | 10 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch language-tree-sitter verified — LANG-N01, LANG-N02, LANG-N03, LANG-N04, LANG-N05, LANG-N06, LANG-N07 status set to `verified` (all previously fixed with regression tests; LANG filter green, residual closed).
 - 2026-08-03: Phase 6a language/Tree-sitter verifier residual (2) — hard tests: LANG-N05 `EngineError.cancelled` fail-closed + document/language generation stale discard; LANG-N06 malformed fixture in-range + recovery to real JSON scopes; LANG-N07 explicit init generation==0 + host isolation from shared (no vacuous expects). ParseSession/TreeSitterHighlightProvider map cancel to typed error. LANG filter 41 passed.
 - 2026-08-03: Phase 6a language/Tree-sitter verifier residual — LANG-N02/N04/N05: `CodeEditorTreeSitterTests` links real `TreeSitterJsonGrammar`/`CodeEditorLanguageJSON`; `QuerySetLoader.compile`/`loadAndCompile` fail-closed (removed `loadSourcesSoft`); N02 factory/malformed tests assert typed throws with real grammar pointer (no `#expect(Bool(true))`); N03/N04/N05 configure real `LanguageConfiguration` + `TSLanguageRef` retention across edits/stress; N05 capture scopes + large-file real tree; N06 expected scopes + present optional queries must compile; pin-aligned perl/verilog/markdown-inline queries. LANG filter 41 passed; TreeSitter+Languages+Support 70 passed.
 - 2026-08-03: Phase 6a language/Tree-sitter — fixed LANG-N01…LANG-N07: `LanguageRegistrationRecord` owner/generation/priority/token (dispose removes only that record); malformed present queries fail closed (`QuerySetError` / no silent `try?`); single `ParseSession` actor path (`LanguageDocumentActor` typealias; highlight provider no dual main-actor tree); `TSLanguageRef` ownership wrappers + stress; expanded CodeEditorTreeSitterTests; 39-grammar conformance matrix; host-owned `bootstrap(into:)` registries. Language product suites + View Tree-sitter filters green.
