@@ -699,28 +699,8 @@ struct WorkbenchStatusBar: View {
             let sel = session.selections.first,
             let doc = model.activeDocument
         else { return "Ln — Col —" }
-        let text = doc.text as NSString
-        let loc = min(max(sel.location, 0), text.length)
-        var line = 1
-        var col = 1
-        var i = 0
-        while i < loc {
-            let ch = text.character(at: i)
-            if ch == 10 {  // \n
-                line += 1
-                col = 1
-            } else if ch == 13 {  // \r
-                line += 1
-                col = 1
-                if i + 1 < loc, text.character(at: i + 1) == 10 {
-                    i += 1
-                }
-            } else {
-                col += 1
-            }
-            i += 1
-        }
-        return "Ln \(line), Col \(col)"
+        // WB-013: O(log n) via LineIndex — never full-string scan per caret change.
+        return WorkbenchStatusMetrics.label(text: doc.text, utf16Offset: sel.location)
     }
 
     private var languageLabel: String? {

@@ -24,6 +24,15 @@ public final class WorkbenchModel {
     public let commandPalette: CommandPaletteModel
     public let windowRegistry: WorkbenchWindowRegistry
     public let toolingSurfaces: WorkbenchToolingSurfaceRegistry
+    /// Phase 10 chrome models (scheme, activity, navigators).
+    public let schemes: WorkbenchSchemeModel
+    public let activity: WorkbenchActivityModel
+    public let symbols: WorkbenchSymbolsModel
+    public let breakpoints: WorkbenchBreakpointsModel
+    public let tests: WorkbenchTestsModel
+    public let debugSessions: WorkbenchDebugModel
+    public let scmModel: WorkbenchSCMModel
+    public let problemsBridge: WorkbenchTaskProblemsBridge
 
     /// Explicit lifecycle phase for the primary session owner.
     public private(set) var lifecyclePhase: WorkbenchLifecyclePhase = .creating
@@ -114,6 +123,14 @@ public final class WorkbenchModel {
         self.commandPalette = CommandPaletteModel()
         self.windowRegistry = WorkbenchWindowRegistry()
         self.toolingSurfaces = WorkbenchToolingSurfaceRegistry()
+        self.schemes = WorkbenchSchemeModel()
+        self.activity = WorkbenchActivityModel()
+        self.symbols = WorkbenchSymbolsModel()
+        self.breakpoints = WorkbenchBreakpointsModel()
+        self.tests = WorkbenchTestsModel()
+        self.debugSessions = WorkbenchDebugModel()
+        self.scmModel = WorkbenchSCMModel()
+        self.problemsBridge = WorkbenchTaskProblemsBridge()
         self.isNavigatorVisible = configuration.showsNavigator
         self.isInspectorVisible = configuration.showsInspector
         self.isUtilityVisible = configuration.showsUtilityArea
@@ -127,6 +144,10 @@ public final class WorkbenchModel {
         // Built-in contributions — retained in RegistrationBag for host lifetime (CMD-001).
         registrationBag.retain(contributionRegistry.register(FileTreeNavigatorContribution()))
         registrationBag.retain(contributionRegistry.register(StatusBarContribution()))
+        // Phase 10 navigators (real models; empty list is a valid empty state, not a stub).
+        for contrib in WorkbenchDefaultNavigatorContributions.all {
+            registrationBag.retain(contributionRegistry.register(contrib))
+        }
         // Real utility panels (WB-001) — not ContentUnavailable placeholders.
         registrationBag.retain(contributionRegistry.register(WorkbenchOutputPanelContribution()))
         registrationBag.retain(contributionRegistry.register(WorkbenchProblemsPanelContribution()))
@@ -134,6 +155,20 @@ public final class WorkbenchModel {
 
         activeNavigatorID = "workbench.navigator.files"
         activeUtilityID = "workbench.utility.problems"
+
+        // Default scheme so build/run commands have a target.
+        schemes.setSchemes([
+            WorkbenchScheme(
+                id: "default",
+                name: "Default",
+                buildTaskID: "build",
+                testTaskID: "test",
+                runTaskID: "run"
+            )
+        ])
+        schemes.setDestinations([
+            WorkbenchRunDestination(id: "my-mac", name: "My Mac")
+        ])
 
         // Primary window for multi-window hosts.
         _ = windowRegistry.create(

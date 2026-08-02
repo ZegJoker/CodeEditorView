@@ -130,8 +130,8 @@ public struct OpenQuicklyView: View {
     }
 
     private func confirmSelection() {
-        guard let item = model.selectedItem else { return }
-        onSelect(item.uri)
+        guard let item = model.selectedItem, let uri = item.uri else { return }
+        onSelect(uri)
         onDismiss()
     }
 }

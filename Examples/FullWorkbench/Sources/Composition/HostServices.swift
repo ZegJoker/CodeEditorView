@@ -118,6 +118,9 @@ final class HostServices {
         workbench.contributionRegistry.unregister(id: "workbench.utility.problems")
         workbench.contributionRegistry.unregister(id: "workbench.utility.terminal")
 
+        // Host find navigator replaces shell search; keep Phase 10 IDs covered via aliases + host find.
+        workbench.contributionRegistry.unregister(id: WorkbenchNavigatorID.search.rawValue)
+        workbench.contributionRegistry.unregister(id: WorkbenchNavigatorID.scm.rawValue)
         contributionTokens.append(workbench.contributionRegistry.register(FindNavigatorContribution(host: self)))
         contributionTokens.append(workbench.contributionRegistry.register(SCMNavigatorContribution(host: self)))
         contributionTokens.append(workbench.contributionRegistry.register(OutputUtilityContribution(host: self)))
@@ -127,6 +130,46 @@ final class HostServices {
 
         workbench.ensureActiveNavigator()
         workbench.ensureActiveUtility()
+
+        // Schemes for build/test/run (Phase 10).
+        workbench.schemes.setSchemes([
+            WorkbenchScheme(
+                id: "sample",
+                name: "Sample",
+                buildTaskID: "sample.build",
+                testTaskID: "sample.test",
+                runTaskID: "sample.echo",
+                debugSessionName: "Sample Debug"
+            )
+        ])
+        workbench.schemes.setDestinations([
+            WorkbenchRunDestination(id: "my-mac", name: "My Mac")
+        ])
+        workbench.tests.setTests([
+            WorkbenchTestItem(id: "sample.tests.main", name: "MainTests")
+        ])
+        workbench.symbols.setSymbols([
+            WorkbenchSymbolItem(name: "main", kind: "func", path: "Main.swift", line: 0),
+            WorkbenchSymbolItem(name: "Sample", kind: "type", path: "Main.swift", line: 0),
+        ])
+        workbench.openQuickly.symbolItems = workbench.symbols.symbols.map {
+            OpenQuicklyItem(
+                uri: DocumentURI(fileURL: rootURL.appendingPathComponent($0.path)),
+                name: $0.name,
+                path: $0.path,
+                mode: .symbol,
+                line: $0.line,
+                column: $0.column
+            )
+        }
+        workbench.openQuickly.commandItems = WorkbenchChromeCommand.allCases.map {
+            OpenQuicklyItem(
+                uri: nil,
+                name: $0.rawValue,
+                path: $0.rawValue,
+                mode: .command
+            )
+        }
 
         // Tooling commands
         let cmds = workbench.commandDispatcher.commands
@@ -142,7 +185,9 @@ final class HostServices {
 
         // Git provider if repo exists.
         await scm.setProvider(GitCLIProvider(repositoryRoot: rootURL, trusted: true))
+        workbench.scmModel.trusted = true
         await refreshSCM()
+        await workbench.scmModel.refresh(provider: GitCLIProvider(repositoryRoot: rootURL, trusted: true))
 
         // Terminal backend + session.
         await terminal.attach(backend: terminalBackend)
@@ -160,6 +205,26 @@ final class HostServices {
                 arguments: ["Hello from FullWorkbench task"],
                 cwd: rootURL,
                 group: .build
+            )
+        )
+        await tasks.register(
+            TaskDefinition(
+                id: "sample.build",
+                label: "Sample Build",
+                executable: "/bin/echo",
+                arguments: ["build ok"],
+                cwd: rootURL,
+                group: .build
+            )
+        )
+        await tasks.register(
+            TaskDefinition(
+                id: "sample.test",
+                label: "Sample Test",
+                executable: "/bin/echo",
+                arguments: ["test ok"],
+                cwd: rootURL,
+                group: .test
             )
         )
         await tasks.register(
