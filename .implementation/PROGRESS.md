@@ -17,7 +17,7 @@
 | 4 | workspace | 10 | verified |
 | 5a | search | 9 | verified |
 | 5b | tasks | 8 | verified |
-| 5c | SCM | 9 | fixed (verifier residual closed) |
+| 5c | SCM | 9 | verified |
 | 6a | language/Tree-sitter | 7 | open |
 | 6b | LSP | 13 | open |
 | 7 | DAP | 10 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch scm verified — SCM-N01, SCM-N02, SCM-N03, SCM-N04, SCM-N05, SCM-N06, SCM-N07, SCM-N08, SCM-N09 status set to `verified` (all previously fixed with regression tests; CodeEditorSourceControlTests SCMN green, residual closed).
 - 2026-08-03: Phase 5c SCM verifier residual — SCM-N06 fail-closed `documentCoordinatorRequired` (service + provider discard/discardHunk/checkout/pull; no soft nil return); FullWorkbench HostServices binds `DocumentLifecycleCoordinator` + `startStatusWatching`; SCM-N03 fraction progress + cancel kills ProcessHandle; SCM-N08 watcher-driven debounced stale→fresh refresh; strengthened N02 askpass runtime, N07 required quotes, N09 runtime ProcessSupervisor spawn bounds. CodeEditorSourceControlTests 46 passed.
 - 2026-08-03: Phase 5c SCM — fixed SCM-N01…SCM-N09: per-repo `SCMRepositoryIdentity` (not constant `git`); auth callback + GIT_ASKPASS fail-closed + `SCMLogSanitizer`; progress via AsyncBroadcastHub + `SCMRepositoryGate`; dual index/worktree `SCMFileStatus`; exclusive mutations; destructive ops preflight via `SCMDocumentCoordinator`/`DocumentLifecycleCoordinator`; git-validated hunk patches (`apply --check`); multicast status snapshots with finish on provider removal; `ProcessSupervisor` + bounded stdout/stderr. CodeEditorSourceControlTests 41 passed.
 - 2026-08-03: batch tasks verified — TASK-N01, TASK-N02, TASK-N03, TASK-N04, TASK-N05, TASK-N06, TASK-N07, TASK-N08 status set to `verified` (all previously fixed with regression tests; CodeEditorTasksTests TASKN green).
