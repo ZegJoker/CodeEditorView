@@ -11,7 +11,7 @@
 |------:|------|---------:|--------|
 | 0 | release-truth | 9 | verified |
 | 1 | documents | 12 | verified |
-| 2 | substrate | 3 (+ shared substrate build) | fixed |
+| 2 | substrate | 3 (+ shared substrate build) | verified |
 | 3a | commands | 5 | open |
 | 3b | native editor UI | 10 | open |
 | 4 | workspace | 10 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: batch substrate verified — CORE-N02, CORE-N03, CORE-N04 status set to `verified` (all previously fixed with regression tests; ProcessSubstrate+Broadcast+Promise/RPC green).
 - 2026-08-02: Phase 2 verifier residual — CORE-N02/N03/N04: removed tautology/Bool(true) expects; cancel asserts elapsed<50ms + exit.code!=0; non-macOS #else asserts unavailableOnPlatform; shell deny throws ProcessServiceError.shellCapabilityRequired; non-macOS ProcessHandle documented fail-closed already-terminated. ProcessSubstrate+Broadcast+Promise/RPC: 16 passed; Core+Tasks: 117 passed.
 - 2026-08-02: Phase 2 substrate — fixed CORE-N02/N03/N04 + shared substrate (§22): AsyncBroadcastHub (sequence/gap/replay/finish), OneShotPromise + DeadlineScheduler/TestDeadlineClock, BoundedByteSpool, FramedRPCConnection (Content-Length + JSON-RPC codec), ProcessSupervisor actor. ProcessHandle multi-subscriber bounded events; cancel() nonblocking + awaitTermination; shell via localShellExecution. CodeEditorCoreTests+Tasks+SCM: 136 passed.
 - 2026-08-02: batch documents verified — DOC-N01…DOC-N11 + CORE-N01 status set to `verified` (all previously fixed with regression tests).

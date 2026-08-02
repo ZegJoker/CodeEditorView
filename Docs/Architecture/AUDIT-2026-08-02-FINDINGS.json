@@ -374,7 +374,7 @@
       "severity_raw": "P0 cross-cutting substrate",
       "title": "process event stream is single-consumer and unbounded",
       "phase": 2,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCoreTests/SubstrateBroadcastHubTests.swift::test_CORE_N02_multiSubscriberReceivesIndependentCopies",
         "Tests/CodeEditorCoreTests/SubstrateBroadcastHubTests.swift::test_CORE_N02_overflowEmitsGapAndPreservesSequence",
@@ -396,7 +396,7 @@
       "severity_raw": "P1",
       "title": "process cancellation can synchronously block the caller",
       "phase": 2,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N03_cancelReturnsWithoutWaitingForDeath",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N03_awaitTerminationIsSeparateFromCancel"
@@ -409,7 +409,7 @@
       "severity_raw": "P1 security/API",
       "title": "shell execution is an explicit high-trust capability",
       "phase": 2,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellModeRequiresShellCapability",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N04_shellModeSucceedsWhenCapabilityGranted",
