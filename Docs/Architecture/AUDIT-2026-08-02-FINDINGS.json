@@ -1,0 +1,1838 @@
+{
+  "schema_version": 1,
+  "program": "audit-2026-08-02-deep-remediation",
+  "source": "Docs/Architecture/AUDIT-2026-08-02-Deep-Audit-and-Stable-Plan.md",
+  "policy": {
+    "tdd": true,
+    "no_skip": true,
+    "no_defer": true,
+    "no_residuals": true,
+    "status_values": [
+      "open",
+      "in_progress",
+      "fixed",
+      "verified"
+    ]
+  },
+  "phases": [
+    {
+      "id": 0,
+      "name": "release-truth",
+      "title": "Restore truth and reproducibility"
+    },
+    {
+      "id": 1,
+      "name": "documents",
+      "title": "Document/data-integrity foundation"
+    },
+    {
+      "id": 2,
+      "name": "substrate",
+      "title": "Concurrency, streams, process, RPC substrate"
+    },
+    {
+      "id": 3,
+      "name": "editor-commands",
+      "title": "Native editor correctness and commands"
+    },
+    {
+      "id": 4,
+      "name": "workspace",
+      "title": "Workspace transaction and lifecycle"
+    },
+    {
+      "id": 5,
+      "name": "tooling",
+      "title": "Search, tasks, and SCM"
+    },
+    {
+      "id": 6,
+      "name": "language-lsp",
+      "title": "Language intelligence and LSP"
+    },
+    {
+      "id": 7,
+      "name": "dap",
+      "title": "DAP debugging"
+    },
+    {
+      "id": 8,
+      "name": "terminal",
+      "title": "Ghostty terminal"
+    },
+    {
+      "id": 9,
+      "name": "extensions-wasm",
+      "title": "Extensions, broker, and Wasm security"
+    },
+    {
+      "id": 10,
+      "name": "workbench",
+      "title": "Integrated workbench"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PKG-N01",
+      "severity": "P1",
+      "severity_raw": "P1 until CI proves it",
+      "title": "package structure is fixed, but clean-resolution evidence is not yet produced",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N01",
+      "severity": "P1",
+      "severity_raw": "P1 release-truth defect",
+      "title": "README and compatibility profile conflict",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N02",
+      "severity": "P0",
+      "severity_raw": "P0 release-certification defect",
+      "title": "product scorecards can pass while every dimension fails",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N03",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "accessibility gate is a source-token check",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "performance gate validates a document and one loose sample",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N06",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "API freeze is not semantic API validation",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "strict concurrency is not warnings-as-errors",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "REL-N08",
+      "severity": "P0",
+      "severity_raw": "P0 for Ghostty, P1 for LSP/DAP",
+      "title": "optional production integrations are allowed to fail",
+      "phase": 0,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CORE-N01",
+      "severity": "P1",
+      "severity_raw": "P1 concurrency",
+      "title": "`DocumentStore` main-thread ownership is convention, not enforced architecture",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N01",
+      "severity": "P0",
+      "severity_raw": "P0 data-integrity/user-trust defect",
+      "title": "saved-version dirty tracking is logically impossible after undo",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N02",
+      "severity": "P0",
+      "severity_raw": "P0 potential overwrite",
+      "title": "normal save bypasses conflict-aware save",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N03",
+      "severity": "P1",
+      "severity_raw": "P1 correctness/API contract",
+      "title": "equal-offset insertion contract is internally contradictory",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "public per-edit undo convenience can partially mutate external state",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N05",
+      "severity": "P1",
+      "severity_raw": "P1 for untrusted protocol/extension inputs",
+      "title": "UTF-16 range arithmetic can overflow",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N06",
+      "severity": "P1",
+      "severity_raw": "P1 operational risk",
+      "title": "`bufferSize <= 0` creates an unbounded event stream",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N07",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "document encoding fallback contradicts its contract",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N08",
+      "severity": "P1",
+      "severity_raw": "P1 for local concurrent writers",
+      "title": "conflict check still has a time-of-check/time-of-use window",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N09",
+      "severity": "P2",
+      "severity_raw": "P2 performance",
+      "title": "local read path still doubles peak memory",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N10",
+      "severity": "P1",
+      "severity_raw": "P1 for the \u201cdurable\u201d claim",
+      "title": "durable write omits parent-directory durability and rich metadata",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DOC-N11",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "recovery is a sidecar snapshot, not a durable journal",
+      "phase": 1,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CORE-N02",
+      "severity": "P0",
+      "severity_raw": "P0 cross-cutting substrate",
+      "title": "process event stream is single-consumer and unbounded",
+      "phase": 2,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CORE-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "process cancellation can synchronously block the caller",
+      "phase": 2,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CORE-N04",
+      "severity": "P1",
+      "severity_raw": "P1 security/API",
+      "title": "shell execution is an explicit high-trust capability",
+      "phase": 2,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CMD-N01",
+      "severity": "P1",
+      "severity_raw": "P1 API correctness",
+      "title": "public soft registration silently replaces commands",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CMD-N02",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "`CommandID` validation and documentation disagree",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CMD-N03",
+      "severity": "P1",
+      "severity_raw": "P1 lifecycle nondeterminism",
+      "title": "token deinit unregisters through an unstructured task",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CMD-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "chord timeout executes with stale context and hides errors",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "CMD-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "synchronous handlers can block the main actor",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N01",
+      "severity": "P1",
+      "severity_raw": "P1 native input correctness",
+      "title": "UIKit vertical movement is raw UTF-16 arithmetic",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N02",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "generic offset clamping can return invalid insertion points",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N03",
+      "severity": "P1",
+      "severity_raw": "P1 performance",
+      "title": "selection rectangle generation is O(selection UTF-16 length)",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "BiDi behavior is heuristic/incomplete",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "first-rect/attributed-substring contracts are incomplete",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N06",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "IME conformance is not complete",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "AppKit/UIKit error paths are frequently suppressed",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "platform build/runtime evidence is incomplete",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N09",
+      "severity": "P1",
+      "severity_raw": "P1 for Xcode-class claim",
+      "title": "large-file architecture needs an explicit mode",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "UI-N10",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "accessibility must be semantic, not identifier-only",
+      "phase": 3,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N01",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "workspace rollback is not a coherent transaction",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N02",
+      "severity": "P0",
+      "severity_raw": "P0 data-loss risk",
+      "title": "file deletion can race dirty/open document lifecycle",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "bulk close can partially save before a later cancellation",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N04",
+      "severity": "P1",
+      "severity_raw": "P1 responsiveness",
+      "title": "local filesystem actor executes blocking traversal and mutation",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N05",
+      "severity": "P0",
+      "severity_raw": "P0 for rollback claim, P2 if the claim is removed",
+      "title": "directory archive is not byte/metadata exact",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N06",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "journal has no complete startup recovery contract",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "workspace event stream can miss startup events",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N08",
+      "severity": "P1",
+      "severity_raw": "P1 security",
+      "title": "symlink containment remains time-of-check/time-of-use sensitive",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N09",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "hidden-file policy is hardcoded",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WSP-N10",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "registry mutation bypasses higher-level ownership",
+      "phase": 4,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N01",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "provider identity collides across repositories",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N02",
+      "severity": "P1",
+      "severity_raw": "P1 feature-contract mismatch",
+      "title": "auth callback is not wired",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N03",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "progress events are not a real path",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "status model cannot represent staged and unstaged state simultaneously",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "repository mutations are not serialized",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N06",
+      "severity": "P0",
+      "severity_raw": "P0 data-loss risk",
+      "title": "destructive Git operations ignore dirty editor buffers",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "hunk patch generation is incomplete",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "status stream is not lifecycle-safe",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SCM-N09",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "process output is unbounded",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N01",
+      "severity": "P1",
+      "severity_raw": "P1 correctness",
+      "title": "nested `.gitignore` files are skipped",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N02",
+      "severity": "P1",
+      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
+      "title": "gitignore semantics are only partial",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "workspace glob matching is ad hoc",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N04",
+      "severity": "P1",
+      "severity_raw": "P1 responsiveness",
+      "title": "search performs blocking traversal/regex work on one actor",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N05",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "UTF-8-only search silently excludes files",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N06",
+      "severity": "P1",
+      "severity_raw": "P1 denial-of-service/performance",
+      "title": "regular expression evaluation is unbounded",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N07",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "completion metrics are incorrect",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "regex replacement is fake/incomplete",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "SRCH-N09",
+      "severity": "P0",
+      "severity_raw": "P0 for multi-file replacement",
+      "title": "replace transaction inherits workspace transaction defects",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N01",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "task events are not multicast",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N02",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "chunk-local UTF-8 decoding corrupts output",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "`.bufferingNewest` silently drops task output",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "output accumulation is unbounded",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "invalid readiness regex disables behavior silently",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N06",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "dependency/exclusive-group failures are suppressed",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "problem source paths/ranges remain weak",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TASK-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "task/output channels lack finish ownership",
+      "phase": 5,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N01",
+      "severity": "P1",
+      "severity_raw": "P1 extension correctness",
+      "title": "duplicate language registration overwrites ownership",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N02",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "malformed queries can be silently omitted",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "dual parser/tree state paths can diverge",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N04",
+      "severity": "P1",
+      "severity_raw": "P1 memory safety",
+      "title": "parser/language pointer lifetime is unclear",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "Tree-sitter direct test ownership is inadequate",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N06",
+      "severity": "P1",
+      "severity_raw": "P1 before Stable",
+      "title": "language packs need generated conformance fixtures",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LANG-N07",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "global bootstrap side effects are not ideal Stable API",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N01",
+      "severity": "P0",
+      "severity_raw": "P0 protocol/lifecycle",
+      "title": "request registration still races timeout/cancellation",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N02",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "ordered inbound chain can be stalled by one handler",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "public `didChange` API remains ambiguous/unsafe",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N04",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "`preferIncremental` does not control behavior meaningfully",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N05",
+      "severity": "P0",
+      "severity_raw": "P0 for synchronization",
+      "title": "bounded document events have no gap recovery",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N06",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "save/close/change ordering is not one document lane",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "local open state can change before send succeeds",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N08",
+      "severity": "P1",
+      "severity_raw": "P1 for rename/code-action claim",
+      "title": "WorkspaceEdit decoding is incomplete",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N09",
+      "severity": "P0",
+      "severity_raw": "P0 for source edits/navigation",
+      "title": "cross-file snapshot resolution can silently use empty text",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N10",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "dynamic registration accounting is fragile",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N11",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "JSON result model is incomplete",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N12",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "diagnostics streams are unbounded/not version-safe",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "LSP-N13",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "current \u201creal LSP\u201d gate is not an integration test",
+      "phase": 6,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N01",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "same pending-registration race as LSP",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N02",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "late responses are retained as \u201cearly\u201d responses",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "one reverse request/event can stall all inbound messages",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N04",
+      "severity": "P1",
+      "severity_raw": "P1 protocol correctness",
+      "title": "missing reverse handler returns empty success",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N05",
+      "severity": "P0",
+      "severity_raw": "P0 if force-unwrapped during teardown",
+      "title": "session connection lifetime can crash",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N06",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "breakpoint state is committed before adapter reconciliation",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N07",
+      "severity": "P1",
+      "severity_raw": "P1 release hygiene",
+      "title": "production target contains a mock adapter",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "`runInTerminal` spans two terminal architectures",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N09",
+      "severity": "P1",
+      "severity_raw": "P1/P2",
+      "title": "Stable DAP workflow is incomplete",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "DAP-N10",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "real DAP gate must use `lldb-dap`",
+      "phase": 7,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N01",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "fake fallback is on the default production-shaped path",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N02",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "terminal UI is a text snapshot, not Ghostty rendering",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N03",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "two conflicting terminal architectures remain public",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "input mapping is incomplete",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "per-chunk UTF-8 snapshot handling loses split scalars",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N06",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "local PTY transport stream and write lifecycle are unsafe",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "terminal security policy is incomplete",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N09",
+      "severity": "P0",
+      "severity_raw": "P0 before Stable",
+      "title": "no direct tests for `CodeEditorTerminalGhostty`",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "TER-N10",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "pinning alone is not integration qualification",
+      "phase": 8,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N01",
+      "severity": "P0",
+      "severity_raw": "P0 capability-boundary bypass",
+      "title": "broker handles are not bound to the caller",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N02",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "handles can be minted for unregistered extensions",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N03",
+      "severity": "P0",
+      "severity_raw": "P0 for security-sensitive calls",
+      "title": "malformed wire payloads degrade to defaults",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "initialization suppresses storage directory errors",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "worktree list hides I/O failure as an empty directory",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N06",
+      "severity": "P0",
+      "severity_raw": "P0 for untrusted extensions",
+      "title": "path containment is not descriptor-relative",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N07",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "executable allow decision can race executable replacement",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N08",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "`projectInfo` encodes roots ambiguously",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N09",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "settings/storage have incomplete quotas",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N10",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "storage quota calculation scans synchronously",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N11",
+      "severity": "P1",
+      "severity_raw": "P1 policy ambiguity",
+      "title": "process \u201cargsGlob\u201d is not a glob",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N12",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "spawned process output has no complete capability stream",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N13",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "download is whole-memory and redirect policy incomplete",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N14",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "path-prefix allowlist uses string prefix",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N15",
+      "severity": "P0",
+      "severity_raw": "P1/P0 denial of service",
+      "title": "npm materializer mishandles scoped packages and total size",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "BROKER-N16",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "revoke can block the broker actor",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N01",
+      "severity": "P1",
+      "severity_raw": "P1 compatibility/correctness",
+      "title": "TOML parser is intentionally a minimal subset",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N02",
+      "severity": "P1",
+      "severity_raw": "P1 release truth",
+      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N03",
+      "severity": "P0",
+      "severity_raw": "P0 if used as security identity",
+      "title": "non-cryptographic digest fallback exists in plan validation",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N04",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "package signature skips hidden files",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N05",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "`.codeeditor/` is explicitly unsigned",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N06",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "publisher identity is not bound by default signature",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N07",
+      "severity": "P0",
+      "severity_raw": "P0 key-loss risk",
+      "title": "key writing can destroy the existing key before replacement succeeds",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N08",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "security helpers `fatalError` without CryptoKit",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N09",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "keyring parser silently skips malformed data",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N10",
+      "severity": "P0",
+      "severity_raw": "P0 denial of service",
+      "title": "package inventory has no global resource limits",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N11",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "install parses/copies before complete verification",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N12",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "installation/update is not crash durable",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N13",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "same-version reinstall can mix plan and bytes",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N14",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "persisted package paths are trusted too directly",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N15",
+      "severity": "P0",
+      "severity_raw": "P0 for marketplace trust",
+      "title": "revocation state lacks freshness/rollback protection",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N16",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "recovery and snapshot filtering can expose unverified state",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N17",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "executable-content detection is heuristic",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N18",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "telemetry/log files are unbounded and errors are swallowed",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N19",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "package snapshot stream is not a robust broadcast contract",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "EXT-N20",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "test doubles and simulations are public production surface",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N01",
+      "severity": "P0",
+      "severity_raw": "P0 isolation failure",
+      "title": "watchdog cannot interrupt a noncooperative Wasm loop",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N02",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "memory growth is not continuously limited",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N03",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "missing memory must fail ABI validation",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N04",
+      "severity": "P0",
+      "severity_raw": "P0 memory/concurrency safety",
+      "title": "calls and memory access are not clearly serialized",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "memory view growth API is incomplete",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N06",
+      "severity": "P0",
+      "severity_raw": "P0 ABI correctness",
+      "title": "unsupported Wasm values must not coerce to zero",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N07",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "monotonic clock is not monotonic and may truncate",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N08",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "session-wide deadline expires all future calls",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N09",
+      "severity": "P0",
+      "severity_raw": "P0",
+      "title": "request continuation is installed by an unstructured task",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N10",
+      "severity": "P0",
+      "severity_raw": "P0/P1",
+      "title": "configured limits are not enforced",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N11",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "logs are unbounded",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N12",
+      "severity": "P0",
+      "severity_raw": "P0 correctness",
+      "title": "cancellation is global and never reset",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N13",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "poll return status is ignored",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N14",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "guest allocations are leaked",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N15",
+      "severity": "P1",
+      "severity_raw": "P1 release truth",
+      "title": "linked Swift guest simulation must be test-only",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WASM-N16",
+      "severity": "P0",
+      "severity_raw": "P0 before Stable",
+      "title": "adversarial corpus needs truly hostile modules",
+      "phase": 9,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N01",
+      "severity": "P0",
+      "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
+      "title": "contribution \u201cfault isolation\u201d is not isolation",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N02",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "fabricated navigation offsets remain",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N03",
+      "severity": "P2",
+      "severity_raw": "P2",
+      "title": "no-op animation wrapper is fake behavior",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N04",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "file-tree indexing can freeze the main actor",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N05",
+      "severity": "P1",
+      "severity_raw": "P1",
+      "title": "unstructured tasks can outlive models/windows",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N06",
+      "severity": "P1",
+      "severity_raw": "P1/P2 by feature",
+      "title": "models exist without end-to-end workflows",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    },
+    {
+      "id": "WB-N07",
+      "severity": "P2",
+      "severity_raw": "unknown",
+      "title": "Xcode-class workbench gaps",
+      "phase": 10,
+      "status": "open",
+      "regression_tests": [],
+      "notes": ""
+    }
+  ],
+  "counts": {
+    "total": 174,
+    "by_severity": {
+      "P0": 52,
+      "P1": 108,
+      "P2": 14,
+      "P3": 0
+    },
+    "by_phase": {
+      "0": 9,
+      "1": 12,
+      "2": 3,
+      "3": 15,
+      "4": 10,
+      "5": 26,
+      "6": 20,
+      "7": 10,
+      "8": 10,
+      "9": 52,
+      "10": 7
+    }
+  }
+}
