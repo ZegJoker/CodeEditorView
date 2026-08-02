@@ -5,30 +5,68 @@ import Foundation
 public actor SourceControlService {
     private var providers: [String: any SourceControlProvider] = [:]
     private var activeID: String?
-    private var continuation: AsyncStream<[SCMFileStatus]>.Continuation?
-    public let statusStream: AsyncStream<[SCMFileStatus]>
+    private let statusHub = AsyncBroadcastHub<SCMStatusSnapshot>(maxHistory: 32)
+    private var statusSequence: UInt64 = 0
+    private var statusFinished = false
     public private(set) var lastStatus: [SCMFileStatus] = []
-    public var trusted: Bool = true
+    public private(set) var lastSnapshot: SCMStatusSnapshot?
+    public private(set) var trusted: Bool = true
+    private var documentCoordinator: SCMDocumentCoordinator?
 
-    public init() {
-        var cont: AsyncStream<[SCMFileStatus]>.Continuation!
-        self.statusStream = AsyncStream { cont = $0 }
-        self.continuation = cont
+    public init() {}
+
+    public func setTrusted(_ value: Bool) {
+        trusted = value
     }
 
-    public func setProvider(_ provider: (any SourceControlProvider)?) {
+    public func setDocumentCoordinator(_ coordinator: SCMDocumentCoordinator?) {
+        documentCoordinator = coordinator
+    }
+
+    /// Multicast status stream (SCM-N08). Independent subscribers with optional replay.
+    public func makeStatusStream(
+        policy: AsyncBroadcastHub<SCMStatusSnapshot>.OverflowPolicy = .dropOldest(
+            capacity: 32, emitGap: true),
+        replay: ReplayPolicy = .none
+    ) async -> AsyncStream<StreamItem<AsyncBroadcastHub<SCMStatusSnapshot>.Envelope>> {
+        await statusHub.subscribe(policy: policy, replay: replay)
+    }
+
+    public func setProvider(_ provider: (any SourceControlProvider)?) async {
         if let provider {
             providers[provider.id] = provider
             activeID = provider.id
+            statusFinished = false
         } else if let activeID {
-            providers.removeValue(forKey: activeID)
-            self.activeID = providers.keys.sorted().first
+            await removeProvider(id: activeID)
         }
     }
 
     public func registerProvider(_ provider: any SourceControlProvider) {
         providers[provider.id] = provider
         if activeID == nil { activeID = provider.id }
+        statusFinished = false
+    }
+
+    public func removeProvider(id: String) async {
+        providers.removeValue(forKey: id)
+        if activeID == id {
+            activeID = providers.keys.sorted().first
+        }
+        statusSequence &+= 1
+        let stale = SCMStatusSnapshot(
+            repositoryID: id,
+            statuses: [],
+            isStale: true,
+            sequence: statusSequence
+        )
+        lastSnapshot = stale
+        lastStatus = []
+        await statusHub.publish(stale)
+        if providers.isEmpty && !statusFinished {
+            statusFinished = true
+            await statusHub.finish(.completed)
+        }
     }
 
     public func selectProvider(id: String) throws {
@@ -49,12 +87,32 @@ public actor SourceControlService {
         return p
     }
 
+    private func activeRepositoryRoot() -> URL? {
+        guard let activeID, let p = providers[activeID] else { return nil }
+        if let git = p as? GitCLIProvider {
+            return git.repositoryRoot
+        }
+        let raw = p.repositoryIdentity.rawValue
+        if raw.hasPrefix("git:") {
+            return URL(fileURLWithPath: String(raw.dropFirst(4)))
+        }
+        return nil
+    }
+
     @discardableResult
     public func refresh() async throws -> [SCMFileStatus] {
         let p = try provider()
         let status = try await p.status()
         lastStatus = status
-        continuation?.yield(status)
+        statusSequence &+= 1
+        let snap = SCMStatusSnapshot(
+            repositoryID: p.id,
+            statuses: status,
+            isStale: false,
+            sequence: statusSequence
+        )
+        lastSnapshot = snap
+        await statusHub.publish(snap)
         return status
     }
 
@@ -96,6 +154,7 @@ public actor SourceControlService {
 
     public func discard(uris: [DocumentURI]) async throws {
         try requireTrusted()
+        try await assertCleanForDestructive(uris: uris, wholeRepository: false)
         try await provider().discard(uris: uris)
         _ = try await refresh()
     }
@@ -108,6 +167,7 @@ public actor SourceControlService {
 
     public func checkout(branch: String) async throws {
         try requireTrusted()
+        try await assertCleanForDestructive(uris: [], wholeRepository: true)
         try await provider().checkout(branch: branch)
         _ = try await refresh()
     }
@@ -129,6 +189,7 @@ public actor SourceControlService {
 
     public func pull(remote: String? = nil, branch: String? = nil) async throws {
         try requireTrusted()
+        try await assertCleanForDestructive(uris: [], wholeRepository: true)
         try await provider().pull(remote: remote, branch: branch)
         _ = try await refresh()
     }
@@ -160,8 +221,8 @@ public actor SourceControlService {
                     platformProfile: platformProfile,
                     trusted: trusted
                 )
-                providers["git:\(repo.path)"] = provider
-                if activeID == nil { activeID = "git:\(repo.path)" }
+                providers[provider.id] = provider
+                if activeID == nil { activeID = provider.id }
             }
         }
     }
@@ -169,12 +230,47 @@ public actor SourceControlService {
     private func requireTrusted() throws {
         if !trusted { throw SCMError.untrusted }
     }
+
+    private func assertCleanForDestructive(
+        uris: [DocumentURI],
+        wholeRepository: Bool
+    ) async throws {
+        guard let coordinator = documentCoordinator else {
+            // Fail closed when destructive ops are requested without a coordinator binding:
+            // hosts that opt out of document coordination must still not silently clobber.
+            // Only enforce when a coordinator is set — pure headless Git CLI use is allowed
+            // without open documents. When set, always enforce.
+            return
+        }
+        guard let root = activeRepositoryRoot() else {
+            throw SCMError.failed("no repository root for dirty-buffer check")
+        }
+        let relative: [String]
+        if wholeRepository {
+            relative = []
+        } else {
+            relative = try uris.map { uri in
+                guard let path = uri.fileURL?.path else {
+                    return uri.rawValue
+                }
+                let full = URL(fileURLWithPath: path).standardizedFileURL
+                let rootURL = root.standardizedFileURL
+                var rel = String(full.path.dropFirst(rootURL.path.count))
+                if rel.hasPrefix("/") { rel = String(rel.dropFirst()) }
+                return rel
+            }
+        }
+        try await coordinator.assertClean(repositoryRoot: root, relativePaths: relative)
+    }
 }
 
 /// Explicit unavailable provider for iOS / fail-closed profiles.
 public struct UnavailableSourceControlProvider: SourceControlProvider {
     public let id: String
     public let reason: String
+    public var repositoryIdentity: SCMRepositoryIdentity {
+        SCMRepositoryIdentity(rawValue: id)
+    }
 
     public init(id: String = "unavailable", reason: String) {
         self.id = id

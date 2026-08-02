@@ -91,6 +91,8 @@ let package = Package(
                 "CodeEditorLanguageSupport",
                 "CodeEditorTerminal",
                 "CodeEditorTerminalGhostty",
+                "CodeEditorSourceControl",
+                "CodeEditorTasks",
             ]
         ),
         .target(
@@ -469,7 +471,12 @@ let package = Package(
         ),
         .testTarget(
             name: "CodeEditorSourceControlTests",
-            dependencies: ["CodeEditorSourceControl"]
+            dependencies: [
+                "CodeEditorSourceControl",
+                "CodeEditorWorkspace",
+                "CodeEditorDocuments",
+                "CodeEditorCore",
+            ]
         ),
         .testTarget(
             name: "CodeEditorExtensionProtocolTests",

@@ -48,7 +48,7 @@ public final class WorkbenchSCMModel {
     public func refresh(provider: any SourceControlProvider) async {
         do {
             if let git = provider as? GitCLIProvider {
-                git.trusted = trusted
+                await git.setTrusted(trusted)
             }
             statuses = try await provider.status()
             errorMessage = nil
