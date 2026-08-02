@@ -69,17 +69,25 @@ final class GuestMemory: WasmMemoryView, @unchecked Sendable {
 
 /// Factory for host sessions.
 public enum WasmEngineFactory {
+    /// Dual-run / Swift guest semantics only — **not** Wasm isolation (Phase 9).
     public static func linkedGuest() -> LinkedGuestWasmEngine {
         LinkedGuestWasmEngine {
             WasmGuestLink()
         }
     }
 
+    /// In-process simulation (non-isolation).
     public static func inProcess() -> InProcessCoreWasmEngine {
         InProcessCoreWasmEngine()
     }
 
+    /// Production real WasmKit engine — module bytes determine behavior.
     public static func wasmKit() -> WasmKitEngine {
-        WasmKitEngine(guestFactory: { WasmGuestLink() })
+        WasmKitEngine()
+    }
+
+    /// Alias for simulation dual-run path.
+    public static func simulation() -> LinkedGuestWasmEngine {
+        linkedGuest()
     }
 }

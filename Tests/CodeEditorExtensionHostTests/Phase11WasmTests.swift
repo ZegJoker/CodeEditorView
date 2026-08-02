@@ -15,9 +15,12 @@ private func fixtureModule() -> Data {
     return d
 }
 
-@Suite("Phase 11 core-Wasm ABI")
+/// Dual-run / LinkedGuest semantics (Phase 11 history).
+/// Isolation against Wasm **bytes** is Phase 9 (`Phase9WasmExecutionTests` / WasmKit).
+@Suite("Phase 11 core-Wasm ABI (dual-run LinkedGuest)")
 struct Phase11ABITests {
     @Test func linkedGuestEchoAndActivate() async throws {
+        // LinkedGuest: module bytes are markers only — not isolation proof (Phase 9).
         let engine = WasmEngineFactory.linkedGuest()
         let session = CoreWasmABISession(
             engine: engine,
@@ -187,10 +190,10 @@ struct Phase11DualRunTests {
 
     @Test func runtimeSelectorChoosesWasm() throws {
         let pkg = PreparedExtensionPackage(
-            packageID: "w",
+            packageID: "com.example.wasm",
             displayName: "w",
             version: SemanticVersion(major: 1),
-            manifest: ExtensionManifest(id: "w", displayName: "w"),
+            manifest: ExtensionManifest(id: "com.example.wasm", displayName: "w"),
             wasmModuleData: fixtureModule(),
             trustClass: .workspaceDev,
             runtimePreference: .swiftWasm

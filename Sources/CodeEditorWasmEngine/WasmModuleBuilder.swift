@@ -119,7 +119,11 @@ public struct WasmModuleBuilder: Sendable {
     }
 
     public static func abiVersionOnlyModule() -> Data {
-        // Even smaller: only abi_version export, no imports — used to test missing export rejection separately
+        abiVersionConstantModule(value: 1)
+    }
+
+    /// Module whose only export is `codeeditor_abi_version` returning a fixed i32 (E1 proof).
+    public static func abiVersionConstantModule(value: Int32) -> Data {
         var module: [UInt8] = []
         module += magic + version
         let types = [funcType([], [.i32])]
@@ -128,7 +132,72 @@ public struct WasmModuleBuilder: Sendable {
         var exports: [UInt8] = []
         exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 0)
         module += section(7, encodeCounted(exports, count: 1))
-        module += section(10, encodeCounted(funcBody([0x41, 0x01, 0x0B]), count: 1))
+        // i32.const value; end — encode small immediates
+        var body: [UInt8] = [0x41]
+        body += sleb(Int(value))
+        body += [0x0B]
+        module += section(10, encodeCounted(funcBody(body), count: 1))
+        return Data(module)
+    }
+
+    /// Guest uses data segment "OK" at offset 0 then host_send(0,2) — proves memory bridge (E4).
+    public static func hostSendEchoModule() -> Data {
+        var module: [UInt8] = []
+        module += magic + version
+        let types = [
+            funcType([], []),
+            funcType([], [.i32]),
+            funcType([.i32], [.i32]),
+            funcType([.i32, .i32], []),
+            funcType([.i32, .i32], [.i32]),
+            funcType([.i32], []),
+            funcType([.i32, .i32, .i32], []),
+            funcType([.i64, .i64], [.i32]),
+        ]
+        module += section(1, encodeVector(types))
+        var imports: [UInt8] = []
+        imports += importFunc("codeeditor", CoreWasmImport.hostSend.rawValue, typeIndex: 4)
+        imports += importFunc("codeeditor", CoreWasmImport.hostLog.rawValue, typeIndex: 6)
+        imports += importFunc("codeeditor", CoreWasmImport.hostMonotonicMillis.rawValue, typeIndex: 1)
+        imports += importFunc("codeeditor", CoreWasmImport.hostShouldCancel.rawValue, typeIndex: 7)
+        module += section(2, encodeCounted(imports, count: 4))
+        let funcTypes: [UInt8] = [1, 2, 3, 4, 4, 2, 5]
+        module += section(3, encodeCounted(funcTypes.flatMap { uleb(UInt32($0)) }, count: 7))
+        module += section(5, encodeCounted([0x01, 0x01, 0x02], count: 1))
+        var exports: [UInt8] = []
+        exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 4)
+        exports += exportFunc(CoreWasmExport.alloc.rawValue, index: 5)
+        exports += exportFunc(CoreWasmExport.dealloc.rawValue, index: 6)
+        exports += exportFunc(CoreWasmExport.start.rawValue, index: 7)
+        exports += exportFunc(CoreWasmExport.receive.rawValue, index: 8)
+        exports += exportFunc(CoreWasmExport.poll.rawValue, index: 9)
+        exports += exportFunc(CoreWasmExport.stop.rawValue, index: 10)
+        exports += exportMemory("memory", index: 0)
+        module += section(7, encodeCounted(exports, count: 8))
+        // poll: host_send(0, 2); drop; return 0
+        let pollCode = funcBody([
+            0x41, 0x00,  // i32.const 0
+            0x41, 0x02,  // i32.const 2
+            0x10, 0x00,  // call 0 host_send
+            0x1A,  // drop
+            0x41, 0x00, 0x0B,
+        ])
+        module += section(
+            10,
+            encodeCounted(
+                funcBody([0x41, 0x01, 0x0B]) + funcBody([0x41, 0x00, 0x0B]) + funcBody([0x0B])
+                    + funcBody([0x41, 0x00, 0x0B]) + funcBody([0x41, 0x00, 0x0B]) + pollCode
+                    + funcBody([0x0B]),
+                count: 7
+            ))
+        // data section: active segment at offset 0 with "OK"
+        // 1 segment; memidx 0; offset i32.const 0 end; size 2; 'O' 'K'
+        var dataSec: [UInt8] = []
+        dataSec += uleb(1)  // count
+        dataSec += [0x00]  // memory index 0 (legacy active form)
+        dataSec += [0x41, 0x00, 0x0B]  // i32.const 0; end
+        dataSec += uleb(2) + [0x4F, 0x4B]  // "OK"
+        module += section(11, dataSec)
         return Data(module)
     }
 
@@ -166,9 +235,18 @@ public struct WasmModuleBuilder: Sendable {
         exports += exportFunc(CoreWasmExport.stop.rawValue, index: 10)
         exports += exportMemory("memory", index: 0)
         module += section(7, encodeCounted(exports, count: 8))
-        // poll: loop br 0 forever
+        // poll: loop until host_should_cancel returns non-zero (WASM-004 cooperative + interrupt).
+        // Imports: 0 send, 1 log, 2 millis, 3 should_cancel
+        // loop:
+        //   i64.const 0; i64.const 0; call 3; if (i32) { i32.const 0; return }; br 0
         let pollLoop = funcBody([
             0x03, 0x40,  // loop
+            0x42, 0x00,  // i64.const 0
+            0x42, 0x00,  // i64.const 0
+            0x10, 0x03,  // call 3 host_should_cancel
+            0x04, 0x40,  // if
+            0x41, 0x00, 0x0F,  // i32.const 0; return
+            0x0B,  // end if
             0x0C, 0x00,  // br 0
             0x0B,  // end loop
             0x41, 0x00, 0x0B,
@@ -286,6 +364,25 @@ public struct WasmModuleBuilder: Sendable {
             if v != 0 { b |= 0x80 }
             out.append(b)
         } while v != 0
+        return out
+    }
+
+    /// Signed LEB128 for i32.const immediates.
+    private static func sleb(_ value: Int) -> [UInt8] {
+        var v = value
+        var out: [UInt8] = []
+        var more = true
+        while more {
+            var b = UInt8(v & 0x7F)
+            v >>= 7
+            let signBitSet = (b & 0x40) != 0
+            if (v == 0 && !signBitSet) || (v == -1 && signBitSet) {
+                more = false
+            } else {
+                b |= 0x80
+            }
+            out.append(b)
+        }
         return out
     }
 }

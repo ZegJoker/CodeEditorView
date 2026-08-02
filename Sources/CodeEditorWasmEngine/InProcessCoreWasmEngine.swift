@@ -181,9 +181,6 @@ final class InProcessMemory: WasmMemoryView, @unchecked Sendable {
         storage.append(Data(count: pages * 65536))
         return old
     }
-    func rawBuffer() -> UnsafeMutableRawBufferPointer {
-        storage.withUnsafeMutableBytes { $0 }
-    }
 }
 
 /// Bridges host imports without depending on WasmGuest module (engine stays free of Protocol).

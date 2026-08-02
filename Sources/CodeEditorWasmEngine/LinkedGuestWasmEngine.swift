@@ -1,10 +1,11 @@
 import Foundation
 
-/// Engine that links a real ``WasmGuestRuntime`` (from ExtensionWasmGuest) as the instance.
-/// Module validation still enforces Wasm magic + size limits so malicious/malformed fixtures fail.
+/// **Simulation / dual-run engine** — links a Swift ``LinkedWasmGuest`` factory.
 ///
-/// Note: This type lives in the engine module via a protocol-based guest factory to avoid
-/// a hard dependency cycle; Host constructs it with a guest factory closure.
+/// Module magic/size checks run, but **guest behavior is not determined by Wasm bytecode**.
+/// Do **not** use this type as isolation evidence (audit §16 / Phase 9). Prefer ``WasmKitEngine``.
+///
+/// Note: protocol-based guest factory avoids a hard dependency cycle; Host constructs it.
 public struct LinkedGuestWasmEngine: CodeEditorWasmEngine {
     public typealias GuestFactory = @Sendable () -> any LinkedWasmGuest
 
@@ -39,6 +40,8 @@ public struct LinkedGuestWasmEngine: CodeEditorWasmEngine {
         limits: WasmResourceLimits
     ) async throws -> any CodeEditorWasmInstance {
         try validate(module: module, limits: limits)
+        // Simulation path may still use a Swift infinite-loop instance for dual-run stress;
+        // isolation proof must use WasmKitEngine with real module bytes.
         if module == WasmModuleBuilder.infiniteLoopModule() {
             return InfiniteLoopInstance(limits: limits)
         }
@@ -47,6 +50,9 @@ public struct LinkedGuestWasmEngine: CodeEditorWasmEngine {
         return LinkedGuestWasmInstance(guest: guest, limits: limits)
     }
 }
+
+/// Honest simulation alias (Phase 9 / WASM-008) — **not** the real WasmKit backend.
+public typealias CodeEditorWasmSimulationEngine = LinkedGuestWasmEngine
 
 /// Minimal guest surface for linking without importing Protocol into every engine user.
 public protocol LinkedWasmGuest: AnyObject, Sendable {

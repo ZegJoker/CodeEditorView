@@ -5,22 +5,20 @@ import os
 #if canImport(WasmKit)
     import WasmKit
     import WasmTypes
-    import SystemPackage
 #endif
 
-/// **Real WasmKit-backed engine** — parses and executes submitted WebAssembly module bytes.
+/// **Real WasmKit-backed engine** — submitted module bytes determine executed behavior.
 ///
-/// ## WASM-001 / WASM-002
+/// ## Phase 9 / WASM-001…005
 /// - `parseWasm(bytes:)` validates structure
-/// - Instantiates a fresh `Store` per guest
-/// - Defines only capability-scoped host imports (`codeeditor` module)
-/// - Calls exported functions by name through WasmKit
-/// - Enforces module size and interrupt flags
+/// - Fresh `Store` per instance; only `codeeditor` host imports
+/// - Host imports read **guest linear memory** (ptr/len) with OOB-safe bounds
+/// - Wall-time watchdog on `call` + cooperative `host_should_cancel` / `interrupt()`
+/// - Enforces module size and max linear memory
 public struct WasmKitEngine: CodeEditorWasmEngine {
     public init() {}
 
-    /// Back-compat factory used by Host tests that still pass a guest factory.
-    /// Real Wasm execution ignores the factory; submitted module bytes determine behavior.
+    /// Factory argument is **ignored** — real execution uses module bytes only.
     public init(guestFactory: @escaping () -> Any) {
         self.init()
         _ = guestFactory
@@ -64,10 +62,70 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
     }
 }
 
-/// Honest name alias — this type is the real engine when WasmKit is linked.
-public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
-
 #if canImport(WasmKit)
+
+    // MARK: - Memory holder for host import closures
+
+    /// Filled after instantiate so import callbacks can read guest linear memory (WASM-003).
+    final class GuestMemoryHolder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _memory: Memory?
+        private var _interrupted = false
+        private var _cancel: (() -> Int32)?
+
+        func setMemory(_ memory: Memory) {
+            lock.lock()
+            _memory = memory
+            lock.unlock()
+        }
+
+        func setCancelCheck(_ check: @escaping () -> Int32) {
+            lock.lock()
+            _cancel = check
+            lock.unlock()
+        }
+
+        func interrupt() {
+            lock.lock()
+            _interrupted = true
+            lock.unlock()
+        }
+
+        var isInterrupted: Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            return _interrupted
+        }
+
+        func read(offset: Int, length: Int) throws -> Data {
+            lock.lock()
+            let memory = _memory
+            lock.unlock()
+            guard let memory else {
+                throw WasmEngineError.trap("guest memory not bound")
+            }
+            let total = memory.data.count
+            guard offset >= 0, length >= 0,
+                offset <= total,
+                length <= total - offset
+            else {
+                throw WasmEngineError.trap("memory oob read offset=\(offset) len=\(length) size=\(total)")
+            }
+            if length == 0 { return Data() }
+            return try memory.withUnsafeBufferPointer(offset: UInt(offset), count: length) { buf in
+                Data(buf)
+            }
+        }
+
+        func shouldCancel(a: Int64, b: Int64, host: WasmHostImports) -> Int32 {
+            if isInterrupted { return 1 }
+            lock.lock()
+            let custom = _cancel
+            lock.unlock()
+            if let custom { return custom() }
+            return host.shouldCancel(a, b)
+        }
+    }
 
     // MARK: - Instance
 
@@ -76,6 +134,8 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
         private let store: Store
         private let instance: Instance
         private let memoryView: WasmKitMemoryView
+        private let limits: WasmResourceLimits
+        private let memoryHolder: GuestMemoryHolder
         private let state = OSAllocatedUnfairLock(initialState: (interrupted: false, meters: WasmMeters()))
 
         var memory: any WasmMemoryView { memoryView }
@@ -83,7 +143,7 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
             state.withLock { $0.meters }
         }
         var isInterrupted: Bool {
-            state.withLock { $0.interrupted }
+            state.withLock { $0.interrupted } || memoryHolder.isInterrupted
         }
 
         static func create(
@@ -100,9 +160,9 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
 
             let engine = Engine()
             let store = Store(engine: engine)
+            let holder = GuestMemoryHolder()
 
-            // Host imports under "codeeditor" — only grant declared ABI imports.
-            let hostImports = try buildHostImports(store: store, host: host)
+            let hostImports = try buildHostImports(store: store, host: host, holder: holder)
             let instance: Instance
             do {
                 instance = try module.instantiate(store: store, imports: hostImports)
@@ -110,27 +170,45 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
                 throw WasmEngineError.instantiationFailed(String(describing: error))
             }
 
-            // Memory: prefer exported "memory"; allocate a scratch page if module has none.
             let mem: Memory
             if let exported = instance.exports[memory: "memory"] {
                 mem = exported
             } else {
                 mem = try Memory(store: store, type: MemoryType(min: 1, max: 2))
             }
+            // Enforce max linear memory (WASM-005).
+            let pageSize = 64 * 1024
+            if mem.data.count > limits.maxLinearMemoryBytes {
+                throw WasmEngineError.memoryLimitExceeded
+            }
+            // If memory has no declared max and current is under limit, still bind.
+            _ = pageSize
+            holder.setMemory(mem)
 
             return WasmKitInstance(
                 engine: engine,
                 store: store,
                 instance: instance,
-                memoryView: WasmKitMemoryView(memory: mem, limits: limits)
+                memoryView: WasmKitMemoryView(memory: mem, limits: limits),
+                limits: limits,
+                memoryHolder: holder
             )
         }
 
-        private init(engine: Engine, store: Store, instance: Instance, memoryView: WasmKitMemoryView) {
+        private init(
+            engine: Engine,
+            store: Store,
+            instance: Instance,
+            memoryView: WasmKitMemoryView,
+            limits: WasmResourceLimits,
+            memoryHolder: GuestMemoryHolder
+        ) {
             self.engine = engine
             self.store = store
             self.instance = instance
             self.memoryView = memoryView
+            self.limits = limits
+            self.memoryHolder = memoryHolder
         }
 
         func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
@@ -141,59 +219,130 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
                 throw WasmEngineError.missingExport(name)
             }
             let values = args.map { $0.toWasmKitValue() }
-            // Run WasmKit invoke off the cooperative pool; meters updated under lock on return.
-            let results: [Value]
-            do {
-                results = try await Task.detached {
-                    try fn.invoke(values)
-                }.value
-            } catch {
-                if isInterrupted {
-                    throw WasmEngineError.interrupted
+            let wall = limits.maxWallTime
+            let holder = memoryHolder
+            // Box for Sendable invoke across task boundary (WasmKit Function is not Sendable).
+            final class InvokeBox: @unchecked Sendable {
+                let fn: Function
+                let values: [Value]
+                init(fn: Function, values: [Value]) {
+                    self.fn = fn
+                    self.values = values
                 }
-                throw WasmEngineError.trap(String(describing: error))
+                func run() throws -> [Value] { try fn.invoke(values) }
             }
-            state.withLock { $0.meters.budgetConsumed += 1 }
+            let box = InvokeBox(fn: fn, values: values)
+
+            // Wall-time watchdog (WASM-004): race invoke vs deadline on a global queue.
+            let results: [Value] = try await withThrowingTaskGroup(of: [Value].self) { group in
+                group.addTask {
+                    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[Value], Error>) in
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            do {
+                                cont.resume(returning: try box.run())
+                            } catch {
+                                cont.resume(throwing: error)
+                            }
+                        }
+                    }
+                }
+                group.addTask {
+                    try await Task.sleep(for: wall)
+                    holder.interrupt()
+                    throw WasmEngineError.deadlineExceeded
+                }
+                do {
+                    let first = try await group.next()!
+                    group.cancelAll()
+                    return first
+                } catch {
+                    group.cancelAll()
+                    if holder.isInterrupted || self.isInterrupted {
+                        if error is WasmEngineError { throw error }
+                        throw WasmEngineError.interrupted
+                    }
+                    throw error
+                }
+            }
+
+            state.withLock {
+                $0.meters.budgetConsumed += 1
+                $0.meters.memoryBytes = memoryView.size
+            }
             return results.map { WasmValue.fromWasmKit($0) }
         }
 
         func interrupt() {
+            memoryHolder.interrupt()
             state.withLock {
                 $0.interrupted = true
                 $0.meters.interrupted = true
             }
         }
 
-        private static func buildHostImports(store: Store, host: WasmHostImports) throws -> Imports {
+        private static func buildHostImports(
+            store: Store,
+            host: WasmHostImports,
+            holder: GuestMemoryHolder
+        ) throws -> Imports {
             var imports = Imports()
-            // Match WasmModuleBuilder import type section indices:
-            // host_send: (i32,i32)->i32, host_log: (i32,i32,i32)->(), millis: ()->i32, cancel: (i64,i64)->i32
+
             let send = Function(store: store, parameters: [.i32, .i32], results: [.i32]) { _, args in
-                let len = Int32(truncatingIfNeeded: args[1].i32)
-                let rc = host.send(nil, len)
-                return [.i32(UInt32(bitPattern: rc))]
+                let ptr = Int(Int32(bitPattern: args[0].i32))
+                let len = Int32(bitPattern: args[1].i32)
+                if len < 0 {
+                    return [.i32(UInt32(bitPattern: CoreWasmABI.statusError))]
+                }
+                if len == 0 {
+                    let rc = host.send(nil, 0)
+                    return [.i32(UInt32(bitPattern: rc))]
+                }
+                do {
+                    let data = try holder.read(offset: ptr, length: Int(len))
+                    let rc = data.withUnsafeBytes { raw -> Int32 in
+                        host.send(raw.baseAddress, len)
+                    }
+                    return [.i32(UInt32(bitPattern: rc))]
+                } catch {
+                    return [.i32(UInt32(bitPattern: CoreWasmABI.statusError))]
+                }
             }
+
             let log = Function(store: store, parameters: [.i32, .i32, .i32], results: []) { _, args in
-                let level = Int32(truncatingIfNeeded: args[0].i32)
-                let len = Int32(truncatingIfNeeded: args[2].i32)
-                host.log(level, nil, len)
+                let level = Int32(bitPattern: args[0].i32)
+                let ptr = Int(Int32(bitPattern: args[1].i32))
+                let len = Int32(bitPattern: args[2].i32)
+                if len <= 0 {
+                    host.log(level, nil, 0)
+                    return []
+                }
+                if let data = try? holder.read(offset: ptr, length: Int(len)) {
+                    data.withUnsafeBytes { raw in
+                        host.log(level, raw.baseAddress, len)
+                    }
+                }
                 return []
             }
-            // Fixture module imports millis as () -> i32 (truncated millis for ABI size).
+
+            // Fixture modules import millis as () -> i32 (truncated).
             let millis = Function(store: store, parameters: [], results: [.i32]) { _, _ in
                 let v = Int32(truncatingIfNeeded: host.monotonicMillis())
                 return [.i32(UInt32(bitPattern: v))]
             }
+
             let cancel = Function(store: store, parameters: [.i64, .i64], results: [.i32]) { _, args in
                 let a = Int64(bitPattern: args[0].i64)
                 let b = Int64(bitPattern: args[1].i64)
-                let rc = host.shouldCancel(a, b)
+                let rc = holder.shouldCancel(a: a, b: b, host: host)
                 return [.i32(UInt32(bitPattern: rc))]
             }
+
             imports.define(module: CoreWasmImport.moduleName, name: CoreWasmImport.hostSend.rawValue, send)
             imports.define(module: CoreWasmImport.moduleName, name: CoreWasmImport.hostLog.rawValue, log)
-            imports.define(module: CoreWasmImport.moduleName, name: CoreWasmImport.hostMonotonicMillis.rawValue, millis)
-            imports.define(module: CoreWasmImport.moduleName, name: CoreWasmImport.hostShouldCancel.rawValue, cancel)
+            imports.define(
+                module: CoreWasmImport.moduleName, name: CoreWasmImport.hostMonotonicMillis.rawValue, millis)
+            imports.define(
+                module: CoreWasmImport.moduleName, name: CoreWasmImport.hostShouldCancel.rawValue, cancel)
             return imports
         }
     }
@@ -207,18 +356,14 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
             self.limits = limits
         }
 
-        var size: Int {
-            memory.withUnsafeBufferPointer(offset: 0, count: 0) { _ in
-                // size via data copy when needed
-            }
-            return memory.data.count
-        }
+        var size: Int { memory.data.count }
 
         func read(offset: Int, length: Int) throws -> Data {
             let total = memory.data.count
-            guard offset >= 0, length >= 0, offset <= total, offset + length <= total else {
+            guard offset >= 0, length >= 0, offset <= total, length <= total - offset else {
                 throw WasmEngineError.trap("memory oob read")
             }
+            if length == 0 { return Data() }
             return try memory.withUnsafeBufferPointer(offset: UInt(offset), count: length) { buf in
                 Data(buf)
             }
@@ -226,9 +371,10 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
 
         func write(offset: Int, data: Data) throws {
             let total = memory.data.count
-            guard offset >= 0, offset + data.count <= total else {
+            guard offset >= 0, data.count <= total - offset else {
                 throw WasmEngineError.trap("memory oob write")
             }
+            if data.isEmpty { return }
             memory.withUnsafeMutableBufferPointer(offset: UInt(offset), count: data.count) { dest in
                 _ = data.copyBytes(to: dest)
             }
@@ -241,7 +387,8 @@ public typealias CodeEditorWasmSimulationEngine = WasmKitEngine
             if next > limits.maxLinearMemoryBytes {
                 throw WasmEngineError.memoryLimitExceeded
             }
-            throw WasmEngineError.notSupported("memory.grow via host binding")
+            // WasmKit Memory growth API is limited; refuse rather than soft-succeed.
+            throw WasmEngineError.memoryLimitExceeded
         }
     }
 
