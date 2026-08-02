@@ -81,9 +81,10 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_cleanArchiveRehearsalRequiresEmptyCacheAndAllProducts",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N01",
@@ -94,9 +95,10 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_compatibilityProfileIsPreAlphaNotPhase16RC",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_readmeAndProfileAgreeOnMaturity"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_readmeAndProfileAgreeOnMaturity",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N01_profileIsCIGeneratedWithArtifactAndToolchainIDs"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N02",
@@ -110,7 +112,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_scorecardGateFailsOnAuthoredPassWithoutArtifact",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N02_liveScorecardsPassStructuralHonestyGate"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N03",
@@ -124,7 +126,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_defectGateRejectsFixedWithoutRegressionTests",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N03_liveDefectsLinkRegressionTests"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N04",
@@ -136,9 +138,11 @@
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_accessibilityGateIsMoreThanTokenGrep",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_workbenchAccessibilityHierarchyModel",
-        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_accessibilityHierarchyAndRotorSurfaces"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N04_accessibilityGateExecutesAutomationTests",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_accessibilityHierarchyAndRotorSurfaces",
+        "Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift::test_REL_N04_xcuiEquivalentHierarchyKeyboardRotorSwitchControl"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N05",
@@ -149,9 +153,10 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_perfGateRequiresMeasurementsNotDocsAlone",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_livePerfGatePassesWithCommittedSample"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_livePerfGatePassesWithCommittedSample",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N05_perfProducerEmitsPercentilesAndHardware"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N06",
@@ -162,9 +167,10 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeIsSemanticNotNameOnlySubset",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeScriptRuns"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_apiFreezeScriptRuns",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N06_digesterToolIsAvailableAndBaselineScriptUsesIt"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N07",
@@ -174,9 +180,10 @@
       "phase": 0,
       "status": "fixed",
       "regression_tests": [
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N07_strictConcurrencyIsWarningsAsErrors"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N07_strictConcurrencyIsWarningsAsErrors",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N07_sanitizerScriptExecutesTestsNotBuildOnly"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "REL-N08",
@@ -188,9 +195,12 @@
       "regression_tests": [
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_ghosttyLspDapAreHardGates",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_realLspScriptHardFailsWhenRequiredAndMissing",
-        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_productionMocksNotDefaultInProtocolDAPModules"
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_productionMocksNotDefaultInProtocolDAPModules",
+        "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_REL_N08_productionGhosttyDefaultsRequireLinked",
+        "Tests/CodeEditorTerminalTests/Phase5TerminalTests.swift::test_REL_N08_terminalServiceDefaultsRequireGhosttyLinked",
+        "Tests/CodeEditorTerminalTests/Phase5TerminalTests.swift::test_REL_N08_ghosttyControllerDefaultsRequireLinked"
       ],
-      "notes": "Phase 0 release-truth remediation 2026-08-02"
+      "notes": "Phase 0 release-truth verifier remediation 2026-08-02: execution gates, digester/symbol-graph, a11y automation, perf percentiles, requireLinked defaults, CI-generated profile"
     },
     {
       "id": "CORE-N01",

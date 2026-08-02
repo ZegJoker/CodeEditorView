@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# REL-N04 — accessibility gate beyond source-token grep.
-# Requires hierarchy/focus/rotor model, executable tests, and manual sign-off protocol.
+# REL-N04 — accessibility gate: hierarchy/keyboard/rotor/Switch Control automation + manual protocol.
+# No token-grep-only pass. Swift tests always run (no skip escape hatch).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -8,6 +8,7 @@ fail=0
 
 req_files=(
   Sources/CodeEditorWorkbench/WorkbenchAccessibility.swift
+  Sources/CodeEditorWorkbench/WorkbenchAccessibilityAutomation.swift
   Docs/Architecture/ACCESSIBILITY-SIGNOFF.md
 )
 for f in "${req_files[@]}"; do
@@ -20,6 +21,7 @@ for f in "${req_files[@]}"; do
 done
 
 A11Y="Sources/CodeEditorWorkbench/WorkbenchAccessibility.swift"
+AUTO="Sources/CodeEditorWorkbench/WorkbenchAccessibilityAutomation.swift"
 if [[ -f "$A11Y" ]]; then
   for token in WorkbenchAccessibilityHierarchy WorkbenchFocusOrder rotor keyboard; do
     if ! grep -q "$token" "$A11Y"; then
@@ -33,6 +35,19 @@ if [[ -f "$A11Y" ]]; then
       fail=1
     fi
   done
+fi
+
+if [[ -f "$AUTO" ]]; then
+  for token in WorkbenchAccessibilitySession moveFocus rotorQuery switchControl fullKeyboardAccess reduceMotion; do
+    if ! grep -q "$token" "$AUTO"; then
+      echo "FAIL: automation missing $token"
+      fail=1
+    fi
+  done
+  echo "OK:   accessibility automation session API present"
+else
+  echo "FAIL: WorkbenchAccessibilityAutomation.swift required for XCUI-equivalent coverage"
+  fail=1
 fi
 
 if ! grep -R -q "accessibilityIdentifier" Sources/CodeEditorWorkbench --include='*.swift'; then
@@ -49,7 +64,6 @@ else
   echo "OK:   reduce-motion handling present"
 fi
 
-# Manual sign-off protocol must list IME + screen reader scenarios
 if [[ -f Docs/Architecture/ACCESSIBILITY-SIGNOFF.md ]]; then
   if ! grep -qiE 'IME|screen reader|VoiceOver|Switch Control|Dynamic Type|high contrast' Docs/Architecture/ACCESSIBILITY-SIGNOFF.md; then
     echo "FAIL: ACCESSIBILITY-SIGNOFF.md missing required manual scenarios"
@@ -57,23 +71,29 @@ if [[ -f Docs/Architecture/ACCESSIBILITY-SIGNOFF.md ]]; then
   else
     echo "OK:   manual sign-off protocol present"
   fi
-fi
-
-# Executable accessibility tests (hierarchy model + Phase 16 IDs)
-if ! grep -R -q "WorkbenchAccessibility\|AccessibilityHierarchy\|Phase16Accessibility\|REL_N04\|test_REL_N04" Tests --include='*.swift'; then
-  echo "FAIL: no executable accessibility tests under Tests/"
-  fail=1
-else
-  echo "OK:   executable accessibility tests referenced"
-fi
-
-# Run focused swift tests when not skipped for fixture-only hosts
-if [[ "${A11Y_SKIP_SWIFT_TEST:-0}" != "1" ]]; then
-  echo "== swift test --filter Phase16Accessibility =="
-  if ! swift test --filter Phase16Accessibility 2>&1 | tail -30; then
-    echo "FAIL: accessibility swift tests failed"
+  # Automation must cover keyboard/rotor/switch; manual only for IME/screen-reader residual
+  if ! grep -qiE 'automat' Docs/Architecture/ACCESSIBILITY-SIGNOFF.md; then
+    echo "FAIL: ACCESSIBILITY-SIGNOFF.md must document automated vs manual split"
     fail=1
   fi
+fi
+
+if ! grep -R -q "WorkbenchAccessibilitySession\|test_REL_N04" Tests --include='*.swift'; then
+  echo "FAIL: no executable WorkbenchAccessibilitySession automation tests"
+  fail=1
+else
+  echo "OK:   executable accessibility automation tests present"
+fi
+
+# Always run focused swift tests (no skip escape hatch)
+echo "== swift test --filter REL_N04 =="
+if ! swift test --filter REL_N04 2>&1 | tee /tmp/a11y-swift-test.log | tail -40; then
+  echo "FAIL: accessibility automation swift tests failed"
+  fail=1
+fi
+if ! grep -Eqi 'passed|Test run' /tmp/a11y-swift-test.log; then
+  # swift-testing formats vary; exit code is authoritative
+  :
 fi
 
 if [[ "$fail" -ne 0 ]]; then

@@ -1,0 +1,71 @@
+class LinkedGuestWasmInstance | sendable=1
+enum CoreWasmABI
+enum CoreWasmExport | sendable=1
+enum CoreWasmImport | sendable=1
+enum WasmEngineError | sendable=1
+enum WasmValue | sendable=1
+func abiVersionConstantModule(value: Int32)
+func abiVersionOnlyModule()
+func call(_ name: String, args: [WasmValue])
+func conformanceModule()
+func hostSendEchoModule()
+func infiniteLoopModule()
+func instantiate( module: Data, imports: WasmHostImports, limits: WasmResourceLimits )
+func interrupt()
+func malformedModule()
+func missingExportModule()
+func validate(module: Data, limits: WasmResourceLimits)
+init ( maxLinearMemoryBytes: Int , maxWallTime: Duration )
+init ( send: @escaping @Sendable (UnsafeRawPointer?, Int32)
+init ( wallTimeStarted: Date )
+init ()
+init (factory: @escaping GuestFactory)
+init (guest: any LinkedWasmGuest, limits: WasmResourceLimits)
+protocol CodeEditorWasmEngine | sendable=1
+protocol CodeEditorWasmInstance | sendable=1
+protocol LinkedWasmGuest | sendable=1
+protocol WasmMemoryView | sendable=1
+struct InProcessCoreWasmEngine
+struct LinkedGuestWasmEngine
+struct WasmHostImports | sendable=1
+struct WasmMeters | sendable=1
+struct WasmModuleBuilder | sendable=1
+struct WasmResourceLimits | sendable=1
+typealias CodeEditorWasmSimulationEngine
+typealias GuestFactory | sendable=1
+var budgetConsumed
+var guest
+var hostSendBytes
+var hostSendMessages
+var i32
+var i64
+var interrupted
+var isInterrupted
+var log | sendable=1
+var logBytes
+var magic
+var maxConcurrentRequests
+var maxHostSendQueueBytes
+var maxHostSendQueueMessages
+var maxLinearMemoryBytes
+var maxLogBytes
+var maxModuleBytes
+var maxPollBudgetPerTick
+var maxPollTicks
+var maxWallTime
+var memory
+var memoryBytes
+var meters
+var moduleName
+var monotonicMillis | sendable=1
+var pollTicks
+var send | sendable=1
+var shouldCancel | sendable=1
+var statusBackpressure
+var statusBusy
+var statusCancelled
+var statusError
+var statusOK
+var tight
+var version
+var wallTimeStarted

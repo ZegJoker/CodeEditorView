@@ -1,0 +1,7 @@
+enum CodeEditorLanguageSwift | sendable=1
+func register() | attr=discardableResult
+var grammarCommit
+var grammarParserSHA256
+var grammarSourceURL
+var lastError
+var requiredQueries

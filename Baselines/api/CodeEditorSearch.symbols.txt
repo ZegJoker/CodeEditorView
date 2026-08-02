@@ -1,0 +1,71 @@
+actor WorkspaceSearchService
+enum GitIgnoreLoader
+enum SearchCommands
+enum SearchError | sendable=1
+enum SearchEvent | sendable=1
+enum SearchMatchMode | sendable=1
+enum SearchReplaceBuilder
+enum SearchReplaceService | isolation=@MainActor
+func append(contentsOf other: GitIgnoreRules)
+func apply( plan: SearchReplacePlan, to workspace: Workspace, preserveCase: Bool )
+func applyPreserveCase(matched: String, replacement: String)
+func isIgnored(relativePath: String, isDirectory: Bool)
+func load(root: URL, maxFiles: Int )
+func makeWorkspaceEdit( plan: SearchReplacePlan, openDocumentVersions: [DocumentURI: DocumentVersion] , documentTexts: [DocumentURI: String] , preserveCase: Bool )
+func parse(fileContents: String, basePath: String )
+func register( into registry: CommandRegistry, onFindInFiles: @escaping @MainActor () | isolation=@MainActor attr=discardableResult
+func replacementText( for match: SearchMatch, template: String, query: SearchQuery, fullText: String? , preserveCase: Bool )
+func search( _ query: SearchQuery, context: WorkspaceSearchContext )
+init ( id: UUID )
+init ( pattern: String, matchMode: SearchMatchMode , caseSensitive: Bool , isRegex: Bool , wholeWord: Bool , includeGlobs: [String] , excludeGlobs: [String] , maxFileBytes: Int , maxResults: Int )
+init ( rootDirectories: [URL] , openDocuments: [DocumentURI: String] , openDocumentVersions: [DocumentURI: DocumentVersion] )
+init (context: WorkspaceSearchContext, backendOptions: NativeSearchBackend ))
+init (filesScanned: Int, matchesFound: Int, currentPath: String? )
+init (maxFileBytes: Int , respectGitIgnore: Bool )
+init (pattern: String, isNegation: Bool, directoryOnly: Bool, basePath: String)
+init (query: SearchQuery, replacement: String, matches: [SearchMatch])
+init (rules: [Rule] , alwaysExcludeNames: Set<String> , ".DS_Store"])
+protocol SearchBackend | sendable=1
+struct GitIgnoreRules | sendable=1
+struct NativeSearchBackend
+struct Rule | sendable=1
+struct SearchMatch | sendable=1
+struct SearchProgress | sendable=1
+struct SearchQuery | sendable=1
+struct SearchReplacePlan | sendable=1
+struct WorkspaceSearchContext | sendable=1
+var alwaysExcludeNames
+var basePath
+var caseSensitive
+var column
+var currentPath
+var defaultExcludes
+var directoryOnly
+var displayName
+var excludeGlobs
+var filesScanned
+var findInFiles
+var fromOpenDocument
+var id
+var includeGlobs
+var isNegation
+var isRegex
+var line
+var matchMode
+var matches
+var matchesFound
+var maxFileBytes
+var maxResults
+var openDocumentVersions
+var openDocuments
+var pattern
+var preview
+var query
+var range
+var replaceInFiles
+var replacement
+var respectGitIgnore
+var rootDirectories
+var rules
+var uri
+var wholeWord

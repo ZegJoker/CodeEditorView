@@ -8,7 +8,9 @@ import Foundation
 /// Actor-isolated Ghostty surface controller (TER-001 / §21.4).
 ///
 /// Owns one surface handle and feeds ordered bytes without loss.
-/// Production factories should set `requireLinked` and refuse unlinked mode.
+///
+/// Production default is `requireLinked: true` (REL-N08 fail-closed). Tests and
+/// explicit unlinked harnesses must pass `requireLinked: false`.
 public actor GhosttySessionController {
     public let id: TerminalSessionID
     public private(set) var isLinkedToGhostty: Bool
@@ -24,7 +26,7 @@ public actor GhosttySessionController {
         id: TerminalSessionID = TerminalSessionID(),
         cols: Int = 80,
         rows: Int = 24,
-        requireLinked: Bool = false
+        requireLinked: Bool = true
     ) throws {
         self.id = id
         self.cols = cols

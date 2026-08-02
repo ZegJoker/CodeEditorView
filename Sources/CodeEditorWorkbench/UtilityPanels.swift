@@ -191,9 +191,10 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
     private var pollTask: Task<Void, Never>?
 
     public init(service: TerminalService? = nil) {
+        // REL-N08: production workbench terminal fails closed unless Ghostty is linked.
         self.service = service ?? TerminalService(
             securityPolicy: .restricted,
-            requireGhosttyLinked: false,
+            requireGhosttyLinked: true,
             isGhosttyLinked: { GhosttySessionController.isLinked }
         )
     }
@@ -210,8 +211,8 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
     #if os(macOS)
         private func startMacSession() async {
             do {
-                let ghostty = try GhosttySessionController(
-                    cols: 80, rows: 24, requireLinked: false)
+                // Production path requires linked Ghostty (default requireLinked: true).
+                let ghostty = try GhosttySessionController(cols: 80, rows: 24, requireLinked: true)
                 self.controller = ghostty
                 let transport = LocalPTYTransport(securityPolicy: .restricted)
                 let id = try await service.create(

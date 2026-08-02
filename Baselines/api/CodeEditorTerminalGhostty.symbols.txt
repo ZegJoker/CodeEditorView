@@ -1,0 +1,39 @@
+actor GhosttyRunInTerminalHandler
+actor GhosttySessionController
+class GhosttySurfaceView | isolation=@MainActor
+func applySnapshot(_ text: String)
+func bindSession(_ id: TerminalSessionID)
+func from(snapshot: String, title: String, isRunning: Bool)
+func keyDown(with event: NSEvent)
+func keyInput(_ bytes: Data)
+func layout()
+func makeNSView(context: Context)
+func makeUIView(context: Context)
+func resize(cols: Int, rows: Int, widthPx: Int , heightPx: Int )
+func runInTerminal(args: DAPRunInTerminalArgs)
+func shutdown()
+func snapshotUTF8()
+func textDidChange(_ notification: Notification)
+func updateNSView(_ nsView: GhosttySurfaceView, context: Context)
+func updateUIView(_ uiView: GhosttySurfaceView, context: Context)
+func write(_ bytes: Data)
+init ( id: TerminalSessionID )
+init ( screenText: String , cursorLine: Int , cursorColumn: Int , title: String , isRunning: Bool )
+init ( service: TerminalService, transportFactory: @escaping @Sendable ()
+init ( sessionID: TerminalSessionID, snapshot: String, onKeyData: @escaping (Data)
+init (sessionID: TerminalSessionID ))
+struct GhosttyAccessibilityAdapter | sendable=1
+struct GhosttySurfaceRepresentable
+var accessibilityLabel
+var accessibilityValue
+var cursorColumn
+var cursorLine
+var id
+var isLinked
+var isRunning
+var onKeyData
+var screenText
+var sessionID
+var shimABI
+var snapshot
+var title

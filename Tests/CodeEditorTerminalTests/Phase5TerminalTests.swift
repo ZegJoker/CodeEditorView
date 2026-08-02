@@ -61,7 +61,7 @@ struct Phase5TransportServiceTests {
     }
 
     @Test func terminalServiceCloseAllOnReplace() async throws {
-        let service = TerminalService()
+        let service = TerminalService(requireGhosttyLinked: false)
         let id1 = try await service.create(transport: MockByteTransport())
         let id2 = try await service.create(transport: MockByteTransport())
         #expect(await service.allSessions().count == 2)
@@ -87,13 +87,43 @@ struct Phase5TransportServiceTests {
     }
 
     @Test func restorationIsConfigOnly() async throws {
-        let service = TerminalService()
+        let service = TerminalService(requireGhosttyLinked: false)
         var cfg = TerminalConfiguration()
         cfg.cols = 100
         _ = try await service.create(configuration: cfg, transport: MockByteTransport())
         let snaps = await service.restorationSnapshots()
         #expect(snaps.count == 1)
         #expect(snaps[0].cols == 100)
+    }
+
+    @Test func test_REL_N08_terminalServiceDefaultsRequireGhosttyLinked() async throws {
+        // Production default must fail closed when Ghostty is not linked.
+        let service = TerminalService()
+        let requires = await service.requireGhosttyLinked
+        #expect(requires == true)
+        do {
+            _ = try await service.create(transport: MockByteTransport())
+            Issue.record("default TerminalService must refuse unlinked sessions")
+        } catch let error as TerminalError {
+            guard case .startFailed = error else {
+                Issue.record("wrong \(error)")
+                return
+            }
+        }
+    }
+
+    @Test func test_REL_N08_ghosttyControllerDefaultsRequireLinked() async throws {
+        // Production default requireLinked is true.
+        if GhosttySessionController.isLinked {
+            let c = try GhosttySessionController()
+            let linked = await c.isLinkedToGhostty
+            #expect(linked == true)
+            await c.shutdown()
+            return
+        }
+        #expect(throws: TerminalError.self) {
+            _ = try GhosttySessionController()
+        }
     }
 }
 
@@ -161,7 +191,7 @@ struct Phase5GhosttyControllerTests {
 @Suite("Phase5 DAP runInTerminal")
 struct Phase5DAPTerminalTests {
     @Test func runInTerminalCreatesDebuggeeSession() async throws {
-        let service = TerminalService(securityPolicy: .trusted)
+        let service = TerminalService(securityPolicy: .trusted, requireGhosttyLinked: false)
         let handler = GhosttyRunInTerminalHandler(service: service) {
             MockByteTransport()
         }
@@ -181,7 +211,7 @@ struct Phase5DAPTerminalTests {
     }
 
     @Test func runInTerminalDeniedWhenUntrusted() async throws {
-        let service = TerminalService(securityPolicy: .restricted)
+        let service = TerminalService(securityPolicy: .restricted, requireGhosttyLinked: false)
         let handler = GhosttyRunInTerminalHandler(service: service) {
             MockByteTransport()
         }

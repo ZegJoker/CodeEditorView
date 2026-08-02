@@ -29,13 +29,13 @@ public actor TerminalService {
     private var sessions: [TerminalSessionID: Live] = [:]
     private var activeID: TerminalSessionID?
     public var securityPolicy: TerminalSecurityPolicy
-    /// When true, refuse to create sessions without a Ghostty-linked engine (production).
+    /// Production default is `true` (REL-N08 fail-closed). Tests must pass `false` explicitly when using mocks.
     public var requireGhosttyLinked: Bool
     public var isGhosttyLinked: @Sendable () -> Bool
 
     public init(
         securityPolicy: TerminalSecurityPolicy = .restricted,
-        requireGhosttyLinked: Bool = false,
+        requireGhosttyLinked: Bool = true,
         isGhosttyLinked: @escaping @Sendable () -> Bool = { false }
     ) {
         self.securityPolicy = securityPolicy

@@ -1,0 +1,198 @@
+actor DAPJSONRPCConnection
+actor DebugAdapterPool
+actor DebugAdapterSession
+class DAPLog | sendable=1
+class DAPProcessTransport | sendable=1
+class DAPTCPConnectTransport | sendable=1
+class DAPTestTransport | sendable=1
+class Decoder | sendable=1
+enum DAPError | sendable=1
+enum DAPLogLevel | sendable=1
+enum DAPMessageFraming
+enum DAPProtocolVersion
+enum DebugAdapterLaunch | sendable=1
+enum DebugAdapterState | sendable=1
+enum DecodeError | sendable=1
+enum RequestID | sendable=1
+func adapter(for definition: DebugAdapterDefinition) | attr=discardableResult
+func append(_ data: Data)
+func append(level: DAPLogLevel, message: String, adapterID: String? )
+func attach(configuration: DAPJSONObject)
+func close()
+func completions(text: String, column: Int, frameId: Int?)
+func disassemble(memoryReference: String, instructionCount: Int )
+func disconnect(terminateDebuggee: Bool )
+func encode(_ body: Data)
+func evaluate(expression: String, frameId: Int?, context: String )
+func launch(configuration: DAPJSONObject, noDebug: Bool )
+func loadedSources()
+func makePair() -> (client: DAPTestTransport, server: DAPTestTransport)
+func modules()
+func next(threadId: Int)
+func parse(from body: [String: Any])
+func pause(threadId: Int)
+func readMemory(memoryReference: String, count: Int)
+func registerTestFactory( id: String, factory: @escaping @Sendable ()
+func remove(id: DebugAdapterID)
+func requestDictionary(_ command: String, arguments: DAPJSONObject? )
+func requestRaw(command: String, arguments: DAPJSONObject? )
+func reset()
+func restart(configuration: DAPJSONObject? )
+func restart(id: DebugAdapterID, configuration: DAPJSONObject? )
+func scopes(frameId: Int)
+func send(_ data: Data)
+func session(id: DebugAdapterID)
+func setBreakpoints(sourcePath: String, breakpoints: [DAPSourceBreakpoint])
+func setDataBreakpoints(dataIds: [String])
+func setEventHandler(_ handler: @escaping @Sendable (String, DAPJSONObject) async -> Void) | sendable=1
+func setExceptionBreakpoints(filters: [String])
+func setFunctionBreakpoints(_ names: [String])
+func setInstructionBreakpoints(addresses: [String])
+func setReverseRequestHandler( _ handler: @escaping @Sendable (String, RequestID, DAPJSONObject)
+func setRunInTerminalHandler(_ handler: (any DAPRunInTerminalHandler)?)
+func setStartDebuggingHandler(_ handler: (any DAPStartDebuggingHandler)?)
+func setVariable(variablesReference: Int, name: String, value: String)
+func shutdown()
+func shutdownAll()
+func source(sourceReference: Int)
+func stackTrace(threadId: Int, startFrame: Int , levels: Int )
+func start()
+func stepIn(threadId: Int)
+func stepOut(threadId: Int)
+func terminate()
+func threads()
+func variables(variablesReference: Int)
+func writeMemory(memoryReference: String, data: String)
+init ( definition: DebugAdapterDefinition, log: DAPLog )
+init ( executable: URL, arguments: [String] , environment: [String: String]? , currentDirectory: URL? , platformProfile: PlatformCapabilityProfile )
+init ( id: DebugAdapterID, displayName: String, languages: Set<String> , launch: DebugAdapterLaunch, environment: [String: String] , currentDirectory: URL? , adapterID: String? , preDebugTaskID: String? , postDebugTaskID: String? )
+init ( kind: String? , title: String? , cwd: String? , args: [String], env: [String: String]? )
+init ( line: Int, column: Int? , condition: String? , hitCondition: String? , logMessage: String? )
+init ( maxBodyBytes: Int , maxBufferBytes: Int )
+init ( requestTimeout: Duration )
+init ( transport: any DAPTransport, log: DAPLog )
+init ()
+init (_ dictionary: [String: Any] )
+init (host: String, port: Int, timeoutSeconds: TimeInterval )
+init (id: Int, name: String)
+init (id: Int, name: String, line: Int, column: Int, sourcePath: String? )
+init (id: Int? , verified: Bool, message: String? , line: Int? , column: Int? )
+init (level: DAPLogLevel, message: String, adapterID: String? , date: Date ))
+init (log: DAPLog ))
+init (maxEvents: Int )
+init (name: String, value: String, type: String? , variablesReference: Int )
+init (name: String, variablesReference: Int, expensive: Bool )
+init (processId: Int? , shellProcessId: Int? )
+init (rawValue: String)
+init (stringLiteral value: String)
+protocol DAPRunInTerminalHandler | sendable=1
+protocol DAPStartDebuggingHandler | sendable=1
+protocol DAPTransport | sendable=1
+struct DAPBreakpoint | sendable=1
+struct DAPCapabilities | sendable=1
+struct DAPJSONObject | sendable=1
+struct DAPLogEvent | sendable=1
+struct DAPOutputEvent | sendable=1
+struct DAPRunInTerminalArgs | sendable=1
+struct DAPRunInTerminalResult | sendable=1
+struct DAPScope | sendable=1
+struct DAPServerBudgets | sendable=1
+struct DAPSourceBreakpoint | sendable=1
+struct DAPStackFrame | sendable=1
+struct DAPStoppedEvent | sendable=1
+struct DAPThread | sendable=1
+struct DAPVariable | sendable=1
+struct DebugAdapterDefinition | sendable=1
+struct DebugAdapterID | sendable=1
+var adapterID
+var allThreadsStopped
+var args
+var category
+var column
+var condition
+var currentDirectory
+var cwd
+var date
+var defaultMaxBodyBytes
+var defaultMaxBufferBytes
+var definition
+var description
+var dictionary
+var displayName
+var empty
+var env
+var environment
+var events
+var expensive
+var hitCondition
+var id
+var inbound
+var kind
+var languages
+var launch
+var level
+var line
+var log
+var logMessage
+var major
+var maxBodyBytes
+var maxBufferBytes
+var maxStderrBytes
+var message
+var minor
+var name
+var output
+var poolKey
+var postDebugTaskID
+var preDebugTaskID
+var processId
+var processIdentifier
+var rawValue
+var reason
+var requestTimeout
+var restartInitialBackoff
+var restartMaxAttempts
+var restartMaxBackoff
+var runInTerminalHandler
+var shellProcessId
+var sourcePath
+var startDebuggingHandler
+var stderrBytes
+var supportTerminateDebuggee
+var supportsBreakpointLocationsRequest
+var supportsCancelRequest
+var supportsCompletionsRequest
+var supportsConditionalBreakpoints
+var supportsConfigurationDoneRequest
+var supportsDataBreakpoints
+var supportsDelayedStackTraceLoading
+var supportsDisassembleRequest
+var supportsEvaluateForHovers
+var supportsExceptionFilterOptions
+var supportsExceptionInfoRequest
+var supportsExceptionOptions
+var supportsFunctionBreakpoints
+var supportsGotoTargetsRequest
+var supportsHitConditionalBreakpoints
+var supportsInstructionBreakpoints
+var supportsLoadedSourcesRequest
+var supportsLogPoints
+var supportsModulesRequest
+var supportsReadMemoryRequest
+var supportsRestartFrame
+var supportsRestartRequest
+var supportsSetExpression
+var supportsSetVariable
+var supportsSingleThreadExecutionRequests
+var supportsStepBack
+var supportsStepInTargetsRequest
+var supportsTerminateRequest
+var supportsTerminateThreadsRequest
+var supportsValueFormattingOptions
+var supportsWriteMemoryRequest
+var threadId
+var title
+var type
+var value
+var variablesReference
+var verified

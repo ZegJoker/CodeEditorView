@@ -8,6 +8,13 @@ cd "$ROOT"
 OUT_DIR="${1:-$ROOT/Baselines/evidence}"
 mkdir -p "$OUT_DIR"
 
+# PKG-N01: full suite is the only valid production path (fail closed early).
+if [[ "${FULL_ARCHIVE_TEST:-1}" != "1" ]]; then
+  echo "FAIL: FULL_ARCHIVE_TEST must be 1 for clean-archive rehearsal (got ${FULL_ARCHIVE_TEST:-})" >&2
+  echo "      Acceptance requires: resolve → all products → all tests" >&2
+  exit 1
+fi
+
 STAGING="$(mktemp -d /tmp/codeeditor-archive-XXXXXX)"
 cleanup() { rm -rf "$STAGING"; }
 trap cleanup EXIT
@@ -170,14 +177,13 @@ echo "== resolve + build (empty HOME/cache tree) =="
       find .build -type f -name 'codeeditor-extension' -perm -111 -exec {} validate Tests/Fixtures/Extensions/s0-basic \;
   fi
 
-  # Targeted tests on clean tree (full suite optional via FULL_ARCHIVE_TEST=1)
-  if [[ "${FULL_ARCHIVE_TEST:-0}" == "1" ]]; then
-    swift test
-  else
-    swift test --filter 'ReleaseTruthTests|CodeEditorCoreTests'
-  fi
+  # PKG-N01 acceptance: fresh archive → resolve → all product builds → all tests.
+  echo "== swift test (full suite on clean tree) =="
+  # Prevent infinite recursion when a regression test invokes this script.
+  export CODEEDITOR_IN_ARCHIVE_REHEARSAL=1
+  swift test
 )
 
-echo "OK: source-archive rehearsal passed (PKG-N01 clean resolve/build)"
+echo "OK: source-archive rehearsal passed (PKG-N01 clean resolve/build/test)"
 echo "    sha256=$SHA"
 echo "    artifacts under $OUT_DIR (dependency-graph, fingerprints)"

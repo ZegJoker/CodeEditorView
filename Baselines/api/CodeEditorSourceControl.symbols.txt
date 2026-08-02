@@ -1,0 +1,121 @@
+actor SourceControlService
+class GitCLIProvider | sendable=1
+enum GitPorcelain
+enum GitRepositoryDiscovery
+enum SCMCommands
+enum SCMConflictSide | sendable=1
+enum SCMError | sendable=1
+enum SCMProgressEvent | sendable=1
+enum SCMState | sendable=1
+func allProviderIDs()
+func blame(uri: DocumentURI)
+func branches()
+func cancel()
+func checkout(branch: String)
+func commit(message: String)
+func createBranch(_ name: String)
+func currentProviderID()
+func deleteBranch(_ name: String)
+func diff(uri: DocumentURI)
+func discard(uris: [DocumentURI])
+func discardHunk(_ hunk: SCMDiffHunk, uri: DocumentURI)
+func discover(from start: URL)
+func discoverAndRegister( roots: [URL], platformProfile: PlatformCapabilityProfile )
+func fetch(remote: String? )
+func fetch(remote: String?)
+func log(limit: Int )
+func log(limit: Int)
+func mapXY(_ x: Character, _ y: Character) -> (SCMState, Bool)
+func parseDiff(_ raw: String, path: String)
+func parseStatus(_ text: String, repositoryRoot: URL)
+func parseStatusZ(_ data: Data, repositoryRoot: URL)
+func pull(remote: String? , branch: String? )
+func pull(remote: String?, branch: String?)
+func push(remote: String? , branch: String? )
+func push(remote: String?, branch: String?)
+func refresh() | attr=discardableResult
+func register( into registry: CommandRegistry, onRefresh: @escaping @MainActor () | isolation=@MainActor attr=discardableResult
+func registerProvider(_ provider: any SourceControlProvider)
+func remotes()
+func resolveConflict(uri: DocumentURI, side: SCMConflictSide)
+func selectProvider(id: String)
+func setProvider(_ provider: (any SourceControlProvider)?)
+func stage(uris: [DocumentURI])
+func stageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI)
+func status()
+func tags()
+func unstage(uris: [DocumentURI])
+func unstageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI)
+func validateRelativePath(_ path: String, root: URL)
+init ( header: String, oldStart: Int, oldCount: Int, newStart: Int, newCount: Int, lines: [String] )
+init ( repositoryRoot: URL, executable: URL )
+init ( uri: DocumentURI, path: String, state: SCMState, staged: Bool , originalPath: String? , isSubmodule: Bool )
+init ()
+init (branches: [SCMBranch] , current: String? )
+init (hash: String, subject: String, author: String? , date: String? )
+init (id: String , reason: String)
+init (lineNumber: Int, commitHash: String, author: String? , summary: String? , content: String)
+init (name: String)
+init (name: String, isCurrent: Bool , isRemote: Bool )
+init (name: String, url: String? )
+init (path: String, raw: String, hunks: [SCMDiffHunk] )
+init (protocolName: String, host: String, path: String)
+init (username: String? , password: String? )
+protocol SCMAuthCallback | sendable=1
+protocol SourceControlProvider | sendable=1
+protocol SourceControlProviderDefaults
+struct SCMAuthRequest | sendable=1
+struct SCMBlameLine | sendable=1
+struct SCMBranch | sendable=1
+struct SCMBranchList | sendable=1
+struct SCMCommit | sendable=1
+struct SCMCredentials | sendable=1
+struct SCMDiff | sendable=1
+struct SCMDiffHunk | sendable=1
+struct SCMFileStatus | sendable=1
+struct SCMRemote | sendable=1
+struct SCMTag | sendable=1
+struct UnavailableSourceControlProvider
+var auth
+var author
+var branches
+var commit
+var commitHash
+var content
+var current
+var date
+var executable
+var hash
+var header
+var host
+var hunks
+var id
+var isCurrent
+var isRemote
+var isSubmodule
+var lineNumber
+var lines
+var name
+var newCount
+var newStart
+var oldCount
+var oldStart
+var originalPath
+var password
+var path
+var platformProfile
+var protocolName
+var raw
+var reason
+var refresh
+var repositoryRoot
+var stage
+var staged
+var state
+var statusStream
+var subject
+var summary
+var trusted
+var uri
+var url
+var username

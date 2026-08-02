@@ -1,0 +1,151 @@
+actor ExtensionWireConnection
+class Decoder | sendable=1
+enum CBORCodec
+enum CBORError | sendable=1
+enum CBORFraming
+enum CBORValue | sendable=1
+enum ExtensionEnvelope | sendable=1
+enum ExtensionEnvelopeCodec
+enum ExtensionMethodCatalog
+enum JSONDiagnosticRenderer
+func append(_ data: Data)
+func cancel(id: ExtensionRequestID)
+func clearInFlight(id: ExtensionRequestID)
+func close()
+func contains(_ id: ExtensionMethodID)
+func creditStream(streamID: String, amount: Int )
+func decode(_ data: Data)
+func encode(_ body: Data, maxFrameBytes: Int )
+func encode(_ envelope: ExtensionEnvelope)
+func encode(_ value: CBORValue)
+func fromCBOR(_ value: CBORValue)
+func int(_ value: Int)
+func isCancelled(_ id: ExtensionRequestID)
+func isCompatible(with peer: ExtensionWireProtocolVersion)
+func openStream(id: ExtensionRequestID, streamID: String)
+func render(_ envelope: ExtensionEnvelope)
+func request( _ method: ExtensionMethodID, payload: Data )
+func reset()
+func send(_ envelope: ExtensionEnvelope)
+func sendStreamChunk(streamID: String, sequence: UInt64, data: Data, fin: Bool)
+func setEnvelopeHandler(_ handler: @escaping @Sendable (ExtensionEnvelope) async -> Void) | sendable=1
+func setGeneration(_ gen: UInt64)
+func start()
+func string(_ s: String)
+func stringMap(_ dict: [String: CBORValue])
+func toCBOR(_ envelope: ExtensionEnvelope)
+func trackInFlight(id: ExtensionRequestID, task: Task<Void, Never>)
+init ( accepted: Bool, protocolVersion: ExtensionWireProtocolVersion , schemaHash: String , hostCapabilities: [String] , grantedPermissions: [String] , limits: ExtensionHostLimits , generation: UInt64 , rejectReason: String? )
+init ( maxPayloadBytes: Int , maxFrameBytes: Int , streamWindow: Int , maxConcurrentRequests: Int , requestTimeoutMS: Int )
+init ( protocolVersion: ExtensionWireProtocolVersion , schemaHash: String , apiVersion: String )
+init ( transport: any ExtensionWireTransport, maxPayloadBytes: Int , maxFrameBytes: Int , defaultTimeout: Duration )
+init (_ rawValue: UUID ))
+init (code: Int, message: String)
+init (major: Int, minor: Int )
+init (manifest: ExtensionManifest, runtimeKind: String , packageDigest: String? )
+init (maxFrameBytes: Int )
+init (rawValue: String)
+init (stringLiteral value: String)
+protocol ExtensionWireTransport | sendable=1
+struct ExtensionHostLimits | sendable=1
+struct ExtensionMethodID | sendable=1
+struct ExtensionRequestID | sendable=1
+struct ExtensionWireError | sendable=1
+struct ExtensionWireHandshake | sendable=1
+struct ExtensionWireHandshakeResult | sendable=1
+struct ExtensionWireProtocolVersion | sendable=1
+var accepted
+var activate
+var apiVersion
+var arch
+var arrayValue
+var boolValue
+var cancelled
+var canonicalSchemaText
+var capabilities
+var code
+var completion
+var current
+var dapLocate
+var dapResolveConfigurations
+var dapResolveLaunchPlan
+var dapRestart
+var dapStatus
+var dataValue
+var deactivate
+var defaultMaxFrameBytes
+var defaultTimeout
+var definition
+var description
+var diagnostics
+var displayName
+var docsBuildIndex
+var docsInvalidate
+var docsSuggest
+var downloadFetch
+var echo
+var entries
+var forgedHandle
+var generation
+var grantedPermissions
+var hostCapabilities
+var hover
+var incompatibleProtocol
+var intValue
+var limits
+var lsInitializationOptions
+var lsResolveLaunchPlan
+var lsRestart
+var lsStatus
+var lsTransformCompletionLabel
+var lsTransformSymbolLabel
+var lsWorkspaceConfiguration
+var major
+var maxConcurrentRequests
+var maxFrameBytes
+var maxPayloadBytes
+var mcpResolveLaunchPlan
+var mcpRestart
+var mcpStatus
+var message
+var methodNotFound
+var minor
+var npmInstall
+var packageDigest
+var packageID
+var packageVersion
+var payloadTooLarge
+var permissionDenied
+var permissions
+var ping
+var platform
+var processID
+var processKill
+var processSpawn
+var projectInfo
+var protocolMajor
+var protocolMinor
+var protocolVersion
+var quarantined
+var rawValue
+var rejectReason
+var requestTimeoutMS
+var runtimeKind
+var schemaHash
+var schemaMismatch
+var settingsGet
+var settingsSet
+var slashExecute
+var spawnChild
+var storageGet
+var storageSet
+var streamWindow
+var stringMap
+var stringValue
+var timeout
+var transportClosed
+var untrustedPackage
+var worktreeEnvironment
+var worktreeList
+var worktreeRead
+var worktreeWhich

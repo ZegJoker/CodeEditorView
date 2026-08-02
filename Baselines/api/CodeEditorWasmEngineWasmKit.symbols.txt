@@ -1,0 +1,6 @@
+func instantiate( module: Data, imports: WasmHostImports, limits: WasmResourceLimits )
+func validate(module: Data, limits: WasmResourceLimits)
+func withDefaultGuestFactory( _ factory: @escaping ()
+init ()
+init (guestFactory: @escaping () -> Any)
+struct WasmKitEngine

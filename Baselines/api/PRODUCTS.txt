@@ -3,7 +3,7 @@ CodeEditorCore	312
 CodeEditorDocuments	165
 CodeEditorCommands	187
 CodeEditorWorkspace	275
-CodeEditorWorkbench	387
+CodeEditorWorkbench	411
 CodeEditorView	789
 CodeEditorLanguageSupport	144
 CodeEditorLanguageServices	367

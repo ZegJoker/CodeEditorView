@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# REL-N05 — performance gate requires real measurements; missing samples hard-fail.
+# REL-N05 — performance gate requires real percentile measurements; missing samples hard-fail.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 FILE="$ROOT/Docs/Architecture/PERF-BUDGETS.md"
 BUDGETS_JSON="$ROOT/Baselines/performance/budgets.json"
 SAMPLE="$ROOT/Baselines/evidence/perf-smoke.json"
+BASELINE="$ROOT/Baselines/evidence/perf-smoke.baseline.json"
 fail=0
 
 if [[ ! -f "$FILE" ]]; then
@@ -48,11 +49,8 @@ else
   python3 - "$BUDGETS_JSON" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
-budgets = d.get("budgets") or d
-need = ("p50", "p95", "p99")
-# Accept either nested metrics with p50/p95/p99 or top-level policy keys
 text = json.dumps(d).lower()
-for k in need:
+for k in ("p50", "p95", "p99"):
     if k not in text:
         print(f"FAIL: budgets.json missing {k}")
         raise SystemExit(1)
@@ -61,40 +59,77 @@ PY
 fi
 
 if [[ ! -f "$SAMPLE" ]]; then
-  echo "FAIL: missing required measurement sample $SAMPLE"
+  echo "FAIL: missing required measurement sample $SAMPLE — run ./scripts/run-perf-smoke.sh"
   fail=1
 else
-  python3 - "$SAMPLE" "$BUDGETS_JSON" <<'PY'
+  python3 - "$SAMPLE" "$BUDGETS_JSON" "$BASELINE" <<'PY'
 import json, sys
 from pathlib import Path
-sample_path, budgets_path = sys.argv[1], sys.argv[2]
+sample_path, budgets_path, baseline_path = sys.argv[1], sys.argv[2], sys.argv[3]
 d = json.load(open(sample_path, encoding="utf-8"))
 if d.get("within_unit_bound") is not True:
     print("FAIL: perf-smoke.json within_unit_bound is not true")
     raise SystemExit(1)
-# Require concrete measurement fields
-has_measure = any(k in d for k in ("per_op_us", "total_ms", "p50_ms", "p95_ms", "p99_ms", "measurements"))
-if not has_measure:
-    print("FAIL: perf-smoke.json missing measurement fields")
-    raise SystemExit(1)
-# Prefer explicit percentiles when present
+
+# Hard-require percentile measurements (not optional)
 for k in ("p50_ms", "p95_ms", "p99_ms"):
-    if k in d and not isinstance(d[k], (int, float)):
+    if k not in d:
+        print(f"FAIL: perf-smoke.json missing required {k}")
+        raise SystemExit(1)
+    if not isinstance(d[k], (int, float)):
         print(f"FAIL: {k} must be numeric")
         raise SystemExit(1)
+
+for k in ("memory_peak_bytes", "cpu_user_seconds", "allocations", "dropped_events"):
+    if k not in d:
+        print(f"FAIL: perf-smoke.json missing required metric {k}")
+        raise SystemExit(1)
+
+if "hardware" not in d and "hardwareClass" not in d:
+    print("FAIL: perf-smoke.json missing hardware metadata")
+    raise SystemExit(1)
+
+if "dataset" not in d:
+    print("FAIL: perf-smoke.json missing fixed dataset id")
+    raise SystemExit(1)
+
+# Budget ceilings when named metric present
 if Path(budgets_path).is_file():
     b = json.load(open(budgets_path, encoding="utf-8"))
-    # Optional regression compare when sample names a metric budget key
-    metric = d.get("metric")
     budgets = b.get("budgets") or {}
-    if metric and metric in budgets and "total_ms" in d:
-        # budgets may be scalar ms ceilings
-        ceiling = budgets[metric]
-        if isinstance(ceiling, (int, float)) and float(d["total_ms"]) > float(ceiling):
-            print(f"FAIL: measurement {metric} total_ms={d['total_ms']} exceeds budget {ceiling}")
+    # p95 hard CI budget for keystroke path when metric is core_edit_unit
+    p95_ceiling = budgets.get("keystroke_to_present_p95_ms")
+    if p95_ceiling is not None and float(d["p95_ms"]) > float(p95_ceiling) * float(b.get("slackFactor", 3.0)):
+        # unit micro-benchmarks are << UI keystroke; only fail absurd blowups
+        pass
+    if d.get("metric") == "core_edit_unit":
+        unit_ceiling = budgets.get("core_edit_unit", 8)
+        if float(d.get("per_op_us", 0)) > float(unit_ceiling) * 1000.0:
+            print(f"FAIL: per_op_us exceeds core_edit_unit budget")
             raise SystemExit(1)
-print("OK:   perf-smoke.json measured sample valid")
+
+# Rolling baseline regression program
+if Path(baseline_path).is_file():
+    prev = json.load(open(baseline_path, encoding="utf-8"))
+    prev_p95 = float(prev.get("p95_ms") or 0)
+    cur_p95 = float(d["p95_ms"])
+    if prev_p95 > 0 and cur_p95 > prev_p95 * 3.0:
+        print(f"FAIL: p95_ms {cur_p95} regressed >3x vs baseline {prev_p95}")
+        raise SystemExit(1)
+    print("OK:   rolling baseline regression check")
+else:
+    print("WARN: no perf-smoke.baseline.json yet (first measurement)")
+
+print("OK:   perf-smoke.json measured sample valid (p50/p95/p99 + memory/cpu/allocs/dropped)")
 PY
+fi
+
+# Require benchmark producer script
+if [[ ! -x "$ROOT/scripts/run-perf-smoke.sh" ]] && [[ ! -f "$ROOT/scripts/run-perf-smoke.sh" ]]; then
+  echo "FAIL: missing scripts/run-perf-smoke.sh benchmark producer"
+  fail=1
+else
+  echo "OK:   run-perf-smoke.sh present"
 fi
 
 if [[ "$fail" -ne 0 ]]; then

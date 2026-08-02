@@ -1,0 +1,36 @@
+{
+  "allocations": 5200,
+  "baseline_regression": {
+    "compared": false
+  },
+  "budgets_ms": {
+    "p50": 8.0,
+    "p95": 16.0,
+    "p99": 32.0
+  },
+  "cpu_user_seconds": 0.055550999999999996,
+  "dataset": "core_edit_unit_v1",
+  "dataset_version": "1",
+  "dropped_events": 0,
+  "generated_at": "2026-08-02T10:15:49Z",
+  "hardware": {
+    "hardware_class": "apple-silicon-dev-or-ci",
+    "machine": "arm64",
+    "processor": "arm",
+    "python": "3.9.6",
+    "release": "25.5.0",
+    "system": "Darwin"
+  },
+  "iterations": 5000,
+  "memory_peak_bytes": 15073280,
+  "metric": "core_edit_unit",
+  "p50_ms": 0.00010416000000290637,
+  "p95_ms": 0.00013258300000273978,
+  "p99_ms": 0.00013582019999791584,
+  "per_op_us": 0.10619199999997163,
+  "run_id": "c2b9c266-ce8a-4c82-bd5d-d0529efc2e71",
+  "schema_version": 2,
+  "total_ms": 0.5309599999998582,
+  "warmup": 200,
+  "within_unit_bound": true
+}

@@ -1,0 +1,61 @@
+actor LanguageDocumentActor
+actor TreeSitterLanguageRuntime
+class TreeSitterHighlightProvider | isolation=@MainActor
+enum EngineError | sendable=1
+enum Error | sendable=1
+enum QuerySetDiagnostic | sendable=1
+enum QuerySetLoader | sendable=1
+enum TreeSitterConfigurationFactory | sendable=1
+enum TreeSitterEdit
+enum TreeSitterLanguageEnvironment | sendable=1
+func applyEdit( range: NSRange, delta: Int, newText: String )
+func applyEdit(range: NSRange, delta: Int)
+func codeLanguage(id: String)
+func combinedHighlightsSource( language: CodeLanguage, registry: LanguageRegistry , limits: TreeSitterQueryLimits )
+func configure(_ config: LanguageConfiguration)
+func currentGeneration()
+func identifierRange(atUTF16Offset location: Int)
+func indexSet(from tsRanges: [TSRange], documentLength: Int)
+func install(_ provider: any TreeSitterConfigurationProviding)
+func isCurrent(generation gen: UInt64)
+func languageConfiguration(for languageID: String)
+func loadAsync(language: CodeLanguage)
+func loadSources( languageID: LanguageID, kinds: Set<QueryKind>, registry: LanguageRegistry , limits: TreeSitterQueryLimits )
+func make( range: NSRange, delta: Int, oldSource: String, newSource: String )
+func make(for language: CodeLanguage)
+func point(atUTF16Offset offset: Int, in string: NSString)
+func queryHighlights(in range: NSRange)
+func queryHighlights(in range: NSRange, text: String)
+func reset()
+func resolveProvider() -> (any TreeSitterConfigurationProviding)
+func resolveProviderAsync() async -> (any TreeSitterConfigurationProviding)
+func setBootstrap(_ bootstrap: (@Sendable () -> Void)?) | sendable=1
+func setDocumentText(_ text: String)
+func setText(_ text: String) | attr=discardableResult
+func setUp(documentLength: Int, languageID: String?)
+func willApplyEdit(range: NSRange)
+init ( languageID: LanguageID, sourceRevision: String? , parserContentHash: String? )
+init ( maxCombinedQueryBytes: Int , maxInjectionDepth: Int , maxHighlightCaptures: Int )
+init ()
+init (language: CodeLanguage)
+init (languageID: String)
+protocol TreeSitterConfigurationProviding | sendable=1
+struct GrammarIdentity | sendable=1
+struct HighlightPublication | sendable=1
+struct RegistryTreeSitterConfigurationProvider
+struct TreeSitterQueryLimits | sendable=1
+var configurationProvider
+var currentGeneration
+var generation
+var hasProvider
+var highlights
+var languageID
+var maxCombinedQueryBytes
+var maxHighlightCaptures
+var maxInjectionDepth
+var onDemandBootstrap | sendable=1
+var parserContentHash
+var shared
+var sourceLengthUTF16
+var sourceRevision
+var tsLanguage

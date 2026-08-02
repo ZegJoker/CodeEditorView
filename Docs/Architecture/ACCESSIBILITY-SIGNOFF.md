@@ -1,27 +1,38 @@
-# Accessibility manual sign-off protocol (REL-N04)
+# Accessibility sign-off protocol (REL-N04)
 
-Automated gates cover identifier hierarchy, focus order, reduce-motion handling, and rotor surface models.
-The following scenarios require **manual sign-off** before a release candidate; automation cannot reliably cover them.
+## Automated coverage (must pass in CI)
 
-## Required manual scenarios
+`scripts/check-accessibility.sh` runs executable automation via `WorkbenchAccessibilitySession`
+(library XCUI-equivalent hierarchy / keyboard / rotor / Switch Control driver):
+
+| ID | Scenario | Automation |
+|---|---|---|
+| A11Y-A01 | Accessibility hierarchy IDs for chrome regions | `WorkbenchAccessibilitySession.hierarchyIdentifiers` |
+| A11Y-A02 | Keyboard-only tab order across navigator/editor/inspectors/panels | `moveFocus` |
+| A11Y-A03 | Rotor surfaces: errors, symbols, folds, breakpoints, search | `rotorQuery` / `selectRotorHit` |
+| A11Y-A04 | Switch Control linear scan + select | `switchControlScan` / `switchControlSelect` |
+| A11Y-A05 | Reduce Motion disables large chrome motion | preferences.reduceMotion |
+| A11Y-A06 | High contrast + Dynamic Type knobs honored | `chromePresentationValid` |
+| A11Y-A07 | Focus restoration after palette / open quickly | `dismissTransientAndRestoreFocus` |
+| A11Y-A08 | Full keyboard access gate | preferences.fullKeyboardAccess |
+
+Regression tests: `test_REL_N04_*` under `Tests/CodeEditorWorkbenchTests` and `Tests/ReleaseTruthTests`.
+
+## Manual residual scenarios
+
+Automation cannot reliably cover live VoiceOver speech or IME engines. These remain manual for RC:
 
 | ID | Scenario | Platform | Sign-off |
 |---|---|---|---|
-| A11Y-M01 | VoiceOver full pass of navigator → editor → inspector → utility → status bar | macOS | pending |
-| A11Y-M02 | VoiceOver rotor: errors, symbols, folds, breakpoints, search results | macOS | pending |
-| A11Y-M03 | Full keyboard access only (no pointer) across chrome and editor | macOS | pending |
-| A11Y-M04 | Switch Control basic navigation of workbench chrome | macOS | pending |
-| A11Y-M05 | Dynamic Type / larger text (where applicable host UI) | iOS | pending |
-| A11Y-M06 | Increase Contrast / differentiate without color alone | macOS/iOS | pending |
-| A11Y-M07 | Reduce Motion: pane transitions do not use large motion | macOS/iOS | pending |
-| A11Y-M08 | Focus restoration after command palette / open quickly dismiss | macOS | pending |
-| A11Y-M09 | IME composition (Japanese/Chinese/Korean) in editor | macOS/iOS | pending |
-| A11Y-M10 | Screen reader announcement of diagnostics and search hits | macOS | pending |
+| A11Y-M01 | Live VoiceOver speech pass of navigator → editor → inspector → utility → status bar | macOS | pending (pre-alpha) |
+| A11Y-M09 | IME composition (Japanese/Chinese/Korean) in editor | macOS/iOS | pending (pre-alpha) |
+| A11Y-M10 | Live screen reader announcement of diagnostics and search hits | macOS | pending (pre-alpha) |
+
+Pre-alpha: manual residual cells may remain `pending`. RC/stable certification requires all signed.
+Keyboard/rotor/Switch Control/high-contrast/Dynamic Type/reduce-motion/focus restoration are **automated** above — not manual-only.
 
 ## Process
 
-1. Run `./scripts/check-accessibility.sh` (must pass).
-2. Execute each manual scenario; record date, build SHA, and tester in the table (replace `pending`).
-3. File defects for any failure; do not mark release residual empty until closed with regression tests.
-
-Pre-alpha: manual cells may remain `pending`. RC/stable certification requires all signed.
+1. Run `./scripts/check-accessibility.sh` (must pass; runs `swift test --filter REL_N04`).
+2. For RC: execute residual manual scenarios; record date, build SHA, and tester.
+3. File defects for any failure; do not empty release residual until closed with regression tests.

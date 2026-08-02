@@ -1,0 +1,275 @@
+actor LocalWorkspaceFileSystem
+class DocumentLeaseRegistry | isolation=@MainActor
+class EditorLayoutStore | isolation=@MainActor
+class EditorPane | isolation=@MainActor
+class FSEventsWorkspaceWatcher | sendable=1
+class MockWorkspaceFileWatcher | sendable=1
+class NavigationHistory | isolation=@MainActor
+class Workspace | isolation=@MainActor
+class WorkspaceCloseCoordinator | isolation=@MainActor
+class WorkspaceEditService | isolation=@MainActor
+class WorkspaceFileTree | isolation=@MainActor
+enum CloseDecision | sendable=1
+enum CloseTransactionResult | sendable=1
+enum DirtyTabClosePolicy | sendable=1
+enum DocumentLeaseOwner | sendable=1
+enum EditorLayoutNode | sendable=1
+enum EditorSplitAxis | sendable=1
+enum WorkspaceEditError | sendable=1
+enum WorkspaceEditFaultPoint | sendable=1
+enum WorkspaceError | sendable=1
+enum WorkspaceFileEvent | sendable=1
+enum WorkspaceFileOperation | sendable=1
+enum WorkspaceFileSystemError | sendable=1
+enum WorkspacePath
+enum WorkspacePathSecurity | sendable=1
+enum WorkspaceRestoration
+enum WorkspaceRestorationError | sendable=1
+enum WorkspaceSymlinkPolicy | sendable=1
+enum WorkspaceTrust | sendable=1
+enum WorkspaceTrustCapability | sendable=1
+enum WorkspaceWatchSignal | sendable=1
+func acquire(documentID: DocumentID, owner: DocumentLeaseOwner)
+func addRoot(directoryURL: URL)
+func allPaneIDs()
+func allows(_ capability: WorkspaceTrustCapability)
+func appending(_ name: String)
+func apply(_ edit: WorkspaceEdit)
+func apply(_ event: WorkspaceFileEvent)
+func assertSameVolume(url: URL, root: URL)
+func back()
+func cachedChildren(of id: WorkspaceItemID)
+func captureRestorationState()
+func captureRestorationStateAsync()
+func children(of id: WorkspaceItemID) | attr=discardableResult
+func children(of item: WorkspaceItemID)
+func close(pane: EditorPaneID)
+func close(tab id: EditorTabID) | attr=discardableResult
+func closeOtherTabs(keeping tabID: EditorTabID, in paneID: EditorPaneID)
+func closePane(_ id: EditorPaneID)
+func closeTab(_ tabID: EditorTabID, in paneID: EditorPaneID)
+func closeTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID)
+func collapse(_ id: WorkspaceItemID)
+func copy(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?)
+func count(for documentID: DocumentID)
+func createDirectory(in parent: WorkspaceItemID, name: String)
+func createDirectory(in parent: WorkspaceItemID, name: String) | attr=discardableResult
+func createFile( in parent: WorkspaceItemID, name: String, contents: Data ) | attr=discardableResult
+func createFile(in parent: WorkspaceItemID, name: String, contents: Data)
+func decode(_ data: Data)
+func decodeRaw(_ data: Data)
+func delete(item: WorkspaceItemID)
+func deleteItem(_ id: WorkspaceItemID)
+func emit(_ signal: WorkspaceWatchSignal)
+func encode(_ workspace: Workspace) | isolation=@MainActor
+func entries()
+func events()
+func expand(_ id: WorkspaceItemID)
+func forward()
+func hasLeases(for documentID: DocumentID)
+func invalidate(_ id: WorkspaceItemID)
+func invalidateAll()
+func isContained(url: URL, inRoot root: URL)
+func isExpanded(_ id: WorkspaceItemID)
+func isLoaded(_ id: WorkspaceItemID)
+func item(for uri: DocumentURI)
+func join(_ base: String, _ name: String)
+func keepTabOpen(_ tabID: EditorTabID, in paneID: EditorPaneID)
+func local( rootDirectories: [URL], settings: WorkspaceSettings )
+func migrate(_ state: WorkspaceRestorationState)
+func move(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?)
+func moveTab(from: Int, to: Int)
+func moveTab(from: Int, to: Int, in paneID: EditorPaneID)
+func navigateBack()
+func navigateForward()
+func normalize()
+func normalize(_ path: String)
+func open( sessionID: EditorSessionID, documentID: DocumentID, documentURI: DocumentURI, preview: Bool ) | attr=discardableResult
+func open( uri: DocumentURI, in paneID: EditorPaneID, preview: Bool ) | attr=discardableResult
+func openDocument(uri: DocumentURI) | attr=discardableResult
+func openInActivePane( uri: DocumentURI, preview: Bool ) | attr=discardableResult
+func owners(for documentID: DocumentID)
+func pin(tab id: EditorTabID)
+func pinTab(_ tabID: EditorTabID, in paneID: EditorPaneID)
+func preview(_ edit: WorkspaceEdit)
+func promote(to level: WorkspaceTrust)
+func promotePreviewIfNeeded(tab id: EditorTabID)
+func promotePreviewTabs(for documentID: DocumentID)
+func push(_ entry: NavigationEntry)
+func refreshRoots()
+func release(documentID: DocumentID, owner: DocumentLeaseOwner) | attr=discardableResult
+func releaseAll(forTab tabID: EditorTabID) | attr=discardableResult
+func removeAll()
+func removeRoot(_ id: WorkspaceRootID)
+func removeRoot(id: WorkspaceRootID)
+func renameItem(_ id: WorkspaceItemID, to newName: String) | attr=discardableResult
+func replaceRoot(_ node: EditorLayoutNode)
+func requestCloseAllTabs( policy: DirtyTabClosePolicy? ) | attr=discardableResult
+func requestCloseOtherTabs( keeping tabID: EditorTabID, in paneID: EditorPaneID )
+func requestClosePane( _ id: EditorPaneID, policy: DirtyTabClosePolicy? ) | attr=discardableResult
+func requestCloseTab( _ tabID: EditorTabID, in paneID: EditorPaneID, policy: DirtyTabClosePolicy? ) | attr=discardableResult
+func requestCloseTabsToTheRight( of tabID: EditorTabID, in paneID: EditorPaneID )
+func resolveDecisions( candidates: [CloseCandidate], policy: DirtyTabClosePolicy? )
+func resolveUnderRoot( root: URL, relative: RelativeWorkspacePath, options: WorkspacePathResolveOptions )
+func resolveUnderRoot( root: URL, relativePath: String, options: WorkspacePathResolveOptions )
+func restore( from state: WorkspaceRestorationState, fileSystem: any WorkspaceFileSystem, documentProvider: any DocumentContentProvider )
+func restore( tabs restored: [EditorTab], selectedTabID: EditorTabID?, previewTabID: EditorTabID? )
+func select(tab id: EditorTabID)
+func selectTab(_ tabID: EditorTabID, in paneID: EditorPaneID)
+func setActivePane(_ id: EditorPaneID)
+func setEntries(_ entries: [NavigationEntry], index: Int)
+func setFractions(split id: EditorSplitID, fractions: [Double])
+func setSplitFractions(_ id: EditorSplitID, fractions: [Double])
+func signalRescan(rootID: WorkspaceRootID?)
+func simulateOverflow(rootID: WorkspaceRootID)
+func snapshot()
+func split( pane: EditorPaneID, axis: EditorSplitAxis, newPane: EditorPaneID, fraction: Double )
+func splitActivePane(axis: EditorSplitAxis, fraction: Double ) | attr=discardableResult
+func start( rootID: WorkspaceRootID, url: URL, excludedNames: Set<String>, onEvent: @escaping @Sendable (WorkspaceWatchSignal)
+func stop(rootID: WorkspaceRootID)
+func stopAll()
+func updateTabURIs(documentID: DocumentID, uri: DocumentURI)
+func updateURI(documentID: DocumentID, uri: DocumentURI)
+func uri(for item: WorkspaceItemID)
+func validate(_ edit: WorkspaceEdit)
+func validateRelativePath(_ path: String)
+init ( documentChanges: [DocumentChange] , fileOperations: [WorkspaceFileOperation] )
+init ( documentID: DocumentID, uri: DocumentURI, isDirty: Bool, remainingTabCount: Int )
+init ( documentURI: DocumentURI, documentID: DocumentID? , sessionID: EditorSessionID? , selection: CodeEditorCore.TextRange? , scrollY: Double? )
+init ( excludedNames: Set<String> , ".DS_Store"], followSymlinks: Bool , watchExcludedNames: Set<String> , "node_modules", ".build", "DerivedData"], pathResolveOptions: WorkspacePathResolveOptions )
+init ( id: EditorPaneID, tabs: [RestoredTab], selectedTabID: EditorTabID?, previewTabID: EditorTabID? )
+init ( id: EditorTabID )
+init ( id: EditorTabID, documentURI: DocumentURI, isPreview: Bool, isPinned: Bool, selection: CodeEditorCore.TextRange? , scrollY: Double? )
+init ( id: WorkspaceID )
+init ( rootDirectories: [URL], settings: WorkspaceSettings , enablesDirectoryWatching: Bool , watcher: (any WorkspaceFileWatchBackend)
+init ( schemaVersion: Int , workspaceID: WorkspaceID, roots: [WorkspaceRoot], layout: EditorLayoutNode, panes: [RestoredPane], activePaneID: EditorPaneID?, focusHistory: [EditorPaneID], navigation: [NavigationEntry], navigationIndex: Int )
+init ( settings: WorkspaceSettings , enablesDirectoryWatching: Bool , watcher: (any WorkspaceFileWatchBackend)
+init ( symlinkPolicy: WorkspaceSymlinkPolicy , requireSameVolume: Bool )
+init ( uri: DocumentURI, documentID: DocumentID? , expectedVersion: DocumentVersion? , expectedFileIdentity: DocumentFileIdentity? , transaction: EditTransaction )
+init ( workspaceID: WorkspaceID, revision: UInt64, roots: [WorkspaceRoot], openDocumentIDs: [DocumentID], documentVersions: [DocumentURI: DocumentVersion], activePaneID: EditorPaneID?, trust: WorkspaceTrustState )
+init ()
+init (capacity: Int )
+init (defaultPolicy: DirtyTabClosePolicy )
+init (directoryURL: URL, id: WorkspaceRootID ))
+init (fileSystem: any WorkspaceFileSystem)
+init (id: EditorPaneID ), tabs: [EditorTab] , selectedTabID: EditorTabID? )
+init (id: WorkspaceItemID, name: String, isDirectory: Bool, uri: DocumentURI)
+init (id: WorkspaceRootID ), uri: DocumentURI, name: String)
+init (level: WorkspaceTrust , trustedRootIDs: Set<WorkspaceRootID> )
+init (rawValue: UUID)
+init (root: EditorLayoutNode)
+init (rootID: WorkspaceRootID, path: String)
+init (singlePane id: EditorPaneID)
+init (tab: EditorTab, replacedPreview: EditorTab? )
+init (validating path: String)
+init (workspace: Workspace, journalRoot: URL? )
+protocol WorkspaceCloseDelegate | sendable=1
+protocol WorkspaceFileSystem | sendable=1
+protocol WorkspaceFileWatchBackend | sendable=1
+struct CloseCandidate | sendable=1
+struct DocumentChange | sendable=1
+struct EditorPaneID | sendable=1
+struct EditorSplitID | sendable=1
+struct EditorTab | sendable=1
+struct EditorTabID | sendable=1
+struct NavigationEntry | sendable=1
+struct OpenResult | sendable=1
+struct RelativeWorkspacePath | sendable=1
+struct RestoredPane | sendable=1
+struct RestoredTab | sendable=1
+struct WorkspaceEdit | sendable=1
+struct WorkspaceEditPreview | sendable=1
+struct WorkspaceEditResult | sendable=1
+struct WorkspaceID | sendable=1
+struct WorkspaceItem | sendable=1
+struct WorkspaceItemID | sendable=1
+struct WorkspacePathResolveOptions | sendable=1
+struct WorkspaceRestorationState | sendable=1
+struct WorkspaceRoot | sendable=1
+struct WorkspaceRootID | sendable=1
+struct WorkspaceSettings | sendable=1
+struct WorkspaceSnapshot | sendable=1
+struct WorkspaceTrustState | sendable=1
+var activePaneID
+var appliedDocumentChanges
+var canGoBack
+var canGoForward
+var capacity
+var closeCoordinator
+var completedFileOperations
+var current
+var currentSchemaVersion
+var defaultPolicy
+var delegate
+var description
+var documentChangeCount
+var documentChanges
+var documentID
+var documentLeases
+var documentProvider
+var documentURI
+var documentVersions
+var documents
+var enablesDirectoryWatching
+var excludedNames
+var expectedFileIdentity
+var expectedVersion
+var faultPoint
+var fileOperationCount
+var fileOperations
+var fileSystem
+var fileTree
+var focusHistory
+var followSymlinks
+var id
+var inverse
+var isDirectory
+var isDirty
+var isPinned
+var isPreview
+var isRoot
+var journalRoot
+var journalURL
+var lastComponent
+var layout
+var level
+var name
+var navigation
+var navigationHistory
+var navigationIndex
+var onFinalRelease
+var openDocumentIDs
+var openDocumentsAffected
+var panes
+var parent
+var parentPath
+var path
+var pathResolveOptions
+var pathString
+var previewTabID
+var rawValue
+var remainingTabCount
+var replacedPreview
+var requireSameVolume
+var revision
+var root
+var rootID
+var roots
+var schemaVersion
+var scrollY
+var segments
+var selectedTab
+var selectedTabID
+var selection
+var sessionID
+var settings
+var symlinkPolicy
+var tab
+var tabs
+var transaction
+var trust
+var trusted
+var trustedRootIDs
+var uri
+var watchExcludedNames
+var workspaceID

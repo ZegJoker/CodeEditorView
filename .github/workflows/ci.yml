@@ -33,9 +33,19 @@ jobs:
         # Pre-alpha: allow open P0/P1 while verifying fixed rows link to real regression tests.
         # Release/verify-stable runs without DEFECTS_ALLOW_OPEN.
         run: DEFECTS_ALLOW_OPEN=1 ./scripts/check-defects.sh
-      - name: API freeze Stable products (Phase 16)
+      - name: Perf smoke measurements (REL-N05)
+        run: |
+          ./scripts/run-perf-smoke.sh
+          ./scripts/check-perf-budgets.sh
+      - name: Compatibility profile generate + check (REL-N01)
+        run: |
+          ./scripts/generate-compatibility-profile.sh
+          ./scripts/check-compatibility-profile.sh
+      - name: Unchecked Sendable dossier ratchet (REL-N07)
+        run: ./scripts/check-unchecked-sendable.sh
+      - name: API freeze Stable products (Phase 16 / REL-N06)
         run: ./scripts/check-api-freeze.sh
-      - name: Accessibility surface (Phase 16)
+      - name: Accessibility surface (Phase 16 / REL-N04)
         run: ./scripts/check-accessibility.sh
       - name: Grammar pins + committed sources (PKG-001)
         run: ./scripts/verify-grammars.sh
@@ -110,6 +120,8 @@ jobs:
       - name: Build with complete concurrency checking (REL-N07 warnings-as-errors)
         # Package uses Swift 6 language mode; concurrency warnings are errors.
         run: swift build -Xswiftc -strict-concurrency=complete -Xswiftc -warnings-as-errors
+      - name: ASan/TSan execute tests (REL-N07)
+        run: ./scripts/run-sanitizers.sh
 
   ios-simulator:
     name: iOS Simulator build
@@ -243,8 +255,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify committed grammars (PKG-001)
         run: ./scripts/ci-bootstrap-grammars.sh
-      - name: Emit API baselines
+      - name: Emit symbol-graph + digester baselines (REL-N06)
         run: ./scripts/check-api-baseline.sh
+      - name: API freeze against committed baselines
+        run: ./scripts/check-api-freeze.sh
       - uses: actions/upload-artifact@v4
         with:
           name: api-baselines
@@ -267,13 +281,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Xcode pin
         run: ./scripts/check-xcode-pin.sh
-      - name: Export archive + resolve/build
-        run: ./scripts/export-source-archive-rehearsal.sh Baselines/evidence
+      - name: Export archive + resolve/build/all tests (PKG-N01)
+        run: FULL_ARCHIVE_TEST=1 ./scripts/export-source-archive-rehearsal.sh Baselines/evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: source-archive-evidence-${{ github.sha }}
-          path: Baselines/evidence/source-archive.sha256
+          path: |
+            Baselines/evidence/source-archive.sha256
+            Baselines/evidence/dependency-graph.json
+            Baselines/evidence/dependency-graph.txt
+            Baselines/evidence/clean-resolve-fingerprint.txt
+            Baselines/evidence/Package.resolved
           if-no-files-found: error
 
   macos-example-app:

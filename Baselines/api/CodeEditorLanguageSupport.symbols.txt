@@ -1,0 +1,144 @@
+class LanguageRegistry | sendable=1
+enum CaptureName | sendable=1
+enum CodeLanguages | sendable=1
+enum HighlightProvidingError | sendable=1
+enum LanguageDetector | sendable=1
+enum LanguagePackError | sendable=1
+enum LanguagePackRegistration | sendable=1
+enum LanguageRegistrationDiagnostic | sendable=1
+enum QueryKind | sendable=1
+enum TreeSitterLanguageID | sendable=1
+func allDefinitions()
+func definition(for id: LanguageID)
+func detect( filename: String, contentPrefix: String? , in registry: LanguageRegistry )
+func from(capture: String)
+func hasParser(for id: LanguageID)
+func hasQueryProvider(for id: LanguageID)
+func hash(into hasher: inout Hasher)
+func language(forFileExtension ext: String)
+func language(id: LanguageID)
+func language(id: String)
+func language(id: TreeSitterLanguageID)
+func parser(for id: LanguageID)
+func queryURL(for id: LanguageID, kind: QueryKind)
+func queryURL(for id: LanguageID, query: String)
+func queryURL(for name: String )
+func record(_ error: LanguagePackError)
+func register(_ definition: LanguageDefinition) | attr=discardableResult
+func registerParser(for id: LanguageID, factory: @escaping ParserFactory)
+func registerQueryProvider(for id: LanguageID, provider: @escaping QueryURLProvider)
+func removeAll()
+func resetForTests()
+func setDocumentText(_ text: String)
+func setUp(documentLength: Int, languageID: String?)
+func snapshot()
+func unregisterAll(for id: LanguageID)
+func unregisterDefinition(for id: LanguageID)
+func unregisterParser(for id: LanguageID)
+func unregisterQueryProvider(for id: LanguageID)
+func validateCompleteness(for id: LanguageID)
+func willApplyEdit(range: NSRange)
+init ( definitions: [LanguageDefinition], languageIDsWithParsers: Set<LanguageID>, languageIDsWithQueries: Set<LanguageID>, generation: UInt64 )
+init ( id: LanguageID, displayName: String, tsName: String, fileExtensions: Set<String> , aliases: Set<String> , filenames: Set<String> , firstLinePatterns: [String] , contentPatterns: [String] , detectionPriority: Int , lineComment: String , blockComment: (String, String) , "")
+init ( id: TreeSitterLanguageID, tsName: String, displayName: String, extensions: Set<String>, lineComment: String , rangeComment: (String, String) , "")
+init ()
+init (_ language: CodeLanguage)
+init (didRegister: Bool, diagnostics: [LanguageRegistrationDiagnostic] )
+init (range: NSRange, capture: CaptureName? , rawCapture: String? )
+init (rawValue: String)
+init (stringLiteral value: String)
+protocol HighlightProviding | isolation=@MainActor
+struct CodeLanguage | sendable=1
+struct HighlightRange | sendable=1
+struct LanguageDefinition | sendable=1
+struct LanguageID | sendable=1
+struct LanguageRegistrationResult | sendable=1
+struct LanguageRegistrySnapshot | sendable=1
+typealias ParserFactory | sendable=1
+typealias QueryURLProvider | sendable=1
+var additionalQueries
+var agda
+var aliases
+var all
+var allLanguages
+var allowsComments
+var bash
+var blockComment
+var brackets
+var c
+var cSharp
+var capture
+var contentPatterns
+var cpp
+var css
+var dart
+var definitions
+var description
+var detectionPriority
+var diagnostics
+var didRegister
+var displayName
+var dockerfile
+var elixir
+var errors
+var extensions
+var fileBasename
+var fileExtensions
+var fileName
+var filenames
+var firstLinePatterns
+var generation
+var go
+var goMod
+var haskell
+var highlightable
+var html
+var id
+var insertSpaces
+var isHighlightFamily
+var java
+var javascript
+var jsdoc
+var json
+var jsx
+var julia
+var kotlin
+var languageID
+var languageIDsWithParsers
+var languageIDsWithQueries
+var lineComment
+var lua
+var markdown
+var markdownInline
+var maxContentBytes
+var objc
+var ocaml
+var parent
+var perl
+var php
+var plainText
+var preferredDebuggers
+var preferredFormatters
+var preferredLanguageServers
+var python
+var queryKinds
+var range
+var rangeComment
+var rawCapture
+var rawValue
+var regex
+var ruby
+var rust
+var scala
+var shared
+var sql
+var swift
+var tabSize
+var toml
+var tsName
+var tsx
+var typescript
+var verilog
+var wordPattern
+var yaml
+var zig

@@ -1,0 +1,312 @@
+class DocumentStore
+class EditorEventStream | isolation=@MainActor
+class LineIndex
+class ProcessHandle | sendable=1
+class SelectionEngine | isolation=@MainActor
+class UndoCoordinator | isolation=@MainActor
+enum BoundaryPolicy | sendable=1
+enum BracketMatcher
+enum BracketPairEmphasis | sendable=1
+enum BracketPairs | sendable=1
+enum CapabilityAvailability | sendable=1
+enum CodeEditorPlatformError | sendable=1
+enum ColumnSelectionBuilder
+enum DocumentStoreError | sendable=1
+enum EditOrigin | sendable=1
+enum EditorEvent | sendable=1
+enum HostPlatform | sendable=1
+enum IndentOption | sendable=1
+enum LineEnding | sendable=1
+enum MultiRangeEdit
+enum NavigationDirection | sendable=1
+enum NavigationGranularity | sendable=1
+enum PlatformCapabilityKind | sendable=1
+enum ProcessLaunchMode | sendable=1
+enum ProcessOutputEvent | sendable=1
+enum ProcessServiceError | sendable=1
+enum SelectionMode | sendable=1
+enum ShellQuoting
+enum ShippingProfileID | sendable=1
+enum StructureCommands | sendable=1
+enum TextFilters | sendable=1
+enum TextOffsetSemantics | sendable=1
+enum WordNavigationMode | sendable=1
+enum WordSelection | sendable=1
+func addSelection(_ range: NSRange, preferredX: CGFloat? )
+func advanced(by delta: UInt64 )
+func apply( _ transaction: EditTransaction, sortHighToLow: Bool , expectedVersion: DocumentVersion? ) | attr=discardableResult
+func applyMutation(_ mutation: TextMutation)
+func asTransaction(origin: EditOrigin , id: UUID ))
+func attach(document: DocumentStore, layout: some CaretLayoutQuerying)
+func attributedSubstring(from range: NSRange)
+func autoPair( inserted: String, nextCharacter: Character? )
+func availability(for kind: PlatformCapabilityKind)
+func beginGrouping()
+func boundary( fromUTF16Offset offset: Int, in document: String, direction: Int, mode: WordNavigationMode )
+func build( from string: String, estimatedLineHeight: CGFloat, makePayload: (Int)
+func buildUsingSplitLines( from string: String, estimatedLineHeight: CGFloat, makePayload: (Int)
+func cancel()
+func caretAfterReplace(range: NSRange, replacementUTF16Count: Int)
+func clamp(_ range: NSRange, documentLength: Int)
+func clear()
+func collapseToPrimary()
+func deleteBackwardRange( caret: Int, in document: String, indent: IndentOption )
+func detect(in string: String, sampleLimit: Int )
+func disable()
+func enable()
+func encodeAvailability(_ a: CapabilityAvailability)
+func endGrouping()
+func enumerateLines(inYRange minY: CGFloat, maxY: CGFloat, body: (LinePosition<Payload>) -> Void)
+func expandTab(indent: IndentOption)
+func forEach(_ body: (LinePosition<Payload>) -> Void)
+func graphemeBoundaryAfter( utf16Offset: Int, in text: String )
+func graphemeBoundaryBefore( utf16Offset: Int, in text: String )
+func indentLine(_ line: String, indent: IndentOption)
+func indentLines( selections: [NSRange], document: String, indent: IndentOption )
+func indentPrefix(forNewlineAfter lineText: String, indent: IndentOption)
+func insert(payload: Payload, metrics: LineMetrics, atIndex index: Int)
+func insertionPoint(_ location: Int)
+func isAtLineStart(location: Int, in document: String)
+func isClosing(_ character: Character)
+func isClosingPair(_ ch: Character)
+func isOpening(_ character: Character)
+func isOpening(_ character: Character, mate: Character)
+func isValidUTF16Offset(_ offset: Int, documentUTF16Length length: Int)
+func joinCommand(executable: String, arguments: [String])
+func launch(_ request: ProcessLaunchRequest)
+func leadingWhitespace(ofLine line: String)
+func leadingWhitespaceRange( containing location: Int, in document: String )
+func line(atIndex index: Int)
+func line(atUTF16Offset offset: Int)
+func line(atY y: CGFloat)
+func lineContent(range: NSRange, in document: String)
+func lineEndingRangeBefore( location: Int, in document: String )
+func lineRanges( intersecting selections: [NSRange], in document: String )
+func makeEdit(in range: NSRange, replacement: String)
+func makeEventStream( bufferSize: Int )
+func makeSelectionStream()
+func makeTextStream()
+func match(aroundUTF16Offset offset: Int, in string: String)
+func mate(for character: Character)
+func matrixSnapshot()
+func move( direction: NavigationDirection, granularity: NavigationGranularity , extending: Bool , containerWidth: CGFloat )
+func moveLines( selections: [NSRange], document: String, up: Bool )
+func newlineInsertion( lineTextBeforeCaret: String, nextCharacter: Character?, indent: IndentOption )
+func normalize(_ ranges: [NSRange], documentLength: Int)
+func normalizeLineEndings(_ text: String, to ending: LineEnding)
+func outdentLine(_ line: String, indent: IndentOption)
+func outdentLines( selections: [NSRange], document: String, indent: IndentOption )
+func pairOpen(for close: Character)
+func quote(_ argument: String)
+func range( atUTF16Offset offset: Int, in document: String, mode: WordNavigationMode )
+func range(atUTF16Offset offset: Int, in document: String)
+func ranges( in rect: CGRect, fragments: [ColumnSelectionFragment], documentLength: Int )
+func rebuild(lines: [(Payload, LineMetrics)])
+func redo(apply: (TextEdit) throws -> Void)
+func redoGroup(apply: ([TextEdit]) throws -> Void)
+func register(edit: TextEdit)
+func remap(range: NSRange, editLocation: Int, delta: Int)
+func remap(ranges: [NSRange], editLocation: Int, delta: Int)
+func remove(atIndex index: Int)
+func removeAll()
+func replaceAllSelections(with string: String) | attr=discardableResult
+func replaceCharacters(in range: NSRange, with replacement: String) | attr=discardableResult
+func replaceSelection(with string: String)
+func requireFilesystemCapability()
+func requireLocal(_ kind: PlatformCapabilityKind)
+func requireNetworkCapability()
+func requirePTYCapability()
+func requireProcessCapability()
+func resetAttributesToDefaults()
+func runCollecting( _ request: ProcessLaunchRequest )
+func scalarIndex( atUTF16Offset offset: Int, in text: String, policy: BoundaryPolicy )
+func selectAll()
+func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange)
+func setFullText(_ string: String)
+func setInsertionPoint(_ location: Int, preferredX: CGFloat? )
+func setPreferredLineEnding(_ ending: LineEnding)
+func setSelectedRange(_ range: NSRange, preferredX: CGFloat? )
+func setSelectedRanges(_ ranges: [NSRange], preferredX: CGFloat? )
+func shipping(_ id: ShippingProfileID)
+func single( range: NSRange, replacement: String, origin: EditOrigin , id: UUID )
+func snapshot()
+func splitLines( in string: String, estimatedHeight: CGFloat, includeTrailingEmptyLine: Bool )
+func substring(from range: NSRange)
+func subwordSegments(_ identifier: String)
+func terminateProcessGroup()
+func toggleBlockComment( selection: NSRange, document: String, open: String, close: String )
+func toggleLineComment( selections: [NSRange], document: String, lineComment: String )
+func undo(apply: (TextEdit) throws -> Void)
+func undoGroup(apply: ([TextEdit]) throws -> Void)
+func updateMetrics(atIndex index: Int, metrics: LineMetrics)
+func updatePayload(atIndex index: Int, payload: Payload)
+func utf16Offset( fromUTF8Offset utf8Offset: Int, in text: String, policy: BoundaryPolicy )
+func utf8Offset( fromUTF16Offset utf16Offset: Int, in text: String, policy: BoundaryPolicy )
+func validatedUTF16Range( _ range: NSRange, documentUTF16Length length: Int )
+func waitUntilExit() async -> (code: Int32, timedOut: Bool)
+func yield(_ event: EditorEvent)
+func yieldSelection(_ ranges: [NSRange])
+func yieldText(_ text: String)
+init ( executable: String, arguments: [String] , mode: ProcessLaunchMode , currentDirectory: URL? , environment: [String: String] , mergeEnvironment: Bool , timeout: Duration? , maxStdoutBytes: Int , maxStderrBytes: Int , capabilityKind: PlatformCapabilityKind )
+init ( id: UUID )
+init ( managedRegistryOnly: Bool , publisherAllowlistRequired: Bool , requireSignedNativeHelpers: Bool )
+init ( platform: HostPlatform, name: String, shippingProfileID: ShippingProfileID? , capabilities: [PlatformCapabilityKind: CapabilityAvailability], enterpriseOptions: EnterpriseProfileOptions? )
+init ( profile: PlatformCapabilityProfile )
+init ( string: String , attributes: [NSAttributedString.Key: Any] )
+init ( transaction: EditTransaction, oldVersion: DocumentVersion, newVersion: DocumentVersion, inverse: EditTransaction, textEdits: [TextEdit] )
+init ()
+init (_ nsRange: NSRange)
+init (documentVersion: DocumentVersion)
+init (frame: CGRect, documentRange: NSRange, ctLine: CTLine?)
+init (insert: String, placeCaretInside: Bool, skipOver: Bool )
+init (location: Int, length: Int)
+init (mutation: TextMutation, inverse: TextMutation)
+init (nsRanges: [NSRange], version: DocumentVersion)
+init (open: NSRange, close: NSRange)
+init (payload: String, caretOffsetInPayload: Int)
+init (profile: PlatformCapabilityProfile ))
+init (range: NSRange, preferredX: CGFloat? )
+init (range: NSRange, replacement: String)
+init (range: NSRange, string: String)
+init (rawValue: UInt64)
+init (replacedRange: TextRange, replacement: String)
+init (selection: TextRangeSelection ))
+init (selections: [TextRange], version: DocumentVersion)
+init (start: TextPosition, end: TextPosition)
+init (utf16Length: Int, height: CGFloat)
+init (utf16Offset: Int)
+init (version: DocumentVersion, text: String)
+protocol CaretLayoutQuerying | isolation=@MainActor
+protocol FileSystemAccess | sendable=1
+protocol LinePayload
+protocol NetworkAccess | sendable=1
+protocol PTYAccess | sendable=1
+protocol ProcessLaunching | sendable=1
+struct AppliedEditTransaction | sendable=1
+struct AutoPairResult | sendable=1
+struct ColumnSelectionFragment | sendable=1
+struct DocumentSnapshot | sendable=1
+struct DocumentVersion | sendable=1
+struct EditTransaction | sendable=1
+struct EditorContext | sendable=1
+struct EnterpriseProfileOptions | sendable=1
+struct LineMetrics | sendable=1
+struct LinePosition | sendable=1
+struct Match | sendable=1
+struct NewlineInsertion | sendable=1
+struct PlatformCapabilityProfile | sendable=1
+struct PlatformServices | sendable=1
+struct ProcessLaunchRequest | sendable=1
+struct ProcessService | sendable=1
+struct ProfileFileSystemAccess | sendable=1
+struct ProfileNetworkAccess | sendable=1
+struct ProfilePTYAccess | sendable=1
+struct ProfileProcessLauncher | sendable=1
+struct SelectionChangeEvent | sendable=1
+struct TextChange | sendable=1
+struct TextEdit | sendable=1
+struct TextPosition | sendable=1
+struct TextRange | sendable=1
+struct TextRangeSelection | sendable=1
+struct TextReplacement | sendable=1
+typealias ProcessSupervisor
+var arguments
+var autoPairs
+var canRedo
+var canUndo
+var capabilities
+var capabilityKind
+var caretOffsetInPayload
+var changes
+var close
+var closing
+var ctLine
+var current
+var currentDirectory
+var defaultAttributes
+var defaultEventBuffer
+var directMacOS
+var displayName
+var documentRange
+var documentVersion
+var end
+var enterprise
+var enterpriseOptions
+var environment
+var events
+var executable
+var filesystem
+var first
+var frame
+var fullString
+var groupingEnabled
+var height
+var hostPlatform
+var iOS
+var id
+var index
+var insert
+var inverse
+var isEmpty
+var isEnabled
+var isInsertionPoint
+var isLocallyAvailable
+var isTerminated
+var kind
+var last
+var length
+var localizedDescription
+var location
+var macAppStore
+var managedRegistryOnly
+var maxStderrBytes
+var maxStdoutBytes
+var maxY
+var mergeEnvironment
+var metrics
+var mode
+var mutation
+var name
+var network
+var newVersion
+var nsRange
+var oldVersion
+var open
+var opening
+var origin
+var pairs
+var payload
+var placeCaretInside
+var platform
+var preferredX
+var primarySelection
+var process
+var processUnavailable
+var profile
+var pty
+var publisherAllowlistRequired
+var range
+var rawValue
+var remoteToolingAvailable
+var replacedRange
+var replacement
+var requireSignedNativeHelpers
+var selectedRange
+var selectedRanges
+var selections
+var shippingProfileID
+var skipOver
+var start
+var string
+var test
+var text
+var textEdits
+var timeout
+var transaction
+var utf16Length
+var utf16Offset
+var utf16Range
+var version
+var visualWidth
+var yOffset
+var zero

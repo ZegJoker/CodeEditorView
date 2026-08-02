@@ -36,4 +36,65 @@ struct Phase16AccessibilityTests {
         #expect(WorkbenchFocusOrder.keyboardOrder.count >= 5)
         #expect(WorkbenchAccessibilityHierarchy.focusRestorationDefault == WorkbenchAccessibilityID.editor)
     }
+
+    /// REL-N04 — executable XCUI-equivalent automation (hierarchy/keyboard/rotor/Switch Control).
+    @Test func test_REL_N04_xcuiEquivalentHierarchyKeyboardRotorSwitchControl() {
+        let session = WorkbenchAccessibilitySession(
+            preferences: .init(
+                reduceMotion: false,
+                highContrast: true,
+                fullKeyboardAccess: true,
+                dynamicTypeSize: 1.2,
+                switchControlEnabled: true
+            )
+        )
+
+        // Hierarchy (VoiceOver tree surface)
+        let ids = session.hierarchyIdentifiers()
+        #expect(ids.contains(WorkbenchAccessibilityID.navigator))
+        #expect(ids.contains(WorkbenchAccessibilityID.editor))
+        #expect(ids.contains(WorkbenchAccessibilityID.inspector))
+        #expect(session.accessibilityHierarchy().role == "application")
+
+        // Keyboard-only navigation across chrome
+        let start = session.focusedID
+        var seen = Set<String>([start])
+        for _ in 0..<WorkbenchFocusOrder.keyboardOrder.count {
+            let next = session.moveFocus(steps: 1)
+            seen.insert(next)
+        }
+        for region in [
+            WorkbenchAccessibilityID.navigator,
+            WorkbenchAccessibilityID.editor,
+            WorkbenchAccessibilityID.inspector,
+            WorkbenchAccessibilityID.utility,
+        ] {
+            #expect(seen.contains(region), "keyboard order never focused \(region)")
+        }
+
+        // Rotor actions
+        for surface in WorkbenchAccessibilityHierarchy.RotorSurface.allCases {
+            let hits = session.rotorQuery(surface)
+            #expect(!hits.isEmpty, "rotor surface \(surface) empty")
+            let focus = session.selectRotorHit(hits[0])
+            #expect(focus == WorkbenchAccessibilityID.editor)
+        }
+
+        // Switch Control scan + select
+        let scan = session.switchControlScan()
+        #expect(scan.count >= 5)
+        let selected = session.switchControlSelect(index: 2)
+        #expect(scan.contains(selected))
+
+        // Focus restoration after transient UI
+        #expect(session.activate(identifier: WorkbenchAccessibilityID.commandPalette))
+        let restored = session.dismissTransientAndRestoreFocus()
+        #expect(restored == WorkbenchAccessibilityID.editor)
+
+        // Reduce motion / high contrast / Dynamic Type
+        session.apply(preferences: .init(reduceMotion: true, highContrast: true, dynamicTypeSize: 1.5))
+        _ = session.moveFocus(steps: 2)
+        #expect(session.lastMotionUsed == false)
+        #expect(session.chromePresentationValid())
+    }
 }

@@ -1,0 +1,789 @@
+class AttachmentStore | isolation=@MainActor
+class CompletionProviderDelegateAdapter | isolation=@MainActor
+class CompletionSession | isolation=@MainActor
+class DefaultInvisibleCharactersDelegate
+class DefinitionProviderJumpAdapter | isolation=@MainActor
+class EditorController | isolation=@MainActor
+class EditorCoordinatorLifecycleAdapter | isolation=@MainActor
+class EditorPerformanceHarness | sendable=1
+class EmphasisManager | isolation=@MainActor
+class FindPanelBridge | isolation=@MainActor
+class FindSession | isolation=@MainActor
+class FoldingRangeProviderAdapter | isolation=@MainActor
+class Highlighter | isolation=@MainActor
+class JumpToDefinitionLink
+class JumpToDefinitionModel | isolation=@MainActor
+class LanguageCompletionItem
+class LayoutEngine | isolation=@MainActor
+class LineAnnotationStore | isolation=@MainActor
+class LineFoldModel | isolation=@MainActor
+class LineFoldPlaceholder
+class LineFragment
+class LineIndentationFoldProvider | isolation=@MainActor
+class RegexHighlightProvider | isolation=@MainActor
+class SemanticTokensHighlightAdapter | isolation=@MainActor
+class SimpleCodeSuggestion
+class StyledRangeContainer | isolation=@MainActor
+class TextLine
+enum AnnotationMetrics | sendable=1
+enum DiagnosticSeverity | sendable=1
+enum DiagnosticsAnnotationMapper
+enum EditorAccessibility | sendable=1
+enum EditorPerformanceBudgets | sendable=1
+enum EditorSignposts | sendable=1
+enum EmphasisGroup
+enum EmphasisStyle | sendable=1
+enum FieldFocusTarget | sendable=1
+enum FindEngine | sendable=1
+enum FindMethod | sendable=1
+enum FindPanelMode | sendable=1
+enum FoldRibbonMetrics | sendable=1
+enum Interval | sendable=1
+enum InvisibleCharacterStyle | sendable=1
+enum LanguageServiceTextGeometry
+enum LayoutInvalidation
+enum LineBreakStrategy | sendable=1
+enum LineFoldCalculator | isolation=@MainActor
+enum LineFoldProviderLineInfo | sendable=1
+enum MinimapGeometry | sendable=1
+enum MinimapMetrics | sendable=1
+enum PlatformDefaults
+enum SuggestionImageColorToken | sendable=1
+enum SuggestionTrigger | sendable=1
+enum TextAttachmentAction | sendable=1
+func add(_ attachment: any TextAttachment, range: NSRange)
+func add(_ emphasis: Emphasis)
+func addAttachment(_ attachment: any TextAttachment, range: NSRange)
+func addCursor(at offset: Int)
+func annotations( from diagnostics: [LanguageDiagnostic], documentText: String )
+func annotations(onLine line: Int)
+func apply( languageItem: LanguageCompletionItem, textView: EditorController, caretUTF16: Int )
+func applyCollapsedFoldHeights( collapsedFolds: [FoldRange], hideCloserLines: Bool , document: String )
+func applyColumnSelection(rect: CGRect, containerWidth: CGFloat)
+func applyCompletionSelection()
+func applyEdit(range: NSRange, delta: Int)
+func applyFindStateFromEditorState(_ state: EditorState)
+func applyLanguageDiagnostics( _ diagnostics: [LanguageDiagnostic] )
+func applyLanguageID(_ languageID: String?)
+func applyLinkPopoverSelection(_ item: any CodeSuggestionEntry)
+func applyMarkedText( _ text: String, selectedRangeInMarked: NSRange, replaceRange: NSRange? )
+func applyTokenMap(_ map: [String: PlatformColor])
+func applyTypeset(fragments: [LineFragment], height: CGFloat)
+func attach(document: DocumentStore, typingAttributes: [NSAttributedString.Key: Any])
+func attachment(atUTF16Offset offset: Int)
+func attachmentAction()
+func attachments(overlapping range: NSRange)
+func attribute(for capture: CaptureName?)
+func attributedSubstring( forProposedRange range: NSRange, actualRange: NSRangePointer? )
+func bandHeight(forCount count: Int)
+func bandHeight(forLine line: Int)
+func baseWritingDirection( for position: UITextPosition, in direction: UITextStorageDirection )
+func begin(_ interval: Interval)
+func beginTransaction()
+func bubbles( lineText: String, captureRuns: [(range: NSRange, capture: CaptureName?)
+func buildIndentLineFolds( context: LineFoldProviderContext, lineRanges: [(lineNumber: Int, range: NSRange)
+func buildRawFolds( context: LineFoldProviderContext, lineRanges: [(lineNumber: Int, range: NSRange)
+func cancelHover()
+func cancelJumpHover()
+func cancelPendingHighlightWork()
+func cancelPendingWork()
+func captureRuns(in range: NSRange) -> [(range: NSRange, capture: CaptureName?)
+func caretRect(atUTF16Offset offset: Int, containerWidth: CGFloat)
+func caretRect(containerWidth: CGFloat)
+func caretRect(for position: UITextPosition)
+func caretRects(containerWidth: CGFloat)
+func characterIndex(for point: NSPoint)
+func characterRange( byExtending position: UITextPosition, in direction: UITextLayoutDirection )
+func characterRange(at point: CGPoint)
+func clampLines(lineCount: Int)
+func clear()
+func clearAnnotations()
+func clearFoldPlaceholderSelection()
+func clearLanguageServices()
+func clearLinkPopoverState()
+func clearMarkedTextSession()
+func closestPosition(to point: CGPoint)
+func closestPosition(to point: CGPoint, within range: UITextRange)
+func collapseCursors()
+func color(for capture: CaptureName?)
+func commitMarkedTextAsNormalEdit()
+func compare(_ position: UITextPosition, to other: UITextPosition)
+func completionAnchorRect(containerWidth: CGFloat)
+func completionOnCursorMove( textView: EditorController, cursorPosition: CursorPosition )
+func completionSuggestionsRequested( textView: EditorController, cursorPosition: CursorPosition )
+func completionTriggerCharacters()
+func completionWindowApplyCompletion( item: any CodeSuggestionEntry, textView: EditorController, cursorPosition: CursorPosition? )
+func completionWindowDidClose()
+func completionWindowDidSelect(item: any CodeSuggestionEntry)
+func consumeScrollTarget()
+func contentHeight( editorHeight: CGFloat, estimatedEditorLineHeight: CGFloat )
+func controllerDidAppear(controller: EditorController)
+func controllerDidDisappear(controller: EditorController)
+func copy(_ sender: Any?)
+func cursorPosition(for range: NSRange, in text: String)
+func cut(_ sender: Any?)
+func deepestFold(atLine lineIndex: Int)
+func deepestFold(atLineRange lineRange: NSRange)
+func deepestFold(covering lineRange: NSRange)
+func deleteBackward()
+func deleteForward()
+func destroy()
+func dirtyLineIndexRange( editRange: NSRange, lineCount: Int, lineAtOffset: (Int)
+func dismiss()
+func dismissLinkPopover()
+func documentDidEdit( editedRange: NSRange, delta: Int, context: LineFoldProviderContext )
+func documentDidEdit(editedRange: NSRange, delta: Int)
+func documentDidEdit(range: NSRange, delta: Int)
+func documentDidReplace(range: NSRange, delta: Int)
+func documentDidReplaceAll()
+func dragInteraction( _ interaction: UIDragInteraction, itemsForBeginning session: UIDragSession )
+func draggingSession( _ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext )
+func draw( _ emphases: [Emphasis], fragments: [LaidOutFragment], in context: CGContext, standardFill: CGColor, outlineStroke: CGColor )
+func draw( _ fragment: LineFragment, in context: CGContext, origin: CGPoint, textColor: CGColor? )
+func draw( annotationsByLine: [Int: [LineAnnotation]], lineIndex: LineIndex<TextLine>, textLeading: CGFloat, contentWidth: CGFloat, visibleRect: CGRect, excludingLine: Int? , in context: CGContext )
+func draw( delegate: InvisibleCharactersDelegate, document: DocumentStore, fragments: [LaidOutFragment], in context: CGContext, font: CTFont )
+func draw( model: GutterModel, lineIndex: LineIndex<some LinePayload>, visibleRect: CGRect, selectedLineIndices: Set<Int>, textColor: CGColor, selectedTextColor: CGColor, backgroundColor: CGColor, selectedLineColor: CGColor, folds: [FoldRange] , in context: CGContext )
+func draw( name: String, tint: PlatformColor, in rect: CGRect, pointSize: CGFloat? , weight: PlatformFont.Weight )
+func draw(in context: CGContext, rect: CGRect)
+func drawCarets( offsets: [Int], layout: LayoutEngine, containerWidth: CGFloat, in context: CGContext, color: CGColor, visible: Bool ) | isolation=@MainActor
+func drawLineHighlights( lineIndices: Set<Int>, lineIndex: LineIndex<some LinePayload>, contentWidth: CGFloat, gutterWidth: CGFloat, color: CGColor, in context: CGContext )
+func drawReformattingGuide( column: Int, characterWidth: CGFloat, textLeadingInset: CGFloat, visibleRect: CGRect, color: CGColor, in context: CGContext )
+func drawSelection( range: NSRange, fragments: [LaidOutFragment], in context: CGContext, color: CGColor )
+func drawSelection( ranges: [NSRange], fragments: [LaidOutFragment], in context: CGContext, color: CGColor )
+func dropInteraction( _ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession )
+func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession)
+func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession)
+func editorContentY(fromMinimapY minimapY: CGFloat)
+func editorDidApply(_ result: AppliedEditTransaction)
+func editorDidAttach(_ context: EditorContext)
+func editorDidDetach(_ context: EditorContext)
+func editorSelectionDidChange(_ event: SelectionChangeEvent)
+func editorWillApply(_ transaction: EditTransaction, snapshot: DocumentSnapshot)
+func editorY( minimapY: CGFloat, editorHeight: CGFloat, minimapHeight: CGFloat )
+func emphases(overlapping range: NSRange)
+func encode(to encoder: Encoder)
+func end(_ interval: Interval, state: OSSignpostIntervalState)
+func endTransaction()
+func executeCommand(_ id: CommandID)
+func expandFolds(containing offset: Int) | attr=discardableResult
+func expandVisibleRange(_ range: NSRange)
+func findDefinitionRange(at location: Int, controller: EditorController)
+func findNext()
+func findPrevious()
+func firstRect(for range: UITextRange)
+func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?)
+func foldLevelAtLine( lineNumber: Int, lineRange: NSRange, previousDepth: Int, context: LineFoldProviderContext )
+func foldPlaceholder(at point: CGPoint, containerWidth: CGFloat)
+func foldStarting(atLine lineIndex: Int)
+func folds(in queryRange: Range<Int>)
+func folds(in range: NSRange)
+func font(for capture: CaptureName?, base: PlatformFont)
+func from()
+func from(range: NSRange, line: Int, column: Int)
+func from(theme: EditorTheme)
+func handleFoldPlaceholderClick(_ fold: FoldRange)
+func hasMarkedText()
+func hideCompletions()
+func hideFindPanel()
+func hitTestLine( at point: CGPoint, annotationsByLine: [Int: [LineAnnotation]], lineIndex: LineIndex<TextLine>, textLeading: CGFloat, contentWidth: CGFloat, excludingLine: Int? )
+func hitTestOffset(at point: CGPoint, containerWidth: CGFloat)
+func hover(atUTF16Offset location: Int)
+func imageColor(for kind: CompletionItemKind?)
+func indentSelection()
+func insertBacktab()
+func insertNewline()
+func insertTab()
+func insertText(_ string: Any, replacementRange: NSRange)
+func insertText(_ string: String)
+func insertText(_ text: String)
+func installBuiltInCommandCatalog(into dispatcher: CommandDispatcher) | attr=discardableResult
+func installBuiltInCommands(into dispatcher: CommandDispatcher) | attr=discardableResult
+func installLanguageServices( _ host: LanguageServiceHost, context: LanguageServiceContext? )
+func invalidateAll()
+func invalidateMaxLineWidthCache()
+func invalidateTypeset(in range: NSRange)
+func invalidateTypesetForVisibleLines()
+func invisibleStyle(for character: UInt16, at range: NSRange, lineRange: NSRange)
+func isHoveringEqual(_ other: FoldRange)
+func isLineHiddenByCollapsedFold(_ lineRange: NSRange)
+func jumpHover(atUTF16Offset location: Int)
+func jumpToDefinition()
+func label( languageID: String?, isEditable: Bool, isDirty: Bool )
+func label(forLineIndex lineIndex: Int)
+func layoutViewport( visibleRect: CGRect, containerWidth: CGFloat )
+func layoutViewport(visibleRect: CGRect, containerWidth: CGFloat)
+func lineRanges(in document: String) -> [(lineNumber: Int, range: NSRange)
+func makeCommandContext(services: CommandServiceLocator ))
+func makeGutterModel()
+func makeJumpLink( from link: LocationLink, fallbackDocument: String )
+func mapSeverity(_ severity: LanguageDiagnosticSeverity)
+func markNeedsTypeset()
+func markedRange()
+func matches( in document: String, query: String, method: FindMethod, matchCase: Bool )
+func measure() | attr=discardableResult
+func minimapContentHeight()
+func minimapSnapshot(visibleMinimapRect: CGRect)
+func minimapWidth(forHostWidth hostWidth: CGFloat)
+func minimapY( editorY: CGFloat, editorHeight: CGFloat, minimapHeight: CGFloat )
+func move( direction: NavigationDirection, granularity: NavigationGranularity , extending: Bool , containerWidth: CGFloat )
+func moveCompletionSelection(delta: Int)
+func moveSelectedLines(up: Bool)
+func moveSelection(delta: Int)
+func moveText(from ranges: [NSRange], to dropOffset: Int)
+func multiCursorSummary(rangeCount: Int)
+func nearestMatchIndex(matches: [NSRange], toCaret caret: Int)
+func notifyDidAppear()
+func notifyDidDisappear()
+func offset(from: UITextPosition, to toPosition: UITextPosition)
+func open(link: JumpToDefinitionLink)
+func openLink(link: JumpToDefinitionLink)
+func outdentSelection()
+func p95(_ name: String)
+func paste(_ sender: Any?)
+func perform(_ action: EditorCommandAction)
+func performJump(at range: NSRange? )
+func performJumpAtCaret()
+func performJumpToDefinition(at range: NSRange? )
+func pixelAligned(scale: CGFloat )
+func position( from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int )
+func position(from position: UITextPosition, offset: Int)
+func position(within range: UITextRange, farthestIn direction: UITextLayoutDirection)
+func priority(_ severity: DiagnosticSeverity)
+func queryHighlights(in range: NSRange, text: String)
+func queryLinks( forRange range: NSRange, textView: EditorController )
+func rangeForCursorPosition(_ position: CursorPosition)
+func rebuild(context: LineFoldProviderContext)
+func record(_ name: String, seconds: TimeInterval)
+func redo()
+func redo(_ sender: Any?)
+func refreshTokens()
+func relayout()
+func remove(id: UUID)
+func remove(where predicate: (AnyTextAttachment) -> Bool)
+func removeAll()
+func removeAll(in group: String? )
+func replace()
+func replace(_ range: UITextRange, withText text: String)
+func replaceAll()
+func replaceAllMatches()
+func replaceCharacters(in range: NSRange, with string: String)
+func replaceCharacters(in range: NSRange, with string: String, registerUndo: Bool)
+func replaceCurrentMatch()
+func replaceDocumentLength(_ length: Int, notify: Bool )
+func replaceDocumentLength(with newLength: Int)
+func requestFindFieldFocus(selectQuery: Bool)
+func requestPanelFieldFocus(for mode: FindPanelMode)
+func reset() | isolation=@MainActor
+func resolve(token: String)
+func restoreLanguageHighlighting()
+func runs(in range: NSRange)
+func scrollFraction( editorOffsetY: CGFloat, editorHeight: CGFloat, editorVisibleHeight: CGFloat )
+func selectAll()
+func selectCompletionIndex(_ index: Int)
+func selectIndex(_ index: Int)
+func selectWord(atUTF16Offset offset: Int)
+func selectedRange()
+func selectionDidChange(controller: EditorController, cursors: [CursorPosition])
+func selectionExpandedForCollapsedFolds(_ range: NSRange)
+func selectionRects(for range: UITextRange)
+func set(runs newRuns: [Run], for range: NSRange)
+func set(value: Element?, for range: NSRange)
+func setAnnotationBandHeights(_ heights: [Int: CGFloat])
+func setAnnotations(_ annotations: [LineAnnotation])
+func setAnnotations(_ items: [LineAnnotation])
+func setBaseWritingDirection(_ writingDirection: NSWritingDirection, for range: UITextRange)
+func setCollapsed(_ collapsed: Bool, forFold fold: FoldRange)
+func setCoordinators(_ coordinators: [any EditorCoordinator])
+func setDocumentText(_ text: String)
+func setFindMethod(_ method: FindMethod)
+func setFindPanelFocused(_ focused: Bool)
+func setFindPanelMode(_ mode: FindPanelMode)
+func setFindQuery(_ text: String)
+func setFindText(_ text: String)
+func setFocused(_ focused: Bool)
+func setHighlightProviders(_ providers: [any HighlightProviding])
+func setHighlights(_ highlights: [HighlightRange], forProvider id: ProviderID, in range: NSRange)
+func setItems(_ newItems: [any CodeSuggestionEntry], anchor: CursorPosition?)
+func setLanguageID(_ languageID: String?)
+func setLifecycleObservers(_ observers: [any EditorLifecycleObserver])
+func setMarked( text newText: String, selectedRangeInMarked selected: NSRange, documentReplaceRange: NSRange )
+func setMarkedText(_ markedText: String?, selectedRange: NSRange)
+func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange)
+func setMatchCase(_ enabled: Bool)
+func setMatchCase(_ value: Bool)
+func setMethod(_ method: FindMethod)
+func setMode(_ mode: FindPanelMode)
+func setProviders(_ providerIDs: [ProviderID])
+func setProviders(_ providers: [any HighlightProviding])
+func setRanges(_ ranges: [FoldingRange])
+func setReplaceText(_ text: String)
+func setSelectedRange(_ range: NSRange)
+func setSelectedRanges(_ ranges: [NSRange])
+func setTokens(_ tokens: [SemanticTokenSpan])
+func setUp(documentLength: Int, languageID: String?)
+func setVisible(_ visible: Bool)
+func setVisibleUTF16Range(_ range: NSRange)
+func setVisibleUTF16RangeForHighlighting(_ range: NSRange)
+func setWrapAround(_ enabled: Bool)
+func setWrapAround(_ value: Bool)
+func shared( document: TextDocument, session: EditorSession, configuration: EditorConfiguration )
+func shift(forEditAt location: Int, delta: Int, replacedLength: Int)
+func shouldPresent( afterInserting inserted: String, triggerCharacters: Set<String> )
+func showCompletions()
+func showFindPanel(mode: FindPanelMode )
+func showReplacePanel()
+func splitLines( in string: String, estimatedHeight: CGFloat, includeTrailingEmptyLine: Bool )
+func start(interval: Duration )) | isolation=@MainActor
+func stop() | isolation=@MainActor
+func storageEdited(editRange: NSRange, delta: Int)
+func storageUpdated(editedRange: NSRange, changeInLength delta: Int)
+func swiftLike()
+func syncDocumentLengthOnly()
+func syncFromController()
+func systemImage(for kind: CompletionItemKind?)
+func text(in range: UITextRange)
+func text(in ranges: [NSRange])
+func textDidChange(controller: EditorController)
+func textRange(from fromPosition: UITextPosition, to toPosition: UITextPosition)
+func themeDidChange()
+func toggleBlockComment()
+func toggleCollapse(forFold fold: FoldRange)
+func toggleFold(atLine lineIndex: Int)
+func toggleLineComment()
+func typeset( _ string: NSAttributedString, documentRange: NSRange, display: TypesetDisplayData, attachments: [AnyTextAttachment] )
+func undo()
+func undo(_ sender: Any?)
+func unmarkText()
+func updateFolds(from rawFolds: [RawFold], collapsedRanges: Set<DepthStartPair>)
+func updateHighlighting(for snapshot: LayoutSnapshot)
+func updateHooks(_ hooks: DocumentHooks)
+func updateScrollTarget(containerWidth: CGFloat)
+func updateTypingAttributes(_ attributes: [NSAttributedString.Key: Any])
+func utf16Offset(at point: CGPoint, containerWidth: CGFloat)
+func validAttributesForMarkedText()
+func valueText( fullText: String, selectedRange: NSRange, maxCharacters: Int )
+func viewportFrame( editorOffsetY: CGFloat, editorVisibleHeight: CGFloat, editorHeight: CGFloat, contentHeight: CGFloat, stripHeight: CGFloat )
+func viewportHeight( editorVisibleHeight: CGFloat, editorHeight: CGFloat, minimapHeight: CGFloat )
+func virtualizedValueText( fullText: String, selectedRange: NSRange, visibleUTF16Range: NSRange?, maxCharacters: Int )
+func width(hostWidth: CGFloat)
+func willApplyEdit(range: NSRange)
+func wordPrefix(at location: Int, in text: String)
+init ( allowsSpellingCorrections: Bool , allowsAutocorrection: Bool , allowsSmartQuotes: Bool , allowsSmartDashes: Bool , allowsSmartInsertDelete: Bool , allowsDataDetectors: Bool , allowsServicesMenu: Bool , allowsDictation: Bool , allowsTextReplacement: Bool )
+init ( appearance: Appearance )
+init ( background: CGColor, foreground: CGColor, selectedBackground: CGColor, selectedForeground: CGColor )
+init ( contentInsets: HorizontalEdgeInsets , trailing: 4)
+init ( cursorPositions: [CursorPosition]? , scrollPosition: CGPoint? , findText: String? , replaceText: String? , findPanelVisible: Bool? )
+init ( document: TextDocument, session: EditorSession, configuration: EditorConfiguration )
+init ( documentLength: Int , foldProvider: (any LineFoldProvider)
+init ( fold: FoldRange, charWidth: CGFloat, style: LineFoldPlaceholderStyle, onSelect: ((FoldRange) -> Void)
+init ( font: PlatformFont , textColor: PlatformColor , caretColor: PlatformColor , selectionColor: PlatformColor , emphasisFillColor: PlatformColor , emphasisStrokeColor: PlatformColor , lineHeightMultiplier: CGFloat , wrapLines: Bool , isEditable: Bool , isSelectable: Bool , letterSpacing: CGFloat , edgeInsets: HorizontalEdgeInsets , trailing: 4)
+init ( host: LanguageServiceHost, context: LanguageServiceContext )
+init ( id: UUID )
+init ( isEditable: Bool , isSelectable: Bool , indentOption: IndentOption )
+init ( label: String, detail: String? , documentation: String? , pathComponents: [String]? , targetPosition: CursorPosition? , sourcePreview: String? , systemImage: String , imageColorToken: SuggestionImageColorToken , deprecated: Bool )
+init ( length: @escaping ()
+init ( lineCount: Int, font: PlatformFont, minimumDigitCount: Int , horizontalPadding: CGFloat , foldingRibbonWidth: CGFloat )
+init ( lineRelativeRange: NSRange, documentRange: NSRange, width: CGFloat, height: CGFloat, ascent: CGFloat , descent: CGFloat, leading: CGFloat , ctLine: CTLine?, attachments: [AnyTextAttachment] )
+init ( model: CommandPaletteModel, dispatcher: CommandDispatcher, context: CommandContext, onDismiss: (() -> Void)
+init ( pattern: String, capture: CaptureName, options: NSRegularExpression.Options )
+init ( range: NSRange, style: EmphasisStyle , flash: Bool , inactive: Bool , selectInDocument: Bool , group: String , color: CGColor? , id: UUID )
+init ( range: NSRange, text: String, selectedRangeInMarked: NSRange, compositionEditCount: Int )
+init ( showGutter: Bool , showMinimap: Bool , showReformattingGuide: Bool , showFoldingRibbon: Bool , showInvisibleCharacters: Bool )
+init ( spaceColor: CGColor , alpha: 0.6)
+init ( text: Attribute, insertionPoint: PlatformColor, invisibles: Attribute, background: PlatformColor, lineHighlight: PlatformColor, selection: PlatformColor, keywords: Attribute, commands: Attribute, types: Attribute, attributes: Attribute, variables: Attribute, values: Attribute, numbers: Attribute, strings: Attribute, characters: Attribute, comments: Attribute, operators: Attribute? , punctuation: Attribute? , constants: Attribute? , gutterText: PlatformColor? , gutterBackground: PlatformColor? , reformattingGuide: PlatformColor? )
+init ( text: Binding<String>, selection: Binding<NSRange> , length: 0))
+init ( text: String , configuration: EditorConfiguration )
+init ( theme: EditorTheme , useThemeBackground: Bool , font: PlatformFont , lineHeightMultiple: CGFloat , letterSpacing: CGFloat , wrapLines: Bool , tabWidth: Int , bracketPairEmphasis: BracketPairEmphasis? , emphasisFillColor: PlatformColor , emphasisStrokeColor: PlatformColor )
+init ( url: URL?, targetRange: CursorPosition, label: String, detail: String? , documentation: String? , sourcePreview: String? , systemImage: String , imageColorToken: SuggestionImageColorToken , deprecated: Bool )
+init ()
+init () | availability=*, unavailable
+init (annotations: [LineAnnotation])
+init (breakStrategy: LineBreakStrategy )
+init (bridge: FindPanelBridge)
+init (color: PlatformColor, bold: Bool , italic: Bool )
+init (column: Int, length: Int, capture: CaptureName?)
+init (contentHeight: CGFloat, lines: [MinimapLinePaint], selectionRects: [CGRect] )
+init (contentSize: CGSize, fragments: [LaidOutFragment])
+init (controller: EditorController)
+init (controller: EditorController? )
+init (controller: EditorController? , coordinator: (any EditorCoordinator)? )
+init (depth: Int, range: Range<Int>)
+init (depth: Int, start: Int)
+init (document: String, indentOption: IndentOption, lineCount: Int)
+init (documentLength: Int)
+init (documentLength: Int, folds: [RawFold] , collapsedRanges: Set<DepthStartPair> )
+init (documentLength: Int, providerIDs: [ProviderID] )
+init (fragment: LineFragment, frame: CGRect, lineIndex: Int)
+init (fragments: [LineFragment] , typesetHeight: CGFloat )
+init (from decoder: Decoder)
+init (hooks: DocumentHooks)
+init (id: FoldIdentifier, depth: Int, range: Range<Int>, isCollapsed: Bool)
+init (item: CompletionItem, providerID: ProviderID? )
+init (leading: CGFloat , trailing: CGFloat )
+init (length: Int, value: Element?)
+init (maxWidth: CGFloat, lineHeightMultiplier: CGFloat , estimatedLineHeight: CGFloat)
+init (range: NSRange, attachment: any TextAttachment)
+init (range: NSRange, line: Int, column: Int)
+init (ranges: [FoldingRange] )
+init (rules: [Rule])
+init (y: CGFloat, height: CGFloat, bubbles: [MinimapBubbleRun], lineIndex: Int)
+protocol CodeSuggestionDelegate | isolation=@MainActor
+protocol CodeSuggestionEntry
+protocol EditorCoordinator | isolation=@MainActor
+protocol EditorLifecycleObserver | isolation=@MainActor
+protocol InvisibleCharactersDelegate
+protocol JumpToDefinitionDelegate | isolation=@MainActor
+protocol LineFoldProvider | isolation=@MainActor
+protocol RangeStoreElement | sendable=1
+protocol TextAttachment
+struct AnnotationPopupView
+struct AnyTextAttachment
+struct Appearance
+struct Attribute
+struct Behavior
+struct CodeEditor
+struct CommandPaletteView
+struct CursorPosition | sendable=1
+struct DepthStartPair | sendable=1
+struct DocumentHooks
+struct EditorConfiguration
+struct EditorState | sendable=1
+struct EditorTextServicesPolicy | sendable=1
+struct EditorTheme
+struct Emphasis | sendable=1
+struct FindPanelView
+struct FoldRange | sendable=1
+struct GutterModel
+struct HorizontalEdgeInsets | sendable=1
+struct LaidOutFragment
+struct Layout
+struct LayoutSnapshot | sendable=1
+struct LineAnnotation | sendable=1
+struct LineFoldPlaceholderStyle | sendable=1
+struct LineFoldProviderContext | sendable=1
+struct LineFoldStorage | sendable=1
+struct MarkedTextSession | sendable=1
+struct MinimapBubbleRun | sendable=1
+struct MinimapLinePaint | sendable=1
+struct MinimapSnapshot | sendable=1
+struct Peripherals
+struct RangeStore | sendable=1
+struct RawFold | sendable=1
+struct Rule | sendable=1
+struct Run | sendable=1
+struct SharedCodeEditor
+struct TypesetDisplayData | sendable=1
+struct Typesetter | sendable=1
+typealias FoldIdentifier
+typealias PlatformColor
+typealias PlatformFont
+typealias PlatformView
+typealias ProviderID
+var absoluteSelectedRange
+var accessibilityLabelText
+var accessibilityValueText
+var additionalTextEdits
+var allFolds
+var allowsAutocorrection
+var allowsDataDetectors
+var allowsDictation
+var allowsServicesMenu
+var allowsSmartDashes
+var allowsSmartInsertDelete
+var allowsSmartQuotes
+var allowsSpellingCorrections
+var allowsTextReplacement
+var anchorPosition
+var annotations
+var annotationsByLine
+var appearance
+var applyFontTraits
+var ascent
+var attachment
+var attachments
+var attributeColor
+var attributes
+var background
+var baselineFromTop
+var beginningOfDocument
+var behavior
+var body
+var bold
+var bracketPairEmphasis
+var bracketPairs
+var breakStrategy
+var bubbles
+var capture
+var caretColor
+var category
+var charWidth
+var charWidthScale
+var characterWidth
+var characters
+var codeEditor
+var codeGap
+var collapsedFolds
+var collapsedSymbolName
+var color
+var column
+var commandDispatcher
+var commands
+var commentColor
+var comments
+var completionDelegate
+var completionSession
+var completionsVisible
+var configuration
+var constants
+var contentHeight
+var contentInsets
+var contentLeading
+var contentSize
+var context
+var contextFlags
+var controller
+var coordinator
+var cornerRadius
+var ctLine
+var currentMatch
+var currentMatchIndex
+var cursorPositions
+var deprecated
+var depth
+var descent
+var detail
+var diagnostics
+var digitCount
+var displayName
+var document
+var documentID
+var documentLength
+var documentRange
+var documentation
+var edgeInsets
+var editorBackground
+var editorEvents
+var editorState
+var emphasis
+var emphasisFillColor
+var emphasisGroup
+var emphasisStrokeColor
+var empty
+var endOfDocument
+var estimatedLineHeight
+var events
+var expandedSymbolName
+var fieldFocusTarget
+var fieldFocusToken
+var find
+var findFieldFocusToken
+var findPanelVisible
+var findSession
+var findText
+var flash
+var fold
+var foldModel
+var foldProvider
+var foldingRibbonMinX
+var foldingRibbonWidth
+var font
+var foreground
+var fragment
+var fragments
+var frame
+var group
+var gutterBackground
+var gutterText
+var hasProviders
+var hasText
+var height
+var horizontal
+var horizontalPadding
+var host
+var iconPointSize
+var iconSize
+var id
+var imageColorToken
+var inactive
+var indentCharCount
+var indentOption
+var inputDelegate
+var insertText
+var insertionPoint
+var invalidateLayout
+var invisibleCharactersDelegate
+var invisibles
+var isActive
+var isCollapsed
+var isComposingMarkedText
+var isEditable
+var isEmpty
+var isFocused
+var isInTransaction
+var isJumpLinkPopoverVisible
+var isPanelFocused
+var isSelectable
+var isSelected
+var isShowing
+var italic
+var item
+var jumpHoveredRange
+var jumpToDefinition
+var jumpToDefinitionDelegate
+var jumpToDefinitionModel
+var keystrokeLayoutSeconds
+var keywordColor
+var keywords
+var label
+var language
+var languageID
+var layout
+var layout1kLinesSeconds
+var leading
+var length
+var letterSpacing
+var line
+var lineBreakStrategy
+var lineCount
+var lineHeight
+var lineHeightMultiple
+var lineHeightMultiplier
+var lineHighlight
+var lineIndex
+var lineRelativeRange
+var lines
+var markedTextRange
+var markedTextStyle
+var matchCase
+var matchCount
+var matches
+var matchesEmpty
+var maxValueCharacters
+var maxValueOverheadCharacters
+var maxWidth
+var maxWidthFraction
+var message
+var method
+var minWidth
+var minimapWidth
+var minimapX
+var minimumChipWidth
+var minimumDigitCount
+var mode
+var monospacedFont
+var needsDisplay
+var newlineColor
+var nsDocument
+var nsRange
+var numberColor
+var numbers
+var numbersWidth
+var onChange
+var onChange | isolation=@MainActor
+var onCompletionSessionChange
+var onExpand
+var onFindSessionChange
+var onFoldsDidChange
+var onJumpFailed
+var onNeedsDisplay
+var onOpenRemoteURL
+var onRequestScrollToSelection
+var onSelect
+var onSelectionChange
+var onSelectionDidChange
+var onStylesDidChange
+var onTextChange
+var onTextDidChange
+var onTransactionEnded
+var onWillBecomeFirstResponder
+var operatorColor
+var operators
+var options
+var panelHeight
+var pathComponents
+var pattern
+var peripherals
+var popupRightSideOffset
+var prose
+var providerID
+var punctuation
+var punctuationColor
+var range
+var rangeIndice
+var reformatAtColumn
+var reformattingGuide
+var reformattingGuideColor
+var relativeWidth
+var replaceText
+var scrollPosition
+var selectFieldTextOnFocus
+var selectFindQueryOnFocus
+var selectInDocument
+var selectedBackground
+var selectedForeground
+var selectedIndex
+var selectedItem
+var selectedLineIndices
+var selectedRange
+var selectedRangeInMarked
+var selectedRanges
+var selectedTextRange
+var selection
+var selectionChanges
+var selectionColor
+var selectionRects
+var selections
+var separatorWidth
+var sessionID
+var setAttributes
+var severity
+var showFoldingRibbon
+var showGutter
+var showInvisibleCharacters
+var showMinimap
+var showReformattingGuide
+var snapshot
+var sourcePreview
+var spaceColor
+var start
+var stringColor
+var strings
+var style
+var substring
+var subsystem
+var systemImage
+var tabColor
+var tabWidth
+var targetPosition
+var targetRange
+var text
+var textChanges
+var textColor
+var textDocument
+var textEdit
+var textServices
+var theme
+var tokenOverrides
+var tokenizer
+var trailing
+var trailingInset
+var triggerCharacters
+var typeColor
+var types
+var typingAttributes
+var undoCoordinator
+var url
+var useThemeBackground
+var value
+var valueColor
+var values
+var variableColor
+var variables
+var version
+var verticalLayoutPadding
+var width
+var wordNavigationMode
+var wrapAround
+var wrapLines
+var y
+var zero

@@ -1,0 +1,20 @@
+class WasmGuestRuntime | sendable=1
+enum WasmGuestError | sendable=1
+func abiVersion()
+func alloc(_ length: Int32)
+func dealloc(_ ptr: Int32, _ length: Int32)
+func poll(_ budget: Int32)
+func read(ptr: Int, len: Int)
+func receive(ptr: Int32, len: Int32)
+func setHandler(for method: ExtensionMethodID, handler: @escaping @Sendable (Data) -> Data) | sendable=1
+func start(configPtr: Int32, configLen: Int32)
+func stop(_ reason: Int32)
+func writeToMemory(_ data: Data, at ptr: Int)
+init ()
+var hostLog
+var hostMillis
+var hostSend
+var hostShouldCancel
+var memory
+var methodHandlers | sendable=1
+var pendingSlowWork

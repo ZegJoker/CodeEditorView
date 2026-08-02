@@ -1,0 +1,4 @@
+# Digester / symbol-graph baseline stamp
+# 2026-08-02T10:18:59Z
+seeded_from=public_inventory
+note=CI check-api-baseline.sh refreshes real symbol graphs

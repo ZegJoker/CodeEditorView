@@ -1,0 +1,222 @@
+actor ExtensionPackageManager
+actor ExtensionRuntime
+class CommandContributionRegistrar | sendable=1
+class ExtensionContext | sendable=1
+class ExtensionStorage | sendable=1
+class IconThemeContributionRegistrar | sendable=1
+class IconThemeContributionStore | sendable=1
+class KeybindingContributionRegistrar | sendable=1
+class LanguageContributionRegistrar | sendable=1
+class LanguageServiceContributionRegistrar | sendable=1
+class PanelContributionRegistrar | sendable=1
+class PanelContributionStore | sendable=1
+class SnippetContributionRegistrar | sendable=1
+class SnippetContributionStore | sendable=1
+class StoreTelemetrySink | sendable=1
+class ThemeContributionRegistrar | sendable=1
+class ThemeContributionStore | sendable=1
+enum DataExtensionLoader
+enum ExtensionRegistryError | sendable=1
+enum PackageSBOM
+enum SBOMError | sendable=1
+func activate(id: ExtensionID)
+func addTask(_ task: Task<Void, Never>)
+func all()
+func allStatuses()
+func append(_ event: StoreTelemetryEvent)
+func applyOverrides(_ overrides: [KeybindingOverride]) | isolation=@MainActor attr=discardableResult
+func assertCanActivate(id: ExtensionID)
+func bind( _ keybinding: Keybinding, to command: CommandID, priority: Int ) | isolation=@MainActor attr=discardableResult
+func bootstrap()
+func currentInstallPolicy()
+func deactivate(id: ExtensionID)
+func declaredLicense(packageRoot: URL, plan: ValidatedContributionPlan)
+func disable(id: ExtensionID)
+func enable(id: ExtensionID)
+func enforce(packageRoot: URL, plan: ValidatedContributionPlan, policy: LicensePolicy)
+func error(_ message: String)
+func fetchIndex(from url: URL)
+func fire(_ event: ExtensionActivationEvent)
+func generate(packageRoot: URL, plan: ValidatedContributionPlan)
+func hasPermission(_ permission: ExtensionPermission)
+func info(_ message: String)
+func insecureForTests( installRoot: URL, maxEventBuffer: Int , verifier: (any PackageVerifying)
+func install(commands: CommandContributionRegistrar?)
+func install(from source: URL, asDev: Bool ) | attr=discardableResult
+func install(iconThemes: IconThemeContributionRegistrar?)
+func install(keybindings: KeybindingContributionRegistrar?)
+func install(languageServices: LanguageServiceContributionRegistrar?)
+func install(languages: LanguageContributionRegistrar?)
+func install(panels: PanelContributionRegistrar?)
+func install(snippets: SnippetContributionRegistrar?)
+func install(storage: ExtensionStorage?)
+func install(themes: ThemeContributionRegistrar?)
+func installedPackages()
+func load(from directory: URL, allowLegacyJSON: Bool )
+func load(json: Data)
+func load(packageRoot: URL)
+func makeDefinition()
+func makeExtension(from bundle: DataExtensionBundle)
+func makeExtension(from plan: ValidatedContributionPlan)
+func makeFull( commands: CommandRegistry ) | isolation=@MainActor
+func makeOverride()
+func materialize( ref: ExtensionArtifactRef, into destinationDirectory: URL )
+func package(id: ExtensionID)
+func packageDirectory(for id: ExtensionID)
+func panels(slot: String)
+func quarantine(id: ExtensionID, reason: String)
+func readAll()
+func readFile(relativePath: String)
+func recoverCorruptedState()
+func register( _ ext: any CodeEditorExtension, grantedPermissions override: Set<ExtensionPermission>? )
+func register( id: String, slot: String, title: String, priority: Int ) | attr=discardableResult
+func register(_ command: EditorCommand) | isolation=@MainActor attr=discardableResult
+func register(_ definition: LanguageDefinition) | attr=discardableResult
+func register(_ dto: LanguageDefinitionDTO) | attr=discardableResult
+func register(_ panel: PanelContribution)
+func register(_ provider: any CompletionProvider)
+func register(_ provider: any DefinitionProvider)
+func register(_ provider: any DiagnosticsProvider)
+func register(_ provider: any FormattingProvider)
+func register(_ provider: any HoverProvider)
+func register(_ snippet: SnippetContribution)
+func register(_ snippet: SnippetContribution) | attr=discardableResult
+func register(_ theme: IconThemeContribution)
+func register(_ theme: IconThemeContribution) | attr=discardableResult
+func register(_ theme: ThemeContribution)
+func register(_ theme: ThemeContribution) | attr=discardableResult
+func registerAsync(_ command: EditorCommand)
+func reloadDev(path: URL)
+func removeValue(forKey key: String)
+func repairStoreBootstrap()
+func requirePermission(_ permission: ExtensionPermission)
+func resolve( index: ExtensionIndexDocument, id: ExtensionID, version: String? , channel: String , baseURL: URL? )
+func resolvedFileURL(forRelativePath relativePath: String)
+func revocationList()
+func rollback(id: ExtensionID)
+func setInstallPolicy(_ policy: ShippingInstallPolicy?)
+func setRevocationList(_ list: RevocationListDocument)
+func setTelemetry(_ sink: StoreTelemetrySink?)
+func setValue(_ data: Data, forKey key: String)
+func setVerifier(_ verifier: (any PackageVerifying)?)
+func snippets(languageID: String?)
+func status(id: ExtensionID)
+func teardown()
+func theme(id: String)
+func track(_ disposable: any ExtensionDisposable)
+func trustPromptIfNeeded(for id: ExtensionID)
+func trustStatusItems()
+func uninstall(id: ExtensionID, purgeData: Bool )
+func unregister(extensionID: ExtensionID)
+func unregister(id: ExtensionID)
+func unregister(id: String)
+func update(id: ExtensionID, from source: URL)
+func userDataDir(id: ExtensionID)
+func value(forKey key: String)
+func warning(_ message: String)
+func write(packageRoot: URL, plan: ValidatedContributionPlan)
+func writeFile(relativePath: String, data: Data)
+init ( commandRegistry: CommandRegistry? , keybindingRegistry: KeybindingRegistry? , languageRegistry: LanguageRegistry? , languageServiceRegistry: LanguageServiceRegistry? , panelStore: PanelContributionStore )
+init ( environment: HostEnvironment , services: ExtensionHostServices, log: ExtensionLog )
+init ( extensionID: ExtensionID, grantedPermissions: Set<ExtensionPermission>, log: ExtensionLog )
+init ( extensionID: ExtensionID, rootDirectory: URL, grantedPermissions: Set<ExtensionPermission> )
+init ( installRoot: URL, maxEventBuffer: Int , verifier: (any PackageVerifying)
+init ( installRoot: URL, policy: ShippingInstallPolicy, verifier: any PackageVerifying, maxEventBuffer: Int , telemetry: StoreTelemetrySink? )
+init ( manifest: ExtensionManifest, themes: [ThemeContribution] , snippets: [SnippetContribution] , keybindingOverrides: [KeybindingOverrideDTO] , languageDefinitions: [LanguageDefinitionDTO] , iconThemes: [IconThemeContribution] , plan: ValidatedContributionPlan? )
+init ( requireLicense: Bool , requireSBOM: Bool , allowedLicenses: Set<String> , "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "CC0-1.0", "Unlicense", ] )
+init ( spdxVersion: String , dataLicense: String , spdxId: String , name: String, documentNamespace: String, creationInfo: CreationInfo, packages: [Package], files: [File] )
+init ( store: PanelContributionStore, extensionID: ExtensionID, grantedPermissions: Set<ExtensionPermission> )
+init ()
+init (allowHTTP: Bool )
+init (fileURL: URL)
+init (plan: ValidatedContributionPlan)
+init (registry: CommandRegistry)
+init (registry: KeybindingRegistry)
+init (registry: LanguageRegistry )
+init (registry: LanguageServiceRegistry, extensionID: ExtensionID)
+init (store: IconThemeContributionStore, extensionID: ExtensionID)
+init (store: SnippetContributionStore, extensionID: ExtensionID)
+init (store: ThemeContributionStore, extensionID: ExtensionID)
+init (trustClass: ExtensionTrustClassDTO, publisher: String?, quarantined: Bool, error: String?)
+init (wrapping commandDisposable: any CommandDisposable)
+protocol PackageVerifying | sendable=1
+struct Checksum | sendable=1
+struct CreationInfo | sendable=1
+struct DataExtensionBundle | sendable=1
+struct Document | sendable=1
+struct ExtensionHostServices | sendable=1
+struct ExtensionRegistryClient | sendable=1
+struct File | sendable=1
+struct InstalledPackage | sendable=1
+struct LicensePolicy | sendable=1
+struct Package | sendable=1
+struct PackageVerifyResult | sendable=1
+var algorithm
+var allowHTTP
+var allowedLicenses
+var cacheRoot
+var canActivate
+var checksumValue
+var checksums
+var commandRegistry
+var copyrightText
+var created
+var creationInfo
+var creators
+var currentVersion
+var dataLicense
+var dataRoot
+var documentNamespace
+var downloadLocation
+var downloadsRoot
+var enabled
+var environment
+var error
+var extensionID
+var fileName
+var files
+var grantedPermissions
+var iconThemeStore
+var iconThemes
+var installPath
+var installRoot
+var isDev
+var keybindingOverrides
+var keybindingRegistry
+var languageDefinitions
+var languageRegistry
+var languageServiceRegistry
+var licenseConcluded
+var licenseDeclared
+var log
+var manifest
+var name
+var packages
+var packagesRoot
+var panelStore
+var permissive
+var plan
+var previousPlan
+var previousVersion
+var publisher
+var quarantineReason
+var quarantined
+var requireLicense
+var requireSBOM
+var revocationRoot
+var rootDirectory
+var services
+var snapshots
+var snippetStore
+var snippets
+var spdxId
+var spdxVersion
+var state
+var stateRoot
+var storageRoot
+var strict
+var telemetryRoot
+var themeStore
+var themes
+var trustClass
+var versionInfo

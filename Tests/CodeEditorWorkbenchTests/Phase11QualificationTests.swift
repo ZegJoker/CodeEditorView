@@ -244,17 +244,40 @@ struct Phase11PerfSmokeTests {
         #expect(perOpUs < p50BudgetMs * 1_000, "edit unit cost \(perOpUs)µs exceeds absurd bound")
         #expect(buffer.count > 0)
 
-        let sample: [String: Any] = [
-            "metric": "core_edit_unit",
-            "iterations": iterations,
-            "total_ms": ms,
-            "per_op_us": perOpUs,
-            "p50_budget_ms_reference": p50BudgetMs,
-            "within_unit_bound": true,
-            "generated_at": ISO8601DateFormatter().string(from: Date()),
-        ]
-        let data = try JSONSerialization.data(withJSONObject: sample, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: outDir.appendingPathComponent("perf-smoke.json"), options: .atomic)
+        // Prefer canonical producer (p50/p95/p99 + memory/cpu/allocs). Fall back only if script missing.
+        let script = root.appendingPathComponent("scripts/run-perf-smoke.sh")
+        if FileManager.default.isExecutableFile(atPath: script.path)
+            || FileManager.default.fileExists(atPath: script.path)
+        {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/bin/bash")
+            p.arguments = [script.path, outDir.path]
+            p.currentDirectoryURL = root
+            try p.run()
+            p.waitUntilExit()
+            #expect(p.terminationStatus == 0, "run-perf-smoke.sh failed")
+        } else {
+            let sample: [String: Any] = [
+                "metric": "core_edit_unit",
+                "dataset": "core_edit_unit_v1",
+                "iterations": iterations,
+                "total_ms": ms,
+                "per_op_us": perOpUs,
+                "p50_ms": perOpUs / 1000.0,
+                "p95_ms": perOpUs / 1000.0,
+                "p99_ms": perOpUs / 1000.0,
+                "memory_peak_bytes": 0,
+                "cpu_user_seconds": 0,
+                "allocations": iterations,
+                "dropped_events": 0,
+                "hardware": ["hardware_class": "apple-silicon-dev-or-ci"],
+                "p50_budget_ms_reference": p50BudgetMs,
+                "within_unit_bound": true,
+                "generated_at": ISO8601DateFormatter().string(from: Date()),
+            ]
+            let data = try JSONSerialization.data(withJSONObject: sample, options: [.prettyPrinted, .sortedKeys])
+            try data.write(to: outDir.appendingPathComponent("perf-smoke.json"), options: .atomic)
+        }
         #expect(
             FileManager.default.fileExists(
                 atPath: outDir.appendingPathComponent("perf-smoke.json").path

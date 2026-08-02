@@ -1,9 +1,6 @@
 # Unchecked Sendable dossier (REL-N07)
-
 Policy for every `@unchecked Sendable` site under `Sources/`.
-
 ## Required fields (per site)
-
 | Field | Meaning |
 |---|---|
 | invariant | Why the type is safe despite unchecked Sendable |
@@ -13,27 +10,120 @@ Policy for every `@unchecked Sendable` site under `Sources/`.
 | removal path | How the site will become checked Sendable |
 
 ## Global rules
-
-1. New sites require updating `Baselines/unchecked-sendable-allowlist.txt` **and** an entry in this dossier (or inventory regeneration with rationale).
+1. New sites require updating `Baselines/unchecked-sendable-allowlist.txt` **and** a per-site row below.
 2. Count is ratcheted downward: `scripts/check-unchecked-sendable.sh` fails on any site not in the allowlist.
 3. CI `strict-concurrency` job uses `-strict-concurrency=complete` with **warnings-as-errors**.
 4. Thread Sanitizer jobs must execute tests (see `scripts/run-sanitizers.sh`), not only compile.
 
 ## Inventory
-
 Generated inventory: `Docs/Architecture/UNCHECKED-SENDABLE.md`  
 Allowlist: `Baselines/unchecked-sendable-allowlist.txt`  
-Current count is maintained by `scripts/generate-unchecked-sendable-inventory.sh`.
+Per-site entries: **101** (must match allowlist).
+
+## Per-site entries
+| site | class | invariant | owner | synchronization | stress | removal path |
+|---|---|---|---|---|---|---|
+| `Sources/CodeEditorCore/Index/LineIndex.swift:79:public struct LinePosition<Payload: LinePayload>: @unchecked Sendable {` | core-index | Value snapshot; CTLine not Sendable | CodeEditorCore | immutability after build | core tests | copy-on-write Sendable wrappers |
+| `Sources/CodeEditorCore/Platform/ProcessService.swift:284:    public final class ProcessHandle: @unchecked Sendable {` | process | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
+| `Sources/CodeEditorCore/Platform/ProcessService.swift:92:    public final class ProcessHandle: @unchecked Sendable {` | process | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
+| `Sources/CodeEditorCore/Selection/ColumnSelectionBuilder.swift:10:/// `@unchecked Sendable`: `CTLine` is not Sendable; fragments are value snapshots` | core-index | Value snapshot; CTLine not Sendable | CodeEditorCore | immutability after build | core tests | copy-on-write Sendable wrappers |
+| `Sources/CodeEditorCore/Selection/ColumnSelectionBuilder.swift:12:public struct ColumnSelectionFragment: @unchecked Sendable {` | core-index | Value snapshot; CTLine not Sendable | CodeEditorCore | immutability after build | core tests | copy-on-write Sendable wrappers |
+| `Sources/CodeEditorDAP/DAPErrors.swift:46:public final class DAPLog: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorDAP/DAPErrors.swift:97:public struct DAPJSONObject: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorDAP/Transport/DAPMessageFraming.swift:21:    public final class Decoder: @unchecked Sendable {` | framing | Buffer mutated only on owner queue | transport owners | lock / single consumer | transport unit tests | isolate decoder actor |
+| `Sources/CodeEditorDAP/Transport/DAPTransport.swift:12:private final class DAPTransportState: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorDAP/Transport/DAPTransport.swift:195:public final class DAPProcessTransport: DAPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorDAP/Transport/DAPTransport.swift:211:    private final class StderrBox: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorDAP/Transport/DAPTransport.swift:26:public final class DAPTestTransport: DAPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorDAP/Transport/DAPTransport.swift:83:public final class DAPTCPConnectTransport: DAPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:25:            final class Box: @unchecked Sendable {` | documents | Callback box for coordinated IO | Documents | lock / queue | document tests | checked Sendable callbacks |
+| `Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:64:            final class Box: @unchecked Sendable {` | documents | Callback box for coordinated IO | Documents | lock / queue | document tests | checked Sendable callbacks |
+| `Sources/CodeEditorExtensionAPI/ExtensionDisposable.swift:31:public final class CompositeExtensionDisposable: ExtensionDisposable, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionAPI/ExtensionDisposable.swift:9:public final class ExtensionRegistrationToken: ExtensionDisposable, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionAPI/ExtensionStatus.swift:69:public final class ExtensionLog: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionGuest/ExtensionGuestRuntime.swift:431:public final class GuestExtensionContext: ExtensionAuthorContext, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionGuest/ExtensionGuestRuntime.swift:486:public final class StdioWireTransport: ExtensionWireTransport, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Adapters/RemoteLanguageServiceProviders.swift:8:public final class RemoteProviderRegistration: @unchecked Sendable {` | language | Lazy init once | Languages | lock | bootstrap tests | actor |
+| `Sources/CodeEditorExtensionHost/Broker/CapabilityBroker.swift:870:final class DownloadRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Conformance/ConformanceTrace.swift:38:public final class ConformanceTracer: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Debug/TerminalDAPRunInTerminalHandler.swift:41:public final class TerminalInvokeCounter: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:176:private final class MCPTransportState: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:202:public final class MCPTestTransport: MCPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:203:    private final class State: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:250:public struct MCPJSON: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:84:public final class MCPProcessTransport: MCPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/RPC/RPCFraming.swift:12:    public final class Decoder: @unchecked Sendable {` | framing | Buffer mutated only on owner queue | transport owners | lock / single consumer | transport unit tests | isolate decoder actor |
+| `Sources/CodeEditorExtensionHost/Transport/NativeHelperProcessTransport.swift:7:public final class NativeHelperProcessTransport: ExtensionWireTransport, @unchecked Sendable {` | process | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
+| `Sources/CodeEditorExtensionHost/Transport/RemoteExtensionTransport.swift:10:private final class TransportState: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Transport/RemoteExtensionTransport.swift:24:public final class MockRemoteExtensionTransport: RemoteExtensionTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Transport/RemoteExtensionTransport.swift:83:public final class ProcessRemoteExtensionTransport: RemoteExtensionTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Wasm/CoreWasmABISession.swift:222:final class MessageBox: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Wasm/WasmGuestLink.swift:53:final class GuestMemory: WasmMemoryView, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionHost/Wasm/WasmGuestLink.swift:8:public final class WasmGuestLink: LinkedWasmGuest, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionProtocol/CBOR/CBORFraming.swift:18:    public final class Decoder: @unchecked Sendable {` | framing | Buffer mutated only on owner queue | transport owners | lock / single consumer | transport unit tests | isolate decoder actor |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:10:public final class CommandContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:218:public final class PanelContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:258:public final class ThemeContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:282:public final class SnippetContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:306:public final class IconThemeContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:33:public final class KeybindingContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:74:public final class LanguageContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionRegistrars.swift:98:public final class LanguageServiceContributionRegistrar: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionStores.swift:11:public final class PanelContributionStore: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionStores.swift:131:public final class IconThemeContributionStore: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionStores.swift:51:public final class ThemeContributionStore: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ContributionStores.swift:90:public final class SnippetContributionStore: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ExtensionContext.swift:5:public final class ExtensionContext: ExtensionAuthorContext, @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ExtensionPackageManager.swift:929:public final class StoreTelemetrySink: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensions/ExtensionStorage.swift:5:public final class ExtensionStorage: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorExtensionWasmGuest/WasmGuestRuntime.swift:6:public final class WasmGuestRuntime: @unchecked Sendable {` | extension | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
+| `Sources/CodeEditorLanguageJSON/CodeEditorLanguageJSON.swift:22:    private final class State: @unchecked Sendable {` | language | Lazy init once | Languages | lock | bootstrap tests | actor |
+| `Sources/CodeEditorLanguages/CodeEditorLanguagesBootstrap.swift:54:    private final class State: @unchecked Sendable {` | language | Lazy init once | Languages | lock | bootstrap tests | actor |
+| `Sources/CodeEditorLanguageSupport/LanguageRegistry.swift:46:public final class LanguageRegistry: @unchecked Sendable {` | language | Lazy init once | Languages | lock | bootstrap tests | actor |
+| `Sources/CodeEditorLanguageSwift/CodeEditorLanguageSwift.swift:20:    private final class State: @unchecked Sendable {` | language | Lazy init once | Languages | lock | bootstrap tests | actor |
+| `Sources/CodeEditorLSP/Adapters/LSPLanguageServiceProviders.swift:8:public final class LSPProviderRegistration: @unchecked Sendable {` | language | Lazy init once | Languages | lock | bootstrap tests | actor |
+| `Sources/CodeEditorLSP/LSPErrors.swift:52:public final class LSPLog: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorLSP/LSPJSON.swift:17:public struct LSPAnyJSON: @unchecked Sendable {` | json-box | Immutable after parse or locked | LSP/DAP | value snapshot | matrix tests | structured Sendable DTOs |
+| `Sources/CodeEditorLSP/LSPJSON.swift:4:public struct LSPJSONObject: @unchecked Sendable {` | json-box | Immutable after parse or locked | LSP/DAP | value snapshot | matrix tests | structured Sendable DTOs |
+| `Sources/CodeEditorLSP/Transport/LSPMessageFraming.swift:29:    public final class Decoder: @unchecked Sendable {` | framing | Buffer mutated only on owner queue | transport owners | lock / single consumer | transport unit tests | isolate decoder actor |
+| `Sources/CodeEditorLSP/Transport/LSPTransport.swift:13:private final class TransportState: @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorLSP/Transport/LSPTransport.swift:27:public final class LSPTestTransport: LSPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorLSP/Transport/LSPTransport.swift:87:public final class LSPProcessTransport: LSPTransport, @unchecked Sendable {` | transport | Transport state exclusive to owner | host/transport | lock / actor | transport tests | actor isolation |
+| `Sources/CodeEditorSourceControl/Git/GitCLIProvider.swift:6:public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {` | remote-provider | Registration table lock | ExtensionHost | lock | host tests | actor registry |
+| `Sources/CodeEditorTasks/OutputChannel.swift:19:public final class OutputChannel: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorTasks/ProblemMatcher.swift:228:    public final class StreamingState: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorTasks/ProblemMatcher.swift:313:public final class StreamingProblemMatcherEngine: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorTasks/TaskRunner.swift:20:public final class TaskExecutionHandle: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorTerminal/PTYTerminalBackend.swift:160:    public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {` | terminal-dap | Counter/handle exclusive | Terminal/DAP | lock | terminal tests | actor |
+| `Sources/CodeEditorTerminal/PTYTerminalBackend.swift:7:    public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {` | terminal-dap | Counter/handle exclusive | Terminal/DAP | lock | terminal tests | actor |
+| `Sources/CodeEditorTerminal/TerminalScreen.swift:40:public final class TerminalScreen: @unchecked Sendable {` | terminal-dap | Counter/handle exclusive | Terminal/DAP | lock | terminal tests | actor |
+| `Sources/CodeEditorTerminal/VTParser.swift:13:public final class VTParser: @unchecked Sendable {` | terminal-dap | Counter/handle exclusive | Terminal/DAP | lock | terminal tests | actor |
+| `Sources/CodeEditorTreeSitter/TreeSitterConfiguration.swift:45:    private final class Box: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorTreeSitter/TreeSitterConfigurationFactory.swift:91:    private final class Cache: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/Core/Layout/LayoutSnapshot.swift:33:extension LaidOutFragment: @unchecked Sendable {}` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/Platform/Shared/CursorBlinkController.swift:6:package final class CursorBlinkController: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/Platform/Shared/EditorSignposts.swift:58:public final class EditorPerformanceHarness: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:307:extension EditorConfiguration: @unchecked Sendable {}` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:308:extension EditorConfiguration.Appearance: @unchecked Sendable {}` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:309:extension EditorConfiguration.Behavior: @unchecked Sendable {}` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:310:extension EditorConfiguration.Layout: @unchecked Sendable {}` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:311:extension EditorConfiguration.Peripherals: @unchecked Sendable {}` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWasmEngine/InProcessCoreWasmEngine.swift:152:final class InProcessMemory: WasmMemoryView, @unchecked Sendable {` | process | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
+| `Sources/CodeEditorWasmEngine/InProcessCoreWasmEngine.swift:187:final class WasmGuestBridge: @unchecked Sendable {` | process | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
+| `Sources/CodeEditorWasmEngine/InProcessCoreWasmEngine.swift:52:final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {` | process | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
+| `Sources/CodeEditorWasmEngine/LinkedGuestWasmEngine.swift:144:final class InfiniteLoopInstance: CodeEditorWasmInstance, @unchecked Sendable {` | guest-wire | Wire IO exclusive to guest runtime | ExtensionGuest | lock / serial queue | guest tests | actor transport |
+| `Sources/CodeEditorWasmEngine/LinkedGuestWasmEngine.swift:182:final class ByteMemory: WasmMemoryView, @unchecked Sendable {` | guest-wire | Wire IO exclusive to guest runtime | ExtensionGuest | lock / serial queue | guest tests | actor transport |
+| `Sources/CodeEditorWasmEngine/LinkedGuestWasmEngine.swift:70:public final class LinkedGuestWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {` | guest-wire | Wire IO exclusive to guest runtime | ExtensionGuest | lock / serial queue | guest tests | actor transport |
+| `Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:132:    final class WasmKitInstance: CodeEditorWasmInstance, @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:225:            final class InvokeBox: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:350:    final class WasmKitMemoryView: WasmMemoryView, @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:70:    final class GuestMemoryHolder: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWorkbench/WorkspaceIndexService.swift:12:public final class FileTreeIndexService: WorkspaceIndexService, @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:202:    public final class FSEventsWorkspaceWatcher: WorkspaceFileWatchBackend, @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:232:public final class MockWorkspaceFileWatcher: WorkspaceFileWatchBackend, @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:28:/// Lock-protected; `@unchecked Sendable` documents external synchronization.` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:29:final class WorkspaceWatchSink: @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
+| `Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:82:    public final class FSEventsWorkspaceWatcher: WorkspaceFileWatchBackend, @unchecked Sendable {` | misc | Site-specific invariant documented at declaration | module owner | lock or immutability | module tests | checked Sendable when types allow |
 
 ## Site classes (summary)
-
-| Class | invariant | owner | synchronization | stress | removal path |
-|---|---|---|---|---|---|
-| Framing decoders (LSP/DAP/RPC/CBOR) | Buffer mutated only on owner queue | transport owners | lock / single consumer | transport unit tests | isolate decoder actor |
-| Process handles | Process lifecycle exclusive | CodeEditorCore | lock around Process | process tests | ProcessSupervisor actor |
-| Contribution stores | Main-actor affine or lock | Extensions | lock | host tests | actor isolation |
-| Test transports (legacy) | Test-only duplex pairs | tests | lock | suite | move fully to Tests/ |
-| Language registry / bootstrap | Lazy init once | Languages | lock | bootstrap tests | actor |
-| JSON boxes | Immutable after parse or locked | LSP/DAP | value snapshot | matrix tests | structured Sendable DTOs |
-
-Per-file line items live in the generated inventory. Adding a site without allowlist + dossier update fails CI.
+See per-site table above. Class summaries are not a substitute for per-site rows.

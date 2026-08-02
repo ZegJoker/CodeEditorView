@@ -36,8 +36,15 @@ for token in invariant owner synchronization "removal path" stress; do
   fi
 done
 
+# REL-N07: per-site entries required (not class summary alone)
+if ! rg -q 'Per-site entries' "$DOSSIER"; then
+  echo "FAIL: dossier must contain Per-site entries section"
+  exit 1
+fi
+
 python3 - <<'PY'
 from pathlib import Path
+import re
 cur = {l.strip() for l in Path("Baselines/unchecked-sendable-current.txt").read_text().splitlines() if l.strip()}
 allow = {l.strip() for l in Path("Baselines/unchecked-sendable-allowlist.txt").read_text().splitlines() if l.strip()}
 added = sorted(cur - allow)
@@ -47,11 +54,32 @@ if added:
     for a in added:
         print(" ", a)
     raise SystemExit(1)
-# Ratchet note: count must not exceed allowlist size
 if len(cur) > len(allow):
     print(f"FAIL: unchecked count {len(cur)} exceeds allowlist {len(allow)}")
     raise SystemExit(1)
-print(f"OK:   unchecked Sendable within allowlist ({len(cur)} sites; {len(removed)} allowlist-only stale ok)")
+
+dossier = Path("Docs/Architecture/dossiers/unchecked-sendable.md").read_text(encoding="utf-8")
+missing = []
+for site in sorted(cur):
+    # site lines look like path:line:code — match path:line at minimum
+    key = site
+    # Allow path-only match if line numbers drift slightly: require path segment present
+    path = site.split(":")[0]
+    if path not in dossier and site not in dossier:
+        # try path:line
+        parts = site.split(":")
+        if len(parts) >= 2:
+            pl = f"{parts[0]}:{parts[1]}"
+            if pl not in dossier:
+                missing.append(site)
+        else:
+            missing.append(site)
+if missing:
+    print(f"FAIL: {len(missing)} sites missing per-site dossier entries (sample):")
+    for m in missing[:10]:
+        print(" ", m)
+    raise SystemExit(1)
+print(f"OK:   unchecked Sendable within allowlist ({len(cur)} sites; per-site dossier complete; {len(removed)} allowlist-only stale ok)")
 PY
 
-echo "OK:   dossier present for unchecked Sendable policy"
+echo "OK:   dossier present with per-site unsafe-concurrency entries"
