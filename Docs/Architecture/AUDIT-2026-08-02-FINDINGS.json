@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked “fixed” rows",
+      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the “durable” claim",
+      "severity_raw": "P1 for the \u201cdurable\u201d claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
     },
     {
       "id": "CORE-N03",
@@ -796,9 +796,13 @@
       "severity_raw": "P1",
       "title": "provider identity collides across repositories",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N01_providerIdentityIsPerRepositoryNotConstantGit",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N01_identityUsesCanonicalResolvedRoot",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N01_serviceRegistersDistinctProvidersWithoutCollision"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N02",
@@ -806,9 +810,13 @@
       "severity_raw": "P1 feature-contract mismatch",
       "title": "auth callback is not wired",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N02_authCallbackIsInvokedForRemoteAuthPrompt",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N02_missingAuthFailsClosedWithoutTerminalPrompt",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N02_errorsAndLogsNeverExposeSecrets"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N03",
@@ -816,9 +824,12 @@
       "severity_raw": "P2",
       "title": "progress events are not a real path",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N03_longOperationEmitsProgressAndSupportsCancel",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N03_oneOperationCoordinatorPerRepository"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N04",
@@ -826,9 +837,12 @@
       "severity_raw": "P1",
       "title": "status model cannot represent staged and unstaged state simultaneously",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N04_statusRepresentsIndexAndWorktreeSimultaneously",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N04_renameCopySubmoduleAndIntentToAdd"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N05",
@@ -836,9 +850,11 @@
       "severity_raw": "P1",
       "title": "repository mutations are not serialized",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N05_mutationsAreSerializedPerRepository"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N06",
@@ -846,9 +862,13 @@
       "severity_raw": "P0 data-loss risk",
       "title": "destructive Git operations ignore dirty editor buffers",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N06_discardFailsClosedWhenDirtyBufferOpen",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N06_lifecycleBindingDetectsDirtyOpenDocument",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N06_checkoutFailsClosedForAnyDirtyRepoDocument"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N07",
@@ -856,9 +876,13 @@
       "severity_raw": "P1",
       "title": "hunk patch generation is incomplete",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N07_patchIncludesNoNewlineAndPassesGitApplyCheck",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N07_pathWithSpacesIsQuotedInPatch",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N07_applyCheckFailureDoesNotMutate"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N08",
@@ -866,9 +890,12 @@
       "severity_raw": "P1",
       "title": "status stream is not lifecycle-safe",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N08_statusStreamIsMulticastWithReplay",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N08_providerRemovalFinishesStreamAndMarksStale"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SCM-N09",
@@ -876,9 +903,13 @@
       "severity_raw": "P1",
       "title": "process output is unbounded",
       "phase": 5,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N09_usesProcessSupervisorAndBoundedOutput",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N09_outputOverflowFailsClosed",
+        "Tests/CodeEditorSourceControlTests/SCMNAuditTests.swift::test_SCM_N09_sanitizedFailureHidesCredentials"
+      ],
+      "notes": "2026-08-03: per-repo identity; auth askpass wired fail-closed; progress hub; dual index/worktree status; mutation gate; DocumentLifecycleCoordinator dirty preflight; git apply --check hunks; AsyncBroadcastHub status stream; ProcessSupervisor bounded sanitized output."
     },
     {
       "id": "SRCH-N01",
@@ -896,7 +927,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for “gitignore-compatible” claim",
+      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "verified",
@@ -1310,7 +1341,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current “real LSP” gate is not an integration test",
+      "title": "current \u201creal LSP\u201d gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1330,7 +1361,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as “early” responses",
+      "title": "late responses are retained as \u201cearly\u201d responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1470,7 +1501,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n²)-prone",
+      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1620,7 +1651,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process “argsGlob” is not a glob",
+      "title": "process \u201cargsGlob\u201d is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1690,7 +1721,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one “passing” flag",
+      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -2040,7 +2071,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution “fault isolation” is not isolation",
+      "title": "contribution \u201cfault isolation\u201d is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],
