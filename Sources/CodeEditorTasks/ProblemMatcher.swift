@@ -85,6 +85,26 @@ public struct TaskSourcePosition: Sendable, Hashable, Codable {
     }
 }
 
+/// Range resolved against an exact document content state (TASK-N07).
+///
+/// Line/column stay protocol-level until the host binds them to a snapshot
+/// via ``MatchedProblem/resolve(against:contentState:)``.
+public struct VersionedProblemRange: Sendable, Hashable {
+    public var range: CodeEditorCore.TextRange
+    public var contentState: DocumentContentStateID
+    public var position: TaskSourcePosition
+
+    public init(
+        range: CodeEditorCore.TextRange,
+        contentState: DocumentContentStateID,
+        position: TaskSourcePosition
+    ) {
+        self.range = range
+        self.contentState = contentState
+        self.position = position
+    }
+}
+
 public struct MatchedProblem: Sendable, Hashable {
     public var uri: DocumentURI?
     public var path: String
@@ -106,6 +126,14 @@ public struct MatchedProblem: Sendable, Hashable {
 
     /// Resolve `position` against `text` into a UTF-16 range for navigation.
     public func resolvedRange(in text: String) throws -> CodeEditorCore.TextRange {
+        try resolve(against: text, contentState: DocumentContentStateID()).range
+    }
+
+    /// Bind line/column to a UTF-16 range on a specific document content state (TASK-N07).
+    public func resolve(
+        against text: String,
+        contentState: DocumentContentStateID
+    ) throws -> VersionedProblemRange {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
         guard position.line < lines.count else {
             throw DocumentStoreError.invalidOffset(position.line)
@@ -118,7 +146,11 @@ public struct MatchedProblem: Sendable, Hashable {
         let lineUTF16 = (lineText as NSString).length
         let col = min(position.column, lineUTF16)
         let location = utf16Offset + col
-        return CodeEditorCore.TextRange(location: location, length: max(0, min(1, lineUTF16 - col)))
+        let range = CodeEditorCore.TextRange(
+            location: location,
+            length: max(0, min(1, lineUTF16 - col))
+        )
+        return VersionedProblemRange(range: range, contentState: contentState, position: position)
     }
 }
 
@@ -279,6 +311,9 @@ public enum ProblemMatcherEngine {
     }
 
     /// Returns nil when path escapes workspace root.
+    ///
+    /// Uses standardized path **components** for containment (TASK-N07) — never a weak
+    /// string-prefix check (which would accept `/workspace-evil` under root `/workspace`).
     public static func normalizePath(
         _ raw: String,
         cwd: URL?,
@@ -296,13 +331,15 @@ public enum ProblemMatcherEngine {
             return trimmed
         }
         if let root = workspaceRoot?.standardizedFileURL {
-            let rootPath = root.path
-            let path = url.path
-            if path != rootPath && !path.hasPrefix(rootPath.hasSuffix("/") ? rootPath : rootPath + "/") {
-                // Also allow equal after standardization
-                if !path.hasPrefix(rootPath) {
-                    return nil
-                }
+            let rootComponents = root.pathComponents
+            let pathComponents = url.pathComponents
+            // Exact root or proper descendant by component prefix.
+            let isRoot = pathComponents == rootComponents
+            let isDescendant =
+                pathComponents.count > rootComponents.count
+                && Array(pathComponents.prefix(rootComponents.count)) == rootComponents
+            if !isRoot && !isDescendant {
+                return nil
             }
         }
         return url.path

@@ -27,8 +27,11 @@ public struct FakeTaskRunner: TaskRunner, Sendable {
         _ definition: TaskDefinition,
         output: OutputChannel
     ) async throws -> TaskExecutionHandle {
+        // TASK-N05: fail closed on invalid readiness before any emission.
+        _ = try TaskError.validateReadinessPattern(definition.readinessPattern)
+
         let run = TaskRun(definitionID: definition.id, state: .running, startedAt: Date())
-        let handle = TaskExecutionHandle(
+        let handle = try TaskExecutionHandle(
             run: run,
             processHandle: nil,
             readinessPattern: definition.readinessPattern
@@ -42,7 +45,10 @@ public struct FakeTaskRunner: TaskRunner, Sendable {
             if hang {
                 while true {
                     try? await Task.sleep(nanoseconds: 20_000_000)
-                    if handle.run.state == .cancelled { return }
+                    if handle.run.state == .cancelled {
+                        // cancel() without process finishes the handle.
+                        return
+                    }
                 }
             }
             var out = ""
@@ -64,6 +70,7 @@ public struct FakeTaskRunner: TaskRunner, Sendable {
             done.exitCode = Int(code)
             done.endedAt = Date()
             handle.complete(run: done, stdout: out, stderr: err)
+            output.finish(reason: .completed)
         }
         return handle
     }

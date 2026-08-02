@@ -173,11 +173,72 @@ public struct TaskRunResult: Sendable {
     }
 }
 
+public enum TaskOutputStream: String, Sendable, Hashable, Codable {
+    case stdout
+    case stderr
+}
+
 public enum TaskOutputEvent: Sendable, Hashable {
     case stdout(String)
     case stderr(String)
+    /// Bounded spool overflow: delivered once per stream when the cap is first exceeded (TASK-N03).
+    case outputTruncated(stream: TaskOutputStream, droppedBytes: Int)
     case ready
     case completed(TaskRun)
+}
+
+/// Explicit DAG node outcome (TASK-N06) — dependents never launch merely because wait returned.
+public enum TaskNodeOutcome: Sendable, Hashable {
+    case succeeded
+    case failed(TaskFailure)
+    case cancelled
+    case skippedBecauseDependency(TaskID)
+
+    public var isFailureOrSkip: Bool {
+        switch self {
+        case .succeeded: return false
+        case .failed, .cancelled, .skippedBecauseDependency: return true
+        }
+    }
+
+    public var allowsDependents: Bool {
+        if case .succeeded = self { return true }
+        return false
+    }
+}
+
+public enum TaskFailure: Sendable, Hashable {
+    case exitCode(Int)
+    case timedOut
+    case processFailed(String)
+    case invalidDefinition(String)
+    case notReady(TaskID)
+    case concurrencyConflict(String)
+}
+
+/// Result of executing a task graph with per-node outcomes (TASK-N06).
+public struct TaskGraphReport: Sendable {
+    public var root: TaskID
+    public var order: [TaskID]
+    public var outcomes: [TaskID: TaskNodeOutcome]
+    /// Live handle for the root when it was launched; nil when root was skipped/failed before launch.
+    public var rootHandle: TaskExecutionHandle?
+
+    public init(
+        root: TaskID,
+        order: [TaskID],
+        outcomes: [TaskID: TaskNodeOutcome],
+        rootHandle: TaskExecutionHandle? = nil
+    ) {
+        self.root = root
+        self.order = order
+        self.outcomes = outcomes
+        self.rootHandle = rootHandle
+    }
+
+    public var rootOutcome: TaskNodeOutcome {
+        outcomes[root] ?? .failed(.invalidDefinition("missing root outcome"))
+    }
 }
 
 public enum TaskError: Error, Sendable, Equatable {
@@ -189,6 +250,20 @@ public enum TaskError: Error, Sendable, Equatable {
     case timedOut
     case invalidDefinition(String)
     case concurrencyConflict(String)
+}
+
+extension TaskError {
+    /// Validate readiness regex at definition/launch time (TASK-N05). Throws source-located config error.
+    public static func validateReadinessPattern(_ pattern: String?) throws -> NSRegularExpression? {
+        guard let pattern else { return nil }
+        do {
+            return try NSRegularExpression(pattern: pattern, options: [])
+        } catch {
+            throw TaskError.invalidDefinition(
+                "invalid readinessPattern: \(pattern) (\(error.localizedDescription))"
+            )
+        }
+    }
 }
 
 // MARK: - Variable resolution

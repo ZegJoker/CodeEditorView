@@ -1,3 +1,4 @@
+import CodeEditorCore
 import Foundation
 
 public struct OutputLine: Sendable, Hashable {
@@ -12,10 +13,10 @@ public struct OutputLine: Sendable, Hashable {
     }
 }
 
-/// Bounded task/process output channel (TASK-004 / §18.5).
+/// Bounded task/process output channel (TASK-N03/N04/N08).
 ///
 /// Retains at most `maxLines`. Emits **one** truncation marker when the cap is
-/// first exceeded (not repeated per later chunk).
+/// first exceeded (not repeated per later chunk). Producer owns finish exactly once.
 public final class OutputChannel: @unchecked Sendable {
     public let id: String
     public let name: String
@@ -23,8 +24,10 @@ public final class OutputChannel: @unchecked Sendable {
     private let lock = NSLock()
     private var _lines: [OutputLine] = []
     private var didTruncate = false
-    private var droppedLineCount = 0
+    private var _droppedLineCount = 0
     private var continuation: AsyncStream<OutputLine>.Continuation?
+    private var _finished = false
+    private var finishReason: StreamFinishReason?
     public let lines: AsyncStream<OutputLine>
 
     public init(id: String, name: String, maxLines: Int = 10_000) {
@@ -48,19 +51,35 @@ public final class OutputChannel: @unchecked Sendable {
         return didTruncate
     }
 
+    public var droppedLineCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _droppedLineCount
+    }
+
+    public var isFinished: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return _finished
+    }
+
     public func append(_ line: OutputLine) {
         lock.lock()
+        if _finished {
+            lock.unlock()
+            return
+        }
         _lines.append(line)
         var truncationLine: OutputLine?
         if _lines.count > maxLines {
             let overflow = _lines.count - maxLines
-            droppedLineCount += overflow
+            _droppedLineCount += overflow
             if !didTruncate {
                 didTruncate = true
                 // Drop oldest content lines, then pin a single truncation marker at front.
                 _lines.removeFirst(overflow)
                 truncationLine = OutputLine(
-                    text: "[output truncated; dropped \(droppedLineCount) lines]",
+                    text: "[output truncated; dropped \(_droppedLineCount) lines]",
                     isError: true
                 )
                 _lines.insert(truncationLine!, at: 0)
@@ -69,18 +88,15 @@ public final class OutputChannel: @unchecked Sendable {
                 }
             } else {
                 // Already truncated: preserve marker at [0], drop following oldest content.
-                // Capacity: 1 marker + (maxLines - 1) content lines.
                 let contentCap = max(0, maxLines - 1)
-                let contentCount = max(0, _lines.count - 1)  // exclude marker
+                let contentCount = max(0, _lines.count - 1)
                 if contentCount > contentCap {
                     let drop = contentCount - contentCap
-                    // Marker is index 0; content starts at 1.
                     _lines.removeSubrange(1..<(1 + drop))
                 }
-                // Refresh dropped count in the marker text once (still a single marker).
                 if !_lines.isEmpty {
                     _lines[0] = OutputLine(
-                        text: "[output truncated; dropped \(droppedLineCount) lines]",
+                        text: "[output truncated; dropped \(_droppedLineCount) lines]",
                         isError: true
                     )
                 }
@@ -104,8 +120,23 @@ public final class OutputChannel: @unchecked Sendable {
         lock.lock()
         _lines.removeAll()
         didTruncate = false
-        droppedLineCount = 0
+        _droppedLineCount = 0
         lock.unlock()
+    }
+
+    /// Producer owns completion exactly once (TASK-N08). Further appends are ignored.
+    public func finish(reason: StreamFinishReason = .completed) {
+        lock.lock()
+        if _finished {
+            lock.unlock()
+            return
+        }
+        _finished = true
+        finishReason = reason
+        let cont = continuation
+        continuation = nil
+        lock.unlock()
+        cont?.finish()
     }
 }
 
@@ -123,5 +154,12 @@ public actor OutputChannelRegistry {
 
     public func all() -> [OutputChannel] {
         Array(channels.values).sorted { $0.id < $1.id }
+    }
+
+    /// Finish every channel (window/service teardown — TASK-N08).
+    public func finishAll(reason: StreamFinishReason = .cancelled) {
+        for ch in channels.values {
+            ch.finish(reason: reason)
+        }
     }
 }
