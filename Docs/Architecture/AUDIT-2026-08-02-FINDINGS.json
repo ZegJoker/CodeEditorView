@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked “fixed” rows",
+      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the “durable” claim",
+      "severity_raw": "P1 for the \u201cdurable\u201d claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
     },
     {
       "id": "CORE-N03",
@@ -653,7 +653,7 @@
       "severity_raw": "P0",
       "title": "workspace rollback is not a coherent transaction",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N01_failedTransactionLeavesNoUserVisibleUndo",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N01_committedEditRegistersSingleUndoPerDocument",
@@ -669,7 +669,7 @@
       "severity_raw": "P0 data-loss risk",
       "title": "file deletion can race dirty/open document lifecycle",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N02_deleteAbortsWhenDirtyCancel",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N02_deleteResolvesDirtyDescendants",
@@ -683,7 +683,7 @@
       "severity_raw": "P1",
       "title": "bulk close can partially save before a later cancellation",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N03_allOrNothingCancelLeavesEarlierUnsaved",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N03_decisionThenSaveThenCommit",
@@ -697,7 +697,7 @@
       "severity_raw": "P1 responsiveness",
       "title": "local filesystem actor executes blocking traversal and mutation",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N04_childrenStreamBatchesAndCancellation",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N04_progressHubPublishes"
@@ -710,7 +710,7 @@
       "severity_raw": "P0 for rollback claim, P2 if the claim is removed",
       "title": "directory archive is not byte/metadata exact",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N05_archivePreservesSymlinkWithoutFollow",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N05_noFalseByteExactClaim",
@@ -724,7 +724,7 @@
       "severity_raw": "P0",
       "title": "journal has no complete startup recovery contract",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_checksumStableAcrossEncodeDecode",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_recoversPendingDeleteJournal",
@@ -740,7 +740,7 @@
       "severity_raw": "P1",
       "title": "workspace event stream can miss startup events",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N07_subscriptionStartsWithSnapshotAndSequence",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N07_noRegistrationRace"
@@ -753,7 +753,7 @@
       "severity_raw": "P1 security",
       "title": "symlink containment remains time-of-check/time-of-use sensitive",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N08_openatNoFollowRejectsSymlinkEscape",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N08_mutationUsesDescriptorRelativePath"
@@ -766,7 +766,7 @@
       "severity_raw": "P2",
       "title": "hidden-file policy is hardcoded",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N09_showAllListsDotfiles",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N09_hideDotfilesPolicy",
@@ -780,7 +780,7 @@
       "severity_raw": "P1",
       "title": "registry mutation bypasses higher-level ownership",
       "phase": 4,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_openCloseOnlyViaLifecycle",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_workspaceOpenUsesLifecycle",
@@ -893,7 +893,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for “gitignore-compatible” claim",
+      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "open",
@@ -1244,7 +1244,7 @@
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current “real LSP” gate is not an integration test",
+      "title": "current \u201creal LSP\u201d gate is not an integration test",
       "phase": 6,
       "status": "open",
       "regression_tests": [],
@@ -1264,7 +1264,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as “early” responses",
+      "title": "late responses are retained as \u201cearly\u201d responses",
       "phase": 7,
       "status": "open",
       "regression_tests": [],
@@ -1404,7 +1404,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n²)-prone",
+      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
       "phase": 8,
       "status": "open",
       "regression_tests": [],
@@ -1554,7 +1554,7 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process “argsGlob” is not a glob",
+      "title": "process \u201cargsGlob\u201d is not a glob",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1624,7 +1624,7 @@
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one “passing” flag",
+      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
       "phase": 9,
       "status": "open",
       "regression_tests": [],
@@ -1974,7 +1974,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution “fault isolation” is not isolation",
+      "title": "contribution \u201cfault isolation\u201d is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],
