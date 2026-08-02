@@ -46,6 +46,48 @@ struct GitIgnoreTests {
     }
 }
 
+@Suite("Search DOC-N05 overflow")
+struct SearchDOC05OverflowTests {
+    /// Untrusted / malformed match ranges must not trap on location+length (DOC-N05).
+    @Test func test_DOC_N05_searchReplaceOverflowSafeRangeArithmetic() throws {
+        let text = "hello world"
+        let overflowMatch = SearchMatch(
+            uri: DocumentURI(rawValue: "file:///doc.txt"),
+            range: TextRange(location: Int.max - 1, length: 10),
+            line: 1,
+            column: 1,
+            preview: "hello",
+            fromOpenDocument: true
+        )
+        // Must not trap; falls back to preview when range is invalid for the document.
+        let replaced = try SearchReplaceBuilder.replacementText(
+            for: overflowMatch,
+            template: "X",
+            query: SearchQuery(pattern: "hello"),
+            fullText: text,
+            preserveCase: false
+        )
+        #expect(replaced == "X")
+
+        let overlong = SearchMatch(
+            uri: DocumentURI(rawValue: "file:///doc.txt"),
+            range: TextRange(location: 0, length: Int.max),
+            line: 1,
+            column: 1,
+            preview: "hello",
+            fromOpenDocument: true
+        )
+        let overlongReplaced = try SearchReplaceBuilder.replacementText(
+            for: overlong,
+            template: "Y",
+            query: SearchQuery(pattern: "hello"),
+            fullText: text,
+            preserveCase: false
+        )
+        #expect(overlongReplaced == "Y")
+    }
+}
+
 @Suite("Search replace stale")
 @MainActor
 struct SearchReplaceStaleTests {

@@ -5,6 +5,32 @@ import Testing
 
 @testable import CodeEditorLSP
 
+@Suite("LSP DOC-N05 overflow")
+struct LSPDOC05OverflowTests {
+    /// LSP range conversion must not use bare location+length (DOC-N05).
+    @Test func test_DOC_N05_lspRangeConversionOverflowSafe() {
+        let text = "hello"
+        let overflowed = CodeEditorCore.TextRange(location: Int.max - 1, length: 10)
+        // Fail-closed empty TextRange; conversion must not trap.
+        let lsp = LSPConvert.range(overflowed, in: text)
+        #expect(lsp.start.line >= 0)
+        #expect(lsp.start.character >= 0)
+        #expect(lsp.end.line >= 0)
+        #expect(lsp.end.character >= 0)
+
+        let map = LSPPositionMap(version: .zero, text: text)
+        let endPos = map.position(utf16Offset: overflowed.endUTF16Offset)
+        #expect(endPos.line >= 0)
+        #expect(endPos.character >= 0)
+
+        // Normal range still maps correctly via stored end.
+        let normal = CodeEditorCore.TextRange(location: 1, length: 3)
+        let normalLSP = LSPConvert.range(normal, in: text)
+        #expect(normalLSP.start.character == 1 || normalLSP.start.line == 0)
+        #expect(normal.endUTF16Offset == 4)
+    }
+}
+
 @Suite("Phase6 residual LSP connection")
 struct Phase6ConnectionResidualTests {
     @Test func registerBeforeSendHandlesInstantReply() async throws {

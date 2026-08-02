@@ -274,8 +274,9 @@ private enum LSPRequestHelpers {
         let start: LSPPosition
         let end: LSPPosition
         if let map {
+            // DOC-N05: use stored end offset — never bare location+length (overflow-safe TextRange).
             let s = map.position(utf16Offset: range.location)
-            let e = map.position(utf16Offset: range.location + range.length)
+            let e = map.position(utf16Offset: range.endUTF16Offset)
             start = LSPPosition(line: s.line, character: s.character)
             end = LSPPosition(line: e.line, character: e.character)
         } else {
@@ -867,9 +868,8 @@ struct LSPSemanticTokensAdapter: SemanticTokensProvider {
             for: DocumentRequest(document: request.document, context: request.context)
         )
         return all.filter {
-            let r = $0.range
-            return r.location < request.range.location + request.range.length
-                && r.location + r.length > request.range.location
+            // DOC-N05: overflow-safe intersection (no location+length).
+            LanguageServiceSanitize.rangesIntersect($0.range, request.range)
         }
     }
 

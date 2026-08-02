@@ -87,6 +87,34 @@ struct TextOffsetSemanticsTests {
         }
         let end = try? TextOffsetSemantics.utf16EndOffset(location: 3, length: 2)
         #expect(end == 5)
+
+        // TextRange construction must not trap on location+length overflow (DOC-N05).
+        let overflowed = TextRange(location: Int.max - 1, length: 10)
+        #expect(overflowed.location == 0)
+        #expect(overflowed.length == 0)
+
+        // MultiRangeEdit normalize/clamp must not trap on overflowing NSRange fields.
+        let normalized = MultiRangeEdit.normalize(
+            [NSRange(location: Int.max - 1, length: 10)],
+            documentLength: 100
+        )
+        #expect(normalized.count == 1)
+        #expect(normalized[0].location >= 0)
+        #expect(normalized[0].location <= 100)
+        let endSafe = try? TextOffsetSemantics.utf16EndOffset(
+            location: normalized[0].location,
+            length: normalized[0].length
+        )
+        #expect(endSafe != nil)
+        #expect(endSafe! <= 100)
+
+        let remapped = MultiRangeEdit.remap(
+            range: NSRange(location: Int.max - 1, length: 10),
+            editLocation: 0,
+            delta: 1
+        )
+        #expect(remapped.location >= 0)
+        #expect(remapped.length >= 0)
     }
 
     @Test func interiorUTF8OffsetThrowsNotScalarBoundary() {

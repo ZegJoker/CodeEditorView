@@ -34,8 +34,15 @@ public struct TextRange: Sendable, Codable, Hashable {
     public init(location: Int, length: Int) {
         let loc = max(0, location)
         let len = max(0, length)
+        // DOC-N05: never trap/wrap on location+length overflow — fail closed to empty range.
+        let (endOffset, overflow) = loc.addingReportingOverflow(len)
+        if overflow {
+            self.start = TextPosition(utf16Offset: 0)
+            self.end = TextPosition(utf16Offset: 0)
+            return
+        }
         self.start = TextPosition(utf16Offset: loc)
-        self.end = TextPosition(utf16Offset: loc + len)
+        self.end = TextPosition(utf16Offset: endOffset)
     }
 
     public init(_ nsRange: NSRange) {
@@ -44,6 +51,8 @@ public struct TextRange: Sendable, Codable, Hashable {
 
     public var location: Int { start.utf16Offset }
     public var length: Int { end.utf16Offset - start.utf16Offset }
+    /// Overflow-safe end offset (DOC-N05). Prefer this over `location + length`.
+    public var endUTF16Offset: Int { end.utf16Offset }
     public var nsRange: NSRange {
         NSRange(location: location, length: length)
     }

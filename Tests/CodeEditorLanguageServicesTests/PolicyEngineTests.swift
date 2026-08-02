@@ -147,6 +147,43 @@ struct PolicyEngineTests {
         #expect(markup.value.count == 10)
     }
 
+    /// Arithmetic overflow on location+length must fail closed without trapping (DOC-N05).
+    @Test func test_DOC_N05_languageServiceSanitizeOverflowSafe() {
+        let arithmeticOverflow = LanguageServiceSanitize.clampRange(
+            CodeEditorCore.TextRange(location: Int.max - 1, length: 10),
+            documentLength: Int.max
+        )
+        // TextRange fail-closed empty, or sanitize returns nil — never traps / wraps.
+        if let clamped = arithmeticOverflow {
+            #expect(clamped.location >= 0)
+            #expect(clamped.length >= 0)
+            let end = try? TextOffsetSemantics.utf16EndOffset(
+                location: clamped.location,
+                length: clamped.length
+            )
+            #expect(end != nil)
+        }
+
+        let edit = LanguageServiceSanitize.sanitizeEdit(
+            TextEditPlan(
+                range: CodeEditorCore.TextRange(location: Int.max - 1, length: 10),
+                newText: "x"
+            ),
+            documentLength: 10
+        )
+        // Empty fail-closed range may sanitize to a caret; must not trap.
+        if let edit {
+            #expect(edit.range.location >= 0)
+            #expect(edit.range.location <= 10)
+        }
+
+        // Range intersection filter uses overflow-safe ends (semantic tokens default).
+        let requestRange = CodeEditorCore.TextRange(location: 0, length: 5)
+        let spanRange = CodeEditorCore.TextRange(location: Int.max - 1, length: 10)
+        let intersects = LanguageServiceSanitize.rangesIntersect(spanRange, requestRange)
+        #expect(intersects == false)
+    }
+
     @Test func largeResultLimitsApplied() async throws {
         let registry = LanguageServiceRegistry()
         let many = (0..<100).map { CompletionItem(label: "item\($0)") }

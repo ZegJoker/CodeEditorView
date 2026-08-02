@@ -100,6 +100,9 @@ public enum DocumentIOError: Error, Sendable, Equatable {
 
 /// Production filesystem IO with temp file + fsync + replace + parent fsync (DOC-N10).
 public struct LocalDocumentIO: DocumentIO {
+    /// Stream chunk size for reads and hash-only identity (DOC-N09).
+    public static let streamChunkSizeBytes: Int = 64 * 1024
+
     public init() {}
 
     public func read(url: URL) async throws -> Data {
@@ -116,6 +119,35 @@ public struct LocalDocumentIO: DocumentIO {
     ) async throws -> (Data, DocumentFileIdentity) {
         try await Task.detached(priority: .userInitiated) {
             try Self.readContentAndIdentitySync(url: url, maxBytes: maxBytes)
+        }.value
+    }
+
+    /// Content read with peak retained-payload observation (DOC-N09 tests).
+    ///
+    /// Observer is captured into the worker task so concurrent tests cannot race a global hook.
+    package func readContentAndIdentity(
+        url: URL,
+        maxBytes: UInt64,
+        peakRetainedPayloadObserver: @escaping @Sendable (Int) -> Void
+    ) async throws -> (Data, DocumentFileIdentity) {
+        try await Task.detached(priority: .userInitiated) {
+            try Self.readContentAndIdentitySync(
+                url: url,
+                maxBytes: maxBytes,
+                peakObserver: peakRetainedPayloadObserver
+            )
+        }.value
+    }
+
+    /// Hash-only identity with peak retained-payload observation (DOC-N09 tests).
+    package func resourceIdentity(
+        at url: URL,
+        peakRetainedPayloadObserver: @escaping @Sendable (Int) -> Void
+    ) async throws -> DocumentFileIdentity? {
+        let exists = await fileExists(at: url)
+        guard exists else { return nil }
+        return try await Task.detached(priority: .userInitiated) {
+            try Self.hashOnlyIdentitySync(url: url, peakObserver: peakRetainedPayloadObserver)
         }.value
     }
 
@@ -177,7 +209,8 @@ public struct LocalDocumentIO: DocumentIO {
     /// instead of retaining chunk arrays and combining them.
     static func readContentAndIdentitySync(
         url: URL,
-        maxBytes: UInt64
+        maxBytes: UInt64,
+        peakObserver: (@Sendable (Int) -> Void)? = nil
     ) throws -> (Data, DocumentFileIdentity) {
         let values = try? url.resourceValues(forKeys: [
             .fileSizeKey,
@@ -200,13 +233,14 @@ public struct LocalDocumentIO: DocumentIO {
         defer { try? handle.close() }
 
         var hasher = SHA256()
-        let chunkSize = 64 * 1024
+        let chunkSize = streamChunkSizeBytes
         let knownSize = values?.fileSize.map { UInt64($0) }
 
         let data: Data
         if let knownSize, knownSize <= maxBytes, knownSize <= UInt64(Int.max) {
-            // Single preallocated buffer (DOC-N09).
+            // Single preallocated buffer (DOC-N09) — peak retained payload == file size, not 2N.
             var buffer = Data(count: Int(knownSize))
+            peakObserver?(buffer.count)
             var offset = 0
             while offset < buffer.count {
                 let want = min(chunkSize, buffer.count - offset)
@@ -220,9 +254,12 @@ public struct LocalDocumentIO: DocumentIO {
                 buffer.replaceSubrange(offset..<(offset + piece.count), with: piece)
                 hasher.update(data: piece)
                 offset += piece.count
+                // Peak is the single buffer only; do not retain a parallel chunk array.
+                peakObserver?(buffer.count)
             }
             if offset < buffer.count {
                 buffer.count = offset
+                peakObserver?(buffer.count)
             }
             // Guard against size growth after metadata read.
             if maxBytes < UInt64.max {
@@ -259,6 +296,7 @@ public struct LocalDocumentIO: DocumentIO {
                 hasher.update(data: piece)
                 buffer.append(piece)
                 total += UInt64(piece.count)
+                peakObserver?(buffer.count)
                 if maxBytes < UInt64.max, total > maxBytes {
                     throw DocumentIOError.tooLarge(total)
                 }
@@ -277,7 +315,10 @@ public struct LocalDocumentIO: DocumentIO {
     }
 
     /// Stream-hash only; never retains full file content (DOC-N09).
-    static func hashOnlyIdentitySync(url: URL) throws -> DocumentFileIdentity {
+    static func hashOnlyIdentitySync(
+        url: URL,
+        peakObserver: (@Sendable (Int) -> Void)? = nil
+    ) throws -> DocumentFileIdentity {
         let values = try? url.resourceValues(forKeys: [
             .fileSizeKey,
             .contentModificationDateKey,
@@ -293,7 +334,7 @@ public struct LocalDocumentIO: DocumentIO {
 
         var hasher = SHA256()
         var total: UInt64 = 0
-        let chunkSize = 64 * 1024
+        let chunkSize = streamChunkSizeBytes
         while true {
             let piece: Data
             do {
@@ -302,8 +343,11 @@ public struct LocalDocumentIO: DocumentIO {
                 throw DocumentIOError.ioFailure(error.localizedDescription)
             }
             if piece.isEmpty { break }
+            // Hash-only: retain at most one stream chunk (DOC-N09) — never full payload.
+            peakObserver?(piece.count)
             hasher.update(data: piece)
             total += UInt64(piece.count)
+            // `piece` drops at end of loop iteration; peak is O(chunkSize).
         }
         let digest = hasher.finalize().map { String(format: "%02x", $0) }.joined()
         return DocumentFileIdentity(

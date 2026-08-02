@@ -450,6 +450,61 @@ struct Phase2DocumentResidualTests {
         #expect(id2.contentHash == identity.contentHash)
     }
 
+    /// DOC-N09: known-size content read retains a single buffer (~N), not chunk-array + combined (~2N).
+    /// Hash-only identity retains at most one stream chunk, not the full payload.
+    @Test func test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered() async throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ce-n09-peak-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("big.txt")
+        let fileSize = 512 * 1024
+        let payload = Data(repeating: 0x41, count: fileSize)
+        let io = LocalDocumentIO()
+        try await io.writeAtomically(data: payload, to: url)
+
+        final class PeakTracker: @unchecked Sendable {
+            private let lock = NSLock()
+            private var _peak = 0
+            var peak: Int {
+                lock.lock(); defer { lock.unlock() }
+                return _peak
+            }
+            func note(_ n: Int) {
+                lock.lock(); defer { lock.unlock() }
+                _peak = max(_peak, n)
+            }
+        }
+
+        // Content + identity: single preallocated buffer ⇒ peak retained payload ≤ file size
+        // (not ~2× from chunk array + combined Data). Observer is per-call (no global race).
+        let contentPeak = PeakTracker()
+        let (data, _) = try await io.readContentAndIdentity(
+            url: url,
+            maxBytes: UInt64(fileSize),
+            peakRetainedPayloadObserver: { contentPeak.note($0) }
+        )
+        #expect(data.count == fileSize)
+        #expect(contentPeak.peak > 0)
+        #expect(contentPeak.peak <= fileSize)
+        // Reject double-buffer architecture: peak must not reach ~2N.
+        #expect(contentPeak.peak < fileSize * 2)
+
+        // Hash-only: stream chunks only — peak must stay O(chunk), far below full file.
+        let hashPeak = PeakTracker()
+        let identity = try #require(
+            await io.resourceIdentity(
+                at: url,
+                peakRetainedPayloadObserver: { hashPeak.note($0) }
+            )
+        )
+        #expect(identity.size == UInt64(fileSize))
+        #expect(identity.contentHash == DocumentFileIdentity.hash(of: payload))
+        #expect(hashPeak.peak > 0)
+        #expect(hashPeak.peak <= LocalDocumentIO.streamChunkSizeBytes)
+        #expect(hashPeak.peak < fileSize / 2)
+    }
+
     @Test func test_DOC_N10_durableWriteSurvivesFaultBeforeParentFsync() async throws {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("ce-n10-\(UUID().uuidString)", isDirectory: true)
@@ -468,10 +523,10 @@ struct Phase2DocumentResidualTests {
                 return
             }
         }
-        // After replace succeeded, content is NEW even if parent fsync faulted.
-        // Durable claim requires parent fsync on success path — fault proves the stage exists.
+        // Replace already committed before parent fsync: content must be NEW (not soft ORIG accept).
+        // Parent fsync is a separate durability stage proven by the success-path observer test.
         let disk = String(data: try await ioBase.read(url: url), encoding: .utf8)
-        #expect(disk == "NEW" || disk == "ORIG")
+        #expect(disk == "NEW")
     }
 
     @Test func test_DOC_N10_successfulDurableWriteIncludesParentFsync() async throws {

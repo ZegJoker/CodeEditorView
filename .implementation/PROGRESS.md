@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: Phase 1 verifier residual (2) — DOC-N09 per-call peak retained payload (single buffer ≤N; hash-only ≤chunk); DOC-N10 beforeParentFsync pins disk==NEW (no soft ORIG); DOC-N05 overflow-safe residuals in TextRange/MultiRangeEdit/Search/LSP/LanguageServiceSanitize with adapter tests. 28 DOC-N/CORE-N01 + 190 product-suite tests pass.
 - 2026-08-02: Phase 1 verifier residual — strengthened weak tests: DOC-N06 drain+streamGap on overflow; DOC-N10 parentDirectoryFsyncObserver asserts real fsyncDirectory; CORE-N01 off-main assertOwnership violation probe; DOC-N04 atomic group DocumentStore.apply (no intentional partial mutation). 24 DOC-N/CORE-N01 tests pass.
 - 2026-08-02: Phase 1 documents — fixed DOC-N01…DOC-N11 + CORE-N01 (content-state savepoints, DocumentSaveRequest CAS API, equal-offset declaration order, atomic undo only, overflow-safe ranges, bounded sequenced events, encoding fail-closed, coordinated identity write, single-buffer/hash-only read, parent fsync durable write, versioned recovery record, DocumentStore main-actor ownership). CodeEditorCoreTests+CodeEditorDocumentsTests: 114 passed.
 - 2026-08-02: batch release-truth verified — PKG-N01, REL-N01…REL-N08 status set to `verified` (all previously fixed with regression tests).

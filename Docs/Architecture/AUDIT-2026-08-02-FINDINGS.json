@@ -284,9 +284,12 @@
       "phase": 1,
       "status": "fixed",
       "regression_tests": [
-        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N05_utf16RangeArithmeticOverflowSafe"
+        "Tests/CodeEditorCoreTests/TextOffsetSemanticsTests.swift::test_DOC_N05_utf16RangeArithmeticOverflowSafe",
+        "Tests/CodeEditorSearchTests/GitIgnoreAndReplaceTests.swift::test_DOC_N05_searchReplaceOverflowSafeRangeArithmetic",
+        "Tests/CodeEditorLanguageServicesTests/PolicyEngineTests.swift::test_DOC_N05_languageServiceSanitizeOverflowSafe",
+        "Tests/CodeEditorLSPTests/Phase6ResidualTests.swift::test_DOC_N05_lspRangeConversionOverflowSafe"
       ],
-      "notes": "validatedUTF16Range and utf16EndOffset use addingReportingOverflow."
+      "notes": "validatedUTF16Range/utf16EndOffset; TextRange fail-closed on overflow; MultiRangeEdit/Search/LSP/LanguageServiceSanitize use overflow-safe ends (no bare location+length)."
     },
     {
       "id": "DOC-N06",
@@ -334,9 +337,10 @@
       "phase": 1,
       "status": "fixed",
       "regression_tests": [
-        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn"
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
+        "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync for resourceIdentity."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
@@ -349,7 +353,7 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N10_durableWriteSurvivesFaultBeforeParentFsync",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N10_successfulDurableWriteIncludesParentFsync"
       ],
-      "notes": "Durable write: temp fsync, atomic replace, parent directory fsync; parentDirectoryFsyncObserver asserts real fsyncDirectory on success; fault before parent fsync; symlink refuse."
+      "notes": "Durable write: temp fsync, atomic replace, parent directory fsync; parentDirectoryFsyncObserver asserts real fsyncDirectory on success; beforeParentFsync fault pins disk==NEW (replace committed); symlink refuse."
     },
     {
       "id": "DOC-N11",

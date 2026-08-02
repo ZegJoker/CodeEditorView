@@ -14,7 +14,11 @@ public struct TextRangeSelection: Equatable, Sendable, Hashable {
 
     public var isInsertionPoint: Bool { range.length == 0 }
     public var location: Int { range.location }
-    public var end: Int { range.location + range.length }
+    /// Overflow-safe end (DOC-N05). Invalid arithmetic yields `location`.
+    public var end: Int {
+        (try? TextOffsetSemantics.utf16EndOffset(location: range.location, length: range.length))
+            ?? range.location
+    }
 
     public static func insertionPoint(_ location: Int) -> TextRangeSelection {
         TextRangeSelection(range: NSRange(location: location, length: 0))

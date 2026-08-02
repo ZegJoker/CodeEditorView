@@ -173,9 +173,7 @@ extension SemanticTokensProvider {
             for: DocumentRequest(document: request.document, context: request.context)
         )
         return all.filter {
-            let r = $0.range
-            return r.location < request.range.location + request.range.length
-                && r.location + r.length > request.range.location
+            LanguageServiceSanitize.rangesIntersect($0.range, request.range)
         }
     }
 }

@@ -76,8 +76,19 @@ public enum SearchReplaceBuilder {
         if let fullText {
             let ns = fullText as NSString
             let r = match.range.nsRange
-            if r.location >= 0, r.location + r.length <= ns.length {
-                matched = ns.substring(with: r)
+            // DOC-N05: overflow-safe end check — never bare location+length on match ranges.
+            if let end = try? TextOffsetSemantics.utf16EndOffset(
+                location: r.location,
+                length: r.length
+            ),
+                r.location >= 0,
+                end <= ns.length,
+                let validated = try? TextOffsetSemantics.validatedUTF16Range(
+                    r,
+                    documentUTF16Length: ns.length
+                )
+            {
+                matched = ns.substring(with: validated)
             } else {
                 matched = match.preview
             }

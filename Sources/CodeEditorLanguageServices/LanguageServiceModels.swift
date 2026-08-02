@@ -685,17 +685,43 @@ public enum LanguageServiceSanitize {
         documentLength: Int
     ) -> CodeEditorCore.TextRange? {
         guard documentLength >= 0 else { return nil }
+        // DOC-N05: use overflow-safe end — never bare location+length on untrusted ranges.
+        let rawLength = max(0, range.length)
+        let rawEnd: Int
+        if let safe = try? TextOffsetSemantics.utf16EndOffset(
+            location: max(0, range.location),
+            length: rawLength
+        ) {
+            rawEnd = safe
+        } else {
+            // Arithmetic overflow: fail closed — clamp from bounded location to document end.
+            let loc = max(0, min(range.location, documentLength))
+            return CodeEditorCore.TextRange(location: loc, length: documentLength - loc)
+        }
         let loc = max(0, min(range.location, documentLength))
-        let end = max(loc, min(range.location + max(0, range.length), documentLength))
+        let end = max(loc, min(rawEnd, documentLength))
         let length = end - loc
-        guard length >= 0, loc + length <= documentLength else { return nil }
-        if range.location < 0 || range.location > documentLength || range.length < 0 {
-            return CodeEditorCore.TextRange(location: loc, length: length)
+        guard length >= 0 else { return nil }
+        if let verified = try? TextOffsetSemantics.utf16EndOffset(location: loc, length: length),
+            verified <= documentLength
+        {
+            if range.location < 0 || range.location > documentLength || range.length < 0
+                || rawEnd > documentLength
+            {
+                return CodeEditorCore.TextRange(location: loc, length: length)
+            }
+            return range
         }
-        if range.location + range.length > documentLength {
-            return CodeEditorCore.TextRange(location: loc, length: length)
-        }
-        return range
+        return CodeEditorCore.TextRange(location: loc, length: length)
+    }
+
+    /// Overflow-safe half-open range intersection (DOC-N05 / semantic-token filters).
+    public static func rangesIntersect(
+        _ a: CodeEditorCore.TextRange,
+        _ b: CodeEditorCore.TextRange
+    ) -> Bool {
+        // Prefer stored ends (overflow-safe TextRange construction).
+        a.location < b.endUTF16Offset && a.endUTF16Offset > b.location
     }
 
     public static func sanitizeEdit(
