@@ -79,20 +79,51 @@ public struct WorkspaceSettings: Sendable, Hashable, Codable {
     public var watchExcludedNames: Set<String>
     /// Path resolve options for security checks.
     public var pathResolveOptions: WorkspacePathResolveOptions
+    /// Host hidden-file policy (WSP-N09) — never hardcode skipsHiddenFiles alone.
+    public var hiddenFilePolicy: WorkspaceHiddenFilePolicy
+    /// Names always shown even when hidden policy would skip them (e.g. `.env`, `.gitignore`).
+    public var revealedHiddenNames: Set<String>
+    /// Caps for blocking filesystem work (WSP-N04).
+    public var filesystemLimits: WorkspaceFilesystemLimits
 
     public init(
         excludedNames: Set<String> = [".git", ".DS_Store"],
         followSymlinks: Bool = false,
         watchExcludedNames: Set<String> = [".git", "node_modules", ".build", "DerivedData"],
-        pathResolveOptions: WorkspacePathResolveOptions = .default
+        pathResolveOptions: WorkspacePathResolveOptions = .default,
+        hiddenFilePolicy: WorkspaceHiddenFilePolicy = .hideDotfiles,
+        revealedHiddenNames: Set<String> = [".gitignore", ".env", ".editorconfig", ".swift-format"],
+        filesystemLimits: WorkspaceFilesystemLimits = .default
     ) {
         self.excludedNames = excludedNames
         self.followSymlinks = followSymlinks
         self.watchExcludedNames = watchExcludedNames
         self.pathResolveOptions = pathResolveOptions
+        self.hiddenFilePolicy = hiddenFilePolicy
+        self.revealedHiddenNames = revealedHiddenNames
+        self.filesystemLimits = filesystemLimits
     }
 
     public static let `default` = WorkspaceSettings()
+
+    /// Whether `name` should appear in directory listings under the current policy.
+    public func shouldList(name: String) -> Bool {
+        if excludedNames.contains(name) { return false }
+        if revealedHiddenNames.contains(name) { return true }
+        switch hiddenFilePolicy {
+        case .showAll:
+            return true
+        case .hideDotfiles, .hideDotfilesAndPackages:
+            if name.hasPrefix(".") { return false }
+            if hiddenFilePolicy == .hideDotfilesAndPackages {
+                let packageSuffixes = [".app", ".framework", ".bundle", ".xcodeproj", ".xcworkspace", ".playground"]
+                for suffix in packageSuffixes where name.hasSuffix(suffix) {
+                    return false
+                }
+            }
+            return true
+        }
+    }
 }
 
 /// Capability gates controlled by workspace trust (audit §8.7).

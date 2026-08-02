@@ -11,7 +11,10 @@ public final class Workspace {
     public let id: WorkspaceID
     public let fileSystem: any WorkspaceFileSystem
     public let fileTree: WorkspaceFileTree
+    /// Backing registry — mutations must go through ``lifecycle`` (WSP-N10).
     public let documents: DocumentRegistry
+    /// Sole registry mutator (WSP-N10).
+    public let lifecycle: DocumentLifecycleCoordinator
     public let documentProvider: any DocumentContentProvider
     public let layout: EditorLayoutStore
     /// Reference-counted document leases (WSP-006).
@@ -26,6 +29,10 @@ public final class Workspace {
     public var trust: WorkspaceTrustState
     /// Dirty-close policy and host delegate (WSP-001).
     public let closeCoordinator: WorkspaceCloseCoordinator
+    /// Bulk close atomicity (WSP-N03). Default is all-or-nothing.
+    public var bulkCloseAtomicity: BulkCloseAtomicity = .allOrNothing
+    /// Directory for recoverable trash/staging of deletes (WSP-N02).
+    public var trashRoot: URL?
     /// Bumped on structural UI-affecting changes so SwiftUI hosts can depend on a single token.
     public private(set) var revision: UInt64 = 0
 
@@ -43,6 +50,7 @@ public final class Workspace {
         self.fileTree = WorkspaceFileTree(fileSystem: fileSystem)
         self.documentProvider = documentProvider
         self.documents = documents
+        self.lifecycle = DocumentLifecycleCoordinator(registry: documents)
         self.settings = settings
         self.trust = trust
         self.closeCoordinator = WorkspaceCloseCoordinator(defaultPolicy: dirtyTabClosePolicy)
@@ -57,8 +65,9 @@ public final class Workspace {
         self.activePaneID = pane.id
         self.focusHistory = [pane.id]
 
+        self.lifecycle.leases = self.documentLeases
         self.documentLeases.onFinalRelease = { [weak self] documentID in
-            self?.documents.remove(id: documentID)
+            self?.lifecycle.handleFinalLeaseReleaseSync(documentID: documentID)
         }
     }
 
@@ -121,12 +130,7 @@ public final class Workspace {
 
     @discardableResult
     public func openDocument(uri: DocumentURI) async throws -> TextDocument {
-        if let existing = documents.document(uri: uri) {
-            return existing
-        }
-        let doc = TextDocument(uri: uri, text: "")
-        try await doc.load(from: documentProvider, uri: uri)
-        documents.register(doc)
+        let doc = try await lifecycle.open(uri: uri, provider: documentProvider)
         noteRevision()
         return doc
     }
@@ -335,18 +339,15 @@ public final class Workspace {
     }
 
     public func requestCloseOtherTabs(
-        keeping tabID: EditorTabID, in paneID: EditorPaneID
+        keeping tabID: EditorTabID, in paneID: EditorPaneID,
+        policy: DirtyTabClosePolicy? = nil
     ) async -> CloseTransactionResult {
         guard let pane = panes[paneID] else { return .closed }
         let toClose = pane.tabs.map(\.id).filter { $0 != tabID }
-        for id in toClose {
-            let result = await requestCloseTab(id, in: paneID)
-            if result == .cancelled || result != .closed {
-                if case .saveFailed = result { return result }
-                if result == .cancelled { return .cancelled }
-            }
-        }
-        return .closed
+        return await runBulkClose(
+            targets: toClose.map { (paneID, $0) },
+            policy: policy
+        )
     }
 
     public func closeTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID) {
@@ -360,18 +361,17 @@ public final class Workspace {
     }
 
     public func requestCloseTabsToTheRight(
-        of tabID: EditorTabID, in paneID: EditorPaneID
+        of tabID: EditorTabID, in paneID: EditorPaneID,
+        policy: DirtyTabClosePolicy? = nil
     ) async -> CloseTransactionResult {
         guard let pane = panes[paneID],
             let idx = pane.tabs.firstIndex(where: { $0.id == tabID })
         else { return .closed }
         let toClose = pane.tabs.suffix(from: idx + 1).map(\.id)
-        for id in toClose {
-            let result = await requestCloseTab(id, in: paneID)
-            if result == .cancelled { return .cancelled }
-            if case .saveFailed = result { return result }
-        }
-        return .closed
+        return await runBulkClose(
+            targets: toClose.map { (paneID, $0) },
+            policy: policy
+        )
     }
 
     public func promotePreviewTabs(for documentID: DocumentID) {
@@ -428,18 +428,81 @@ public final class Workspace {
         return newPane.id
     }
 
-    /// Deletes a workspace item from disk and updates the file tree.
-    public func deleteItem(_ id: WorkspaceItemID) async throws {
-        try await fileSystem.delete(item: id)
-        fileTree.apply(.removed(id))
-        // Close tabs for deleted file if open (async path for dirty).
-        if let uri = await fileSystem.uri(for: id) {
-            for (paneID, pane) in panes {
-                for tab in pane.tabs where tab.documentURI == uri {
-                    _ = await requestCloseTab(tab.id, in: paneID, policy: .discard)
+    /// Deletes a workspace item after dirty-descendant preflight (WSP-N02).
+    ///
+    /// Order: discover open docs → resolve save/discard/cancel → abort on cancel →
+    /// stage to recoverable trash → update registry/tabs → commit staging delete.
+    public func deleteItem(
+        _ id: WorkspaceItemID,
+        policy: DirtyTabClosePolicy? = nil
+    ) async throws {
+        let affected = await openDocumentsUnder(item: id)
+        let dirty = affected.filter(\.isDirty)
+        if !dirty.isEmpty {
+            let candidates = dirty.map {
+                CloseCandidate(
+                    documentID: $0.id,
+                    uri: $0.uri,
+                    isDirty: true,
+                    remainingTabCount: 0
+                )
+            }
+            let decisions = await closeCoordinator.resolveDecisions(
+                candidates: candidates,
+                policy: policy
+            )
+            if candidates.contains(where: { decisions[$0.documentID] == .cancel }) {
+                throw WorkspaceError.deleteAborted(reason: "cancelled")
+            }
+            for doc in dirty {
+                let decision = decisions[doc.id] ?? .cancel
+                switch decision {
+                case .cancel:
+                    throw WorkspaceError.deleteAborted(reason: "cancelled")
+                case .discard:
+                    break
+                case .save:
+                    let outcome = try await documentProvider.save(
+                        DocumentSaveRequest(
+                            snapshot: doc.snapshot(),
+                            target: doc.uri,
+                            encoding: doc.encoding,
+                            expectedIdentity: doc.fileIdentity,
+                            conflictPolicy: .requireHostDecision,
+                            durability: .durable
+                        )
+                    )
+                    switch outcome {
+                    case .saved(let identity):
+                        if let identity { doc.setFileIdentity(identity) }
+                        doc.markClean()
+                    case .conflict:
+                        throw WorkspaceError.deleteAborted(reason: "save conflict")
+                    case .cancelled:
+                        throw WorkspaceError.deleteAborted(reason: "cancelled")
+                    case .unsupportedConflictDetection:
+                        throw WorkspaceError.deleteAborted(reason: "unsupportedConflictDetection")
+                    }
                 }
             }
         }
+
+        // Stage to recoverable trash before final removal.
+        let staging = try await stageItemForDelete(id)
+        // Close tabs / registry for affected documents (now clean or discarded).
+        for doc in affected {
+            for (paneID, pane) in panes {
+                for tab in pane.tabs where tab.documentID == doc.id {
+                    forceCloseTab(tab.id, in: paneID)
+                }
+            }
+            _ = try await lifecycle.close(documentID: doc.id, reason: .deletedFromWorkspace)
+        }
+        // Commit: remove staging (resource already moved out of workspace tree).
+        if let staging {
+            try? FileManager.default.removeItem(at: staging)
+        }
+        fileTree.apply(.removed(id))
         noteRevision()
     }
 
@@ -450,16 +513,58 @@ public final class Workspace {
         let oldURI = await fileSystem.uri(for: id)
         let moved = try await fileSystem.move(item: id, to: parent, newName: newName)
         fileTree.apply(.renamed(from: id, to: moved))
-        // Retarget open documents that pointed at the old URI.
-        if let oldURI,
-            let doc = documents.document(uri: oldURI)
-        {
-            doc.setURI(moved.uri)
-            documents.reindexURI(for: doc)
+        if let oldURI, let doc = lifecycle.document(uri: oldURI) {
+            try await lifecycle.rename(documentID: doc.id, to: moved.uri)
             updateTabURIs(documentID: doc.id, uri: moved.uri)
         }
         noteRevision()
         return moved
+    }
+
+    /// Open documents whose URI is the item or a descendant path.
+    public func openDocumentsUnder(item: WorkspaceItemID) async -> [TextDocument] {
+        guard let baseURI = await fileSystem.uri(for: item),
+            let baseURL = baseURI.fileURL?.standardizedFileURL
+        else { return [] }
+        let basePath = baseURL.path
+        return lifecycle.documents.filter { doc in
+            guard let url = doc.uri.fileURL?.standardizedFileURL else { return false }
+            let path = url.path
+            return path == basePath || path.hasPrefix(basePath + "/")
+        }
+    }
+
+    private func stageItemForDelete(_ id: WorkspaceItemID) async throws -> URL? {
+        guard let uri = await fileSystem.uri(for: id), let source = uri.fileURL else {
+            try await fileSystem.delete(item: id)
+            return nil
+        }
+        let trash =
+            trashRoot
+            ?? FileManager.default.temporaryDirectory
+            .appendingPathComponent("CodeEditorWorkspaceTrash", isDirectory: true)
+            .appendingPathComponent(id.rootID.rawValue.uuidString, isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+        let dest = trash.appendingPathComponent(source.lastPathComponent)
+        do {
+            try FileManager.default.moveItem(at: source, to: dest)
+        } catch {
+            // Fall back to direct delete if move fails (cross-volume).
+            try await fileSystem.delete(item: id)
+            return nil
+        }
+        // Resource already moved off workspace path — notify FS model.
+        // Local FS still thinks it exists until we emit removed; call delete only if still present.
+        if FileManager.default.fileExists(atPath: source.path) {
+            try await fileSystem.delete(item: id)
+        } else {
+            // Emit removal via file tree only; mirror delete event if possible.
+            if let local = fileSystem as? LocalWorkspaceFileSystem {
+                await local.noteRemoved(item: id)
+            }
+        }
+        return dest
     }
 
     /// Moves a tab within a pane (drag-reorder).
@@ -511,17 +616,130 @@ public final class Workspace {
     }
 
     /// Close every dirty document across all panes (window close / workspace replace).
+    /// Uses decision → save → commit phases (WSP-N03).
     @discardableResult
     public func requestCloseAllTabs(
         policy: DirtyTabClosePolicy? = nil
     ) async -> CloseTransactionResult {
+        var targets: [(EditorPaneID, EditorTabID)] = []
         for (paneID, pane) in panes {
             for tab in pane.tabs {
-                let result = await requestCloseTab(tab.id, in: paneID, policy: policy)
-                if result == .cancelled { return .cancelled }
-                if case .saveFailed = result { return result }
+                targets.append((paneID, tab.id))
             }
         }
+        return await runBulkClose(targets: targets, policy: policy)
+    }
+
+    /// Three-phase bulk close: decision → save → commit (WSP-N03).
+    private func runBulkClose(
+        targets: [(EditorPaneID, EditorTabID)],
+        policy: DirtyTabClosePolicy?
+    ) async -> CloseTransactionResult {
+        // Build candidates for tabs that would drop the last lease.
+        var candidates: [CloseCandidate] = []
+        var seenDocs = Set<DocumentID>()
+        var closeTargets: [(EditorPaneID, EditorTabID, DocumentID)] = []
+
+        for (paneID, tabID) in targets {
+            guard let pane = panes[paneID],
+                let tab = pane.tabs.first(where: { $0.id == tabID })
+            else { continue }
+            closeTargets.append((paneID, tabID, tab.documentID))
+            let leaseCount = documentLeases.count(for: tab.documentID)
+            let remainingAfter = max(0, leaseCount - 1)
+            // Count other targeted tabs for same document.
+            let otherTargets = closeTargets.filter { $0.2 == tab.documentID }.count - 1
+            let remainingAfterAll = max(0, remainingAfter - otherTargets)
+            guard remainingAfterAll <= 0 else { continue }
+            guard let doc = documents.document(id: tab.documentID), doc.isDirty else { continue }
+            if seenDocs.insert(doc.id).inserted {
+                candidates.append(
+                    CloseCandidate(
+                        documentID: doc.id,
+                        uri: doc.uri,
+                        isDirty: true,
+                        remainingTabCount: 0
+                    )
+                )
+            }
+        }
+
+        let plan = await closeCoordinator.planBulkClose(
+            candidates: candidates,
+            policy: policy,
+            atomicity: bulkCloseAtomicity
+        )
+
+        if plan.atomicity == .allOrNothing, plan.hasCancel {
+            return .cancelled
+        }
+
+        // Save phase (all-or-nothing: fail stops before any tab close).
+        var savedDocs = Set<DocumentID>()
+        for candidate in plan.candidates {
+            let decision = plan.decisions[candidate.documentID] ?? .cancel
+            if decision == .cancel {
+                if plan.atomicity == .bestEffort { continue }
+                return .cancelled
+            }
+            if decision == .discard { continue }
+            guard decision == .save, let doc = documents.document(id: candidate.documentID) else {
+                continue
+            }
+            do {
+                let outcome = try await documentProvider.save(
+                    DocumentSaveRequest(
+                        snapshot: doc.snapshot(),
+                        target: doc.uri,
+                        encoding: doc.encoding,
+                        expectedIdentity: doc.fileIdentity,
+                        conflictPolicy: .requireHostDecision,
+                        durability: .durable
+                    )
+                )
+                switch outcome {
+                case .saved(let identity):
+                    if let identity { doc.setFileIdentity(identity) }
+                    doc.markClean()
+                    savedDocs.insert(doc.id)
+                case .conflict:
+                    if plan.atomicity == .allOrNothing {
+                        return .saveFailed(doc.id, "conflict")
+                    }
+                case .cancelled:
+                    if plan.atomicity == .allOrNothing { return .cancelled }
+                case .unsupportedConflictDetection:
+                    if plan.atomicity == .allOrNothing {
+                        return .saveFailed(doc.id, "unsupportedConflictDetection")
+                    }
+                }
+            } catch {
+                if plan.atomicity == .allOrNothing {
+                    return .saveFailed(candidate.documentID, String(describing: error))
+                }
+            }
+        }
+
+        // Commit phase: close tabs whose decision is save/discard (or clean).
+        var anyCancelled = false
+        for (paneID, tabID, docID) in closeTargets {
+            if let decision = plan.decisions[docID], decision == .cancel {
+                anyCancelled = true
+                continue
+            }
+            // Clean or resolved dirty — force close.
+            if let doc = documents.document(id: docID), doc.isDirty,
+                plan.decisions[docID] == nil
+            {
+                // Still dirty without decision (multi-lease intermediate) — use single-tab path.
+                let result = await requestCloseTab(tabID, in: paneID, policy: policy)
+                if result == .cancelled { anyCancelled = true }
+                if case .saveFailed = result { return result }
+                continue
+            }
+            forceCloseTab(tabID, in: paneID)
+        }
+        if anyCancelled { return .cancelled }
         return .closed
     }
 
@@ -706,4 +924,6 @@ public final class Workspace {
 public enum WorkspaceError: Error, Sendable, Equatable {
     case paneNotFound
     case tabNotFound
+    /// Delete aborted during dirty preflight (WSP-N02).
+    case deleteAborted(reason: String)
 }

@@ -159,6 +159,17 @@ public final class UndoCoordinator {
         openGroup = nil
     }
 
+    /// Drops closed undo groups above `count` (workspace transaction rollback / WSP-N01).
+    /// Does not leave user-visible undo for rolled-back content.
+    public func truncateClosedGroups(to count: Int) {
+        flushOpenGroup()
+        let target = max(0, count)
+        while undoStack.count > target {
+            undoStack.removeLast()
+        }
+        redoStack.removeAll()
+    }
+
     /// Drops oldest closed undo groups so `closedGroupCount <= maxGroups` when bounded (UI-N09).
     public func trimToMaxGroups() {
         guard let maxGroups, maxGroups > 0 else { return }

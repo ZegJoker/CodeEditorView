@@ -14,7 +14,7 @@
 | 2 | substrate | 3 (+ shared substrate build) | verified |
 | 3a | commands | 5 | verified |
 | 3b | native editor UI | 10 | verified |
-| 4 | workspace | 10 | open |
+| 4 | workspace | 10 | fixed |
 | 5a | search | 9 | open |
 | 5b | tasks | 8 | open |
 | 5c | SCM | 9 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: Phase 4 workspace — fixed WSP-N01…WSP-N10: WorkspaceTransactionCoordinator (prepare/commit/recover, one rollback owner, undo only on success); dirty-descendant delete preflight + trash staging; bulk close decision→save→commit (all-or-nothing default); FS workers with batch streaming + progress hub; honest WorkspaceArchive (symlink no-follow, no false full-POSIX claim); durable journal checksum/quarantine/startup recovery; workspaceEvents snapshot+sequence; DescriptorRelativeIO openat/unlinkat/renameat O_NOFOLLOW; host WorkspaceHiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator. CodeEditorWorkspaceTests 78 passed.
 - 2026-08-03: batch native-editor-ui verified — UI-N01, UI-N02, UI-N03, UI-N04, UI-N05, UI-N06, UI-N07, UI-N08, UI-N09, UI-N10 status set to `verified` (all previously fixed with regression tests; CodeEditorViewTests UINAudit green).
 - 2026-08-03: Phase 3b verifier residual — UI-N01 host `visualCaretMove`/AppKit moveDown; UI-N04 CoreText CTLine platform BiDi; UI-N08 real macOS+iOS sim builds + platform-matrix.json evidence (xcodebuild hosts under CI); UI-N09 enforce highlighter suspend/diagnostics reject/bounded undo + auto-refresh; UI-N10 AppKit/UIKit custom rotors, live breakpoints/symbols, completion announcements, chrome landmarks, system reduce-motion. CodeEditorViewTests UIN0+UIN10: 45 passed.
 - 2026-08-02: Phase 3b native editor UI — fixed UI-N01…UI-N10: CaretNavigationEngine + layout snapshots; grapheme-valid positions; fragment selection geometry; WritingDirectionModel BiDi; firstRect/attributedSubstring contracts; IME begin/cancel/commit lifecycle; EditorDiagnosticChannel (no silent try? on input); PLATFORM-MATRIX + check-platform-matrix.sh; LargeFileMode explicit limitations; semantic accessibility (line/col, rotor, multi-cursor, completion, landmarks, reduced motion). CodeEditorViewTests UINAudit 36 passed.

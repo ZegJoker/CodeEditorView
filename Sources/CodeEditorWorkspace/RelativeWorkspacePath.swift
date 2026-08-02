@@ -15,13 +15,17 @@ public struct WorkspacePathResolveOptions: Sendable, Hashable, Codable {
     public var symlinkPolicy: WorkspaceSymlinkPolicy
     /// When true, require the resolved path to share the root's volume/device ID.
     public var requireSameVolume: Bool
+    /// Prefer `openat`/`unlinkat`/`renameat` with `O_NOFOLLOW` for mutations (WSP-N08).
+    public var useDescriptorRelativeIO: Bool
 
     public init(
         symlinkPolicy: WorkspaceSymlinkPolicy = .denyEscape,
-        requireSameVolume: Bool = false
+        requireSameVolume: Bool = false,
+        useDescriptorRelativeIO: Bool = true
     ) {
         self.symlinkPolicy = symlinkPolicy
         self.requireSameVolume = requireSameVolume
+        self.useDescriptorRelativeIO = useDescriptorRelativeIO
     }
 
     public static let `default` = WorkspacePathResolveOptions()
