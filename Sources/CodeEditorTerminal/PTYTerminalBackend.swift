@@ -4,6 +4,8 @@ import Foundation
 
 #if os(macOS)
     /// macOS PTY backend using `forkpty` with process-group teardown and window-size ioctl.
+    /// Prefer ``LocalPTYTransport`` + ``TerminalService`` (TER-N03 / TER-N07).
+    @available(*, deprecated, message: "Legacy dual architecture (TER-N03). Use LocalPTYTransport + TerminalService.")
     public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
         private struct Entry {
             var masterFD: Int32
@@ -157,6 +159,7 @@ import Foundation
     }
 #else
     /// Non-macOS stub: local PTY unavailable.
+    @available(*, deprecated, message: "Legacy dual architecture (TER-N03). Use LocalPTYTransport + TerminalService.")
     public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
         public let output: AsyncStream<TerminalOutputEvent>
         public let platformProfile: PlatformCapabilityProfile

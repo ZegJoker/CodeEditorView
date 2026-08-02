@@ -2,6 +2,8 @@ import CodeEditorCore
 import Darwin
 import Foundation
 
+/// Legacy backend protocol. Prefer ``TerminalByteTransport`` + ``TerminalService`` (TER-N03).
+@available(*, deprecated, message: "Legacy dual architecture (TER-N03). Use TerminalByteTransport + TerminalService.")
 public protocol TerminalBackend: Sendable {
     func start(configuration: TerminalConfiguration) async throws -> TerminalSessionHandle
     func write(_ data: Data, to session: TerminalSessionID) async throws
@@ -11,6 +13,7 @@ public protocol TerminalBackend: Sendable {
 }
 
 /// In-memory backend for tests (echoes writes).
+@available(*, deprecated, message: "Legacy dual architecture (TER-N03). Use MockByteTransport + TerminalService.")
 public actor MockTerminalBackend: TerminalBackend {
     private var sessions: Set<TerminalSessionID> = []
     private var continuation: AsyncStream<TerminalOutputEvent>.Continuation?
@@ -46,8 +49,8 @@ public actor MockTerminalBackend: TerminalBackend {
     }
 }
 
-/// Legacy process-pipe backend (not a PTY). Prefer ``PTYTerminalBackend`` on macOS.
-/// Kept for hosts that only grant `localProcess` without PTY.
+/// Legacy process-pipe backend (not a PTY). Prefer ``LocalPTYTransport`` + ``TerminalService``.
+@available(*, deprecated, message: "Legacy dual architecture (TER-N03). Use LocalPTYTransport + TerminalService.")
 public actor ProcessTerminalBackend: TerminalBackend {
     private struct Entry {
         var process: Process

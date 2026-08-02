@@ -1,6 +1,10 @@
 import Foundation
 
 /// Bounded VT/ANSI escape parser producing high-level actions for ``TerminalScreen``.
+///
+/// - Important: Legacy custom-terminal path. Production architecture is
+///   ``TerminalService`` + CodeEditorTerminalGhostty (TER-N03).
+@available(*, deprecated, message: "Legacy custom VT path (TER-N03). Use TerminalService + CodeEditorTerminalGhostty.")
 public enum VTAction: Sendable, Hashable {
     case print(Character)
     case execute(UInt8)  // C0 controls
@@ -10,6 +14,7 @@ public enum VTAction: Sendable, Hashable {
     case invalid
 }
 
+@available(*, deprecated, message: "Legacy custom VT path (TER-N03). Use TerminalService + CodeEditorTerminalGhostty.")
 public final class VTParser: @unchecked Sendable {
     public enum State: Sendable {
         case ground

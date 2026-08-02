@@ -1,3 +1,4 @@
+import CodeEditorCore
 import CodeEditorDocuments
 import CodeEditorTerminal
 import CodeEditorTerminalGhostty
@@ -220,40 +221,67 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
         private func startMacSession() async {
             do {
                 // Production path requires linked Ghostty (default requireLinked: true).
+                // Production path requires linked Ghostty (default requireLinked: true).
+                // Hard-unavailable when unlinked — never present a fake terminal as Ghostty (TER-N01/N02).
                 let ghostty = try GhosttySessionController(cols: 80, rows: 24, requireLinked: true)
                 self.controller = ghostty
-                let transport = LocalPTYTransport(securityPolicy: .restricted)
+                let supervisor = ProcessSupervisor()
+                let transport = LocalPTYTransport(
+                    securityPolicy: .forProfile(.macOSDirect),
+                    supervisor: supervisor
+                )
+                final class SessionBox: @unchecked Sendable {
+                    var id: TerminalSessionID?
+                }
+                let sessionBox = SessionBox()
                 let id = try await service.create(
                     metadata: TerminalMetadata(kind: .terminal, title: "Terminal"),
                     configuration: TerminalConfiguration(cols: 80, rows: 24),
                     transport: transport,
                     onOutput: { [weak self] data in
+                        // TER-N05: raw bytes into Ghostty only — never String(data:encoding:).
                         guard let self else { return }
-                        try? await ghostty.write(data)
-                        let snap = (try? await ghostty.snapshotUTF8()) ?? ""
-                        await MainActor.run {
-                            self.snapshot = snap
-                            self.isRunning = true
+                        do {
+                            try await ghostty.write(data)
+                            let gen = await ghostty.currentGeneration()
+                            let snap = try await ghostty.snapshotUTF8()
+                            if let sid = sessionBox.id {
+                                await self.service.updateViewport(plainText: snap, generation: gen, for: sid)
+                            }
+                            await MainActor.run {
+                                self.snapshot = snap
+                                self.isRunning = true
+                            }
+                        } catch {
+                            await MainActor.run {
+                                self.errorMessage = String(describing: error)
+                            }
                         }
                     }
                 )
+                sessionBox.id = id
                 await MainActor.run {
                     self.sessionID = id
-                    self.title = "Terminal"
+                    self.title = GhosttySessionController.integrationClaim
                     self.isRunning = true
                     self.errorMessage = nil
+                    // Dirty generation pull — not a full O(n²) string rebuild (TER-N06).
                     self.pollTask = Task { @MainActor in
+                        var lastGen: UInt64 = 0
                         while !Task.isCancelled {
                             if let c = self.controller {
-                                self.snapshot = (try? await c.snapshotUTF8()) ?? self.snapshot
+                                let gen = await c.currentGeneration()
+                                if gen != lastGen {
+                                    lastGen = gen
+                                    if let snap = try? await c.snapshotUTF8() {
+                                        self.snapshot = snap
+                                    }
+                                }
                             }
                             if let id = self.sessionID {
                                 let states = await self.service.allSessions()
                                 if let s = states.first(where: { $0.id == id }) {
                                     self.isRunning = s.isRunning
-                                    if !s.snapshotUTF8.isEmpty && self.snapshot.isEmpty {
-                                        self.snapshot = s.snapshotUTF8
-                                    }
                                 }
                             }
                             try? await Task.sleep(nanoseconds: 50_000_000)
@@ -272,10 +300,36 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
         guard let id = sessionID else { return }
         Task {
             if let c = controller {
-                let encoded = (try? await c.keyInput(data)) ?? data
-                try? await service.write(encoded, to: id)
+                do {
+                    let encoded = try await c.keyInput(data)
+                    try await service.write(encoded, to: id)
+                } catch {
+                    await MainActor.run { self.errorMessage = String(describing: error) }
+                }
             } else {
-                try? await service.write(data, to: id)
+                await MainActor.run {
+                    self.errorMessage = "Terminal unavailable: Ghostty not linked"
+                }
+            }
+        }
+    }
+
+    public func writeKeyEvent(_ event: GhosttyKeyEvent) {
+        guard let id = sessionID else { return }
+        Task {
+            if let c = controller {
+                do {
+                    let encoded = try await c.encodeKey(event)
+                    if !encoded.isEmpty {
+                        try await service.write(encoded, to: id)
+                    }
+                } catch {
+                    await MainActor.run { self.errorMessage = String(describing: error) }
+                }
+            } else {
+                await MainActor.run {
+                    self.errorMessage = "Terminal unavailable: Ghostty not linked"
+                }
             }
         }
     }
@@ -338,6 +392,8 @@ struct WorkbenchTerminalPanelView: View {
                     GhosttySurfaceRepresentable(
                         sessionID: id,
                         snapshot: model.snapshot,
+                        integrationLevel: GhosttySessionController.currentIntegrationLevel,
+                        onKeyEvent: { model.writeKeyEvent($0) },
                         onKeyData: { model.writeKey($0) }
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -1,6 +1,10 @@
 import Foundation
 
 /// Manages terminal sessions, optional screen models, and panel descriptors.
+///
+/// - Important: Legacy dual architecture. Production path is ``TerminalService``
+///   + Ghostty (TER-N03). Prefer ``TerminalService`` for all new code.
+@available(*, deprecated, message: "Legacy dual architecture (TER-N03). Use TerminalService + CodeEditorTerminalGhostty.")
 public actor TerminalSessionManager {
     private var backend: (any TerminalBackend)?
     private var sessions: [TerminalSessionID: TerminalSession] = [:]

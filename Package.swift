@@ -479,7 +479,27 @@ let package = Package(
         ),
         .testTarget(
             name: "CodeEditorTerminalTests",
-            dependencies: ["CodeEditorTerminal", "CodeEditorTerminalGhostty"]
+            dependencies: [
+                "CodeEditorTerminal",
+                "CodeEditorTerminalGhostty",
+                "CodeEditorCore",
+                "CodeEditorDAP",
+                "CGhosttyTestSpool",
+            ]
+        ),
+        .target(
+            name: "CGhosttyTestSpool",
+            path: "Tests/Support/CGhosttyTestSpool",
+            publicHeadersPath: "include"
+        ),
+        .testTarget(
+            name: "CodeEditorTerminalGhosttyTests",
+            dependencies: [
+                "CodeEditorTerminalGhostty",
+                "CodeEditorTerminal",
+                "CodeEditorCore",
+                "CGhosttyTestSpool",
+            ]
         ),
         .testTarget(
             name: "CodeEditorSourceControlTests",

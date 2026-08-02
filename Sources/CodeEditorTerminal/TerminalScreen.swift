@@ -1,5 +1,6 @@
 import Foundation
 
+@available(*, deprecated, message: "Legacy custom VT path (TER-N03). Use TerminalService + CodeEditorTerminalGhostty.")
 public struct TerminalCell: Sendable, Hashable {
     public var character: Character
     public var fg: Int?  // SGR color index 0-255 or nil default
@@ -28,6 +29,7 @@ public struct TerminalCell: Sendable, Hashable {
     }
 }
 
+@available(*, deprecated, message: "Legacy custom VT path (TER-N03). Use TerminalService + CodeEditorTerminalGhostty.")
 public struct TerminalHyperlink: Sendable, Hashable {
     public var id: String?
     public var uri: String
@@ -37,6 +39,10 @@ public struct TerminalHyperlink: Sendable, Hashable {
 }
 
 /// Bounded terminal screen + scrollback model driven by ``VTParser`` actions.
+///
+/// - Important: Legacy custom-terminal path. Production architecture is
+///   ``TerminalService`` + CodeEditorTerminalGhostty (TER-N03).
+@available(*, deprecated, message: "Legacy custom VT path (TER-N03). Use TerminalService + CodeEditorTerminalGhostty.")
 public final class TerminalScreen: @unchecked Sendable {
     public private(set) var cols: Int
     public private(set) var rows: Int

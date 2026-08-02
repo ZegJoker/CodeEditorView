@@ -1,13 +1,27 @@
 import Foundation
 
-/// Ordered byte transport for a single terminal process (audit §21.5 / TER-003).
+/// Ordered byte transport for a single terminal process (audit §21.5 / TER-N07).
 ///
 /// Never silently drop bytes. Overflow must suspend the producer or fail the session.
 public enum TerminalTransportEvent: Sendable, Hashable {
     case output(Data)
-    case exited(code: Int32)
+    /// Exact process exit reason (TER-N07) — never soft-map user cancel to exit 0.
+    case terminated(TerminalProcessExitReason)
     case overflowTerminated(String)
     case error(String)
+
+    /// Compatibility alias for exit-with-code.
+    public static func exited(code: Int32) -> TerminalTransportEvent {
+        .terminated(.exited(code: code))
+    }
+}
+
+/// Exact termination taxonomy for PTY/process lifecycle (TER-N07).
+public enum TerminalProcessExitReason: Sendable, Hashable {
+    case exited(code: Int32)
+    case signalled(signal: Int32)
+    case cancelled
+    case spawnFailed(String)
 }
 
 public struct TerminalProcessInfo: Sendable, Hashable {
@@ -76,6 +90,23 @@ public protocol TerminalByteTransport: Sendable {
     func terminate(_ reason: TerminalTerminationReason) async
 }
 
+/// Clamp terminal dimensions into the portable winsize range (TER-N07).
+public enum TerminalDimension {
+    public static let minCells = 1
+    public static let maxCells = Int(UInt16.max)
+
+    public static func clampCells(_ value: Int) -> UInt16 {
+        let v = max(minCells, min(maxCells, value))
+        return UInt16(v)
+    }
+
+    public static func clampPixels(_ value: Int) -> UInt32 {
+        if value <= 0 { return 0 }
+        if value >= Int(UInt32.max) { return UInt32.max }
+        return UInt32(value)
+    }
+}
+
 /// In-memory transport for tests: echoes writes, never drops.
 public actor MockByteTransport: TerminalByteTransport {
     private var running = false
@@ -116,9 +147,15 @@ public actor MockByteTransport: TerminalByteTransport {
     }
 
     public func terminate(_ reason: TerminalTerminationReason) async {
-        _ = reason
         if running {
-            cont?.yield(.exited(code: 0))
+            switch reason {
+            case .user, .replaced:
+                cont?.yield(.terminated(.cancelled))
+            case .processExited:
+                cont?.yield(.terminated(.exited(code: 0)))
+            case .error(let msg):
+                cont?.yield(.terminated(.spawnFailed(msg)))
+            }
             cont?.finish()
         }
         running = false
