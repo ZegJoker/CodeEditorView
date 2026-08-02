@@ -12,7 +12,7 @@
 | 0 | release-truth | 9 | verified |
 | 1 | documents | 12 | verified |
 | 2 | substrate | 3 (+ shared substrate build) | verified |
-| 3a | commands | 5 | fixed |
+| 3a | commands | 5 | verified |
 | 3b | native editor UI | 10 | open |
 | 4 | workspace | 10 | open |
 | 5a | search | 9 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-02: batch commands verified — CMD-N01, CMD-N02, CMD-N03, CMD-N04, CMD-N05 status set to `verified` (all previously fixed with regression tests; CodeEditorCommandsTests green).
 - 2026-08-02: Phase 3a commands — fixed CMD-N01…CMD-N05: rejectDuplicate registration + owned replace with diagnostics; CommandID lowercase grammar + reserved `codeeditor` namespace; explicit synchronous dispose (no deinit Task); chord timeout re-resolves live context/focus scope and surfaces errors; CommandExecutionClass gates long-running off sync MainActor. CodeEditorCommandsTests 45 passed; Search/Tasks/SCM/Extensions/Workbench subset green.
 - 2026-08-02: batch substrate verified — CORE-N02, CORE-N03, CORE-N04 status set to `verified` (all previously fixed with regression tests; ProcessSubstrate+Broadcast+Promise/RPC green).
 - 2026-08-02: Phase 2 verifier residual — CORE-N02/N03/N04: removed tautology/Bool(true) expects; cancel asserts elapsed<50ms + exit.code!=0; non-macOS #else asserts unavailableOnPlatform; shell deny throws ProcessServiceError.shellCapabilityRequired; non-macOS ProcessHandle documented fail-closed already-terminated. ProcessSubstrate+Broadcast+Promise/RPC: 16 passed; Core+Tasks: 117 passed.

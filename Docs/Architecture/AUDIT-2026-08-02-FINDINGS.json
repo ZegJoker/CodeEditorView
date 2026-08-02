@@ -423,7 +423,7 @@
       "severity_raw": "P1 API correctness",
       "title": "public soft registration silently replaces commands",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N01_defaultPolicyRejectsDuplicate",
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N01_softRegisterConvenienceRemovedOrRejects",
@@ -438,7 +438,7 @@
       "severity_raw": "P2",
       "title": "`CommandID` validation and documentation disagree",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N02_rejectsUppercase",
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N02_acceptsRecommendedGrammar",
@@ -453,7 +453,7 @@
       "severity_raw": "P1 lifecycle nondeterminism",
       "title": "token deinit unregisters through an unstructured task",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N03_disposeUnregistersSynchronously",
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N03_tokenDeinitDoesNotScheduleUnregister",
@@ -467,7 +467,7 @@
       "severity_raw": "P1",
       "title": "chord timeout executes with stale context and hides errors",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N04_timeoutReResolvesContextAndRespectsEnablement",
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N04_timeoutSurfacesExecutionErrors",
@@ -482,7 +482,7 @@
       "severity_raw": "P1",
       "title": "synchronous handlers can block the main actor",
       "phase": 3,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_syncExecuteRejectsLongRunning",
         "Tests/CodeEditorCommandsTests/CMDNAuditTests.swift::test_CMD_N05_syncExecuteRejectsAsynchronousClass",
