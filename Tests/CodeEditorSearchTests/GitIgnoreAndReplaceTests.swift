@@ -99,7 +99,7 @@ struct SearchReplaceStaleTests {
         let fs = try await LocalWorkspaceFileSystem(rootDirectories: [root], enablesDirectoryWatching: false)
         let ws = Workspace(fileSystem: fs)
         let doc = TextDocument(text: "hello hello")
-        ws.documents.register(doc)
+        try await ws.lifecycle.openExisting(doc)
 
         let matches = [
             SearchMatch(

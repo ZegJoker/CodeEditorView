@@ -133,11 +133,11 @@ struct WSPN01TransactionTests {
                 Issue.record("expected catastrophic/rollback, got \(error)")
             }
         }
-        // In-process rollback was injected-fail; durable recovery restores via capture owner only
-        // (no inverse-create double path) (WSP-N01 / WSP-N06).
+        // Crash-boundary recovery must roll back via the single capture owner (not quarantine).
         let coordinator = WorkspaceTransactionCoordinator(workspace: ws, journalRoot: journalRoot)
         let recovery = try await coordinator.recoverPendingTransactions()
-        #expect(recovery.results.contains { $0.outcome == .rolledBack || $0.outcome == .quarantined })
+        #expect(recovery.results.contains { $0.outcome == .rolledBack })
+        #expect(!recovery.results.contains { $0.outcome == .quarantined })
         #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("keep.txt").path))
         let data = try Data(contentsOf: root.appendingPathComponent("keep.txt"))
         #expect(String(data: data, encoding: .utf8) == "payload")
@@ -327,9 +327,12 @@ struct WSPN03BulkCloseTests {
             })
         }
         let result = await ws.requestCloseAllTabs()
-        #expect(result == .cancelled || result == .closed)
-        // Best-effort may close a and leave b.
+        // Best-effort: a discarded/closed, b cancelled and still open+dirty, overall cancelled.
+        #expect(result == .cancelled)
+        #expect(ws.documents.document(id: a.document.id) == nil)
         #expect(ws.documents.document(id: b.document.id) != nil)
+        #expect(b.document.isDirty)
+        #expect(ws.panes.values.flatMap(\.tabs).contains { $0.documentID == b.document.id })
     }
 }
 
@@ -381,29 +384,35 @@ struct WSPN04WorkerTests {
     }
 
     @Test func test_WSP_N04_progressHubPublishes() async throws {
-        let root = try makeTempRoot(files: ["p.txt": "p"])
+        let root = try makeTempRoot(files: ["p.txt": "p", "q.txt": "q"])
         defer { try? FileManager.default.removeItem(at: root) }
         let fs = try await LocalWorkspaceFileSystem(
             rootDirectories: [root],
             enablesDirectoryWatching: false
         )
-        let stream = await fs.progressEvents()
         let rootID = try #require(await fs.roots.first).id
-        let collector = Task<Bool, Never> {
-            for await item in stream {
-                if case .value = item {
-                    return true
+        // Perform work first; progress hub replays recent events to late subscribers (WSP-N04).
+        _ = try await fs.children(of: WorkspaceItemID(rootID: rootID, path: ""))
+        #expect(await fs.directoryListCount >= 1)
+        #expect(await fs.lastWorkerUsedBackgroundExecutor)
+
+        let stream = await fs.progressEvents()
+        var sawListing = false
+        var sawValue = false
+        for await item in stream {
+            if case .value(let envelope) = item {
+                sawValue = true
+                switch envelope.event {
+                case .listingStarted, .listingBatch, .listingFinished:
+                    sawListing = true
+                default:
+                    break
                 }
             }
-            return false
+            if sawListing { break }
         }
-        _ = try await fs.children(of: WorkspaceItemID(rootID: rootID, path: ""))
-        try await Task.sleep(nanoseconds: 150_000_000)
-        collector.cancel()
-        let saw = await collector.value
-        let listCount = await fs.directoryListCount
-        #expect(saw || listCount >= 1)
-        #expect(await fs.lastWorkerUsedBackgroundExecutor)
+        #expect(sawValue)
+        #expect(sawListing)
     }
 }
 
@@ -465,6 +474,36 @@ struct WSPN05ArchiveTests {
 @Suite("WSP-N06 journal startup recovery")
 @MainActor
 struct WSPN06JournalRecoveryTests {
+    @Test func test_WSP_N06_checksumStableAcrossEncodeDecode() throws {
+        var journal = DurableWorkspaceJournal(
+            formatVersion: DurableWorkspaceJournal.currentFormatVersion,
+            transactionID: "tx-stable",
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000.123),
+            workspaceID: "ws",
+            state: .prepared,
+            operations: ["delete:file:///tmp/x"],
+            backupRelativePaths: ["backup.bin"],
+            rootPaths: ["/tmp/root"],
+            resourceOwners: [
+                RollbackResourceOwner(
+                    uri: "file:///tmp/root/x",
+                    owner: .captureRestore,
+                    relativeBackup: "backup.bin"
+                )
+            ],
+            checksum: ""
+        )
+        journal.checksum = try DurableWorkspaceJournal.computeChecksum(for: journal)
+        let data = try DurableWorkspaceJournal.encodeJournal(journal)
+        let decoded = try DurableWorkspaceJournal.decodeJournal(from: data)
+        let recomputed = try DurableWorkspaceJournal.computeChecksum(for: decoded)
+        #expect(decoded.checksum == journal.checksum)
+        #expect(recomputed == journal.checksum)
+        // Second encode of the same material must match (canonical sorted keys).
+        let again = try DurableWorkspaceJournal.computeChecksum(for: decoded)
+        #expect(again == recomputed)
+    }
+
     @Test func test_WSP_N06_recoversPendingDeleteJournal() async throws {
         let (ws, root) = try await makeAuditWorkspace(files: ["j.txt": "journaled"])
         defer { try? FileManager.default.removeItem(at: root) }
@@ -483,11 +522,49 @@ struct WSPN06JournalRecoveryTests {
         // leave prepared journal on disk without committing.
         #expect(FileManager.default.fileExists(atPath: prepared.journalURL!.path))
 
+        // Verify on-disk checksum is valid before recovery (regression for unstable hashing).
+        let onDisk = try Data(contentsOf: prepared.journalURL!)
+        let journal = try DurableWorkspaceJournal.decodeJournal(from: onDisk)
+        #expect(try DurableWorkspaceJournal.computeChecksum(for: journal) == journal.checksum)
+
         let recovery = try await coordinator.recoverPendingTransactions()
         #expect(recovery.results.count >= 1)
-        #expect(recovery.results.contains { $0.outcome == .rolledBack || $0.outcome == .resumedCommitted })
-        // After rollback recovery, original file must still exist.
+        #expect(recovery.results.contains { $0.outcome == .rolledBack })
+        #expect(!recovery.results.contains { $0.outcome == .quarantined && $0.detail.contains("checksum") })
+        // After rollback recovery, original file must still exist (delete never committed).
         #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("j.txt").path))
+        #expect(try String(contentsOf: root.appendingPathComponent("j.txt"), encoding: .utf8) == "journaled")
+    }
+
+    @Test func test_WSP_N06_activateRunsStartupRecovery() async throws {
+        let root = try makeTempRoot(files: ["act.txt": "alive"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let journalRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("jr-act-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: journalRoot, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: journalRoot) }
+
+        // First workspace: prepare a pending delete journal, then "crash" (drop workspace).
+        let fs1 = try await LocalWorkspaceFileSystem(
+            rootDirectories: [root],
+            enablesDirectoryWatching: false
+        )
+        let ws1 = Workspace(fileSystem: fs1, journalRoot: journalRoot)
+        let del = DocumentURI(fileURL: root.appendingPathComponent("act.txt"))
+        let coordinator = WorkspaceTransactionCoordinator(workspace: ws1, journalRoot: journalRoot)
+        _ = try await coordinator.prepare(
+            WorkspaceTransactionRequest(edit: WorkspaceEdit(fileOperations: [.delete(uri: del)]))
+        )
+        // Second workspace activation must discover and roll back the unfinished journal.
+        let fs2 = try await LocalWorkspaceFileSystem(
+            rootDirectories: [root],
+            enablesDirectoryWatching: false
+        )
+        let ws2 = Workspace(fileSystem: fs2, journalRoot: journalRoot)
+        let report = try await ws2.activate()
+        #expect(report.results.contains { $0.outcome == .rolledBack })
+        #expect(ws2.lastRecoveryReport?.results.contains { $0.outcome == .rolledBack } == true)
+        #expect(FileManager.default.fileExists(atPath: root.appendingPathComponent("act.txt").path))
     }
 
     @Test func test_WSP_N06_quarantinesCorruptJournal() async throws {
@@ -518,10 +595,10 @@ struct WSPN06JournalRecoveryTests {
 
         let txDir = journalRoot.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: txDir, withIntermediateDirectories: true)
-        let journal = DurableWorkspaceJournal(
+        var journal = DurableWorkspaceJournal(
             formatVersion: DurableWorkspaceJournal.currentFormatVersion,
             transactionID: UUID().uuidString,
-            createdAt: Date(),
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
             workspaceID: ws.id.rawValue.uuidString,
             state: .prepared,
             operations: [],
@@ -536,12 +613,14 @@ struct WSPN06JournalRecoveryTests {
             ],
             checksum: ""
         )
-        let encoded = try JSONEncoder().encode(journal)
-        // Write without valid checksum so validation fails closed OR path escape quarantines.
-        try encoded.write(to: txDir.appendingPathComponent("journal.json"))
+        // Valid checksum so recovery reaches path-escape validation (not checksum mismatch).
+        journal.checksum = try DurableWorkspaceJournal.computeChecksum(for: journal)
+        try DurableWorkspaceJournal.encodeJournal(journal)
+            .write(to: txDir.appendingPathComponent("journal.json"), options: .atomic)
         let coordinator = WorkspaceTransactionCoordinator(workspace: ws, journalRoot: journalRoot)
         let recovery = try await coordinator.recoverPendingTransactions()
-        #expect(recovery.results.contains { $0.outcome == .quarantined || $0.outcome == .rolledBack })
+        #expect(recovery.results.contains { $0.outcome == .quarantined })
+        #expect(recovery.results.contains { $0.detail.contains("path escapes") || $0.detail.contains("passwd") || $0.detail.contains("escape") })
     }
 }
 
@@ -629,7 +708,17 @@ struct WSPN08DescriptorIOTests {
             )
         }
         #else
-        #expect(Bool(true))
+        // Non-Darwin: descriptor-relative IO must fail closed (not soft-succeed).
+        #expect(throws: DescriptorRelativeIOError.notSupported) {
+            _ = try DescriptorRelativeIO.openDirectory(at: URL(fileURLWithPath: "/tmp"))
+        }
+        #expect(throws: DescriptorRelativeIOError.notSupported) {
+            _ = try DescriptorRelativeIO.openAt(
+                dirfd: -1,
+                relativePath: "escape",
+                flags: DescriptorRelativeIO.O_RDONLY | DescriptorRelativeIO.O_NOFOLLOW
+            )
+        }
         #endif
     }
 
@@ -759,5 +848,40 @@ struct WSPN10LifecycleTests {
         _ = try await ws.renameItem(item, to: "new.txt")
         #expect(opened.document.uri.fileURL?.lastPathComponent == "new.txt")
         #expect(ws.documents.document(uri: DocumentURI(fileURL: root.appendingPathComponent("new.txt"))) != nil)
+    }
+
+    @Test func test_WSP_N10_registryMutationIsPackageScoped() async throws {
+        // WSP-N10: DocumentRegistry.register/remove are package-scoped; public surface is
+        // read-only. Sole production mutator is DocumentLifecycleCoordinator.
+        let (ws, root) = try await makeAuditWorkspace(files: ["m.txt": "m"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let uri = DocumentURI(fileURL: root.appendingPathComponent("m.txt"))
+        let doc = try await ws.lifecycle.open(uri: uri, provider: LocalFileDocumentProvider())
+        #expect(ws.lifecycle.isRegistered(doc.id))
+        #expect(ws.documents.document(id: doc.id) != nil)
+        // Closing only via lifecycle drops registry entry.
+        try await ws.lifecycle.close(documentID: doc.id, reason: .explicit)
+        #expect(ws.documents.document(id: doc.id) == nil)
+        // Source contract: Workspace.swift documents comment + package access on registry
+        // mutation methods (verified by building consumers outside package fails on remove).
+        let sources = [
+            "Sources/CodeEditorDocuments/DocumentRegistry.swift",
+            "Sources/CodeEditorWorkspace/DocumentLifecycleCoordinator.swift",
+        ]
+        let cwd = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        for rel in sources {
+            let text = try String(contentsOf: cwd.appendingPathComponent(rel), encoding: .utf8)
+            if rel.contains("DocumentRegistry") {
+                #expect(text.contains("package func register"))
+                #expect(text.contains("package func remove"))
+            }
+            if rel.contains("DocumentLifecycleCoordinator") {
+                #expect(text.contains("registry.register") || text.contains("registry.remove"))
+                #expect(text.contains("Sole owner") || text.contains("sole"))
+            }
+        }
     }
 }

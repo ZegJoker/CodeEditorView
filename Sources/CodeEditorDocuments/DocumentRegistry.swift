@@ -1,6 +1,10 @@
 import Foundation
 
 /// In-process registry of open ``TextDocument`` instances.
+///
+/// **Mutation policy (WSP-N10):** `register` / `remove` / `removeAll` / `reindexURI` are
+/// `package`-scoped so only this package (via ``DocumentLifecycleCoordinator`` in
+/// CodeEditorWorkspace) may mutate. Public surface is read-only lookups.
 @MainActor
 public final class DocumentRegistry {
     public static let shared = DocumentRegistry()
@@ -10,7 +14,8 @@ public final class DocumentRegistry {
 
     public init() {}
 
-    public func register(_ document: TextDocument) {
+    /// Package-only mutation — hosts must use ``DocumentLifecycleCoordinator`` (WSP-N10).
+    package func register(_ document: TextDocument) {
         byID[document.id] = document
         let key = document.uri.canonicalized()
         byURI[key] = document.id
@@ -28,15 +33,17 @@ public final class DocumentRegistry {
         return nil
     }
 
+    /// Package-only mutation — hosts must use ``DocumentLifecycleCoordinator`` (WSP-N10).
     @discardableResult
-    public func remove(id: DocumentID) -> TextDocument? {
+    package func remove(id: DocumentID) -> TextDocument? {
         guard let doc = byID.removeValue(forKey: id) else { return nil }
         // Remove every URI alias that points at this document (raw + canonical).
         byURI = byURI.filter { $0.value != id }
         return doc
     }
 
-    public func removeAll() {
+    /// Package-only mutation — hosts must use ``DocumentLifecycleCoordinator`` (WSP-N10).
+    package func removeAll() {
         byID.removeAll()
         byURI.removeAll()
     }
@@ -45,8 +52,8 @@ public final class DocumentRegistry {
         Array(byID.values)
     }
 
-    /// Updates URI index after ``TextDocument/setURI``.
-    public func reindexURI(for document: TextDocument) {
+    /// Package-only mutation — hosts must use ``DocumentLifecycleCoordinator`` (WSP-N10).
+    package func reindexURI(for document: TextDocument) {
         let canonical = document.uri.canonicalized()
         // Drop stale URI keys pointing at this id.
         for (uri, id) in byURI where id == document.id && uri != document.uri && uri != canonical {

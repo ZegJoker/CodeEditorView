@@ -33,6 +33,10 @@ public final class Workspace {
     public var bulkCloseAtomicity: BulkCloseAtomicity = .allOrNothing
     /// Directory for recoverable trash/staging of deletes (WSP-N02).
     public var trashRoot: URL?
+    /// Durable workspace transaction journal root (WSP-N01 / WSP-N06).
+    public var journalRoot: URL?
+    /// Last report from ``activate()`` / startup journal recovery (WSP-N06).
+    public private(set) var lastRecoveryReport: WorkspaceRecoveryReport?
     /// Bumped on structural UI-affecting changes so SwiftUI hosts can depend on a single token.
     public private(set) var revision: UInt64 = 0
 
@@ -43,7 +47,8 @@ public final class Workspace {
         documents: DocumentRegistry = DocumentRegistry(),
         settings: WorkspaceSettings = .default,
         trust: WorkspaceTrustState = .default,
-        dirtyTabClosePolicy: DirtyTabClosePolicy = .prompt
+        dirtyTabClosePolicy: DirtyTabClosePolicy = .prompt,
+        journalRoot: URL? = nil
     ) {
         self.id = id
         self.fileSystem = fileSystem
@@ -58,6 +63,7 @@ public final class Workspace {
         self.sessions = [:]
         self.navigationHistory = NavigationHistory()
         self.focusHistory = []
+        self.journalRoot = journalRoot
 
         let pane = EditorPane()
         self.panes = [pane.id: pane]
@@ -69,6 +75,16 @@ public final class Workspace {
         self.documentLeases.onFinalRelease = { [weak self] documentID in
             self?.lifecycle.handleFinalLeaseReleaseSync(documentID: documentID)
         }
+    }
+
+    /// Discover unfinished journals and recover before the workspace is interactive (WSP-N06).
+    /// Hosts must call this (or use ``local(rootDirectories:settings:journalRoot:)``) before edits.
+    @discardableResult
+    public func activate() async throws -> WorkspaceRecoveryReport {
+        let coordinator = WorkspaceTransactionCoordinator(workspace: self, journalRoot: journalRoot)
+        let report = try await coordinator.recoverPendingTransactions()
+        lastRecoveryReport = report
+        return report
     }
 
     /// Immutable cross-isolation snapshot of workspace content state.
@@ -90,16 +106,22 @@ public final class Workspace {
         )
     }
 
-    /// Convenience for local disk roots.
+    /// Convenience for local disk roots. Runs durable journal recovery before return (WSP-N06).
     public static func local(
         rootDirectories: [URL],
-        settings: WorkspaceSettings = .default
+        settings: WorkspaceSettings = .default,
+        journalRoot: URL? = nil
     ) async throws -> Workspace {
         let fs = try await LocalWorkspaceFileSystem(
             rootDirectories: rootDirectories, settings: settings)
         let workspace = Workspace(
-            fileSystem: fs, documentProvider: LocalFileDocumentProvider(), settings: settings)
+            fileSystem: fs,
+            documentProvider: LocalFileDocumentProvider(),
+            settings: settings,
+            journalRoot: journalRoot
+        )
         await workspace.fileTree.refreshRoots()
+        _ = try await workspace.activate()
         return workspace
     }
 

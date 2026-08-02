@@ -99,7 +99,8 @@ public final class WorkspaceEditService {
     }
 
     public func validate(_ edit: WorkspaceEdit) async throws {
-        let coordinator = WorkspaceTransactionCoordinator(workspace: workspace, journalRoot: journalRoot)
+        let root = journalRoot ?? workspace.journalRoot
+        let coordinator = WorkspaceTransactionCoordinator(workspace: workspace, journalRoot: root)
         _ = try await coordinator.prepare(WorkspaceTransactionRequest(edit: edit))
     }
 
@@ -117,7 +118,8 @@ public final class WorkspaceEditService {
     /// Transactional apply via ``WorkspaceTransactionCoordinator`` (WSP-N01 / WSP-N06).
     /// Prepare → commit; undo registered only on success; one rollback owner per resource.
     public func apply(_ edit: WorkspaceEdit) async throws -> WorkspaceEditResult {
-        let coordinator = WorkspaceTransactionCoordinator(workspace: workspace, journalRoot: journalRoot)
+        let root = journalRoot ?? workspace.journalRoot
+        let coordinator = WorkspaceTransactionCoordinator(workspace: workspace, journalRoot: root)
         coordinator.faultPoint = faultPoint
         let prepared = try await coordinator.prepare(WorkspaceTransactionRequest(edit: edit))
         let receipt = try await coordinator.commit(prepared)

@@ -94,9 +94,10 @@ public actor LocalWorkspaceFileSystem: WorkspaceFileSystem {
     }
 
     public func progressEvents() async -> AsyncStream<StreamItem<AsyncBroadcastHub<WorkspaceFSProgressEvent>.Envelope>> {
+        // Replay recent progress so late subscribers (and tests) observe listing batches (WSP-N04).
         await progressHub.subscribe(
             policy: .dropOldest(capacity: 64, emitGap: true),
-            replay: .none
+            replay: .last(64)
         )
     }
 

@@ -661,7 +661,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N01_prepareCommitUsesLiveIdentity",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N01_transactionCoordinatorAPI"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03 verifier residual: crash recovery requires rolledBack (not quarantine); canonical durable journal checksum; activate() startup recovery; one capture rollback owner."
     },
     {
       "id": "WSP-N02",
@@ -675,7 +675,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N02_deleteResolvesDirtyDescendants",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N02_deleteStagesThenCommits"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03: dirty-descendant preflight; trash stage then commit; abort on cancel."
     },
     {
       "id": "WSP-N03",
@@ -689,7 +689,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N03_decisionThenSaveThenCommit",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N03_bestEffortExplicit"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03 verifier residual: bestEffort asserts discard-a + cancel-b leaves a closed and b open dirty; allOrNothing default."
     },
     {
       "id": "WSP-N04",
@@ -702,7 +702,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N04_childrenStreamBatchesAndCancellation",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N04_progressHubPublishes"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03 verifier residual: progressEvents replay last(64); test requires listing progress events not listCount fallback."
     },
     {
       "id": "WSP-N05",
@@ -716,7 +716,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N05_noFalseByteExactClaim",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N05_regularFileRoundTripBytesAndMode"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03: claimsFullPOSIXMatrix=false; symlink no-follow; regular file bytes+mode."
     },
     {
       "id": "WSP-N06",
@@ -726,11 +726,13 @@
       "phase": 4,
       "status": "fixed",
       "regression_tests": [
+        "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_checksumStableAcrossEncodeDecode",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_recoversPendingDeleteJournal",
+        "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_activateRunsStartupRecovery",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_quarantinesCorruptJournal",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N06_rejectsPathEscapeInJournal"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03 verifier residual: canonical checksum (sortedKeys+ms dates); recoverPendingTransactions on Workspace.activate/local; path-escape after valid checksum; quarantine corrupt."
     },
     {
       "id": "WSP-N07",
@@ -743,7 +745,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N07_subscriptionStartsWithSnapshotAndSequence",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N07_noRegistrationRace"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03: snapshot+sequence first; actor-registered subscription."
     },
     {
       "id": "WSP-N08",
@@ -756,7 +758,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N08_openatNoFollowRejectsSymlinkEscape",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N08_mutationUsesDescriptorRelativePath"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03 verifier residual: non-Darwin asserts notSupported fail-closed (no Bool(true) vacuous)."
     },
     {
       "id": "WSP-N09",
@@ -770,7 +772,7 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N09_hideDotfilesPolicy",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N09_explicitRevealOverridesHide"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03: WorkspaceHiddenFilePolicy showAll/hideDotfiles/revealedHiddenNames."
     },
     {
       "id": "WSP-N10",
@@ -783,9 +785,10 @@
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_openCloseOnlyViaLifecycle",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_workspaceOpenUsesLifecycle",
         "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_finalLeaseReleaseRoutesThroughLifecycle",
-        "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_renameRoutesThroughLifecycle"
+        "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_renameRoutesThroughLifecycle",
+        "Tests/CodeEditorWorkspaceTests/WSPNAuditTests.swift::test_WSP_N10_registryMutationIsPackageScoped"
       ],
-      "notes": "2026-08-03: WorkspaceTransactionCoordinator prepare/commit/recover; one rollback owner; durable journal recovery+quarantine; dirty-descendant delete preflight+trash staging; bulk close decision/save/commit; FS workers+batch progress hub; honest WorkspaceArchive (no full POSIX claim); snapshot+sequence events; descriptor-relative O_NOFOLLOW; host HiddenFilePolicy; DocumentLifecycleCoordinator sole registry mutator."
+      "notes": "2026-08-03 verifier residual: DocumentRegistry register/remove/removeAll/reindexURI are package-scoped; DocumentLifecycleCoordinator is sole production mutator."
     },
     {
       "id": "SCM-N01",

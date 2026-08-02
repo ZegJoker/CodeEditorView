@@ -82,11 +82,35 @@ public struct DurableWorkspaceJournal: Codable, Sendable, Hashable {
         self.checksum = checksum
     }
 
+    /// Canonical JSON encoder for checksum material (stable key order + integer ms dates).
+    /// Using unsorted `JSONEncoder` key order is non-deterministic across encode calls and
+    /// makes encode→decode→recompute always fail-closed on valid journals (WSP-N06).
+    public static func makeCanonicalEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        return encoder
+    }
+
+    public static func makeCanonicalDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .millisecondsSince1970
+        return decoder
+    }
+
     public static func computeChecksum(for journal: DurableWorkspaceJournal) throws -> String {
         var copy = journal
         copy.checksum = ""
-        let data = try JSONEncoder().encode(copy)
+        let data = try makeCanonicalEncoder().encode(copy)
         return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    public static func encodeJournal(_ journal: DurableWorkspaceJournal) throws -> Data {
+        try makeCanonicalEncoder().encode(journal)
+    }
+
+    public static func decodeJournal(from data: Data) throws -> DurableWorkspaceJournal {
+        try makeCanonicalDecoder().decode(DurableWorkspaceJournal.self, from: data)
     }
 }
 
@@ -483,7 +507,7 @@ public final class WorkspaceTransactionCoordinator {
 
             do {
                 let data = try Data(contentsOf: journalURL)
-                let journal = try JSONDecoder().decode(DurableWorkspaceJournal.self, from: data)
+                let journal = try DurableWorkspaceJournal.decodeJournal(from: data)
 
                 guard journal.formatVersion == DurableWorkspaceJournal.currentFormatVersion else {
                     try quarantine(directory: dir, reason: "unsupported format \(journal.formatVersion)")
@@ -670,10 +694,11 @@ public final class WorkspaceTransactionCoordinator {
 
         var journal = DurableWorkspaceJournal(
             transactionID: transactionID,
-            createdAt: Date(),
+            // Truncate to whole milliseconds so encode→decode→recompute is bit-stable.
+            createdAt: Date(timeIntervalSince1970: floor(Date().timeIntervalSince1970 * 1000) / 1000),
             workspaceID: workspace.id.rawValue.uuidString,
             state: state,
-            operations: operations.map { String(describing: $0) },
+            operations: operations.map { Self.stableOperationDescription($0) },
             backupRelativePaths: backupNames,
             rootPaths: rootPaths,
             resourceOwners: patchedOwners,
@@ -681,8 +706,23 @@ public final class WorkspaceTransactionCoordinator {
         )
         journal.checksum = try DurableWorkspaceJournal.computeChecksum(for: journal)
         let journalURL = dir.appendingPathComponent("journal.json")
-        try JSONEncoder().encode(journal).write(to: journalURL, options: .atomic)
+        try DurableWorkspaceJournal.encodeJournal(journal).write(to: journalURL, options: .atomic)
         return (journalURL, dir)
+    }
+
+    private static func stableOperationDescription(_ op: WorkspaceFileOperation) -> String {
+        switch op {
+        case .createFile(let uri, _):
+            return "createFile:\(uri.rawValue)"
+        case .createFileBytes(let uri, _):
+            return "createFileBytes:\(uri.rawValue)"
+        case .createDirectory(let uri):
+            return "createDirectory:\(uri.rawValue)"
+        case .delete(let uri):
+            return "delete:\(uri.rawValue)"
+        case .rename(let from, let to):
+            return "rename:\(from.rawValue)->\(to.rawValue)"
+        }
     }
 
     private func updateJournalState(
@@ -693,11 +733,11 @@ public final class WorkspaceTransactionCoordinator {
             FileManager.default.fileExists(atPath: journalURL.path)
         else { return }
         let data = try Data(contentsOf: journalURL)
-        var journal = try JSONDecoder().decode(DurableWorkspaceJournal.self, from: data)
+        var journal = try DurableWorkspaceJournal.decodeJournal(from: data)
         journal.state = state
         journal.checksum = ""
         journal.checksum = try DurableWorkspaceJournal.computeChecksum(for: journal)
-        try JSONEncoder().encode(journal).write(to: journalURL, options: .atomic)
+        try DurableWorkspaceJournal.encodeJournal(journal).write(to: journalURL, options: .atomic)
         try? fsyncParent(of: journalURL)
     }
 

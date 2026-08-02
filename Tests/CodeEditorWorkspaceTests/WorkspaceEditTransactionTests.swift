@@ -24,7 +24,7 @@ struct WorkspaceEditTransactionTests {
         let (ws, root) = try await makeWorkspace()
         defer { try? FileManager.default.removeItem(at: root) }
         let doc = TextDocument(text: "hello")
-        ws.documents.register(doc)
+        try await ws.lifecycle.openExisting(doc)
         let bad = WorkspaceEdit(documentChanges: [
             DocumentChange(
                 uri: doc.uri,
@@ -52,8 +52,8 @@ struct WorkspaceEditTransactionTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let a = TextDocument(text: "aaa")
         let b = TextDocument(text: "bbb")
-        ws.documents.register(a)
-        ws.documents.register(b)
+        try await ws.lifecycle.openExisting(a)
+        try await ws.lifecycle.openExisting(b)
         let edit = WorkspaceEdit(documentChanges: [
             DocumentChange(
                 uri: a.uri,
@@ -108,7 +108,7 @@ struct WorkspaceEditTransactionTests {
         let (ws, root) = try await makeWorkspace()
         defer { try? FileManager.default.removeItem(at: root) }
         let doc = TextDocument(text: "x")
-        ws.documents.register(doc)
+        try await ws.lifecycle.openExisting(doc)
         _ = try doc.apply(.single(range: NSRange(location: 1, length: 0), replacement: "y"))
         let snap = await ws.snapshot()
         #expect(snap.documentVersions[doc.uri] == doc.version)
