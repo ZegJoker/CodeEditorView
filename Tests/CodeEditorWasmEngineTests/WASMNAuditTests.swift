@@ -511,11 +511,31 @@ struct WASMNAuditTests {
         process.waitUntilExit()
         killer.cancel()
         let elapsed = ContinuousClock.now - start
-        #expect(elapsed < .seconds(5), "process-isolated harness must not hang the test runner")
-        // Contained: exit 0 (returned), 2 (deadline/trap), or signalled — never hang.
         let status = process.terminationStatus
-        #expect(status == 0 || status == 2 || status == 9 || status == 15 || status != 0)
-        #expect(!process.isRunning)
+        let reason = process.terminationReason
+        #expect(elapsed < .seconds(5), "process-isolated harness must not hang the test runner")
+        #expect(!process.isRunning, "helper OS process must have exited")
+        // Pure noncooperative loop must never report success: exit 0 means the call
+        // returned normally, which would prove non-containment.
+        #expect(
+            !(reason == .exit && status == 0),
+            "pure noncooperative loop must not exit 0 (success)"
+        )
+        // Contained outcomes (non-tautological):
+        // - harness clean exit 2 (deadline/interrupted/trap) or 3 (instantiate fail-closed)
+        // - uncaught signal (SIGTERM=15 outer kill, SIGKILL=9, SIGTRAP=5 engine trap, etc.)
+        switch reason {
+        case .exit:
+            #expect(
+                status == 2 || status == 3,
+                "unexpected harness exit \(status); expected 2 (contained) or 3 (validate fail)"
+            )
+        case .uncaughtSignal:
+            // Signal number must be a real fatal signal (not 0).
+            #expect(status > 0, "uncaughtSignal with non-positive signal \(status)")
+        @unknown default:
+            Issue.record("unknown Process.terminationReason for hostile loop helper")
+        }
     }
 
     private static func resolveWasmHarness() throws -> URL {

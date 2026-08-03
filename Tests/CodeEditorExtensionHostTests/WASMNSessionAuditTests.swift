@@ -83,54 +83,85 @@ struct WASMNSessionAuditTests {
     // MARK: - WASM-N10
 
     @Test func test_WASM_N10_configuredLimitsEnforced() async throws {
+        // Deterministic quotas only (no racey concurrent-request section).
+        // maxConcurrentRequests has hard coverage in
+        // test_WASM_N10_maxConcurrentRequestsEnforced (slow-work occupancy + exact error).
         let engine = WasmTestEngines.linkedGuest()
-        let limits = WasmResourceLimits(
-            maxHostSendQueueBytes: 32,
-            maxHostSendQueueMessages: 2,
-            maxLogBytes: 64,
-            maxLogMessages: 2,
-            maxConcurrentRequests: 1,
-            maxRequestBytes: 128,
-            maxCapabilityCalls: 3,
-            maxCapabilityCallsPerSecond: 3
+        // Session path: maxRequestBytes fail-closed. Keep host-send queue roomy so a
+        // later in-budget echo can deliver (tight queue is exercised on MessageBox below).
+        let sessionLimits = WasmResourceLimits(
+            maxConcurrentRequests: 4,
+            maxRequestBytes: 128
         )
         let session = CoreWasmABISession(
             engine: engine,
             module: fixtureModule(),
-            limits: limits,
+            limits: sessionLimits,
             generation: 1
         )
         try await session.start()
-        // Oversized request fails closed
+        // Oversized request fails closed with typed requestTooLarge (not soft any-error).
+        var sawTooLarge = false
         do {
-            _ = try await session.request(.echo, payload: Data(repeating: 0x41, count: 512), timeout: .seconds(1))
-            Issue.record("expected requestTooLarge")
-        } catch WasmEngineError.requestTooLarge {
-            // ok
-        } catch {
-            #expect(String(describing: error).count > 0)
+            _ = try await session.request(
+                ExtensionMethodID.echo,
+                payload: Data(repeating: 0x41, count: 512),
+                timeout: Duration.seconds(1)
+            )
+            Issue.record("expected requestTooLarge for payload > maxRequestBytes")
+        } catch WasmEngineError.requestTooLarge(let size) {
+            #expect(size >= 512)
+            sawTooLarge = true
         }
-        // Concurrent request limit
-        do {
-            // With maxConcurrent=1, second concurrent request must fail.
-            // Hold first open via slow work is hard after start — assert resourceLimit path exists.
-            async let a = session.request(.echo, payload: Data("a".utf8), timeout: .seconds(2))
-            // Tiny race window; also verify queue backpressure below.
-            _ = try? await a
-        }
+        #expect(sawTooLarge, "must throw WasmEngineError.requestTooLarge fail-closed")
+        // Small in-budget request still succeeds after oversized rejection.
+        let ok = try await session.request(
+            ExtensionMethodID.echo,
+            payload: Data("ok".utf8),
+            timeout: Duration.seconds(2)
+        )
+        #expect(ok == Data("ok".utf8))
         await session.stop()
 
-        let box = MessageBox(limits: limits)
-        #expect(box.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusOK)
-        #expect(box.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusOK)
-        #expect(box.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusBackpressure)
+        // Host-send queue: message count + byte budget fail closed with backpressure.
+        let messageLimited = MessageBox(
+            limits: WasmResourceLimits(
+                maxHostSendQueueBytes: 10_000,
+                maxHostSendQueueMessages: 2
+            )
+        )
+        #expect(messageLimited.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusOK)
+        #expect(messageLimited.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusOK)
+        #expect(
+            messageLimited.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusBackpressure,
+            "maxHostSendQueueMessages=2 must reject 3rd enqueue"
+        )
+        let byteLimited = MessageBox(
+            limits: WasmResourceLimits(
+                maxHostSendQueueBytes: 16,
+                maxHostSendQueueMessages: 100
+            )
+        )
+        #expect(byteLimited.enqueue(Data(repeating: 2, count: 10)) == CoreWasmABI.statusOK)
+        #expect(
+            byteLimited.enqueue(Data(repeating: 2, count: 10)) == CoreWasmABI.statusBackpressure,
+            "maxHostSendQueueBytes=16 must reject when bytes would exceed"
+        )
 
-        // Capability call quota
-        #expect(box.recordCapabilityCall())
-        #expect(box.recordCapabilityCall())
-        #expect(box.recordCapabilityCall())
-        #expect(!box.recordCapabilityCall(), "maxCapabilityCalls=3 must fail closed on 4th")
-        #expect(box.capabilityCallCount == 3)
+        // Capability call quota: hard cap, exact counter, 4th call denied.
+        let capBox = MessageBox(
+            limits: WasmResourceLimits(
+                maxCapabilityCalls: 3,
+                maxCapabilityCallsPerSecond: 100
+            )
+        )
+        #expect(capBox.recordCapabilityCall())
+        #expect(capBox.recordCapabilityCall())
+        #expect(capBox.recordCapabilityCall())
+        #expect(!capBox.recordCapabilityCall(), "maxCapabilityCalls=3 must fail closed on 4th")
+        #expect(capBox.capabilityCallCount == 3)
+        #expect(!capBox.recordCapabilityCall(), "further calls remain denied at total cap")
+        #expect(capBox.capabilityCallCount == 3)
     }
 
     @Test func test_WASM_N10_maxConcurrentRequestsEnforced() async throws {

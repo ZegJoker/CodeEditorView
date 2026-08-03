@@ -2356,7 +2356,7 @@
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N10_maxInstancesEnforced",
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N10_capabilityCallQuotaOnHostSend"
       ],
-      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
+      "notes": "2026-08-03 verifier residual (2): configuredLimitsEnforced is deterministic only \u2014 typed requestTooLarge + post-reject success, MessageBox message/byte backpressure, capability total cap; racey concurrent try? removed (hard maxConcurrent in maxConcurrentRequestsEnforced)."
     },
     {
       "id": "WASM-N11",
@@ -2431,7 +2431,7 @@
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_hostileModulesContainedInProcess",
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_processIsolatedHostileLoopContained"
       ],
-      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
+      "notes": "2026-08-03 verifier residual (2): processIsolatedHostileLoopContained non-tautological \u2014 forbids exit 0 success; exit reason .exit requires status 2|3; .uncaughtSignal requires status>0; wall elapsed<.seconds(5) + !isRunning."
     },
     {
       "id": "WB-N01",
