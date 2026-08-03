@@ -1,6 +1,9 @@
 import SwiftUI
 
 /// Shared motion curves for workbench chrome (Xcode-like, short and snappy).
+///
+/// All helpers honor reduce-motion: when `reduceMotion` is true, animations are
+/// omitted so content updates apply immediately (WB-N03).
 public enum WorkbenchMotion {
     /// Sidebar / inspector / utility show-hide.
     public static let pane: Animation = .snappy(duration: 0.22, extraBounce: 0)
@@ -19,6 +22,35 @@ public enum WorkbenchMotion {
 
     /// Navigator row selection.
     public static let selection: Animation = .easeOut(duration: 0.1)
+
+    // MARK: - Resolve / apply (WB-N03)
+
+    /// Returns `preferred` unless reduce-motion is enabled (then `nil`).
+    public static func resolveAnimation(
+        preferred: Animation?,
+        reduceMotion: Bool
+    ) -> Animation? {
+        reduceMotion ? nil : preferred
+    }
+
+    /// Run `body` inside `withAnimation` when motion is allowed; otherwise run immediately.
+    ///
+    /// - Parameter record: Optional test/observability hook that receives the animation
+    ///   actually applied (`nil` when reduce-motion or preferred is nil).
+    public static func withAnimationIfAvailable(
+        _ preferred: Animation? = WorkbenchMotion.pane,
+        reduceMotion: Bool = false,
+        record: ((Animation?) -> Void)? = nil,
+        _ body: () -> Void
+    ) {
+        let resolved = resolveAnimation(preferred: preferred, reduceMotion: reduceMotion)
+        record?(resolved)
+        if let resolved {
+            withAnimation(resolved, body)
+        } else {
+            body()
+        }
+    }
 
     // MARK: - Transitions
 

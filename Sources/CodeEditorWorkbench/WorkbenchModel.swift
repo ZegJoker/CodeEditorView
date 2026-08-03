@@ -6,6 +6,7 @@ import CodeEditorWorkspace
 import CoreGraphics
 import Foundation
 import Observation
+import SwiftUI
 
 #if canImport(AppKit) && !targetEnvironment(macCatalyst)
     import AppKit
@@ -33,6 +34,14 @@ public final class WorkbenchModel {
     public let debugSessions: WorkbenchDebugModel
     public let scmModel: WorkbenchSCMModel
     public let problemsBridge: WorkbenchTaskProblemsBridge
+    /// Production service bindings for advertised workflows (WB-N06).
+    public let workflows: WorkbenchWorkflowCoordinator
+    /// Primary lifecycle TaskBag — cancel on tear-down (WB-N05).
+    public let taskBag = WorkbenchTaskBag()
+    /// When true, chrome show/hide skips animation (tests may override; UI uses environment).
+    public var reduceMotion: Bool = false
+    /// Estimated line height for layout-based reveal when full layout is unavailable (WB-N02).
+    public var revealEstimatedLineHeight: CGFloat = EditorRevealService.defaultEstimatedLineHeight
 
     /// Explicit lifecycle phase for the primary session owner.
     public private(set) var lifecyclePhase: WorkbenchLifecyclePhase = .creating
@@ -131,6 +140,7 @@ public final class WorkbenchModel {
         self.debugSessions = WorkbenchDebugModel()
         self.scmModel = WorkbenchSCMModel()
         self.problemsBridge = WorkbenchTaskProblemsBridge()
+        self.workflows = WorkbenchWorkflowCoordinator()
         self.isNavigatorVisible = configuration.showsNavigator
         self.isInspectorVisible = configuration.showsInspector
         self.isUtilityVisible = configuration.showsUtilityArea
@@ -202,6 +212,8 @@ public final class WorkbenchModel {
 
     public func beginTearDown() {
         lifecyclePhase = .tearingDown
+        taskBag.cancelAll()
+        windowRegistry.cancelAllTaskBags()
         registrationBag.disposeAll()
         builtInCommandToken = nil
     }
@@ -257,7 +269,10 @@ public final class WorkbenchModel {
     public func selectNavigator(id: String) {
         activeNavigatorID = id
         if !isNavigatorVisible {
-            withAnimationIfAvailable {
+            WorkbenchMotion.withAnimationIfAvailable(
+                WorkbenchMotion.pane,
+                reduceMotion: reduceMotion
+            ) {
                 isNavigatorVisible = true
             }
         }
@@ -266,7 +281,10 @@ public final class WorkbenchModel {
     public func selectUtility(id: String) {
         activeUtilityID = id
         if !isUtilityVisible {
-            withAnimationIfAvailable {
+            WorkbenchMotion.withAnimationIfAvailable(
+                WorkbenchMotion.pane,
+                reduceMotion: reduceMotion
+            ) {
                 isUtilityVisible = true
             }
         }
@@ -375,7 +393,10 @@ public final class WorkbenchModel {
         openQuickly.resetPresentation()
         isOpenQuicklyPresented = true
         focusedTarget = .openQuickly
-        Task { await openQuickly.recompute(workspace: workspace) }
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.openQuickly.recompute(workspace: self.workspace)
+        })
     }
 
     // MARK: - Multi-window
@@ -493,94 +514,110 @@ public final class WorkbenchModel {
     ) {
         openGeneration &+= 1
         let generation = openGeneration
-        Task {
+        let lineHeight = revealEstimatedLineHeight
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
-                let opened = try await workspace.openInActivePane(uri: uri, preview: preview)
+                let opened = try await self.workspace.openInActivePane(uri: uri, preview: preview)
                 if let selection {
-                    opened.session.selections = [selection]
-                    // Hint scroll toward the match (points are approximate until layout).
-                    opened.session.scrollPosition = CGPoint(x: 0, y: Double(max(selection.location / 40, 0)))
+                    // WB-N02: layout-based reveal via LineIndex — never fabricated offset/40.
+                    let text = opened.document.text
+                    let result = EditorRevealService.reveal(
+                        range: selection,
+                        text: text,
+                        estimatedLineHeight: lineHeight,
+                        viewportHeight: nil,
+                        alignment: .centerIfOutsideViewport,
+                        selectionPolicy: .select,
+                        animation: .respectReduceMotion
+                    )
+                    EditorRevealService.apply(result, to: opened.session)
                 }
-                guard generation == openGeneration else { return }
-                statusMessage = uri.fileURL?.lastPathComponent ?? uri.rawValue
+                guard generation == self.openGeneration else { return }
+                self.statusMessage = uri.fileURL?.lastPathComponent ?? uri.rawValue
             } catch {
-                guard generation == openGeneration else { return }
-                statusMessage = "Open failed: \(error.localizedDescription)"
+                guard generation == self.openGeneration else { return }
+                self.statusMessage = "Open failed: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     public func createFile(named name: String, in parent: WorkspaceItemID? = nil, open: Bool = true) {
-        Task {
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
-                let parentID = try await resolveCreateParent(parent)
-                let item = try await workspace.createFile(in: parentID, name: name)
-                selectedNavigatorItem = item.id
+                let parentID = try await self.resolveCreateParent(parent)
+                let item = try await self.workspace.createFile(in: parentID, name: name)
+                self.selectedNavigatorItem = item.id
                 if open {
-                    openURI(item.uri, preview: false)
+                    self.openURI(item.uri, preview: false)
                 }
-                statusMessage = "Created \(name)"
+                self.statusMessage = "Created \(name)"
             } catch {
-                navigatorError = error.localizedDescription
-                statusMessage = "Create file failed: \(error.localizedDescription)"
+                self.navigatorError = error.localizedDescription
+                self.statusMessage = "Create file failed: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     public func createFolder(named name: String, in parent: WorkspaceItemID? = nil) {
-        Task {
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
-                let parentID = try await resolveCreateParent(parent)
-                let item = try await workspace.createDirectory(in: parentID, name: name)
-                selectedNavigatorItem = item.id
-                statusMessage = "Created folder \(name)"
+                let parentID = try await self.resolveCreateParent(parent)
+                let item = try await self.workspace.createDirectory(in: parentID, name: name)
+                self.selectedNavigatorItem = item.id
+                self.statusMessage = "Created folder \(name)"
             } catch {
-                navigatorError = error.localizedDescription
-                statusMessage = "Create folder failed: \(error.localizedDescription)"
+                self.navigatorError = error.localizedDescription
+                self.statusMessage = "Create folder failed: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     public func renameItem(_ id: WorkspaceItemID, to newName: String) {
-        Task {
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
-                let item = try await workspace.renameItem(id, to: newName)
-                selectedNavigatorItem = item.id
-                statusMessage = "Renamed to \(item.name)"
+                let item = try await self.workspace.renameItem(id, to: newName)
+                self.selectedNavigatorItem = item.id
+                self.statusMessage = "Renamed to \(item.name)"
             } catch {
-                navigatorError = error.localizedDescription
-                statusMessage = "Rename failed: \(error.localizedDescription)"
+                self.navigatorError = error.localizedDescription
+                self.statusMessage = "Rename failed: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     public func deleteItem(_ id: WorkspaceItemID) {
-        Task {
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
-                try await workspace.deleteItem(id)
-                if selectedNavigatorItem == id {
-                    selectedNavigatorItem = nil
+                try await self.workspace.deleteItem(id)
+                if self.selectedNavigatorItem == id {
+                    self.selectedNavigatorItem = nil
                 }
-                statusMessage = "Deleted"
+                self.statusMessage = "Deleted"
             } catch {
-                navigatorError = error.localizedDescription
-                statusMessage = "Delete failed: \(error.localizedDescription)"
+                self.navigatorError = error.localizedDescription
+                self.statusMessage = "Delete failed: \(error.localizedDescription)"
             }
-        }
+        })
     }
 
     public func revealInFinder(_ id: WorkspaceItemID) {
-        Task {
-            guard let uri = await workspace.fileSystem.uri(for: id),
+        taskBag.store(Task { @MainActor [weak self] in
+            guard let self else { return }
+            guard let uri = await self.workspace.fileSystem.uri(for: id),
                 let url = uri.fileURL
             else {
-                navigatorError = "Cannot reveal item"
+                self.navigatorError = "Cannot reveal item"
                 return
             }
             #if os(macOS)
                 NSWorkspace.shared.activateFileViewerSelecting([url])
             #endif
-        }
+        })
     }
 
     private func resolveCreateParent(_ parent: WorkspaceItemID?) async throws -> WorkspaceItemID {
@@ -627,9 +664,5 @@ public final class WorkbenchModel {
             let tab = workspace.panes[paneID]?.selectedTab
         else { return nil }
         return workspace.sessions[tab.sessionID]
-    }
-
-    private func withAnimationIfAvailable(_ body: () -> Void) {
-        body()
     }
 }

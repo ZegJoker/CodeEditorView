@@ -2439,9 +2439,14 @@
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
       "title": "contribution “fault isolation” is not isolation",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N01_errorPresentationAPINotNamedFaultIsolation",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N01_errorPresentationShowsFaultWithoutClaimingIsolation",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N01_untrustedContributionsAreDeclarativeOnly",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N01_noFaultIsolationWordingInContributionAPI"
+      ],
+      "notes": "2026-08-03: renamed makeBodyIsolated→makeBodyWithErrorPresentation; WorkbenchContributionTrust trustedInProcess|declarativeUntrusted; declarative view models host-rendered only."
     },
     {
       "id": "WB-N02",
@@ -2449,9 +2454,13 @@
       "severity_raw": "P1",
       "title": "fabricated navigation offsets remain",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N02_revealUsesLineIndexNotFabricatedDiv40",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N02_openURIAppliesLayoutReveal",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N02_revealAPISurfaceMatchesAuditContract"
+      ],
+      "notes": "2026-08-03: EditorRevealService uses LineIndex layout y; openURI no longer uses selection.location/40."
     },
     {
       "id": "WB-N03",
@@ -2459,9 +2468,13 @@
       "severity_raw": "P2",
       "title": "no-op animation wrapper is fake behavior",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N03_withAnimationIfAvailableIsNotNoOp",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N03_reduceMotionDisablesAnimation",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N03_workbenchModelUsesRealAnimationHelper"
+      ],
+      "notes": "2026-08-03: WorkbenchMotion.withAnimationIfAvailable applies real withAnimation and honors reduceMotion."
     },
     {
       "id": "WB-N04",
@@ -2469,9 +2482,14 @@
       "severity_raw": "P1",
       "title": "file-tree indexing can freeze the main actor",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_indexDoesNotExpandMainActorFileTree",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_indexEngineIsBackgroundActor",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_indexCancellationAndBudget",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_snapshotIsImmutableAndDiffable"
+      ],
+      "notes": "2026-08-03: FileTreeIndexEngine actor walks WorkspaceFileSystem only (not WorkspaceFileTree.expand); immutable FileTreeIndexSnapshot."
     },
     {
       "id": "WB-N05",
@@ -2479,9 +2497,14 @@
       "severity_raw": "P1",
       "title": "unstructured tasks can outlive models/windows",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_taskBagCancelsStoredTasks",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_workbenchTearDownCancelsTaskBag",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_openURIUsesTaskBag",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_windowScopedTaskBag"
+      ],
+      "notes": "2026-08-03: WorkbenchTaskBag on model + per-window registry bags; open/create/delete/openQuickly stored; cancel on tearDown/close."
     },
     {
       "id": "WB-N06",
@@ -2489,9 +2512,16 @@
       "severity_raw": "P1/P2 by feature",
       "title": "models exist without end-to-end workflows",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N06_schemeBuildRunsTaskService",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N06_schemeBuildFailsClosedWithoutService",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N06_taskProblemsBridgeFromWorkflow",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N06_scmRefreshUsesProductionService",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N06_scmRefreshFailsClosedWithoutService",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N06_testSchemeMarksTestsRunning"
+      ],
+      "notes": "2026-08-03: WorkbenchWorkflowCoordinator binds TaskService/SourceControlService; scheme build/test/run fail closed; problems bridge from task output."
     },
     {
       "id": "WB-N07",
@@ -2499,9 +2529,13 @@
       "severity_raw": "unknown",
       "title": "Xcode-class workbench gaps",
       "phase": 10,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N07_stableScopeIsBoundedAndExplicit",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N07_documentationDeclaresScopeWithoutFakePanels",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N07_defaultNavigatorsAreEmptyStatesNotFakeData"
+      ],
+      "notes": "2026-08-03: WorkbenchStableScope.v1 + Documentation.md declare Stable 1.0 included vs Xcode gaps; no fake panels; empty navigators are empty states."
     }
   ],
   "counts": {

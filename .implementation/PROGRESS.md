@@ -25,7 +25,7 @@
 | 9a | extension package/signing | 20 | fixed |
 | 9b | capability broker | 16 | verified |
 | 9c | Wasm | 16 | fixed |
-| 10 | workbench | 7 | open |
+| 10 | workbench | 7 | fixed |
 | F | final residual gate | all 174 | open |
 
 ## Rules for implementers
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: Phase 10 workbench — fixed WB-N01…WB-N07: makeBodyWithErrorPresentation (not fault isolation) + declarative untrusted contributions; EditorRevealService LineIndex layout reveal (no location/40); WorkbenchMotion.withAnimationIfAvailable (real withAnimation + reduce-motion); FileTreeIndexEngine background actor (no MainActor file-tree expand); WorkbenchTaskBag per model/window cancelled on tearDown/close; WorkbenchWorkflowCoordinator binds TaskService/SourceControlService fail-closed; WorkbenchStableScope.v1 + docs for Stable 1.0 vs Xcode gaps (no fake panels). `swift test --filter 'test_WB_N|Workbench…'`: 66 passed (27 WB-N).
 - 2026-08-03: Phase 9c Wasm verifier residual (3) — hardened weak tests: WASM-N04 callAndMemoryShareSerialRuntime exact-byte marker/write/sequential (removed `|| read2.count == 4`); WASM-N09/N12 exact echo payloads (removed `|| !isEmpty`); WASM-N10 isolated registry at-cap + capabilityCalls hard >0/<=max (removed soft OR). `swift test --filter 'WASMNAuditTests|WASMNSessionAuditTests'`: 25 passed ×2.
 - 2026-08-03: Phase 9c Wasm verifier residual (2) — hardened weak tests only (production already fixed): WASM-N16 processIsolatedHostileLoopContained forbids exit 0 and uses non-tautological terminationReason switch (exit 2|3 or uncaughtSignal status>0); WASM-N10 configuredLimitsEnforced removes racey concurrent try? path, hard-asserts typed requestTooLarge + post-reject success, MessageBox message/byte backpressure, capability total cap (concurrent covered by maxConcurrentRequestsEnforced). `swift test --filter 'WASM_N|WASMN'`: 25 passed.
 - 2026-08-03: Phase 9c Wasm verifier residual — WASM-N04 shared serial runtime for call+memory (re-entrant queue; no DispatchQueue.global invoke); WASM-N06 requireI32/I64 fail-closed (no zero coerce) + fromWasmKitValue v128/ref; WASM-N05 grow success path on growHelperModule; WASM-N10 maxInstances registry + maxCapabilityCalls/rate on host_send/log; WASM-N09 OneShotPromise pendingRequestCount proof; WASM-N12 concurrent keyed cancel; WASM-N14 outstandingGuestAllocations metric; WASM-N15 InProcessCoreWasmEngine moved to TestSupport; MessageBox legacy hasCancel/flagCancel() removed; instrumenter fails closed for pure loops without should_cancel; WASM-N16 codeeditor-wasm-harness killable OS process + deep_recursion/huge_table/oob/capability_flood fixtures. `swift test --filter 'WASMNAuditTests|WASMNSessionAuditTests'`: 25 passed.

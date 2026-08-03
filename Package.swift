@@ -425,7 +425,15 @@ let package = Package(
         ),
         .testTarget(
             name: "CodeEditorWorkbenchTests",
-            dependencies: ["CodeEditorWorkbench", "CodeEditorWorkspace", "CodeEditorDocuments"]
+            dependencies: [
+                "CodeEditorWorkbench",
+                "CodeEditorWorkspace",
+                "CodeEditorDocuments",
+                "CodeEditorCore",
+                "CodeEditorTasks",
+                "CodeEditorSourceControl",
+                "CodeEditorCommands",
+            ]
         ),
         .testTarget(
             name: "CodeEditorViewTests",

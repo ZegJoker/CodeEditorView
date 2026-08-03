@@ -57,6 +57,18 @@ public final class WorkbenchSCMModel {
             statuses = []
         }
     }
+
+    /// Apply statuses from a production ``SourceControlService`` (WB-N06).
+    public func applyStatuses(_ statuses: [SCMFileStatus]) {
+        self.statuses = statuses
+        errorMessage = nil
+    }
+
+    /// Record an SCM workflow error (fail-closed, no silent empty success).
+    public func recordError(_ message: String) {
+        errorMessage = message
+        statuses = []
+    }
 }
 
 // MARK: - Debug session list model (WB-007)

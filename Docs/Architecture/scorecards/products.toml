@@ -93,7 +93,7 @@ tests = { status = "partial", artifact = "Baselines/evidence/scorecard-tests.jso
 platform = { status = "partial", artifact = "Baselines/evidence/scorecard-platform.json", macos15 = "job/local/macos", ios18 = "job/local/ios-not-run" }
 operations = { status = "fail", artifact = "Baselines/evidence/scorecard-operations.json", fault_suite = "Docs/Architecture/defects.json" }
 docs = { status = "partial", artifact = "README.md" }
-residual = ["WB-N01", "WB-N02", "WB-N03", "WB-N04", "WB-N05", "WB-N06", "WB-N07"]
+residual = []
 
 [[product]]
 name = "CodeEditorView"

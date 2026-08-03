@@ -153,6 +153,8 @@ public final class WorkbenchWindowRegistry {
     public private(set) var windows: [WorkbenchWindowID: WorkbenchWindowState] = [:]
     public private(set) var focusedWindowID: WorkbenchWindowID?
     public private(set) var revision: UInt64 = 0
+    /// Per-window TaskBag lifecycle scopes (WB-N05).
+    private var taskBags: [WorkbenchWindowID: WorkbenchTaskBag] = [:]
 
     public init() {}
 
@@ -163,6 +165,7 @@ public final class WorkbenchWindowRegistry {
         state.id = WorkbenchWindowID()
         state.title = title
         windows[state.id] = state
+        taskBags[state.id] = WorkbenchTaskBag()
         focusedWindowID = state.id
         revision &+= 1
         return state
@@ -180,11 +183,28 @@ public final class WorkbenchWindowRegistry {
     }
 
     public func close(_ id: WorkbenchWindowID) {
+        taskBags[id]?.cancelAll()
+        taskBags.removeValue(forKey: id)
         windows.removeValue(forKey: id)
         if focusedWindowID == id {
             focusedWindowID = windows.keys.sorted(by: { $0.rawValue.uuidString < $1.rawValue.uuidString }).first
         }
         revision &+= 1
+    }
+
+    /// Task bag for a window. Returns an empty disposable bag if the window is unknown/closed.
+    public func taskBag(for id: WorkbenchWindowID) -> WorkbenchTaskBag {
+        if let bag = taskBags[id] { return bag }
+        // Closed / unknown window: return a throwaway bag so callers do not crash.
+        let bag = WorkbenchTaskBag()
+        return bag
+    }
+
+    public func cancelAllTaskBags() {
+        for bag in taskBags.values {
+            bag.cancelAll()
+        }
+        taskBags.removeAll()
     }
 
     public func allWindows() -> [WorkbenchWindowState] {

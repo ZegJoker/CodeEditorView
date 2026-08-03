@@ -464,7 +464,7 @@ public struct WorkbenchView: View {
         let active = contribs.first(where: { $0.id == model.activeNavigatorID }) ?? contribs.first
         return Group {
             if let active {
-                model.contributionRegistry.makeBodyIsolated(id: active.id, context: ctx)
+                model.contributionRegistry.makeBodyWithErrorPresentation(id: active.id, context: ctx)
                     .id(active.id)
             } else {
                 ContentUnavailableView("No Navigator", systemImage: "sidebar.left")
@@ -515,7 +515,7 @@ public struct WorkbenchView: View {
             } else {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(contribs, id: \.id) { c in
-                        model.contributionRegistry.makeBodyIsolated(id: c.id, context: ctx)
+                        model.contributionRegistry.makeBodyWithErrorPresentation(id: c.id, context: ctx)
                     }
                 }
             }
@@ -575,7 +575,7 @@ public struct WorkbenchView: View {
 
             Group {
                 if let active {
-                    model.contributionRegistry.makeBodyIsolated(id: active.id, context: ctx)
+                    model.contributionRegistry.makeBodyWithErrorPresentation(id: active.id, context: ctx)
                         .id(active.id)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .transition(WorkbenchMotion.editorContent)
@@ -605,11 +605,11 @@ public struct WorkbenchView: View {
                 EmptyView()
             } else {
                 if let first = contribs.first {
-                    model.contributionRegistry.makeBodyIsolated(id: first.id, context: ctx)
+                    model.contributionRegistry.makeBodyWithErrorPresentation(id: first.id, context: ctx)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 ForEach(contribs.dropFirst(), id: \.id) { c in
-                    model.contributionRegistry.makeBodyIsolated(id: c.id, context: ctx)
+                    model.contributionRegistry.makeBodyWithErrorPresentation(id: c.id, context: ctx)
                 }
             }
         }
