@@ -84,7 +84,7 @@
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_ciEmptyCacheAndArchiveJobsExist",
         "Tests/ReleaseTruthTests/ReleaseTruthTests.swift::test_PKG_N01_executesCleanArchiveResolveBuildAndFullTests"
       ],
-      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive→resolve→product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
+      "notes": "2026-08-02 verifier: test always runs ARCHIVE_PHASE=smoke (empty HOME archive\u2192resolve\u2192product builds, no soft PKG_N01_EXECUTE return); CI source-archive-rehearsal runs FULL_ARCHIVE_TEST=1 full suite."
     },
     {
       "id": "REL-N01",
@@ -119,7 +119,7 @@
       "id": "REL-N03",
       "severity": "P0",
       "severity_raw": "P0",
-      "title": "defect gate trusts manually marked “fixed” rows",
+      "title": "defect gate trusts manually marked \u201cfixed\u201d rows",
       "phase": 0,
       "status": "verified",
       "regression_tests": [
@@ -340,12 +340,12 @@
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_hashOnlyIdentityDoesNotRequireContentReturn",
         "Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift::test_DOC_N09_singleBufferPeakMemoryNotDoubleBuffered"
       ],
-      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak≤N content and peak≤chunkSize hash-only."
+      "notes": "Single preallocated Data when size known; hashOnlyIdentitySync streams O(chunk); per-call peak observer asserts peak\u2264N content and peak\u2264chunkSize hash-only."
     },
     {
       "id": "DOC-N10",
       "severity": "P1",
-      "severity_raw": "P1 for the “durable” claim",
+      "severity_raw": "P1 for the \u201cdurable\u201d claim",
       "title": "durable write omits parent-directory durability and rich metadata",
       "phase": 1,
       "status": "verified",
@@ -388,7 +388,7 @@
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processEventsAreMultiConsumer",
         "Tests/CodeEditorCoreTests/ProcessSubstrateTests.swift::test_CORE_N02_processOutputIsBoundedNotUnbounded"
       ],
-      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per §22."
+      "notes": "2026-08-02 verifier residual: multi-sub + bounded spool asserts real; non-macOS #else asserts unavailableOnPlatform (no Bool(true)). AsyncBroadcastHub + BoundedByteSpool + ProcessHandle multi-subscriber events; OneShotPromise/DeadlineScheduler/FramedRPCConnection per \u00a722."
     },
     {
       "id": "CORE-N03",
@@ -932,7 +932,7 @@
     {
       "id": "SRCH-N02",
       "severity": "P1",
-      "severity_raw": "P1 for “gitignore-compatible” claim",
+      "severity_raw": "P1 for \u201cgitignore-compatible\u201d claim",
       "title": "gitignore semantics are only partial",
       "phase": 5,
       "status": "verified",
@@ -1280,7 +1280,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_responseBeforeWaitCompletesWithoutEarlyMap",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N01_usesOneShotPromiseNotUnstructuredRegistrationTask"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N02",
@@ -1293,7 +1293,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_slowNotificationDoesNotStallResponse",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N02_stateOrderedNotificationsPreserveOrder"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N03",
@@ -1305,7 +1305,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N03_synchronizeRequiresBaseAndTransaction"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N04",
@@ -1330,7 +1330,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N05_streamGapTriggersFullResync"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N06",
@@ -1356,7 +1356,7 @@
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateNotCommittedWhenNotifyFails",
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N07_openStateCommittedAfterSuccessfulSend"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N08",
@@ -1368,7 +1368,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N08_decodesChangesDocumentChangesAndResourceOps"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N09",
@@ -1393,7 +1393,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N10_unregisterExactRegistrationIDNotMethodCount"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N11",
@@ -1405,7 +1405,7 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N11_jsonValuePreservesScalarsArraysObjectsNull"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N12",
@@ -1417,13 +1417,13 @@
       "regression_tests": [
         "Tests/CodeEditorLSPTests/LSPNAuditTests.swift::test_LSP_N12_diagnosticsCarryVersionGenerationSequenceAndBound"
       ],
-      "notes": "2026-08-03: TDD batch lsp — OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
+      "notes": "2026-08-03: TDD batch lsp \u2014 OneShotPromise register-before-send; message lanes; synchronize API; capability-driven sync; gap resync; per-document lane; open-after-send; complete WorkspaceEdit; fail-closed snapshots; registration-by-id; JSONValue; versioned diagnostics hub; real LSP fixtures+gate. 2026-08-03 verifier residual: navigation requireText fail-closed (no text(for:) empty); hard N04/N06 asserts; N13 executes check-real-lsp + in-process session. 2026-08-03 verifier residual (2): removed production LanguageServerSession.text(for:) soft empty fallback (requireText only; API baselines updated); N12 hard-requires hub stream delivery of versioned publication (no latestPublication soft-OR); N13 requires 'full session' success line when binaries present (not binary-name-only OK)."
     },
     {
       "id": "LSP-N13",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "current “real LSP” gate is not an integration test",
+      "title": "current \u201creal LSP\u201d gate is not an integration test",
       "phase": 6,
       "status": "verified",
       "regression_tests": [
@@ -1452,7 +1452,7 @@
       "id": "DAP-N02",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "late responses are retained as “early” responses",
+      "title": "late responses are retained as \u201cearly\u201d responses",
       "phase": 7,
       "status": "verified",
       "regression_tests": [
@@ -1501,7 +1501,7 @@
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N05_teardownDoesNotCrashAndEndsTerminated",
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N05_startFailureIsFailedNotForceUnwrap"
       ],
-      "notes": "State machine idle→starting→initializing→…→terminating→terminated/failed; requireConnection no force-unwrap."
+      "notes": "State machine idle\u2192starting\u2192initializing\u2192\u2026\u2192terminating\u2192terminated/failed; requireConnection no force-unwrap."
     },
     {
       "id": "DAP-N06",
@@ -1556,7 +1556,7 @@
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_requestCancellationSurfacesCancellationError",
         "Tests/CodeEditorDAPTests/DAPNAuditTests.swift::test_DAP_N09_reconnectionPolicyRespectsRestartBudget"
       ],
-      "notes": "2026-08-03 verifier residual: matrix + attach/timeout; adapter crash→failed/crashed; malformed frame resync; request CancellationError; restart budget fail-closed reconnection."
+      "notes": "2026-08-03 verifier residual: matrix + attach/timeout; adapter crash\u2192failed/crashed; malformed frame resync; request CancellationError; restart budget fail-closed reconnection."
     },
     {
       "id": "DAP-N10",
@@ -1667,7 +1667,7 @@
       "id": "TER-N06",
       "severity": "P1",
       "severity_raw": "P1",
-      "title": "repeated full-string snapshots are O(n²)-prone",
+      "title": "repeated full-string snapshots are O(n\u00b2)-prone",
       "phase": 8,
       "status": "fixed",
       "regression_tests": [
@@ -1786,7 +1786,7 @@
       "severity_raw": "P0 capability-boundary bypass",
       "title": "broker handles are not bound to the caller",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N01_crossExtensionHandleUseIsForged",
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N01_crossExtensionOnEveryHandleKind"
@@ -1799,7 +1799,7 @@
       "severity_raw": "P0",
       "title": "handles can be minted for unregistered extensions",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N02_unregisteredCannotMintAnyHandle",
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N02_registeredCanMintSettingsStorage"
@@ -1812,7 +1812,7 @@
       "severity_raw": "P0 for security-sensitive calls",
       "title": "malformed wire payloads degrade to defaults",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N03_malformedJSONFailsClosed",
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N03_validSchemaSucceeds"
@@ -1825,7 +1825,7 @@
       "severity_raw": "P1",
       "title": "initialization suppresses storage directory errors",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N04_initFailsWhenStorageRootIsFile"
       ],
@@ -1837,7 +1837,7 @@
       "severity_raw": "P1",
       "title": "worktree list hides I/O failure as an empty directory",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N05_listIOFailureIsNotEmptyArray"
       ],
@@ -1849,7 +1849,7 @@
       "severity_raw": "P0 for untrusted extensions",
       "title": "path containment is not descriptor-relative",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N06_symlinkEscapeRefused"
       ],
@@ -1861,7 +1861,7 @@
       "severity_raw": "P0",
       "title": "executable allow decision can race executable replacement",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N07_worktreeExecutableDenied",
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N07_exactArgumentMatcher"
@@ -1874,7 +1874,7 @@
       "severity_raw": "P2",
       "title": "`projectInfo` encodes roots ambiguously",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N08_projectInfoReturnsTypedRootsArray"
       ],
@@ -1886,7 +1886,7 @@
       "severity_raw": "P1",
       "title": "settings/storage have incomplete quotas",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N09_keyValueCountAndSettingsIncluded"
       ],
@@ -1898,7 +1898,7 @@
       "severity_raw": "P1",
       "title": "storage quota calculation scans synchronously",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N10_ledgerPersistsAcrossBrokerInstances"
       ],
@@ -1908,9 +1908,9 @@
       "id": "BROKER-N11",
       "severity": "P1",
       "severity_raw": "P1 policy ambiguity",
-      "title": "process “argsGlob” is not a glob",
+      "title": "process \u201cargsGlob\u201d is not a glob",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N11_noArgsGlobShellInjectionSurface"
       ],
@@ -1922,7 +1922,7 @@
       "severity_raw": "P1",
       "title": "spawned process output has no complete capability stream",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N12_spawnReturnsLeaseWithEventsAndExit"
       ],
@@ -1934,7 +1934,7 @@
       "severity_raw": "P1",
       "title": "download is whole-memory and redirect policy incomplete",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N13_fixtureWritesMetadataAndDigest",
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N13_httpsOnlyOnFetchURL"
@@ -1947,7 +1947,7 @@
       "severity_raw": "P0",
       "title": "path-prefix allowlist uses string prefix",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N14_stringPrefixDoesNotBypass"
       ],
@@ -1959,7 +1959,7 @@
       "severity_raw": "P1/P0 denial of service",
       "title": "npm materializer mishandles scoped packages and total size",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N15_scopedPackageAndHiddenFilesAndSize",
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N15_pathTraversalPackageDenied"
@@ -1972,7 +1972,7 @@
       "severity_raw": "P1",
       "title": "revoke can block the broker actor",
       "phase": 9,
-      "status": "fixed",
+      "status": "verified",
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/BROKERNAuditTests.swift::test_BROKER_N16_revokeStripsHandlesWithoutAwaitingProcessDeath"
       ],
@@ -1990,19 +1990,19 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N01_stringEscapesAndDottedKeys",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N01_commentInsideStringPreserved"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N02",
       "severity": "P1",
       "severity_raw": "P1 release truth",
-      "title": "compatibility claims need levels, not one “passing” flag",
+      "title": "compatibility claims need levels, not one \u201cpassing\u201d flag",
       "phase": 9,
       "status": "fixed",
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N02_compatibilityLevelsNotSingleBoolean"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N03",
@@ -2028,7 +2028,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N04_hiddenFilesIncludedInInventory",
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N04_hiddenFileBreaksSignatureWhenAddedAfterSign"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N05",
@@ -2041,7 +2041,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N05_codeeditorPackageContentInInventory",
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N05_codeeditorContentBoundInSignature"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N06",
@@ -2065,7 +2065,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N07_keyWriteIsAtomicAndPreservesPriorOnFailure"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N08",
@@ -2077,7 +2077,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N08_sha256HexThrowsNotFatal"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N09",
@@ -2091,7 +2091,7 @@
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N09_duplicateKeyIDsFail",
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N09_validKeyringLoads"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N10",
@@ -2104,7 +2104,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N10_fileCountQuota",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N10_rejectsSymlink"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N11",
@@ -2116,7 +2116,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N11_verifyBeforeActivateRejectsBadSource"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N12",
@@ -2128,7 +2128,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N12_contentAddressedLayoutAndJournal"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N13",
@@ -2141,7 +2141,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N13_sameVersionReinstallDigestMismatchFails",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N13_sameVersionSameDigestIsIdempotent"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N14",
@@ -2153,7 +2153,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N14_packagesJsonStoresRelativeStoreKeyNotAbsoluteEscape"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N15",
@@ -2169,7 +2169,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N15_revokeTerminatesDriversImmediately",
         "Tests/CodeEditorExtensionHostTests/Phase14SigningAndTrustTests.swift::test_EXT_N15_liveRevokeStopsRunningDriver"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N16",
@@ -2181,7 +2181,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N16_snapshotExcludesUnverifiedAndRevoked"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N17",
@@ -2206,7 +2206,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N18_telemetryRotatesAndReportsFailures"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N19",
@@ -2218,7 +2218,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N19_snapshotUsesBroadcastHub"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "EXT-N20",
@@ -2230,7 +2230,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N20_simulationFactoryNotProductionDefault"
       ],
-      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw→quarantine."
+      "notes": "2026-08-03 verifier residual close: EXT-N15 Ed25519 signed revocation (issuer/keyID/signature required) + onPackagesRevoked driver terminate; EXT-N01 dotted language_servers section; EXT-N16 capabilities=[\"panels\"] hard gate; EXT-N19 packageSnapshotStream consumer backlog gaps; CLI productionManager (no insecureForTests); SHA256Hasher.finalizeHex throws cryptoUnavailable; atomicWrite injectFailureAfterBackup param; recoverCorruptedState verify throw\u2192quarantine."
     },
     {
       "id": "WASM-N01",
@@ -2396,7 +2396,7 @@
       "id": "WB-N01",
       "severity": "P0",
       "severity_raw": "P0 if presented as security/crash isolation; P2 if renamed to error presentation",
-      "title": "contribution “fault isolation” is not isolation",
+      "title": "contribution \u201cfault isolation\u201d is not isolation",
       "phase": 10,
       "status": "open",
       "regression_tests": [],
