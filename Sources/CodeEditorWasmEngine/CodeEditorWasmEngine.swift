@@ -166,11 +166,14 @@ public final class WasmSerialRuntime: @unchecked Sendable {
 }
 
 /// Process-wide active instance counter (WASM-N10 `maxInstances`).
+/// Production engines use ``shared``. Isolated instances may be constructed for tests.
 public final class WasmInstanceRegistry: @unchecked Sendable {
     public static let shared = WasmInstanceRegistry()
 
     private let lock = NSLock()
     private var active = 0
+
+    public init() {}
 
     public var activeCount: Int {
         lock.lock()

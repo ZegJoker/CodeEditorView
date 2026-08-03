@@ -74,7 +74,8 @@ struct WASMNSessionAuditTests {
         // Release slow work so request can finish.
         link.runtime.pendingSlowWork = 0
         let value = try await result
-        #expect(value == Data("probe".utf8) || !value.isEmpty)
+        // Hard exact payload (echo); no soft `!isEmpty` fallback.
+        #expect(value == Data("probe".utf8))
         let after = await session.pendingRequestCount
         #expect(after == 0)
         await session.stop()
@@ -270,7 +271,8 @@ struct WASMNSessionAuditTests {
         #expect(aCancelled, "cancelled request A must fail")
 
         let b = try await resultB
-        #expect(b == Data("B".utf8) || !b.isEmpty, "request B must not inherit A's cancel")
+        // Hard exact payload for B; keyed cancel must not corrupt or empty B's echo.
+        #expect(b == Data("B".utf8), "request B must complete with its own payload (not inherit A's cancel)")
         await session.stop()
     }
 

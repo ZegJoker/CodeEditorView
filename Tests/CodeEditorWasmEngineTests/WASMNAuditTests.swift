@@ -158,7 +158,8 @@ struct WASMNAuditTests {
     }
 
     /// Proves call **and** memory share one serial runtime: interleaved concurrent
-    /// call+read+write+grow never race (WASM-N04 residual).
+    /// call+read+write never race (WASM-N04 residual). Hard exact-byte checks only —
+    /// no soft `count == 4` fallbacks.
     @Test func test_WASM_N04_callAndMemoryShareSerialRuntime() async throws {
         let engine = WasmKitEngine()
         let limits = WasmResourceLimits(
@@ -171,31 +172,45 @@ struct WASMNAuditTests {
             limits: limits
         )
         let marker = Data([0xCA, 0xFE, 0xBA, 0xBE])
+        let written = Data([1, 2, 3, 4])
         try inst.memory.write(offset: 16, data: marker)
 
         // Fire concurrent call + memory ops; serialization must prevent crash/corruption.
+        // Concurrent read targets the pre-written marker (exact equality is well-defined).
+        // Concurrent write targets a disjoint region; exact landing is checked after settle.
         async let call1 = inst.call(CoreWasmExport.abiVersion.rawValue, args: [])
         async let memRead: Data = {
             try inst.memory.read(offset: 16, length: 4)
         }()
         async let call2 = inst.call(CoreWasmExport.alloc.rawValue, args: [.i32(32)])
         async let memWrite: Void = {
-            try inst.memory.write(offset: 32, data: Data([1, 2, 3, 4]))
+            try inst.memory.write(offset: 32, data: written)
         }()
-        async let memRead2: Data = {
-            try inst.memory.read(offset: 32, length: 4)
+        async let memReadMarker2: Data = {
+            try inst.memory.read(offset: 16, length: 4)
         }()
 
         let r1 = try await call1
         let r2 = try await call2
         let readBack = try await memRead
         try await memWrite
-        let read2 = try await memRead2
+        let readMarker2 = try await memReadMarker2
 
         #expect(r1.first?.i32 == 1)
         #expect(r2.first?.i32 != nil)
+        // Concurrent reads of pre-written marker must be exact (no torn/corrupt bytes).
         #expect(readBack == marker)
-        #expect(read2 == Data([1, 2, 3, 4]) || read2.count == 4)
+        #expect(readMarker2 == marker)
+
+        // After concurrent ops settle, written region must contain exact bytes
+        // (write completed; sequential read on shared serial runtime).
+        let afterWrite = try inst.memory.read(offset: 32, length: 4)
+        #expect(afterWrite == written)
+
+        // Sequential write+read on another region: exact round-trip under same runtime.
+        try inst.memory.write(offset: 48, data: written)
+        let sequential = try inst.memory.read(offset: 48, length: 4)
+        #expect(sequential == written)
 
         // Memory size stable under concurrent access (no torn grow).
         let size = inst.memory.size
@@ -295,41 +310,42 @@ struct WASMNAuditTests {
     // MARK: - WASM-N10 engine quotas
 
     @Test func test_WASM_N10_maxInstancesEnforced() async throws {
-        let engine = WasmKitEngine()
-        // Hold one instance under a high ceiling, then attempt acquire with
-        // maxInstances == current active (must fail closed — WASM-N10).
-        let roomy = WasmResourceLimits(maxInstances: 10_000, requireMemoryMaximum: false)
-        let held = try await engine.instantiate(
-            module: WasmModuleBuilder.conformanceModule(),
-            imports: emptyHost(),
-            limits: roomy
-        )
-        let active = WasmInstanceRegistry.shared.activeCount
-        #expect(active >= 1)
-        let atCap = WasmResourceLimits(maxInstances: active, requireMemoryMaximum: false)
+        // Isolated registry: exact capacity accounting without process-wide race
+        // from parallel suite instances (WASM-N10).
+        let registry = WasmInstanceRegistry()
+        #expect(registry.activeCount == 0)
+        try registry.acquire(maxInstances: 2)
+        #expect(registry.activeCount == 1)
+        try registry.acquire(maxInstances: 2)
+        #expect(registry.activeCount == 2)
+        var deniedAtCap = false
         do {
-            _ = try await engine.instantiate(
-                module: WasmModuleBuilder.conformanceModule(),
-                imports: emptyHost(),
-                limits: atCap
-            )
-            Issue.record("expected maxInstances resourceLimit when active >= max")
+            try registry.acquire(maxInstances: 2)
+            Issue.record("third acquire at maxInstances=2 must fail closed")
         } catch WasmEngineError.resourceLimit(let msg) {
             #expect(msg.contains("maxInstances"))
+            deniedAtCap = true
         }
-        // max=0 always denies
+        #expect(deniedAtCap)
+        #expect(registry.activeCount == 2)
+        registry.release()
+        #expect(registry.activeCount == 1)
+        // Slot freed: acquire succeeds again.
+        try registry.acquire(maxInstances: 2)
+        #expect(registry.activeCount == 2)
+
+        // Engine production path: maxInstances=0 always denies (deterministic under
+        // parallel suite noise — independent of shared activeCount).
         do {
-            _ = try await engine.instantiate(
+            _ = try await WasmKitEngine().instantiate(
                 module: WasmModuleBuilder.conformanceModule(),
                 imports: emptyHost(),
                 limits: WasmResourceLimits(maxInstances: 0, requireMemoryMaximum: false)
             )
-            Issue.record("maxInstances=0 must deny")
-        } catch WasmEngineError.resourceLimit {
-            // ok
+            Issue.record("maxInstances=0 must deny on engine instantiate")
+        } catch WasmEngineError.resourceLimit(let msg) {
+            #expect(msg.contains("maxInstances"))
         }
-        held.interrupt()
-        _ = held
     }
 
     @Test func test_WASM_N10_capabilityCallQuotaOnHostSend() async throws {
@@ -362,9 +378,10 @@ struct WASMNAuditTests {
         } catch {
             // interrupt / deadline / trap after quota
         }
-        // Capability meter on instance must have recorded calls and capped them.
+        // Hard quota proofs: calls recorded, hard-capped at max, host sends not above cap.
+        #expect(inst.meters.capabilityCalls > 0, "flood module must exercise host_send")
         #expect(inst.meters.capabilityCalls <= limits.maxCapabilityCalls)
-        #expect(inst.meters.capabilityCalls > 0 || sendBox.count <= limits.maxCapabilityCalls)
+        #expect(sendBox.count <= limits.maxCapabilityCalls)
     }
 
     // MARK: - WASM-N15
