@@ -382,9 +382,13 @@ struct PackageManagerTests {
         let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
         let plan = try await manager.install(from: Fixtures.package("s0-basic"))
-        // Wipe install path
-        if let path = await manager.package(id: plan.packageID)?.installPath {
-            try FileManager.default.removeItem(at: path)
+        // Wipe install path and content-addressed blob (full content loss).
+        if let pkg = await manager.package(id: plan.packageID) {
+            try? FileManager.default.removeItem(at: pkg.installPath)
+            if let digest = pkg.contentDigest {
+                let blob = await manager.blobsRoot.appendingPathComponent(digest, isDirectory: true)
+                try? FileManager.default.removeItem(at: blob)
+            }
         }
         await manager.recoverCorruptedState()
         #expect(await manager.package(id: plan.packageID) == nil)

@@ -259,76 +259,37 @@ public enum ImmutableContributionRegistry {
 }
 
 /// Canonical package file digest (SHA-256 hex of sorted path+content).
+///
+/// EXT-N03/N04/N05: includes hidden files and `.codeeditor/` package content; excludes only
+/// detached signature metadata. Requires CryptoKit SHA-256 (no non-cryptographic fallback).
 public enum ExtensionPackageDigest {
     public static func compute(packageRoot: URL) throws -> String {
-        let fm = FileManager.default
-        let root = packageRoot.standardizedFileURL
-        guard
-            let enumerator = fm.enumerator(
-                at: root,
-                includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey],
-                options: [.skipsHiddenFiles]
-            )
-        else {
-            throw ExtensionError.dataLoad("cannot enumerate package")
-        }
-        var files: [(String, Data)] = []
-        let rootPath = root.path
-        let skipNames: Set<String> = [
-            "checksums.json", "signature.ed25519", "publisher.json", "signed-statement.json",
-        ]
-        for case let url as URL in enumerator {
-            let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
-            if values.isSymbolicLink == true {
-                throw ExtensionError.dataLoad("package contains symlink: \(url.lastPathComponent)")
-            }
-            guard values.isRegularFile == true else { continue }
-            let filePath = url.standardizedFileURL.path
-            guard filePath == rootPath || filePath.hasPrefix(rootPath + "/") else { continue }
-            var rel = String(filePath.dropFirst(rootPath.count))
-                .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            if rel.isEmpty { continue }
-            if rel.hasPrefix(".codeeditor/") { continue }
-            // Signature metadata is written after the package digest is sealed.
-            if skipNames.contains(rel) { continue }
-            if rel.hasPrefix("keys/") || rel == "ed25519.private" || rel == "ed25519.public" {
-                throw ExtensionError.dataLoad("package contains key material: \(rel)")
-            }
-            let data = try Data(contentsOf: url)
-            files.append((rel, data))
-        }
-        files.sort { $0.0 < $1.0 }
-        var hasher = SHA256Hasher()
-        for (path, data) in files {
-            hasher.update(Data(path.utf8))
-            hasher.update(Data([0]))
-            hasher.update(data)
-            hasher.update(Data([0]))
-        }
-        return hasher.finalizeHex()
+        let inventory = try PackageInventoryBuilder.build(packageRoot: packageRoot)
+        return inventory.packageSHA256
     }
 }
 
-/// Minimal SHA-256 (via CryptoKit when available, else CommonCrypto-free portable).
+/// SHA-256 only (EXT-N03). Throws via empty finalize when CryptoKit is unavailable at compile time.
 #if canImport(CryptoKit)
     import CryptoKit
 
-    struct SHA256Hasher {
+    public struct SHA256Hasher: Sendable {
         private var hasher = SHA256()
-        mutating func update(_ data: Data) { hasher.update(data: data) }
-        func finalizeHex() -> String {
+        public init() {}
+        public mutating func update(_ data: Data) { hasher.update(data: data) }
+        public func finalizeHex() -> String {
             hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
         }
     }
 #else
-    struct SHA256Hasher {
-        private var data = Data()
-        mutating func update(_ chunk: Data) { data.append(chunk) }
-        func finalizeHex() -> String {
-            // Fallback: non-crypto fingerprint for platforms without CryptoKit (should not hit on Apple).
-            var hash: UInt64 = 5381
-            for b in data { hash = ((hash << 5) &+ hash) &+ UInt64(b) }
-            return String(format: "%016llx", hash) + String(format: "%08x", data.count)
+    public struct SHA256Hasher: Sendable {
+        public init() {}
+        public mutating func update(_ chunk: Data) { _ = chunk }
+        /// EXT-N03: never return a DJB-like non-crypto fingerprint for security digests.
+        public func finalizeHex() -> String {
+            // Unreachable on shipping Apple platforms; keep a distinctive invalid token length ≠ 64
+            // is rejected by callers that require SHA-256 hex.
+            preconditionFailure("CryptoKit unavailable: SHA-256 required (EXT-N03 fail closed)")
         }
     }
 #endif

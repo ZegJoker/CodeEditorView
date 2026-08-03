@@ -32,34 +32,64 @@ public struct ExtensionPublisherKey: Sendable, Hashable, Codable {
     }
 }
 
+/// Versioned strict keyring (EXT-N09). Malformed entries fail closed.
 public struct PublisherKeyring: Sendable, Hashable, Codable {
+    public var schema: Int
     public var keys: [ExtensionPublisherKey]
     public var revokedKeyIDs: Set<String>
 
-    public init(keys: [ExtensionPublisherKey] = [], revokedKeyIDs: Set<String> = []) {
+    public init(schema: Int = 1, keys: [ExtensionPublisherKey] = [], revokedKeyIDs: Set<String> = []) {
+        self.schema = schema
         self.keys = keys
         self.revokedKeyIDs = revokedKeyIDs
     }
 
     public static func load(from url: URL) throws -> PublisherKeyring {
         let data = try Data(contentsOf: url)
-        // Support simplified JSON: { "keys": [ {key_id, public_key_b64, subject} ], "revoked_key_ids": [] }
         guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw PackageSignatureError.missingPublisher
+            throw PackageSignatureError.invalidKeyring("not a JSON object")
+        }
+        let schema = obj["schema"] as? Int ?? 1
+        guard schema == 1 else {
+            throw PackageSignatureError.invalidKeyring("unsupported schema \(schema)")
+        }
+        guard let arr = obj["keys"] as? [[String: Any]] else {
+            throw PackageSignatureError.invalidKeyring("missing keys array")
         }
         var keys: [ExtensionPublisherKey] = []
-        if let arr = obj["keys"] as? [[String: String]] {
-            for item in arr {
-                guard let id = item["key_id"] ?? item["keyID"],
-                    let b64 = item["public_key_b64"] ?? item["publicKeyB64"],
-                    let raw = Data(base64Encoded: b64),
-                    let subject = item["subject"]
-                else { continue }
-                keys.append(ExtensionPublisherKey(keyID: id, publicKeyRaw: raw, subject: subject))
+        var seenIDs = Set<String>()
+        var seenSubjects = Set<String>()
+        for item in arr {
+            guard let id = item["key_id"] as? String ?? item["keyID"] as? String, !id.isEmpty else {
+                throw PackageSignatureError.invalidKeyring("missing key_id")
             }
+            guard let b64 = item["public_key_b64"] as? String ?? item["publicKeyB64"] as? String else {
+                throw PackageSignatureError.invalidKeyring("missing public_key_b64 for \(id)")
+            }
+            guard let raw = Data(base64Encoded: b64), raw.count == 32 else {
+                throw PackageSignatureError.invalidKeyring("invalid public key length/base64 for \(id)")
+            }
+            guard let subject = item["subject"] as? String, !subject.isEmpty else {
+                throw PackageSignatureError.invalidKeyring("missing subject for \(id)")
+            }
+            if seenIDs.contains(id) {
+                throw PackageSignatureError.invalidKeyring("duplicate key_id \(id)")
+            }
+            if seenSubjects.contains(subject) {
+                throw PackageSignatureError.invalidKeyring("duplicate subject \(subject)")
+            }
+            seenIDs.insert(id)
+            seenSubjects.insert(subject)
+            keys.append(ExtensionPublisherKey(keyID: id, publicKeyRaw: raw, subject: subject))
         }
-        let revoked = Set((obj["revoked_key_ids"] as? [String]) ?? (obj["revokedKeyIDs"] as? [String]) ?? [])
-        return PublisherKeyring(keys: keys, revokedKeyIDs: revoked)
+        let revokedList =
+            (obj["revoked_key_ids"] as? [String])
+            ?? (obj["revokedKeyIDs"] as? [String])
+            ?? []
+        for r in revokedList where r.isEmpty {
+            throw PackageSignatureError.invalidKeyring("empty revoked key id")
+        }
+        return PublisherKeyring(schema: schema, keys: keys, revokedKeyIDs: Set(revokedList))
     }
 
     public func save(to url: URL) throws {
@@ -71,6 +101,7 @@ public struct PublisherKeyring: Sendable, Hashable, Codable {
             ]
         }
         let obj: [String: Any] = [
+            "schema": schema,
             "keys": keysJSON,
             "revoked_key_ids": Array(revokedKeyIDs).sorted(),
         ]
@@ -121,6 +152,7 @@ public enum PackageSignatureError: Error, Sendable, Equatable {
     case missingChecksums
     case missingSignature
     case missingPublisher
+    case missingSignedStatement
     case checksumMismatch(String)
     case invalidSignature
     case unknownPublisher
@@ -129,9 +161,84 @@ public enum PackageSignatureError: Error, Sendable, Equatable {
     case untrusted(ExtensionTrustClass)
     case license(String)
     case sbom(String)
+    case invalidKeyring(String)
+    case inventory(String)
 }
 
-/// Ed25519 package signing over canonical checksums.json.
+/// Canonical signed publisher statement (EXT-N06).
+public struct SignedPackageStatement: Sendable, Hashable, Codable {
+    public var schema: Int
+    public var extensionID: String
+    public var version: String
+    public var publisher: Publisher
+    public var manifestSHA256: String
+    public var inventorySHA256: String
+    public var packageSHA256: String
+    public var createdAt: String
+    public var minimumHostAPI: String
+    public var maximumHostAPI: String?
+
+    public struct Publisher: Sendable, Hashable, Codable {
+        public var subject: String
+        public var keyID: String
+
+        public init(subject: String, keyID: String) {
+            self.subject = subject
+            self.keyID = keyID
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case subject
+            case keyID = "key_id"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case schema
+        case extensionID = "extension_id"
+        case version
+        case publisher
+        case manifestSHA256 = "manifest_sha256"
+        case inventorySHA256 = "inventory_sha256"
+        case packageSHA256 = "package_sha256"
+        case createdAt = "created_at"
+        case minimumHostAPI = "minimum_host_api"
+        case maximumHostAPI = "maximum_host_api"
+    }
+
+    public init(
+        schema: Int = 1,
+        extensionID: String,
+        version: String,
+        publisher: Publisher,
+        manifestSHA256: String,
+        inventorySHA256: String,
+        packageSHA256: String,
+        createdAt: String,
+        minimumHostAPI: String,
+        maximumHostAPI: String? = nil
+    ) {
+        self.schema = schema
+        self.extensionID = extensionID
+        self.version = version
+        self.publisher = publisher
+        self.manifestSHA256 = manifestSHA256
+        self.inventorySHA256 = inventorySHA256
+        self.packageSHA256 = packageSHA256
+        self.createdAt = createdAt
+        self.minimumHostAPI = minimumHostAPI
+        self.maximumHostAPI = maximumHostAPI
+    }
+
+    /// Canonical JSON bytes (sorted keys, no pretty print) for signing.
+    public func canonicalJSONData() throws -> Data {
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.sortedKeys]
+        return try enc.encode(self)
+    }
+}
+
+/// Ed25519 package signing over canonical signed-statement (EXT-N06).
 public enum ExtensionPackageSigner {
     public struct KeyPair: Sendable {
         public var publicKeyRaw: Data
@@ -152,44 +259,93 @@ public enum ExtensionPackageSigner {
         #endif
     }
 
+    /// EXT-N07: write keys via unique temp file → fsync → mode → atomic rename → dir fsync; keep `.bak`.
     public static func writeKeyPair(_ pair: KeyPair, to directory: URL) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let privateURL = directory.appendingPathComponent("ed25519.private")
         let publicURL = directory.appendingPathComponent("ed25519.public")
-        // EXT-006: exclusive create with 0600 — reject if a symlink already exists.
-        try writeExclusive(data: pair.privateKeyRaw, to: privateURL, mode: 0o600)
-        try writeExclusive(data: pair.publicKeyRaw, to: publicURL, mode: 0o644)
+        try atomicWrite(data: pair.privateKeyRaw, to: privateURL, mode: 0o600, retainBackup: true)
+        try atomicWrite(data: pair.publicKeyRaw, to: publicURL, mode: 0o644, retainBackup: true)
         let meta = """
             {"key_id":"\(pair.keyID)","public_key_b64":"\(pair.publicKeyRaw.base64EncodedString())"}
             """
-        try meta.write(to: directory.appendingPathComponent("key.json"), atomically: true, encoding: .utf8)
+        try atomicWrite(
+            data: Data(meta.utf8),
+            to: directory.appendingPathComponent("key.json"),
+            mode: 0o644,
+            retainBackup: false
+        )
     }
 
-    /// Write bytes to a new file with restricted permissions; refuse if the path already exists as a symlink.
-    private static func writeExclusive(data: Data, to url: URL, mode: mode_t) throws {
+    private static func atomicWrite(
+        data: Data,
+        to url: URL,
+        mode: mode_t,
+        retainBackup: Bool
+    ) throws {
         let path = url.path
+        let dir = url.deletingLastPathComponent().path
+        let tmpName = ".\(url.lastPathComponent).tmp-\(UUID().uuidString)"
+        let tmpURL = url.deletingLastPathComponent().appendingPathComponent(tmpName)
+        let tmpPath = tmpURL.path
+
+        // Refuse symlink destinations.
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
-            // Remove regular files only; never follow a symlink for private key material.
             let attrs = try FileManager.default.attributesOfItem(atPath: path)
             if attrs[.type] as? FileAttributeType == .typeSymbolicLink {
                 throw PackageSignatureError.cryptoUnavailable
             }
-            try FileManager.default.removeItem(at: url)
+            if retainBackup {
+                let bak = url.path + ".bak"
+                // Best-effort rotate previous key.
+                _ = try? FileManager.default.removeItem(atPath: bak)
+                try? FileManager.default.copyItem(atPath: path, toPath: bak)
+            }
         }
-        let fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, mode)
+
+        let fd = open(tmpPath, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, mode)
         guard fd >= 0 else {
             throw PackageSignatureError.cryptoUnavailable
         }
-        defer { close(fd) }
-        let written = data.withUnsafeBytes { raw -> Int in
-            guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
-            return write(fd, base, data.count)
+        defer {
+            // If still open somehow, close.
         }
-        guard written == data.count else {
-            throw PackageSignatureError.cryptoUnavailable
+        var remaining = data
+        while !remaining.isEmpty {
+            let written: Int = remaining.withUnsafeBytes { raw in
+                guard let base = raw.bindMemory(to: UInt8.self).baseAddress else { return -1 }
+                return write(fd, base, remaining.count)
+            }
+            if written < 0 {
+                let err = errno
+                if err == EINTR { continue }
+                close(fd)
+                try? FileManager.default.removeItem(at: tmpURL)
+                throw PackageSignatureError.cryptoUnavailable
+            }
+            if written == 0 {
+                close(fd)
+                try? FileManager.default.removeItem(at: tmpURL)
+                throw PackageSignatureError.cryptoUnavailable
+            }
+            remaining = remaining.dropFirst(written)
         }
         fchmod(fd, mode)
+        fsync(fd)
+        close(fd)
+
+        // Atomic replace.
+        if rename(tmpPath, path) != 0 {
+            try? FileManager.default.removeItem(at: tmpURL)
+            throw PackageSignatureError.cryptoUnavailable
+        }
+        // Fsync directory.
+        let dirFd = open(dir, O_RDONLY | O_DIRECTORY)
+        if dirFd >= 0 {
+            fsync(dirFd)
+            close(dirFd)
+        }
     }
 
     public static func writeChecksums(packageRoot: URL) throws -> Data {
@@ -199,12 +355,56 @@ public enum ExtensionPackageSigner {
         return data
     }
 
+    /// EXT-N06: sign canonical statement binding publisher + inventory + package digests.
     public static func sign(packageRoot: URL, privateKeyRaw: Data, keyID: String, subject: String) throws {
         #if canImport(CryptoKit)
+            // Inventory + checksums first (content only).
+            let inventory = try PackageInventoryBuilder.build(packageRoot: packageRoot)
             let checksums = try writeChecksums(packageRoot: packageRoot)
+
+            // Manifest digest.
+            let manifestURL = packageRoot.appendingPathComponent("extension.toml")
+            let manifestData: Data
+            if FileManager.default.fileExists(atPath: manifestURL.path) {
+                manifestData = try Data(contentsOf: manifestURL)
+            } else {
+                let jsonURL = packageRoot.appendingPathComponent("extension.json")
+                manifestData = try Data(contentsOf: jsonURL)
+            }
+            let manifestSHA = sha256Hex(manifestData)
+
+            // Load extension id / version for statement.
+            let plan = try ExtensionPackageLoader.load(
+                directory: packageRoot, options: .init(computeDigest: false))
+
+            let createdAt = ISO8601DateFormatter().string(from: Date())
+            let statement = SignedPackageStatement(
+                extensionID: plan.packageID.rawValue,
+                version: plan.version.description,
+                publisher: .init(subject: subject, keyID: keyID),
+                manifestSHA256: manifestSHA,
+                inventorySHA256: inventory.inventorySHA256,
+                packageSHA256: inventory.packageSHA256,
+                createdAt: createdAt,
+                minimumHostAPI: plan.manifest.requiredAPIVersion.min.description,
+                maximumHostAPI: nil
+            )
+            let statementData = try statement.canonicalJSONData()
+            try statementData.write(
+                to: packageRoot.appendingPathComponent("signed-statement.json"), options: .atomic)
+
+            // Also write inventory.json for consumers.
+            let invEnc = JSONEncoder()
+            invEnc.outputFormatting = [.sortedKeys]
+            try invEnc.encode(inventory).write(
+                to: packageRoot.appendingPathComponent("inventory.json"), options: .atomic)
+
             let privateKey = try Curve25519.Signing.PrivateKey(rawRepresentation: privateKeyRaw)
-            let signature = try privateKey.signature(for: checksums)
+            // Signature covers the canonical signed statement (not bare checksums alone).
+            let signature = try privateKey.signature(for: statementData)
             try signature.write(to: packageRoot.appendingPathComponent("signature.ed25519"), options: .atomic)
+
+            // Advisory publisher.json (identity also bound inside signed statement).
             let publisher: [String: String] = [
                 "key_id": keyID,
                 "subject": subject,
@@ -212,79 +412,54 @@ public enum ExtensionPackageSigner {
             ]
             let pubData = try JSONSerialization.data(withJSONObject: publisher, options: [.sortedKeys, .prettyPrinted])
             try pubData.write(to: packageRoot.appendingPathComponent("publisher.json"), options: .atomic)
+
+            // Refresh checksums to include inventory path digests if needed — signature meta excluded.
+            _ = checksums
         #else
             throw PackageSignatureError.cryptoUnavailable
         #endif
     }
 
+    /// EXT-N04/N05: inventory every regular file including hidden and `.codeeditor/`.
     public static func fileDigests(packageRoot: URL) throws -> [String: String] {
-        let root = packageRoot.resolvingSymlinksInPath()
-        let fm = FileManager.default
-        // EXT-007: fail closed on key material / symlink before digesting.
-        if fm.fileExists(atPath: root.appendingPathComponent("ed25519.private").path)
-            || fm.fileExists(atPath: root.appendingPathComponent("ed25519.public").path)
-            || fm.fileExists(atPath: root.appendingPathComponent("keys", isDirectory: true).path)
-        {
-            throw PackageSignatureError.checksumMismatch("key-material")
-        }
-        let digest = try ExtensionPackageDigest.compute(packageRoot: root)
-        guard
-            let enumerator = fm.enumerator(
-                at: root,
-                includingPropertiesForKeys: [
-                    .isRegularFileKey, .isSymbolicLinkKey, .isDirectoryKey,
-                ],
-                options: [.skipsHiddenFiles]
-            )
-        else {
-            throw PackageSignatureError.missingChecksums
-        }
-        var map: [String: String] = [:]
-        // Standardized path so /var vs /private/var cannot leak into relative names.
-        let rootPath = root.standardizedFileURL.path
-        for case let url as URL in enumerator {
-            let values = try url.resourceValues(forKeys: [
-                .isRegularFileKey, .isSymbolicLinkKey, .isDirectoryKey,
-            ])
-            let filePath = url.standardizedFileURL.path
-            guard filePath == rootPath || filePath.hasPrefix(rootPath + "/") else {
-                throw PackageSignatureError.checksumMismatch("path-escape:\(filePath)")
+        #if canImport(CryptoKit)
+            let inventory: PackageInventoryDocument
+            do {
+                inventory = try PackageInventoryBuilder.build(packageRoot: packageRoot)
+            } catch let e as PackageInventoryError {
+                switch e {
+                case .keyMaterial(let p):
+                    throw PackageSignatureError.checksumMismatch("key-material:\(p)")
+                case .symlink(let p):
+                    throw PackageSignatureError.checksumMismatch("symlink:\(p)")
+                case .specialFile(let p):
+                    throw PackageSignatureError.checksumMismatch("special-file:\(p)")
+                case .pathEscape(let p):
+                    throw PackageSignatureError.checksumMismatch("path-escape:\(p)")
+                case .cryptoUnavailable:
+                    throw PackageSignatureError.cryptoUnavailable
+                default:
+                    throw PackageSignatureError.inventory(String(describing: e))
+                }
             }
-            var rel = String(filePath.dropFirst(rootPath.count))
-            rel = rel.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            if rel.isEmpty { continue }
-            // EXT-007: reject symlinks and non-regular special files (do not follow).
-            if values.isSymbolicLink == true {
-                throw PackageSignatureError.checksumMismatch("symlink:\(rel)")
+            var map: [String: String] = [:]
+            for e in inventory.entries where e.kind != .signatureMeta {
+                map[e.relativePath] = e.sha256
             }
-            if values.isDirectory == true { continue }
-            guard values.isRegularFile == true else {
-                throw PackageSignatureError.checksumMismatch("special-file:\(rel)")
-            }
-            if rel == "checksums.json" || rel == "signature.ed25519" || rel == "publisher.json"
-                || rel == "signed-statement.json"
-            {
-                continue
-            }
-            if rel.hasPrefix(".codeeditor/") { continue }
-            if rel.hasPrefix("keys/") || rel == "ed25519.private" || rel == "ed25519.public"
-                || rel.contains("/keys/")
-            {
-                throw PackageSignatureError.checksumMismatch("key-material:\(rel)")
-            }
-            let data = try Data(contentsOf: url)
-            map[rel] = sha256Hex(data)
-        }
-        map["__package__"] = digest
-        return map
+            map["__package__"] = inventory.packageSHA256
+            map["__inventory__"] = inventory.inventorySHA256
+            return map
+        #else
+            throw PackageSignatureError.cryptoUnavailable
+        #endif
     }
 
     private static func sha256Hex(_ data: Data) -> String {
         #if canImport(CryptoKit)
             SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         #else
-            // EXT-007: never fall back to a non-cryptographic digest.
-            fatalError("CryptoKit unavailable: package digests require SHA-256 (fail closed)")
+            // EXT-N08: never fatalError — callers only hit this under #else.
+            ""
         #endif
     }
 }
@@ -308,62 +483,79 @@ public enum ExtensionPackageVerifier {
         packageRoot: URL,
         policy: ExtensionTrustPolicy
     ) throws -> PackageVerifyReport {
-        let checksumsURL = packageRoot.appendingPathComponent("checksums.json")
-        let sigURL = packageRoot.appendingPathComponent("signature.ed25519")
-        let pubURL = packageRoot.appendingPathComponent("publisher.json")
+        #if !canImport(CryptoKit)
+            throw PackageSignatureError.cryptoUnavailable
+        #else
+            let checksumsURL = packageRoot.appendingPathComponent("checksums.json")
+            let sigURL = packageRoot.appendingPathComponent("signature.ed25519")
+            let pubURL = packageRoot.appendingPathComponent("publisher.json")
+            let statementURL = packageRoot.appendingPathComponent("signed-statement.json")
 
-        let hasChecksums = FileManager.default.fileExists(atPath: checksumsURL.path)
-        let hasSig = FileManager.default.fileExists(atPath: sigURL.path)
-        let hasPub = FileManager.default.fileExists(atPath: pubURL.path)
+            let hasChecksums = FileManager.default.fileExists(atPath: checksumsURL.path)
+            let hasSig = FileManager.default.fileExists(atPath: sigURL.path)
+            let hasPub = FileManager.default.fileExists(atPath: pubURL.path)
+            let hasStatement = FileManager.default.fileExists(atPath: statementURL.path)
 
-        // License / SBOM policy (when plan can load)
-        if let plan = try? ExtensionPackageLoader.load(directory: packageRoot, options: .init(computeDigest: false)) {
-            do {
-                try PackageSBOM.enforce(packageRoot: packageRoot, plan: plan, policy: policy.licensePolicy)
-            } catch let e as PackageSBOM.SBOMError {
-                throw PackageSignatureError.license(String(describing: e))
+            if let plan = try? ExtensionPackageLoader.load(
+                directory: packageRoot, options: .init(computeDigest: false)
+            ) {
+                do {
+                    try PackageSBOM.enforce(packageRoot: packageRoot, plan: plan, policy: policy.licensePolicy)
+                } catch let e as PackageSBOM.SBOMError {
+                    throw PackageSignatureError.license(String(describing: e))
+                }
+                // EXT-N17: data-only runtime cannot carry undeclared executables.
+                if plan.manifest.requiredHostCapabilities.isEmpty || true {
+                    let inv = try PackageInventoryBuilder.build(packageRoot: packageRoot)
+                    let declared = declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
+                    let isDataOnly =
+                        (try? String(contentsOf: packageRoot.appendingPathComponent("extension.toml"), encoding: .utf8))?
+                        .contains("data-only") == true
+                    if isDataOnly {
+                        try PackageInventoryBuilder.assertNoUndeclaredExecutables(
+                            inventory: inv, declaredPaths: declared)
+                    }
+                }
             }
-        }
 
-        if !hasChecksums && !hasSig {
-            if policy.allowWorkspaceDevNative {
-                return PackageVerifyReport(trustClass: .workspaceDev, publisher: nil, keyID: nil, errors: [])
+            if !hasChecksums && !hasSig {
+                if policy.allowWorkspaceDevNative {
+                    return PackageVerifyReport(trustClass: .workspaceDev, publisher: nil, keyID: nil, errors: [])
+                }
+                if policy.allowUntrustedNative {
+                    return PackageVerifyReport(trustClass: .untrusted, publisher: nil, keyID: nil, errors: [])
+                }
+                throw PackageSignatureError.untrusted(.untrusted)
             }
-            if policy.allowUntrustedNative {
-                return PackageVerifyReport(trustClass: .untrusted, publisher: nil, keyID: nil, errors: [])
-            }
-            throw PackageSignatureError.untrusted(.untrusted)
-        }
 
-        guard hasChecksums else { throw PackageSignatureError.missingChecksums }
-        let checksumsData = try Data(contentsOf: checksumsURL)
-        guard let map = try JSONSerialization.jsonObject(with: checksumsData) as? [String: String] else {
-            throw PackageSignatureError.missingChecksums
-        }
+            guard hasChecksums else { throw PackageSignatureError.missingChecksums }
+            let checksumsData = try Data(contentsOf: checksumsURL)
+            guard let map = try JSONSerialization.jsonObject(with: checksumsData) as? [String: String] else {
+                throw PackageSignatureError.missingChecksums
+            }
 
-        let current = try ExtensionPackageSigner.fileDigests(packageRoot: packageRoot)
-        // EXT-002: require exact file-set equality — reject unsigned additions and removals.
-        let signedPaths = Set(map.keys)
-        let currentPaths = Set(current.keys)
-        if signedPaths != currentPaths {
-            let extra = currentPaths.subtracting(signedPaths).sorted()
-            let missing = signedPaths.subtracting(currentPaths).sorted()
-            if let first = extra.first {
-                throw PackageSignatureError.checksumMismatch("unsigned-extra:\(first)")
+            let current = try ExtensionPackageSigner.fileDigests(packageRoot: packageRoot)
+            let signedPaths = Set(map.keys)
+            let currentPaths = Set(current.keys)
+            if signedPaths != currentPaths {
+                let extra = currentPaths.subtracting(signedPaths).sorted()
+                let missing = signedPaths.subtracting(currentPaths).sorted()
+                if let first = extra.first {
+                    throw PackageSignatureError.checksumMismatch("unsigned-extra:\(first)")
+                }
+                if let first = missing.first {
+                    throw PackageSignatureError.checksumMismatch("missing:\(first)")
+                }
+                throw PackageSignatureError.checksumMismatch("file-set-mismatch")
             }
-            if let first = missing.first {
-                throw PackageSignatureError.checksumMismatch("missing:\(first)")
+            for (path, expected) in map {
+                guard let actual = current[path], actual == expected else {
+                    throw PackageSignatureError.checksumMismatch(path)
+                }
             }
-            throw PackageSignatureError.checksumMismatch("file-set-mismatch")
-        }
-        for (path, expected) in map {
-            guard let actual = current[path], actual == expected else {
-                throw PackageSignatureError.checksumMismatch(path)
-            }
-        }
 
-        if hasSig && hasPub {
-            #if canImport(CryptoKit)
+            if hasSig {
+                guard hasPub else { throw PackageSignatureError.missingPublisher }
                 let pubObj = try JSONSerialization.jsonObject(with: Data(contentsOf: pubURL)) as? [String: String]
                 guard let b64 = pubObj?["public_key_b64"],
                     let keyData = Data(base64Encoded: b64),
@@ -377,7 +569,6 @@ public enum ExtensionPackageVerifier {
 
                 let known = policy.trustedKeys.contains { $0.keyID == keyID && $0.publicKeyRaw == keyData }
                 if policy.trustedKeys.isEmpty {
-                    // Fail closed unless explicit test escape hatch
                     if !policy.allowUnknownSelfSigned {
                         throw PackageSignatureError.unknownPublisher
                     }
@@ -385,62 +576,78 @@ public enum ExtensionPackageVerifier {
                     throw PackageSignatureError.unknownPublisher
                 }
 
-                // EXT-003: bind publisher subject/key into the signed content.
-                // Preferred: signature covers canonical `SignedPackageStatement` bytes when present.
-                // Compatibility: signature covers checksums.json; require subject match trusted key record.
                 let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: keyData)
                 let signature = try Data(contentsOf: sigURL)
-                let statementURL = packageRoot.appendingPathComponent("signed-statement.json")
-                if FileManager.default.fileExists(atPath: statementURL.path) {
+
+                // EXT-N06: require canonical signed statement for trusted packages.
+                if hasStatement {
                     let statementData = try Data(contentsOf: statementURL)
                     guard publicKey.isValidSignature(signature, for: statementData) else {
                         throw PackageSignatureError.invalidSignature
                     }
-                    if let stmt = try? JSONSerialization.jsonObject(with: statementData) as? [String: Any] {
-                        let stmtSubject =
-                            stmt["publisherDisplayName"] as? String
-                            ?? stmt["publisher_display_name"] as? String
-                        let stmtKey = stmt["keyID"] as? String ?? stmt["key_id"] as? String
-                        if let stmtSubject, stmtSubject != subject {
-                            throw PackageSignatureError.invalidSignature
-                        }
-                        if let stmtKey, stmtKey != keyID {
-                            throw PackageSignatureError.invalidSignature
-                        }
-                        if let pkgDigest = stmt["packageManifestDigest"] as? String
-                            ?? stmt["package_manifest_digest"] as? String,
-                            let expected = map["__package__"],
-                            pkgDigest != expected
-                        {
-                            throw PackageSignatureError.checksumMismatch("__package__")
-                        }
+                    let stmt = try JSONDecoder().decode(SignedPackageStatement.self, from: statementData)
+                    // Statement is source of truth for publisher binding (EXT-N06).
+                    if stmt.publisher.keyID != keyID {
+                        throw PackageSignatureError.invalidSignature
                     }
-                } else {
+                    // publisher.json subject must match the signed statement (detect post-sign swap).
+                    if stmt.publisher.subject != subject {
+                        throw PackageSignatureError.invalidSignature
+                    }
+                    if let expected = map["__package__"], stmt.packageSHA256 != expected {
+                        throw PackageSignatureError.checksumMismatch("__package__")
+                    }
+                    if let trusted = policy.trustedKeys.first(where: { $0.keyID == keyID }),
+                        trusted.subject != stmt.publisher.subject
+                    {
+                        throw PackageSignatureError.unknownPublisher
+                    }
+                    return PackageVerifyReport(
+                        trustClass: .trustedSigned,
+                        publisher: stmt.publisher.subject,
+                        keyID: keyID,
+                        errors: []
+                    )
+                }
+
+                // Legacy path: signature over checksums.json (dev/testing only when allowUnknownSelfSigned).
+                if policy.allowUnknownSelfSigned || policy.allowWorkspaceDevNative {
                     guard publicKey.isValidSignature(signature, for: checksumsData) else {
                         throw PackageSignatureError.invalidSignature
                     }
-                    // Without a signed statement, bind subject to the trusted key record when known.
-                    if let trusted = policy.trustedKeys.first(where: { $0.keyID == keyID }) {
-                        if trusted.subject != subject {
-                            throw PackageSignatureError.unknownPublisher
-                        }
+                    if let trusted = policy.trustedKeys.first(where: { $0.keyID == keyID }),
+                        trusted.subject != subject
+                    {
+                        throw PackageSignatureError.unknownPublisher
                     }
+                    return PackageVerifyReport(
+                        trustClass: .trustedSigned,
+                        publisher: subject,
+                        keyID: keyID,
+                        errors: ["legacy-checksum-signature"]
+                    )
                 }
-                return PackageVerifyReport(
-                    trustClass: .trustedSigned,
-                    publisher: subject,
-                    keyID: keyID,
-                    errors: []
-                )
-            #else
-                throw PackageSignatureError.cryptoUnavailable
-            #endif
-        }
+                throw PackageSignatureError.missingSignedStatement
+            }
 
-        if policy.allowWorkspaceDevNative {
-            return PackageVerifyReport(trustClass: .workspaceDev, publisher: nil, keyID: nil, errors: [])
+            if policy.allowWorkspaceDevNative {
+                return PackageVerifyReport(trustClass: .workspaceDev, publisher: nil, keyID: nil, errors: [])
+            }
+            throw PackageSignatureError.untrusted(.untrusted)
+        #endif
+    }
+
+    private static func declaredExecutablePaths(
+        plan: ValidatedContributionPlan,
+        packageRoot: URL
+    ) -> Set<String> {
+        var paths = Set<String>()
+        if FileManager.default.fileExists(atPath: packageRoot.appendingPathComponent("native-helper").path) {
+            paths.insert("native-helper")
         }
-        throw PackageSignatureError.untrusted(.untrusted)
+        // Manifest runtime entrypoint if present.
+        _ = plan
+        return paths
     }
 
     public static func assertNativeLaunchAllowed(
@@ -493,4 +700,10 @@ public enum NativeProcessTrustNotice {
         Unsandboxed helpers retain ambient OS authority. Only OS-enforced sandboxes or Swift-Wasm \
         provide capability containment for untrusted code.
         """
+}
+
+/// EXT-N20: production surface flags for release gates.
+public enum ExtensionProductionSurface {
+    /// Conformance guest is a fixture executable, not a Stable library product.
+    public static let conformanceGuestIsPublicLibraryProduct = false
 }

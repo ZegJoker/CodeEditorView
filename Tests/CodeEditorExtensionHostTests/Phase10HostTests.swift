@@ -331,8 +331,17 @@ struct Phase10SigningTests {
             .appendingPathComponent("sig-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
-        try "id = \"x\"\nname = \"X\"\nversion = \"1.0.0\"\nschema_version = 1\n"
-            .write(to: root.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
+        try """
+            id = "com.example.sign"
+            name = "X"
+            version = "1.0.0"
+            schema_version = 1
+            api_version = "1.0"
+            license = "MIT"
+            [activation]
+            events = ["startup"]
+            """.write(to: root.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
+        try "MIT".write(to: root.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
 
         let kp = try ExtensionPackageSigner.generateKeyPair(keyID: "test-key")
         try ExtensionPackageSigner.sign(

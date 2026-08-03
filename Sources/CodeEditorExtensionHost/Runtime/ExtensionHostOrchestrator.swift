@@ -169,28 +169,35 @@ public actor ExtensionHostOrchestrator {
         }
     }
 
-    /// Test helper: start native path over mock transport with guest already running.
+    /// Test helper: start native path over an injected transport with guest already running.
+    ///
+    /// EXT-N20: available for in-package tests only — not a production activation path.
+    /// Production hosts must use verified package install + real runtime drivers.
     public func startNativeMock(
         package: PreparedExtensionPackage,
         transport: any ExtensionWireTransport
     ) async throws -> NativeProcessExtensionInstance {
-        packages[package.packageID] = package
-        generationCounter &+= 1
-        let handshake = ExtensionHostHandshake(
-            environment: environment,
-            generation: generationCounter
-        )
-        let driver = NativeProcessRuntimeDriver()
-        let instance = try await driver.startWithTransport(
-            package: package,
-            transport: transport,
-            handshake: handshake,
-            broker: broker
-        )
-        instances[package.packageID] = instance
-        states[package.packageID] = .active
-        publish()
-        return instance
+        #if DEBUG
+            packages[package.packageID] = package
+            generationCounter &+= 1
+            let handshake = ExtensionHostHandshake(
+                environment: environment,
+                generation: generationCounter
+            )
+            let driver = NativeProcessRuntimeDriver()
+            let instance = try await driver.startWithTransport(
+                package: package,
+                transport: transport,
+                handshake: handshake,
+                broker: broker
+            )
+            instances[package.packageID] = instance
+            states[package.packageID] = .active
+            publish()
+            return instance
+        #else
+            throw ExtensionWireError.quarantined
+        #endif
     }
 
     public func stop(id: ExtensionID, reason: ExtensionStopReason = .user) async {

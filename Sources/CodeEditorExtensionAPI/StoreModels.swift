@@ -190,17 +190,52 @@ public struct ExtensionArtifactRef: Sendable, Hashable, Codable {
     }
 }
 
-// MARK: - Revocation
+// MARK: - Revocation (EXT-N15 freshness / rollback protection)
 
 public struct RevocationListDocument: Sendable, Hashable, Codable {
     public var version: Int
     public var updatedAt: Date
     public var entries: [RevocationEntry]
+    /// Monotonic epoch for rollback prevention.
+    public var sequence: UInt64
+    public var issuer: String?
+    public var expiresAt: Date?
+    /// Detached signature over canonical revocation payload (optional until marketplace online).
+    public var signature: String?
 
-    public init(version: Int = 1, updatedAt: Date = Date(), entries: [RevocationEntry] = []) {
+    public init(
+        version: Int = 1,
+        updatedAt: Date = Date(),
+        entries: [RevocationEntry] = [],
+        sequence: UInt64 = 0,
+        issuer: String? = nil,
+        expiresAt: Date? = nil,
+        signature: String? = nil
+    ) {
         self.version = version
         self.updatedAt = updatedAt
         self.entries = entries
+        self.sequence = sequence
+        self.issuer = issuer
+        self.expiresAt = expiresAt
+        self.signature = signature
+    }
+
+    /// Fresh when not expired and within maxAge of `updatedAt`.
+    public func isFresh(now: Date = Date(), maxAge: TimeInterval = 7 * 24 * 3600) -> Bool {
+        if let exp = expiresAt, now > exp { return false }
+        if now.timeIntervalSince(updatedAt) > maxAge { return false }
+        return true
+    }
+
+    /// Apply an update only when its sequence is strictly greater (EXT-N15).
+    public mutating func applyMonotonicUpdate(_ next: RevocationListDocument) throws {
+        guard next.sequence > sequence else {
+            throw ExtensionError.dataLoad(
+                "revocation sequence rollback rejected: current=\(sequence) next=\(next.sequence)"
+            )
+        }
+        self = next
     }
 }
 

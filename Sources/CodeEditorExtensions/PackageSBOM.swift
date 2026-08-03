@@ -110,31 +110,16 @@ public enum PackageSBOM {
     public static func generate(packageRoot: URL, plan: ValidatedContributionPlan) throws -> Document {
         let license = declaredLicense(packageRoot: packageRoot, plan: plan) ?? "NOASSERTION"
         var files: [File] = []
-        let fm = FileManager.default
-        guard
-            let enumerator = fm.enumerator(
-                at: packageRoot,
-                includingPropertiesForKeys: [.isRegularFileKey],
-                options: [.skipsHiddenFiles]
-            )
-        else {
-            throw SBOMError.invalidSBOM("cannot enumerate package")
-        }
+        // EXT-N04/N05: include hidden files and .codeeditor package content via inventory.
+        let inventory = try PackageInventoryBuilder.build(packageRoot: packageRoot)
         var index = 0
-        for case let url as URL in enumerator {
-            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
-            guard values.isRegularFile == true else { continue }
-            var rel = url.path.replacingOccurrences(of: packageRoot.path, with: "")
-            if rel.hasPrefix("/") { rel.removeFirst() }
-            if rel.hasPrefix(".") { continue }
-            if rel == "sbom.spdx.json" { continue }
+        for entry in inventory.entries where entry.kind != .signatureMeta {
             index += 1
-            let data = try Data(contentsOf: url)
             files.append(
                 File(
                     spdxId: "SPDXRef-File-\(index)",
-                    fileName: rel,
-                    checksums: [Checksum(algorithm: "SHA256", checksumValue: sha256Hex(data))]
+                    fileName: entry.relativePath,
+                    checksums: [Checksum(algorithm: "SHA256", checksumValue: entry.sha256)]
                 ))
         }
         files.sort { $0.fileName < $1.fileName }
@@ -233,12 +218,12 @@ public enum PackageSBOM {
         return nil
     }
 
-    private static func sha256Hex(_ data: Data) -> String {
+    private static func sha256Hex(_ data: Data) throws -> String {
         #if canImport(CryptoKit)
             return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         #else
-            // EXT-006: never fall back to a non-cryptographic digest (length is not a hash).
-            fatalError("CryptoKit unavailable: package SBOM digests require SHA-256 (fail closed)")
+            // EXT-N08: throw, never fatalError.
+            throw SBOMError.invalidSBOM("CryptoKit unavailable: SHA-256 required")
         #endif
     }
 }

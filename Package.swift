@@ -32,7 +32,7 @@ let package = Package(
         .library(name: "CodeEditorExtensionWasmGuest", targets: ["CodeEditorExtensionWasmGuest"]),
         .library(name: "CodeEditorExtensionProtocol", targets: ["CodeEditorExtensionProtocol"]),
         .library(name: "CodeEditorExtensionGuest", targets: ["CodeEditorExtensionGuest"]),
-        .executable(name: "ConformanceExtensionGuest", targets: ["ConformanceExtensionGuest"]),
+        // EXT-N20: ConformanceExtensionGuest is a fixture executable target only (not a public product).
         .library(name: "CodeEditorLSP", targets: ["CodeEditorLSP"]),
         .library(name: "CodeEditorDAP", targets: ["CodeEditorDAP"]),
         .library(name: "CodeEditorSearch", targets: ["CodeEditorSearch"]),

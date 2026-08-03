@@ -159,9 +159,17 @@ public struct ExtensionTOMLManifest: Sendable, Hashable {
     }
 }
 
-/// Minimal TOML subset parser for extension manifests (no external dependency).
+/// **CodeEditor Manifest Language (CEML)** parser — a strict, fail-closed TOML *subset*
+/// for `extension.toml` (EXT-N01).
+///
+/// This is **not** general TOML / Zed-compatible TOML. Unsupported constructs fail closed.
+/// Supported: basic keys, dotted section headers, `[[array.tables]]`, inline string/int/bool/array,
+/// `#` comments outside strings, and common string escapes (`\\n`, `\\"`, `\\\\`).
 public enum ExtensionTOMLParser {
     public static let maxManifestBytes = 256 * 1024
+    /// EXT-N01: deliberate language name — do not claim full TOML.
+    public static let languageName = "CodeEditor Manifest Language"
+    public static let isGeneralTOML = false
 
     public static func parse(
         string: String
@@ -178,12 +186,8 @@ public enum ExtensionTOMLParser {
 
         for (lineNumber, rawLine) in string.split(separator: "\n", omittingEmptySubsequences: false).enumerated() {
             var line = String(rawLine)
-            if let hash = line.firstIndex(of: "#") {
-                // crude: ignore comments not in strings
-                if !line[..<hash].contains("\"") {
-                    line = String(line[..<hash])
-                }
-            }
+            // Strip comments only when `#` is outside quotes (preserve `#` inside strings).
+            line = stripCommentOutsideStrings(line)
             line = line.trimmingCharacters(in: .whitespaces)
             if line.isEmpty { continue }
 
@@ -201,17 +205,23 @@ public enum ExtensionTOMLParser {
             }
 
             guard let eq = line.firstIndex(of: "=") else {
-                diagnostics.append(
-                    .init(
-                        code: "toml.bad_line",
-                        severity: .warning,
-                        message: "unparsed line \(lineNumber + 1)"
-                    ))
-                continue
+                // EXT-N01: malformed lines fail closed (errors, not soft warnings).
+                throw ExtensionError.dataLoad(
+                    "CEML parse error at line \(lineNumber + 1): expected key = value"
+                )
             }
             let key = line[..<eq].trimmingCharacters(in: .whitespaces)
+            guard isValidKey(key) else {
+                throw ExtensionError.dataLoad(
+                    "CEML parse error at line \(lineNumber + 1): invalid key \(key)"
+                )
+            }
             let valueRaw = line[line.index(after: eq)...].trimmingCharacters(in: .whitespaces)
-            let value = parseValue(String(valueRaw))
+            guard let value = try? parseValueStrict(String(valueRaw)) else {
+                throw ExtensionError.dataLoad(
+                    "CEML parse error at line \(lineNumber + 1): invalid value"
+                )
+            }
 
             if section.hasPrefix("[[") {
                 // handled via arrayTables path
@@ -530,12 +540,83 @@ public enum ExtensionTOMLParser {
         }
     }
 
-    private static func parseValue(_ raw: String) -> TOMLValue {
+    private static func isValidKey(_ key: String) -> Bool {
+        guard !key.isEmpty else { return false }
+        // Bare keys and simple dotted keys: A-Za-z0-9_-
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "._-"))
+        return key.unicodeScalars.allSatisfy { allowed.contains($0) }
+    }
+
+    private static func stripCommentOutsideStrings(_ line: String) -> String {
+        var result = ""
+        var inDouble = false
+        var inSingle = false
+        var escape = false
+        for ch in line {
+            if escape {
+                result.append(ch)
+                escape = false
+                continue
+            }
+            if ch == "\\" && inDouble {
+                result.append(ch)
+                escape = true
+                continue
+            }
+            if ch == "\"" && !inSingle {
+                inDouble.toggle()
+                result.append(ch)
+                continue
+            }
+            if ch == "'" && !inDouble {
+                inSingle.toggle()
+                result.append(ch)
+                continue
+            }
+            if ch == "#" && !inDouble && !inSingle {
+                break
+            }
+            result.append(ch)
+        }
+        return result
+    }
+
+    private static func unescapeString(_ s: String) -> String {
+        var out = ""
+        var chars = s.makeIterator()
+        while let ch = chars.next() {
+            if ch == "\\" {
+                guard let next = chars.next() else {
+                    out.append("\\")
+                    break
+                }
+                switch next {
+                case "n": out.append("\n")
+                case "t": out.append("\t")
+                case "r": out.append("\r")
+                case "\\": out.append("\\")
+                case "\"": out.append("\"")
+                case "'": out.append("'")
+                default:
+                    out.append(next)
+                }
+            } else {
+                out.append(ch)
+            }
+        }
+        return out
+    }
+
+    private static func parseValueStrict(_ raw: String) throws -> TOMLValue {
         let s = raw.trimmingCharacters(in: .whitespaces)
         if s == "true" { return .bool(true) }
         if s == "false" { return .bool(false) }
-        if s.hasPrefix("\"") && s.hasSuffix("\"") && s.count >= 2 {
-            return .string(String(s.dropFirst().dropLast()))
+        if s.hasPrefix("\"") {
+            guard s.hasSuffix("\""), s.count >= 2 else {
+                throw ExtensionError.dataLoad("unterminated string")
+            }
+            let inner = String(s.dropFirst().dropLast())
+            return .string(unescapeString(inner))
         }
         if s.hasPrefix("'") && s.hasSuffix("'") && s.count >= 2 {
             return .string(String(s.dropFirst().dropLast()))
@@ -546,10 +627,16 @@ public enum ExtensionTOMLParser {
                 return .array([])
             }
             let parts = splitArray(inner)
-            return .array(parts.map { parseValue($0) })
+            return .array(try parts.map { try parseValueStrict($0) })
         }
         if let i = Int(s) { return .int(i) }
-        return .string(s)
+        // Unquoted bare strings are rejected — fail closed (not silent coercion).
+        throw ExtensionError.dataLoad("invalid CEML value: \(s)")
+    }
+
+    /// Soft parse used only for nested re-entry after strict outer checks.
+    private static func parseValue(_ raw: String) -> TOMLValue {
+        (try? parseValueStrict(raw)) ?? .string(raw)
     }
 
     private static func splitArray(_ inner: String) -> [String] {

@@ -1,7 +1,9 @@
+import CodeEditorCore
 import CodeEditorExtensionAPI
 import Foundation
 
-/// Host package lifecycle with **immutable version directories**, durable state, recovery, and user-data preservation.
+/// Host package lifecycle with **content-addressed immutable blobs**, durable journal, recovery,
+/// and user-data outside package roots (EXT-N11…N16).
 public actor ExtensionPackageManager {
     public let installRoot: URL
     public private(set) var generation: UInt64 = 0
@@ -11,11 +13,15 @@ public actor ExtensionPackageManager {
     private var previousSnapshots: [ExtensionContributionSnapshot] = []
     private var continuation: AsyncStream<ExtensionContributionSnapshot>.Continuation?
     public let snapshots: AsyncStream<ExtensionContributionSnapshot>
+    /// EXT-N19: sequenced full snapshots via shared broadcast hub.
+    private let snapshotHub = AsyncBroadcastHub<ExtensionContributionSnapshot>(maxHistory: 32)
     private let maxEventBuffer: Int
     private var telemetry: StoreTelemetrySink?
     private var revocation: RevocationListDocument = .init()
     private var verifier: (any PackageVerifying)?
     private var installPolicy: ShippingInstallPolicy?
+    /// Maximum age for revocation list freshness (EXT-N15).
+    public var revocationMaxAge: TimeInterval = 7 * 24 * 3600
 
     public var packagesRoot: URL { installRoot.appendingPathComponent("packages", isDirectory: true) }
     public var stateRoot: URL { installRoot.appendingPathComponent("state", isDirectory: true) }
@@ -24,6 +30,15 @@ public actor ExtensionPackageManager {
     public var revocationRoot: URL { installRoot.appendingPathComponent("revocation", isDirectory: true) }
     public var cacheRoot: URL { installRoot.appendingPathComponent("cache", isDirectory: true) }
     public var downloadsRoot: URL { cacheRoot.appendingPathComponent("downloads", isDirectory: true) }
+    /// Content-addressed immutable package bytes (EXT-N12).
+    public var blobsRoot: URL {
+        installRoot.appendingPathComponent("blobs/sha256", isDirectory: true)
+    }
+    public var installsMetaRoot: URL { installRoot.appendingPathComponent("installs", isDirectory: true) }
+    public var activeRoot: URL { installRoot.appendingPathComponent("active", isDirectory: true) }
+    public var transactionsRoot: URL { installRoot.appendingPathComponent("transactions", isDirectory: true) }
+    /// Mutable host state outside immutable package content (EXT-N05).
+    public var hostStateRoot: URL { installRoot.appendingPathComponent("host-state", isDirectory: true) }
 
     public struct InstalledPackage: Sendable {
         public var plan: ValidatedContributionPlan
@@ -38,9 +53,13 @@ public actor ExtensionPackageManager {
         public var quarantined: Bool
         public var quarantineReason: String?
         public var publisher: String?
+        /// Content digest binding immutable bytes (EXT-N13/N14).
+        public var contentDigest: String?
+        /// Relative store key under install root (never a free absolute path).
+        public var storeKey: String?
 
         public var canActivate: Bool {
-            enabled && !quarantined && state == .installed
+            enabled && !quarantined && state == .installed && contentDigest != nil
         }
     }
 
@@ -144,6 +163,11 @@ public actor ExtensionPackageManager {
             installRoot.appendingPathComponent("telemetry", isDirectory: true),
             installRoot.appendingPathComponent("revocation", isDirectory: true),
             installRoot.appendingPathComponent("cache/downloads", isDirectory: true),
+            installRoot.appendingPathComponent("blobs/sha256", isDirectory: true),
+            installRoot.appendingPathComponent("installs", isDirectory: true),
+            installRoot.appendingPathComponent("active", isDirectory: true),
+            installRoot.appendingPathComponent("transactions", isDirectory: true),
+            installRoot.appendingPathComponent("host-state", isDirectory: true),
         ] {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
@@ -205,23 +229,71 @@ public actor ExtensionPackageManager {
     public func currentInstallPolicy() -> ShippingInstallPolicy? { installPolicy }
 
     public func setRevocationList(_ list: RevocationListDocument) throws {
-        self.revocation = list
+        // EXT-N15: monotonic sequence when an epoch is in use.
+        if revocation.sequence > 0, list.sequence > 0 {
+            var current = revocation
+            try current.applyMonotonicUpdate(list)
+            self.revocation = current
+        } else if revocation.sequence > 0, list.sequence == 0 {
+            // Legacy lists without sequence: accept as operator override but keep epoch.
+            var merged = list
+            merged.sequence = revocation.sequence &+ 1
+            self.revocation = merged
+        } else {
+            self.revocation = list
+        }
         try persistRevocationList()
+        // Immediately drop revoked packages from active snapshots (disable; activate path records denied).
+        for (id, pkg) in packages {
+            if revocation.entries.contains(where: {
+                $0.matches(packageID: id.rawValue, version: pkg.currentVersion)
+            }) {
+                var p = pkg
+                p.enabled = false
+                packages[id] = p
+            }
+        }
+        try persistDurableState()
+        rebuildSnapshot()
     }
 
     public func revocationList() -> RevocationListDocument { revocation }
+
+    /// EXT-N19: subscribe to sequenced package contribution snapshots.
+    public func packageSnapshotStream() async -> AsyncStream<
+        StreamItem<AsyncBroadcastHub<ExtensionContributionSnapshot>.Envelope>
+    > {
+        await snapshotHub.subscribe(
+            policy: .dropOldest(capacity: maxEventBuffer, emitGap: true),
+            replay: .last(1)
+        )
+    }
 
     // MARK: - Lifecycle
 
     @discardableResult
     public func install(from source: URL, asDev: Bool = false) throws -> ValidatedContributionPlan {
-        let plan = try ExtensionPackageLoader.load(directory: source)
+        // EXT-N11: secure inventory + verify **before** activate/trust.
+        let limits = PackageInventoryLimits.default
+        let sourceInventory = try PackageInventoryBuilder.build(packageRoot: source, limits: limits)
+        let sourceDigest = sourceInventory.packageSHA256
+
+        var plan = try ExtensionPackageLoader.load(directory: source)
         if plan.hasErrors {
             throw ExtensionError.dataLoad(
                 "package has errors: \(plan.diagnostics.map(\.message).joined(separator: "; "))")
         }
+        plan.digest = sourceDigest
+
+        // EXT-N17: data-only packages cannot ship undeclared executables.
+        if sourceContainsDataOnlyMarker(source) {
+            try PackageInventoryBuilder.assertNoUndeclaredExecutables(
+                inventory: sourceInventory, declaredPaths: [])
+        }
+
         let version = plan.version.description
         try assertNotRevoked(packageID: plan.packageID.rawValue, version: version)
+        try assertRevocationFresh()
         try assertInstallPolicy(plan: plan, source: source, asDev: asDev)
 
         let verify = try runVerify(packageRoot: source)
@@ -229,17 +301,15 @@ public actor ExtensionPackageManager {
             throw ExtensionError.dataLoad(verify.error ?? "package quarantined at verify")
         }
 
-        let dest: URL
         if asDev {
-            dest = source
             packages[plan.packageID] = InstalledPackage(
                 plan: {
                     var p = plan
-                    p.packageRoot = dest
+                    p.packageRoot = source
                     return p
                 }(),
                 enabled: true,
-                installPath: dest,
+                installPath: source,
                 isDev: true,
                 previousPlan: packages[plan.packageID]?.plan,
                 currentVersion: version,
@@ -248,7 +318,9 @@ public actor ExtensionPackageManager {
                 trustClass: verify.trustClass,
                 quarantined: false,
                 quarantineReason: nil,
-                publisher: verify.publisher
+                publisher: verify.publisher,
+                contentDigest: sourceDigest,
+                storeKey: nil
             )
             try ensureUserDataDir(id: plan.packageID)
             try persistDurableState()
@@ -260,63 +332,138 @@ public actor ExtensionPackageManager {
             return plan
         }
 
-        let idRoot = packageDirectory(for: plan.packageID)
-        let versionDir = idRoot.appendingPathComponent(version, isDirectory: true)
-        let staging = idRoot.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: idRoot, withIntermediateDirectories: true)
-        if FileManager.default.fileExists(atPath: staging.path) {
-            try FileManager.default.removeItem(at: staging)
-        }
-        try copyPackage(from: source, to: staging)
-
-        // Re-verify staged tree
-        let stagedVerify = try runVerify(packageRoot: staging)
-        if stagedVerify.quarantined {
-            try? FileManager.default.removeItem(at: staging)
-            throw ExtensionError.dataLoad(stagedVerify.error ?? "staged package failed verify")
+        // EXT-N13: same-version reinstall safety.
+        if let existing = packages[plan.packageID], existing.currentVersion == version, !existing.isDev {
+            if let existingDigest = existing.contentDigest, existingDigest == sourceDigest {
+                // Idempotent: return existing verified install only.
+                return existing.plan
+            }
+            if existing.contentDigest != nil {
+                throw ExtensionError.dataLoad(
+                    "same-version reinstall with different content digest rejected (EXT-N13)"
+                )
+            }
         }
 
-        let previous = packages[plan.packageID]
-        if FileManager.default.fileExists(atPath: versionDir.path) {
-            // Immutable: never overwrite; same-version reinstall reuses existing tree.
-            try FileManager.default.removeItem(at: staging)
-        } else {
-            try FileManager.default.moveItem(at: staging, to: versionDir)
-        }
-
-        try writePointer(idRoot: idRoot, name: "current", version: version)
-        if let prev = previous?.currentVersion, prev != version {
-            try writePointer(idRoot: idRoot, name: "previous", version: prev)
-        }
-
-        var stored = plan
-        stored.packageRoot = versionDir
-        packages[plan.packageID] = InstalledPackage(
-            plan: stored,
-            enabled: previous?.enabled ?? true,
-            installPath: versionDir,
-            isDev: false,
-            previousPlan: previous?.currentVersion == version ? previous?.previousPlan : previous?.plan,
-            currentVersion: version,
-            previousVersion: previous?.currentVersion == version ? previous?.previousVersion : previous?.currentVersion,
-            state: .installed,
-            trustClass: stagedVerify.trustClass,
-            quarantined: false,
-            quarantineReason: nil,
-            publisher: stagedVerify.publisher
+        let txID = UUID().uuidString
+        let tx = InstallTransaction(
+            id: txID,
+            packageID: plan.packageID.rawValue,
+            version: version,
+            contentDigest: sourceDigest,
+            phase: .started,
+            createdAt: Date()
         )
-        try ensureUserDataDir(id: plan.packageID)
-        try persistDurableState()
-        rebuildSnapshot()
-        record(
-            .init(
-                event: previous == nil ? "package.install" : "package.update",
-                packageID: plan.packageID.rawValue,
-                fromVersion: previous?.currentVersion,
-                toVersion: version,
-                success: true
-            ))
-        return stored
+        try writeTransaction(tx)
+
+        let blobDir = blobsRoot.appendingPathComponent(sourceDigest, isDirectory: true)
+        let staging = installRoot
+            .appendingPathComponent("cache/staging-\(txID)", isDirectory: true)
+        defer {
+            try? FileManager.default.removeItem(at: staging)
+        }
+
+        do {
+            if FileManager.default.fileExists(atPath: staging.path) {
+                try FileManager.default.removeItem(at: staging)
+            }
+            try copyPackage(from: source, to: staging)
+
+            // Re-verify staged tree + digest match (EXT-N11).
+            let stagedInventory = try PackageInventoryBuilder.build(packageRoot: staging, limits: limits)
+            guard stagedInventory.packageSHA256 == sourceDigest else {
+                throw ExtensionError.dataLoad("staged digest mismatch")
+            }
+            let stagedVerify = try runVerify(packageRoot: staging)
+            if stagedVerify.quarantined {
+                throw ExtensionError.dataLoad(stagedVerify.error ?? "staged package failed verify")
+            }
+
+            var txVerify = tx
+            txVerify.phase = .verified
+            try writeTransaction(txVerify)
+
+            if !FileManager.default.fileExists(atPath: blobDir.path) {
+                try FileManager.default.createDirectory(
+                    at: blobDir.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try FileManager.default.moveItem(at: staging, to: blobDir)
+            } else {
+                // Blob already present (content-addressed); drop staging.
+                try? FileManager.default.removeItem(at: staging)
+            }
+            try fsyncDirectory(blobDir.deletingLastPathComponent())
+
+            // Legacy layout pointer for compatibility tools.
+            let idRoot = packageDirectory(for: plan.packageID)
+            let versionDir = idRoot.appendingPathComponent(version, isDirectory: true)
+            try FileManager.default.createDirectory(at: idRoot, withIntermediateDirectories: true)
+            if !FileManager.default.fileExists(atPath: versionDir.path) {
+                try FileManager.default.copyItem(at: blobDir, to: versionDir)
+            }
+
+            let previous = packages[plan.packageID]
+            try writePointer(idRoot: idRoot, name: "current", version: version)
+            if let prev = previous?.currentVersion, prev != version {
+                try writePointer(idRoot: idRoot, name: "previous", version: prev)
+            }
+
+            // Installs metadata + active pointer (EXT-N12).
+            let storeKey = "blobs/sha256/\(sourceDigest)"
+            try writeInstallRecord(
+                id: plan.packageID,
+                version: version,
+                digest: sourceDigest,
+                trust: stagedVerify.trustClass,
+                publisher: stagedVerify.publisher
+            )
+            try writeActivePointer(id: plan.packageID, version: version, digest: sourceDigest)
+
+            // installPath stays on versioned layout for tooling compatibility; blob is content-addressed.
+            var stored = plan
+            stored.packageRoot = versionDir
+            stored.digest = sourceDigest
+            packages[plan.packageID] = InstalledPackage(
+                plan: stored,
+                enabled: previous?.enabled ?? true,
+                installPath: versionDir,
+                isDev: false,
+                previousPlan: previous?.currentVersion == version ? previous?.previousPlan : previous?.plan,
+                currentVersion: version,
+                previousVersion: previous?.currentVersion == version
+                    ? previous?.previousVersion : previous?.currentVersion,
+                state: .installed,
+                trustClass: stagedVerify.trustClass,
+                quarantined: false,
+                quarantineReason: nil,
+                publisher: stagedVerify.publisher,
+                contentDigest: sourceDigest,
+                storeKey: storeKey
+            )
+            try ensureUserDataDir(id: plan.packageID)
+            try ensureHostStateDir(id: plan.packageID)
+            try persistDurableState()
+
+            var txDone = txVerify
+            txDone.phase = .committed
+            try writeTransaction(txDone)
+
+            rebuildSnapshot()
+            record(
+                .init(
+                    event: previous == nil ? "package.install" : "package.update",
+                    packageID: plan.packageID.rawValue,
+                    fromVersion: previous?.currentVersion,
+                    toVersion: version,
+                    success: true
+                ))
+            return stored
+        } catch {
+            var txFail = tx
+            txFail.phase = .rolledBack
+            txFail.error = String(describing: error)
+            try? writeTransaction(txFail)
+            throw error
+        }
     }
 
     public func enable(id: ExtensionID) throws {
@@ -450,21 +597,51 @@ public actor ExtensionPackageManager {
 
         // Reconcile known packages against current/previous pointers.
         for (id, pkg) in packages {
-            if pkg.quarantined { continue }
             if !pkg.isDev {
+                let pathExists = FileManager.default.fileExists(atPath: pkg.installPath.path)
+                let blobExists: Bool = {
+                    guard let digest = pkg.contentDigest else { return false }
+                    return FileManager.default.fileExists(
+                        atPath: blobsRoot.appendingPathComponent(digest, isDirectory: true).path)
+                }()
+                if !pathExists {
+                    if blobExists, let digest = pkg.contentDigest {
+                        // Rebind install path to content-addressed blob (EXT-N12/N14).
+                        var rebound = pkg
+                        let blob = blobsRoot.appendingPathComponent(digest, isDirectory: true)
+                        rebound.installPath = blob
+                        rebound.plan.packageRoot = blob
+                        packages[id] = rebound
+                    } else {
+                        packages.removeValue(forKey: id)
+                        continue
+                    }
+                }
+                let live = packages[id] ?? pkg
+                if live.quarantined { continue }
                 let idRoot = packageDirectory(for: id)
-                if var rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: pkg) {
+                if var rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: live) {
                     // Re-verify staged tree before trusting it as active.
                     if let v = try? runVerify(packageRoot: rebuilt.installPath), v.quarantined {
                         rebuilt.quarantined = true
                         rebuilt.quarantineReason = v.error ?? "recover re-verify failed"
                         rebuilt.enabled = false
                         rebuilt.state = .quarantined
+                    } else {
+                        // Preserve prior verified state when pointers rebuild cleanly.
+                        rebuilt.enabled = live.enabled
+                        rebuilt.quarantined = live.quarantined
+                        rebuilt.quarantineReason = live.quarantineReason
+                        rebuilt.state = live.state
+                        rebuilt.trustClass = live.trustClass
+                        rebuilt.contentDigest = live.contentDigest ?? rebuilt.contentDigest
+                        rebuilt.storeKey = live.storeKey ?? rebuilt.storeKey
                     }
                     packages[id] = rebuilt
                     continue
                 }
-                if !FileManager.default.fileExists(atPath: pkg.installPath.path) {
+                // No pointers and no live path → drop (installPath already rebound or removed above).
+                if !FileManager.default.fileExists(atPath: (packages[id] ?? live).installPath.path) {
                     packages.removeValue(forKey: id)
                 }
             } else if !FileManager.default.fileExists(atPath: pkg.installPath.path) {
@@ -519,19 +696,26 @@ public actor ExtensionPackageManager {
                 previousPlan = prevPlan
             }
         }
+        // EXT-N16: pointer recovery does not default to trusted without digest/verify.
+        var digest = base?.contentDigest
+        if digest == nil {
+            digest = try? PackageInventoryBuilder.build(packageRoot: dir).packageSHA256
+        }
         return InstalledPackage(
             plan: plan,
-            enabled: base?.enabled ?? true,
+            enabled: base?.enabled ?? false,
             installPath: dir,
             isDev: base?.isDev ?? false,
             previousPlan: previousPlan,
             currentVersion: current,
             previousVersion: previousVersion ?? base?.previousVersion,
-            state: base?.state ?? .installed,
-            trustClass: base?.trustClass ?? .workspaceDev,
-            quarantined: base?.quarantined ?? false,
-            quarantineReason: base?.quarantineReason,
-            publisher: base?.publisher
+            state: base?.state ?? .discovered,
+            trustClass: base?.trustClass ?? .untrusted,
+            quarantined: base?.quarantined ?? true,
+            quarantineReason: base?.quarantineReason ?? "recovered; re-verify required",
+            publisher: base?.publisher,
+            contentDigest: digest,
+            storeKey: base?.storeKey ?? digest.map { "blobs/sha256/\($0)" }
         )
     }
 
@@ -566,6 +750,14 @@ public actor ExtensionPackageManager {
                 "store quarantined: \(storeQuarantineReason ?? "untrusted state")")
         }
         guard let pkg = packages[id] else { throw ExtensionError.notRegistered }
+        // EXT-N15: revocation checked before soft disable/quarantine so deny reason stays accurate.
+        do {
+            try assertNotRevoked(packageID: id.rawValue, version: pkg.currentVersion)
+        } catch {
+            recordDenied(id: id, reason: "revoked")
+            try? quarantine(id: id, reason: "revoked")
+            throw error
+        }
         if pkg.quarantined {
             recordDenied(id: id, reason: "quarantined")
             throw ExtensionError.dataLoad("quarantined: \(pkg.quarantineReason ?? "")")
@@ -573,13 +765,6 @@ public actor ExtensionPackageManager {
         if !pkg.enabled {
             recordDenied(id: id, reason: "disabled")
             throw ExtensionError.dataLoad("package disabled")
-        }
-        do {
-            try assertNotRevoked(packageID: id.rawValue, version: pkg.currentVersion)
-        } catch {
-            recordDenied(id: id, reason: "revoked")
-            try? quarantine(id: id, reason: "revoked")
-            throw error
         }
         if let keyID = publisherKeyID(for: pkg), isKeyRevoked(keyID) {
             recordDenied(id: id, reason: "key_revoked")
@@ -663,16 +848,141 @@ public actor ExtensionPackageManager {
     // MARK: - Private
 
     private func ensureLayout() {
-        for dir in [packagesRoot, stateRoot, dataRoot, telemetryRoot, revocationRoot, cacheRoot, downloadsRoot] {
+        for dir in [
+            packagesRoot, stateRoot, dataRoot, telemetryRoot, revocationRoot, cacheRoot, downloadsRoot,
+            blobsRoot, installsMetaRoot, activeRoot, transactionsRoot, hostStateRoot,
+        ] {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         if telemetry == nil {
-            telemetry = StoreTelemetrySink(fileURL: telemetryRoot.appendingPathComponent("migration-events.ndjson"))
+            telemetry = StoreTelemetrySink(
+                fileURL: telemetryRoot.appendingPathComponent("migration-events.ndjson"),
+                maxFileBytes: 1_048_576,
+                maxTotalBytes: 8_388_608
+            )
         }
     }
 
     private func ensureUserDataDir(id: ExtensionID) throws {
         try FileManager.default.createDirectory(at: userDataDir(id: id), withIntermediateDirectories: true)
+    }
+
+    private func ensureHostStateDir(id: ExtensionID) throws {
+        let dir = hostStateRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+
+    private func sourceContainsDataOnlyMarker(_ source: URL) -> Bool {
+        guard
+            let text = try? String(
+                contentsOf: source.appendingPathComponent("extension.toml"), encoding: .utf8)
+        else { return false }
+        return text.contains("data-only")
+    }
+
+    private func assertRevocationFresh() throws {
+        // Empty list is fine; non-zero sequence lists must be fresh (EXT-N15).
+        if revocation.sequence > 0 || revocation.expiresAt != nil {
+            guard revocation.isFresh(now: Date(), maxAge: revocationMaxAge) else {
+                throw ExtensionError.dataLoad("revocation list is stale or expired (EXT-N15)")
+            }
+        }
+    }
+
+    private struct InstallTransaction: Codable {
+        var id: String
+        var packageID: String
+        var version: String
+        var contentDigest: String
+        var phase: Phase
+        var createdAt: Date
+        var error: String?
+
+        enum Phase: String, Codable {
+            case started
+            case verified
+            case committed
+            case rolledBack
+        }
+    }
+
+    private func writeTransaction(_ tx: InstallTransaction) throws {
+        try FileManager.default.createDirectory(at: transactionsRoot, withIntermediateDirectories: true)
+        let url = transactionsRoot.appendingPathComponent("\(tx.id).json")
+        let enc = JSONEncoder()
+        enc.dateEncodingStrategy = .iso8601
+        enc.outputFormatting = [.sortedKeys]
+        try enc.encode(tx).write(to: url, options: .atomic)
+        try fsyncDirectory(transactionsRoot)
+    }
+
+    private func writeInstallRecord(
+        id: ExtensionID,
+        version: String,
+        digest: String,
+        trust: ExtensionTrustClassDTO,
+        publisher: String?
+    ) throws {
+        let dir = installsMetaRoot.appendingPathComponent(id.directoryKey, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let obj: [String: Any] = [
+            "package_id": id.rawValue,
+            "version": version,
+            "content_digest": digest,
+            "store_key": "blobs/sha256/\(digest)",
+            "trust_class": trust.rawValue,
+            "publisher": publisher as Any,
+        ]
+        let data = try JSONSerialization.data(withJSONObject: obj, options: [.sortedKeys])
+        try data.write(to: dir.appendingPathComponent("\(version).json"), options: .atomic)
+    }
+
+    private func writeActivePointer(id: ExtensionID, version: String, digest: String) throws {
+        try FileManager.default.createDirectory(at: activeRoot, withIntermediateDirectories: true)
+        let obj: [String: String] = [
+            "package_id": id.rawValue,
+            "version": version,
+            "content_digest": digest,
+            "store_key": "blobs/sha256/\(digest)",
+        ]
+        let data = try JSONSerialization.data(withJSONObject: obj, options: [.sortedKeys])
+        let tmp = activeRoot.appendingPathComponent(".\(id.directoryKey).tmp-\(UUID().uuidString)")
+        try data.write(to: tmp, options: .atomic)
+        let dest = activeRoot.appendingPathComponent("\(id.directoryKey).json")
+        _ = try? FileManager.default.removeItem(at: dest)
+        try FileManager.default.moveItem(at: tmp, to: dest)
+        try fsyncDirectory(activeRoot)
+    }
+
+    private func fsyncDirectory(_ url: URL) throws {
+        let fd = open(url.path, O_RDONLY | O_DIRECTORY)
+        guard fd >= 0 else { return }
+        fsync(fd)
+        close(fd)
+    }
+
+    /// Replay incomplete transactions on bootstrap (EXT-N12).
+    private func recoverTransactions() {
+        guard
+            let files = try? FileManager.default.contentsOfDirectory(
+                at: transactionsRoot, includingPropertiesForKeys: nil)
+        else { return }
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .iso8601
+        for url in files where url.pathExtension == "json" {
+            guard let data = try? Data(contentsOf: url),
+                let tx = try? dec.decode(InstallTransaction.self, from: data)
+            else { continue }
+            if tx.phase == .started || tx.phase == .verified {
+                // Roll back incomplete installs: remove staging leftovers; never activate.
+                let staging = installRoot.appendingPathComponent("cache/staging-\(tx.id)", isDirectory: true)
+                try? FileManager.default.removeItem(at: staging)
+                var rolled = tx
+                rolled.phase = .rolledBack
+                rolled.error = "startup recovery"
+                try? writeTransaction(rolled)
+            }
+        }
     }
 
     private func writePointer(idRoot: URL, name: String, version: String) throws {
@@ -803,9 +1113,24 @@ public actor ExtensionPackageManager {
             previousSnapshots.removeFirst(previousSnapshots.count - 8)
         }
         generation &+= 1
-        let enabled = packages.values.filter { $0.enabled && !$0.quarantined }.map(\.plan)
-        snapshot = ImmutableContributionRegistry.build(packages: enabled, generation: generation)
+        // EXT-N16: only fully loadable records enter the contribution snapshot.
+        let loadable = packages.values.filter { pkg in
+            guard pkg.enabled, !pkg.quarantined, pkg.state == .installed else { return false }
+            if storeQuarantined { return false }
+            if pkg.isDev { return true }
+            guard let digest = pkg.contentDigest, !digest.isEmpty else { return false }
+            guard FileManager.default.fileExists(atPath: pkg.installPath.path) else { return false }
+            // Reject revoked.
+            if revocation.entries.contains(where: {
+                $0.matches(packageID: pkg.plan.packageID.rawValue, version: pkg.currentVersion)
+            }) {
+                return false
+            }
+            return true
+        }.map(\.plan)
+        snapshot = ImmutableContributionRegistry.build(packages: loadable, generation: generation)
         continuation?.yield(snapshot)
+        Task { await snapshotHub.publish(snapshot) }
     }
 
     private func record(_ event: StoreTelemetryEvent) {
@@ -822,7 +1147,10 @@ public actor ExtensionPackageManager {
         var id: String
         var version: String
         var previousVersion: String?
-        var path: String
+        /// Absolute path retained only for legacy; prefer storeKey + contentDigest (EXT-N14).
+        var path: String?
+        var storeKey: String?
+        var contentDigest: String?
         var enabled: Bool
         var isDev: Bool
         var state: PackageInstallState
@@ -833,12 +1161,15 @@ public actor ExtensionPackageManager {
     }
 
     private func persistDurableState() throws {
-        let records = packages.map { id, pkg in
-            DurableRecord(
+        let records = packages.map { id, pkg -> DurableRecord in
+            let key = pkg.storeKey ?? (pkg.contentDigest.map { "blobs/sha256/\($0)" })
+            return DurableRecord(
                 id: id.rawValue,
                 version: pkg.currentVersion,
                 previousVersion: pkg.previousVersion,
-                path: pkg.installPath.path,
+                path: nil, // EXT-N14: do not persist free absolute roots as sole identity
+                storeKey: key,
+                contentDigest: pkg.contentDigest,
                 enabled: pkg.enabled,
                 isDev: pkg.isDev,
                 state: pkg.state,
@@ -852,40 +1183,115 @@ public actor ExtensionPackageManager {
         try data.write(to: stateRoot.appendingPathComponent("packages.json"), options: .atomic)
     }
 
+    private func resolveStorePath(storeKey: String?, contentDigest: String?, legacyPath: String?) -> URL? {
+        if let key = storeKey, !key.isEmpty {
+            let candidate = installRoot.appendingPathComponent(key, isDirectory: true)
+            if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+        }
+        if let digest = contentDigest, !digest.isEmpty {
+            let candidate = blobsRoot.appendingPathComponent(digest, isDirectory: true)
+            if FileManager.default.fileExists(atPath: candidate.path) { return candidate }
+        }
+        // Legacy absolute path: only accept when under installRoot.
+        if let legacy = legacyPath {
+            let url = URL(fileURLWithPath: legacy)
+            let rootPath = installRoot.standardizedFileURL.path
+            let path = url.standardizedFileURL.path
+            if path == rootPath || path.hasPrefix(rootPath + "/") {
+                if FileManager.default.fileExists(atPath: path) { return url }
+            }
+        }
+        return nil
+    }
+
     private func loadDurableState() throws {
+        recoverTransactions()
         let url = stateRoot.appendingPathComponent("packages.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         let data = try Data(contentsOf: url)
         let state = try JSONDecoder().decode(DurableState.self, from: data)
         for rec in state.packages {
             guard let id = ExtensionID(rawValue: rec.id) else { continue }
-            let path = URL(fileURLWithPath: rec.path)
-            guard FileManager.default.fileExists(atPath: path.path),
-                var plan = try? ExtensionPackageLoader.load(directory: path, options: .init(computeDigest: false))
+            guard
+                let path = resolveStorePath(
+                    storeKey: rec.storeKey, contentDigest: rec.contentDigest, legacyPath: rec.path)
+            else { continue }
+            // EXT-N16: re-verify digest when present.
+            if let expected = rec.contentDigest, !rec.isDev {
+                if let live = try? PackageInventoryBuilder.build(packageRoot: path).packageSHA256,
+                    live != expected
+                {
+                    // Quarantine mismatched recovered package.
+                    packages[id] = InstalledPackage(
+                        plan: ValidatedContributionPlan(
+                            packageID: id,
+                            displayName: id.rawValue,
+                            version: SemanticVersion.parse(rec.version) ?? .zero,
+                            manifest: ExtensionManifest(id: id, displayName: id.rawValue),
+                            packageRoot: path,
+                            sourceFormat: .toml,
+                            digest: expected
+                        ),
+                        enabled: false,
+                        installPath: path,
+                        isDev: false,
+                        previousPlan: nil,
+                        currentVersion: rec.version,
+                        previousVersion: rec.previousVersion,
+                        state: .quarantined,
+                        trustClass: rec.trustClass,
+                        quarantined: true,
+                        quarantineReason: "content digest mismatch on recovery",
+                        publisher: rec.publisher,
+                        contentDigest: expected,
+                        storeKey: rec.storeKey
+                    )
+                    continue
+                }
+            }
+            guard
+                var plan = try? ExtensionPackageLoader.load(
+                    directory: path, options: .init(computeDigest: false))
             else { continue }
             plan.packageRoot = path
+            plan.digest = rec.contentDigest
             var previousPlan: ValidatedContributionPlan?
             if let prev = rec.previousVersion, !rec.isDev {
                 let prevDir = packageDirectory(for: id)
                     .appendingPathComponent(prev, isDirectory: true)
-                if var pp = try? ExtensionPackageLoader.load(directory: prevDir, options: .init(computeDigest: false)) {
+                if var pp = try? ExtensionPackageLoader.load(
+                    directory: prevDir, options: .init(computeDigest: false)
+                ) {
                     pp.packageRoot = prevDir
                     previousPlan = pp
                 }
             }
+            // Recovered packages do not default to trusted/enabled without verification (EXT-N16).
+            var enabled = rec.enabled
+            var quarantined = rec.quarantined
+            var quarantineReason = rec.quarantineReason
+            var state = rec.state
+            if !rec.isDev, rec.contentDigest == nil {
+                enabled = false
+                quarantined = true
+                quarantineReason = "missing content digest"
+                state = .quarantined
+            }
             packages[id] = InstalledPackage(
                 plan: plan,
-                enabled: rec.enabled,
+                enabled: enabled,
                 installPath: path,
                 isDev: rec.isDev,
                 previousPlan: previousPlan,
                 currentVersion: rec.version,
                 previousVersion: rec.previousVersion,
-                state: rec.state,
+                state: state,
                 trustClass: rec.trustClass,
-                quarantined: rec.quarantined,
-                quarantineReason: rec.quarantineReason,
-                publisher: rec.publisher
+                quarantined: quarantined,
+                quarantineReason: quarantineReason,
+                publisher: rec.publisher,
+                contentDigest: rec.contentDigest,
+                storeKey: rec.storeKey ?? rec.contentDigest.map { "blobs/sha256/\($0)" }
             )
         }
         rebuildSnapshot()
@@ -926,12 +1332,23 @@ public protocol PackageVerifying: Sendable {
 
 // MARK: - Telemetry sink
 
+/// Bounded telemetry sink with size rotation (EXT-N18). Write failures are counted, never swallowed silently.
 public final class StoreTelemetrySink: @unchecked Sendable {
     private let lock = NSLock()
     private let fileURL: URL
+    public let maxFileBytes: Int
+    public let maxTotalBytes: Int
+    public private(set) var writeFailureCount: Int = 0
+    public private(set) var rotationCount: Int = 0
 
-    public init(fileURL: URL) {
+    public init(
+        fileURL: URL,
+        maxFileBytes: Int = 1_048_576,
+        maxTotalBytes: Int = 8_388_608
+    ) {
         self.fileURL = fileURL
+        self.maxFileBytes = max(1_024, maxFileBytes)
+        self.maxTotalBytes = max(self.maxFileBytes, maxTotalBytes)
         try? FileManager.default.createDirectory(
             at: fileURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
@@ -945,15 +1362,103 @@ public final class StoreTelemetrySink: @unchecked Sendable {
         enc.dateEncodingStrategy = .iso8601
         guard let data = try? enc.encode(event),
             var line = String(data: data, encoding: .utf8)
-        else { return }
-        line.append("\n")
-        if let handle = try? FileHandle(forWritingTo: fileURL) {
-            defer { try? handle.close() }
-            _ = try? handle.seekToEnd()
-            try? handle.write(contentsOf: Data(line.utf8))
-        } else {
-            try? Data(line.utf8).write(to: fileURL)
+        else {
+            writeFailureCount += 1
+            return
         }
+        line.append("\n")
+        let payload = Data(line.utf8)
+        do {
+            try rotateIfNeeded(additional: payload.count)
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                let handle = try FileHandle(forWritingTo: fileURL)
+                defer { try? handle.close() }
+                try handle.seekToEnd()
+                try handle.write(contentsOf: payload)
+            } else {
+                try payload.write(to: fileURL, options: .atomic)
+            }
+        } catch {
+            writeFailureCount += 1
+        }
+    }
+
+    public func totalDiskBytesUsed() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        let dir = fileURL.deletingLastPathComponent()
+        let base = fileURL.lastPathComponent
+        guard
+            let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey])
+        else { return 0 }
+        var total = 0
+        for f in files where f.lastPathComponent.hasPrefix(base) {
+            let size = (try? f.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            total += size
+        }
+        return total
+    }
+
+    private func rotateIfNeeded(additional: Int) throws {
+        let fm = FileManager.default
+        let currentSize =
+            (try? fm.attributesOfItem(atPath: fileURL.path)[.size] as? NSNumber)?.intValue ?? 0
+        if currentSize + additional <= maxFileBytes {
+            // Still enforce total cap across rotations.
+            try enforceTotalCap()
+            return
+        }
+        // Rotate: events.ndjson → events.ndjson.1 ; drop older rotated files first.
+        let rotated = fileURL.appendingPathExtension("1")
+        if fm.fileExists(atPath: rotated.path) {
+            try? fm.removeItem(at: rotated)
+        }
+        if fm.fileExists(atPath: fileURL.path) {
+            try fm.moveItem(at: fileURL, to: rotated)
+            rotationCount += 1
+        }
+        try enforceTotalCap()
+    }
+
+    private func enforceTotalCap() throws {
+        let fm = FileManager.default
+        let dir = fileURL.deletingLastPathComponent()
+        let base = fileURL.lastPathComponent
+        guard
+            let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])
+        else { return }
+        var siblings = files.filter { $0.lastPathComponent.hasPrefix(base) }
+        func total() -> Int {
+            siblings.reduce(0) { acc, f in
+                acc + ((try? f.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+            }
+        }
+        // Delete oldest rotated files until under cap (keep primary if possible).
+        while total() > maxTotalBytes {
+            let candidates = siblings.filter { $0.lastPathComponent != base }
+                .sorted {
+                    let d0 = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                    let d1 = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                    return d0 < d1
+                }
+            guard let victim = candidates.first ?? siblings.first else { break }
+            try? fm.removeItem(at: victim)
+            siblings.removeAll { $0 == victim }
+        }
+    }
+
+    private func totalDiskBytesUsedUnlocked() -> Int {
+        let dir = fileURL.deletingLastPathComponent()
+        let base = fileURL.lastPathComponent
+        guard
+            let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey])
+        else { return 0 }
+        var total = 0
+        for f in files where f.lastPathComponent.hasPrefix(base) {
+            let size = (try? f.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            total += size
+        }
+        return total
     }
 
     public func readAll() throws -> [StoreTelemetryEvent] {
