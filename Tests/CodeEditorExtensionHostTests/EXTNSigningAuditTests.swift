@@ -137,11 +137,10 @@ struct EXT_N07_Tests {
         let original = try Data(contentsOf: privateURL)
         #expect(original == kp1.privateKeyRaw)
 
-        // Failure injection: backup of prior key, live key preserved (EXT-N07).
-        ExtensionPackageSigner.failNextAtomicWriteAfterBackupForTests = true
+        // Failure injection via parameter (not a production global hook): prior key preserved (EXT-N07).
         let kpFail = try ExtensionPackageSigner.generateKeyPair(keyID: "k-fail")
         #expect(throws: PackageSignatureError.self) {
-            try ExtensionPackageSigner.writeKeyPair(kpFail, to: dir)
+            try ExtensionPackageSigner.writeKeyPair(kpFail, to: dir, injectFailureAfterBackup: true)
         }
         let afterFail = try Data(contentsOf: privateURL)
         #expect(afterFail == original, "prior private key must survive failed replacement")

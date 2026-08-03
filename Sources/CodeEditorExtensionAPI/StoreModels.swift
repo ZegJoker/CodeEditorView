@@ -190,7 +190,7 @@ public struct ExtensionArtifactRef: Sendable, Hashable, Codable {
     }
 }
 
-// MARK: - Revocation (EXT-N15 freshness / rollback protection)
+// MARK: - Revocation (EXT-N15 freshness / rollback / crypto protection)
 
 public struct RevocationListDocument: Sendable, Hashable, Codable {
     public var version: Int
@@ -198,9 +198,12 @@ public struct RevocationListDocument: Sendable, Hashable, Codable {
     public var entries: [RevocationEntry]
     /// Monotonic epoch for rollback prevention.
     public var sequence: UInt64
+    /// Issuing authority subject (required for any non-bootstrap list).
     public var issuer: String?
+    /// Key id of the Ed25519 authority key that produced ``signature``.
+    public var keyID: String?
     public var expiresAt: Date?
-    /// Detached signature over canonical revocation payload (optional until marketplace online).
+    /// Base64 Ed25519 signature over ``RevocationListCrypto/canonicalPayload`` (required; verified before apply).
     public var signature: String?
 
     public init(
@@ -209,6 +212,7 @@ public struct RevocationListDocument: Sendable, Hashable, Codable {
         entries: [RevocationEntry] = [],
         sequence: UInt64 = 0,
         issuer: String? = nil,
+        keyID: String? = nil,
         expiresAt: Date? = nil,
         signature: String? = nil
     ) {
@@ -217,8 +221,20 @@ public struct RevocationListDocument: Sendable, Hashable, Codable {
         self.entries = entries
         self.sequence = sequence
         self.issuer = issuer
+        self.keyID = keyID
         self.expiresAt = expiresAt
         self.signature = signature
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case version
+        case updatedAt
+        case entries
+        case sequence
+        case issuer
+        case keyID = "key_id"
+        case expiresAt
+        case signature
     }
 
     /// Fresh when not expired and within maxAge of `updatedAt`.
@@ -229,6 +245,7 @@ public struct RevocationListDocument: Sendable, Hashable, Codable {
     }
 
     /// Apply an update only when its sequence is strictly greater (EXT-N15).
+    /// Caller must already have verified crypto/freshness on `next`.
     public mutating func applyMonotonicUpdate(_ next: RevocationListDocument) throws {
         guard next.sequence > sequence else {
             throw ExtensionError.dataLoad(
@@ -236,6 +253,17 @@ public struct RevocationListDocument: Sendable, Hashable, Codable {
             )
         }
         self = next
+    }
+
+    /// Sign this document with an authority private key (EXT-N15).
+    public mutating func sign(privateKeyRaw: Data, keyID: String, issuer: String) throws {
+        try RevocationListCrypto.sign(
+            &self, privateKeyRaw: privateKeyRaw, keyID: keyID, issuer: issuer)
+    }
+
+    /// Verify Ed25519 signature against trusted authorities (EXT-N15 fail-closed).
+    public func verify(authorities: [RevocationAuthorityKey]) throws {
+        try RevocationListCrypto.verify(self, authorities: authorities)
     }
 }
 

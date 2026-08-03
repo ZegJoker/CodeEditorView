@@ -1,3 +1,4 @@
+import CodeEditorCore
 import CodeEditorExtensionAPI
 import CodeEditorExtensionHost
 import CodeEditorExtensions
@@ -74,11 +75,11 @@ struct CodeEditorExtensionCLI {
               codeeditor-extension verify --dir <package-dir> [--keyring PATH]
               codeeditor-extension sbom --dir <package-dir> [--out PATH]
               codeeditor-extension package --dir <package-dir>  (checksums + sbom)
-              codeeditor-extension install --dir <package-dir> --install-root <root>
-              codeeditor-extension update --id ID --dir <package-dir> --install-root <root>
-              codeeditor-extension rollback --id ID --install-root <root>
-              codeeditor-extension list --install-root <root>
-              codeeditor-extension recover --install-root <root>
+              codeeditor-extension install --dir <package-dir> --install-root <root> [--keyring PATH] [--profile ID]
+              codeeditor-extension update --id ID --dir <package-dir> --install-root <root> [--keyring PATH]
+              codeeditor-extension rollback --id ID --install-root <root> [--keyring PATH]
+              codeeditor-extension list --install-root <root> [--keyring PATH]
+              codeeditor-extension recover --install-root <root> [--keyring PATH]
               codeeditor-extension revoke-check --dir <package-dir> --revocation PATH
               codeeditor-extension init <name> --dir <package-dir> [--swift-template]
               codeeditor-extension test --dir <package-dir> --runtime in-process|native-process|swift-wasm
@@ -252,13 +253,30 @@ struct CodeEditorExtensionCLI {
         return URL(fileURLWithPath: p, isDirectory: true)
     }
 
+    /// Production store manager — **never** `insecureForTests` (allowMissingSecurity).
+    /// Requires keyring for trust verification; shipping install policy from profile.
+    static func productionManager(installRoot: URL, args: [String]) throws -> ExtensionPackageManager {
+        var trust = ExtensionTrustPolicy.strict
+        if let keyringPath = flag(args, "--keyring") {
+            trust.apply(keyring: try PublisherKeyring.load(from: URL(fileURLWithPath: keyringPath)))
+        }
+        let profileID: ShippingProfileID = {
+            if let raw = flag(args, "--profile"), let id = ShippingProfileID(rawValue: raw) {
+                return id
+            }
+            return .directMacOS
+        }()
+        return ExtensionPackageManager(
+            installRoot: installRoot,
+            policy: ShippingInstallPolicy.shipping(profileID),
+            verifier: HostPackageVerifier(policy: trust)
+        )
+    }
+
     static func install(args: [String]) async throws {
         guard let dir = flag(args, "--dir") else { fail("install requires --dir") }
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager.insecureForTests(
-            installRoot: root,
-            verifier: HostPackageVerifier(policy: .testing)
-        )
+        let manager = try productionManager(installRoot: root, args: args)
         await manager.bootstrap()
         let plan = try await manager.install(from: URL(fileURLWithPath: dir, isDirectory: true))
         print("installed \(plan.packageID.rawValue)@\(plan.version)")
@@ -269,10 +287,7 @@ struct CodeEditorExtensionCLI {
             fail("update requires --id --dir")
         }
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager.insecureForTests(
-            installRoot: root,
-            verifier: HostPackageVerifier(policy: .testing)
-        )
+        let manager = try productionManager(installRoot: root, args: args)
         await manager.bootstrap()
         try await manager.update(id: ExtensionID(rawValue: id)!, from: URL(fileURLWithPath: dir, isDirectory: true))
         print("updated \(id)")
@@ -281,7 +296,7 @@ struct CodeEditorExtensionCLI {
     static func rollback(args: [String]) async throws {
         guard let id = flag(args, "--id") else { fail("rollback requires --id") }
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
+        let manager = try productionManager(installRoot: root, args: args)
         await manager.bootstrap()
         try await manager.rollback(id: ExtensionID(rawValue: id)!)
         print("rolled back \(id)")
@@ -289,7 +304,7 @@ struct CodeEditorExtensionCLI {
 
     static func list(args: [String]) async throws {
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
+        let manager = try productionManager(installRoot: root, args: args)
         await manager.bootstrap()
         for pkg in await manager.installedPackages() {
             let q = pkg.quarantined ? " quarantined" : ""
@@ -299,7 +314,7 @@ struct CodeEditorExtensionCLI {
 
     static func recover(args: [String]) async throws {
         let root = installRoot(from: args)
-        let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
+        let manager = try productionManager(installRoot: root, args: args)
         await manager.bootstrap()
         await manager.recoverCorruptedState()
         print("recovered \(root.path)")

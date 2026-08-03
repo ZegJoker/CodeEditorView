@@ -283,7 +283,8 @@ public enum ExtensionPackageDigest {
     }
 }
 
-/// SHA-256 only (EXT-N03). Throws via empty finalize when CryptoKit is unavailable at compile time.
+/// SHA-256 only (EXT-N03 / EXT-N08). Never `fatalError`/`preconditionFailure` on host paths;
+/// throws ``SecurityDigestError/cryptoUnavailable`` when CryptoKit is absent.
 #if canImport(CryptoKit)
     import CryptoKit
 
@@ -291,7 +292,7 @@ public enum ExtensionPackageDigest {
         private var hasher = SHA256()
         public init() {}
         public mutating func update(_ data: Data) { hasher.update(data: data) }
-        public func finalizeHex() -> String {
+        public func finalizeHex() throws -> String {
             hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
         }
     }
@@ -299,11 +300,9 @@ public enum ExtensionPackageDigest {
     public struct SHA256Hasher: Sendable {
         public init() {}
         public mutating func update(_ chunk: Data) { _ = chunk }
-        /// EXT-N03: never return a DJB-like non-crypto fingerprint for security digests.
-        public func finalizeHex() -> String {
-            // Unreachable on shipping Apple platforms; keep a distinctive invalid token length ≠ 64
-            // is rejected by callers that require SHA-256 hex.
-            preconditionFailure("CryptoKit unavailable: SHA-256 required (EXT-N03 fail closed)")
+        /// EXT-N03/N08: never return a DJB-like non-crypto fingerprint; never fatal.
+        public func finalizeHex() throws -> String {
+            throw SecurityDigestError.cryptoUnavailable
         }
     }
 #endif

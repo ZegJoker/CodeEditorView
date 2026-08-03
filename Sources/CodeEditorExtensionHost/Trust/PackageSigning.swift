@@ -260,11 +260,22 @@ public enum ExtensionPackageSigner {
     }
 
     /// EXT-N07: write keys via unique temp file → fsync → mode → atomic rename → dir fsync; keep `.bak`.
-    public static func writeKeyPair(_ pair: KeyPair, to directory: URL) throws {
+    /// - Parameter injectFailureAfterBackup: test-only; when true, first private-key write fails after `.bak`.
+    public static func writeKeyPair(
+        _ pair: KeyPair,
+        to directory: URL,
+        injectFailureAfterBackup: Bool = false
+    ) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let privateURL = directory.appendingPathComponent("ed25519.private")
         let publicURL = directory.appendingPathComponent("ed25519.public")
-        try atomicWrite(data: pair.privateKeyRaw, to: privateURL, mode: 0o600, retainBackup: true)
+        try atomicWrite(
+            data: pair.privateKeyRaw,
+            to: privateURL,
+            mode: 0o600,
+            retainBackup: true,
+            injectFailureAfterBackup: injectFailureAfterBackup
+        )
         try atomicWrite(data: pair.publicKeyRaw, to: publicURL, mode: 0o644, retainBackup: true)
         let meta = """
             {"key_id":"\(pair.keyID)","public_key_b64":"\(pair.publicKeyRaw.base64EncodedString())"}
@@ -277,16 +288,16 @@ public enum ExtensionPackageSigner {
         )
     }
 
-    /// Test/fault-injection hook for EXT-N07: when true, atomic write fails after backup and before rename.
-    /// Production code never sets this; only tests may.
-    nonisolated(unsafe) public static var failNextAtomicWriteAfterBackupForTests: Bool = false
-
     /// Atomic key/material write (EXT-N07). On failure after backup, the original destination is preserved.
+    ///
+    /// - Parameter injectFailureAfterBackup: **Test-only** fault injection. Production callers
+    ///   must leave this `false` (default). When true, fails after `.bak` is written so prior key is preserved.
     public static func atomicWrite(
         data: Data,
         to url: URL,
         mode: mode_t,
-        retainBackup: Bool
+        retainBackup: Bool,
+        injectFailureAfterBackup: Bool = false
     ) throws {
         let path = url.path
         let dir = url.deletingLastPathComponent().path
@@ -309,9 +320,8 @@ public enum ExtensionPackageSigner {
             }
         }
 
-        // Injected failure (tests): backup already exists; live key untouched.
-        if failNextAtomicWriteAfterBackupForTests {
-            failNextAtomicWriteAfterBackupForTests = false
+        // Injected failure (tests only via parameter): backup already exists; live key untouched.
+        if injectFailureAfterBackup {
             throw PackageSignatureError.invalidKeyring("injected atomic write failure")
         }
 

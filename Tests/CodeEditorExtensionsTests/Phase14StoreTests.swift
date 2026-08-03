@@ -176,10 +176,20 @@ struct Phase14RevocationTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let manager = ExtensionPackageManager.insecureForTests(installRoot: root)
         await manager.bootstrap()
-        try await manager.setRevocationList(
-            RevocationListDocument(entries: [
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "p14-rev", issuer: "test")
+        await manager.setRevocationAuthorities([authority])
+        var revList = RevocationListDocument(
+            entries: [
                 RevocationEntry(packageID: "com.example.bad", version: "*", reason: "malware")
-            ]))
+            ],
+            sequence: 1,
+            issuer: "test",
+            keyID: "p14-rev",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try revList.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try await manager.setRevocationList(revList)
         let pkg = try P14Fixtures.makePackage(id: "com.example.bad", version: "1.0.0", root: root)
         do {
             _ = try await manager.install(from: pkg)
@@ -200,10 +210,21 @@ struct Phase14RevocationTests {
         let pkg = try P14Fixtures.makePackage(id: "com.example.later", version: "1.0.0", root: root)
         let plan = try await manager.install(from: pkg)
         try await manager.assertCanActivate(id: plan.packageID)
-        try await manager.setRevocationList(
-            RevocationListDocument(entries: [
-                RevocationEntry(packageID: "com.example.later", version: "1.0.0", reason: "post-install revoke")
-            ]))
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "p14-rev2", issuer: "test")
+        await manager.setRevocationAuthorities([authority])
+        var revList = RevocationListDocument(
+            entries: [
+                RevocationEntry(
+                    packageID: "com.example.later", version: "1.0.0", reason: "post-install revoke")
+            ],
+            sequence: 1,
+            issuer: "test",
+            keyID: "p14-rev2",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try revList.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try await manager.setRevocationList(revList)
         do {
             try await manager.assertCanActivate(id: plan.packageID)
             Issue.record("expected post-install revoke deny")

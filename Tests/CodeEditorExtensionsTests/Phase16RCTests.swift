@@ -89,10 +89,20 @@ struct Phase16RollbackRehearsalTests {
         await manager.recoverCorruptedState()
         #expect(!FileManager.default.fileExists(atPath: staging.path))
 
-        try await manager.setRevocationList(
-            RevocationListDocument(entries: [
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "p16-rev", issuer: "test")
+        await manager.setRevocationAuthorities([authority])
+        var revList = RevocationListDocument(
+            entries: [
                 RevocationEntry(packageID: "com.example.rc", version: "*", reason: "rc-rehearsal")
-            ]))
+            ],
+            sequence: 1,
+            issuer: "test",
+            keyID: "p16-rev",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try revList.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try await manager.setRevocationList(revList)
         do {
             try await manager.assertCanActivate(id: plan.packageID)
             Issue.record("expected revoke deny after rehearsal")

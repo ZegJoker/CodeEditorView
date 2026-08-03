@@ -76,10 +76,15 @@ struct EXT_N01_Tests {
             events = ["startup"]
             [runtime]
             kind = "data-only"
+            [language_servers.swift]
+            command = "sourcekit-lsp"
+            languages = ["swift"]
             """
         let (m, diags) = try ExtensionTOMLParser.parse(string: src)
         #expect(!diags.contains { $0.severity == .error })
         #expect(m.name.contains("\n") || m.name.contains("\\n") || m.name == "Line\nBreak")
+        // Dotted section keys must be accepted (CEML, not general TOML claim).
+        #expect(m.languageServers.contains { $0.id == "swift" || $0.command == "sourcekit-lsp" })
         #expect(ExtensionTOMLParser.languageName == "CodeEditor Manifest Language")
         #expect(ExtensionTOMLParser.isGeneralTOML == false)
     }
@@ -135,11 +140,11 @@ struct EXT_N03_Tests {
         #expect(digest != digest2)
     }
 
-    @Test func test_EXT_N03_hasherRejectsNonCryptoFallback() {
-        // Production hasher must not expose DJB-style short digests.
+    @Test func test_EXT_N03_hasherRejectsNonCryptoFallback() throws {
+        // Production hasher must not expose DJB-style short digests; throws when crypto unavailable.
         var h = SHA256Hasher()
         h.update(Data("abc".utf8))
-        let hex = h.finalizeHex()
+        let hex = try h.finalizeHex()
         #expect(hex.count == 64)
         #expect(hex != String(format: "%016llx", 5381))
     }
@@ -366,46 +371,160 @@ struct EXT_N14_Tests {
     }
 }
 
-// MARK: - EXT-N15 revocation freshness
+// MARK: - EXT-N15 revocation freshness / crypto / driver stop
 
 @Suite("EXT-N15 revocation freshness")
 struct EXT_N15_Tests {
-    @Test func test_EXT_N15_staleRevocationRejected() throws {
-        let stale = RevocationListDocument(
+    @Test func test_EXT_N15_staleRevocationRejected() async throws {
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "rev-k1", issuer: "test-issuer")
+        var stale = RevocationListDocument(
             version: 1,
             updatedAt: Date(timeIntervalSince1970: 1),
             entries: [],
             sequence: 1,
-            issuer: "test",
-            expiresAt: Date(timeIntervalSince1970: 2),
-            signature: nil
+            issuer: "test-issuer",
+            keyID: "rev-k1",
+            expiresAt: Date(timeIntervalSince1970: 2)
         )
+        try stale.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
         #expect(stale.isFresh(now: Date(), maxAge: 3600) == false)
+        // setRevocationList must reject stale even with valid signature.
+        let store = try EXTNFixtures.tempRoot("rev-stale")
+        defer { try? FileManager.default.removeItem(at: store) }
+        let mgr = ExtensionPackageManager.insecureForTests(installRoot: store)
+        await mgr.setRevocationAuthorities([authority])
+        await #expect(throws: ExtensionError.self) {
+            try await mgr.setRevocationList(stale)
+        }
     }
 
     @Test func test_EXT_N15_monotonicSequencePreventsRollback() throws {
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "rev-k2", issuer: "test-issuer")
         var current = RevocationListDocument(
             version: 1,
             updatedAt: Date(),
             entries: [],
             sequence: 5,
-            issuer: "test",
+            issuer: "test-issuer",
+            keyID: "rev-k2",
             expiresAt: Date().addingTimeInterval(3600)
         )
-        let older = RevocationListDocument(
+        try current.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        var older = RevocationListDocument(
             version: 1,
             updatedAt: Date(),
             entries: [
                 RevocationEntry(packageID: "com.example.x", version: "*", reason: "bad")
             ],
             sequence: 3,
-            issuer: "test",
+            issuer: "test-issuer",
+            keyID: "rev-k2",
             expiresAt: Date().addingTimeInterval(3600)
         )
+        try older.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
         #expect(throws: ExtensionError.self) {
             try current.applyMonotonicUpdate(older)
         }
         #expect(current.sequence == 5)
+    }
+
+    @Test func test_EXT_N15_signatureRequiredAndVerified() async throws {
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "rev-k3", issuer: "marketplace")
+        let store = try EXTNFixtures.tempRoot("rev-sig")
+        defer { try? FileManager.default.removeItem(at: store) }
+        let mgr = ExtensionPackageManager.insecureForTests(installRoot: store)
+        await mgr.setRevocationAuthorities([authority])
+
+        // Unsigned non-empty list rejected.
+        let unsigned = RevocationListDocument(
+            entries: [RevocationEntry(packageID: "com.example.x", version: "*", reason: "bad")],
+            sequence: 1,
+            issuer: "marketplace",
+            keyID: "rev-k3",
+            expiresAt: Date().addingTimeInterval(3600),
+            signature: nil
+        )
+        await #expect(throws: ExtensionError.self) {
+            try await mgr.setRevocationList(unsigned)
+        }
+
+        // Tampered signature rejected.
+        var list = RevocationListDocument(
+            entries: [RevocationEntry(packageID: "com.example.x", version: "*", reason: "bad")],
+            sequence: 2,
+            issuer: "marketplace",
+            keyID: "rev-k3",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try list.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        list.signature = Data(repeating: 0xAB, count: 64).base64EncodedString()
+        await #expect(throws: ExtensionError.self) {
+            try await mgr.setRevocationList(list)
+        }
+
+        // Valid signature accepted.
+        var good = RevocationListDocument(
+            entries: [RevocationEntry(packageID: "com.example.x", version: "*", reason: "bad")],
+            sequence: 3,
+            issuer: "marketplace",
+            keyID: "rev-k3",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try good.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try good.verify(authorities: [authority])
+        try await mgr.setRevocationList(good)
+        let loaded = await mgr.revocationList()
+        #expect(loaded.sequence == 3)
+        #expect(loaded.signature != nil)
+        #expect(loaded.issuer == "marketplace")
+    }
+
+    @Test func test_EXT_N15_revokeTerminatesDriversImmediately() async throws {
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "rev-k4", issuer: "marketplace")
+        let store = try EXTNFixtures.tempRoot("rev-drv")
+        let src = try EXTNFixtures.tempRoot("rev-drv-src")
+        defer {
+            try? FileManager.default.removeItem(at: store)
+            try? FileManager.default.removeItem(at: src)
+        }
+        try EXTNFixtures.writeMinimalPackage(at: src, id: "com.example.revoke-me")
+        let mgr = ExtensionPackageManager.insecureForTests(installRoot: store)
+        await mgr.setRevocationAuthorities([authority])
+        _ = try await mgr.install(from: src, asDev: false)
+
+        // Capture terminator invocations (simulates ExtensionHostOrchestrator stop).
+        final class Box: @unchecked Sendable {
+            var ids: [ExtensionID] = []
+        }
+        let box = Box()
+        await mgr.onPackagesRevoked { ids in
+            box.ids.append(contentsOf: ids)
+        }
+
+        var list = RevocationListDocument(
+            entries: [
+                RevocationEntry(
+                    packageID: "com.example.revoke-me", version: "1.0.0", reason: "malware")
+            ],
+            sequence: 1,
+            issuer: "marketplace",
+            keyID: "rev-k4",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try list.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try await mgr.setRevocationList(list)
+
+        let last = await mgr.lastRevokedPackageIDs
+        #expect(last.map(\.rawValue).contains("com.example.revoke-me"))
+        #expect(box.ids.map(\.rawValue).contains("com.example.revoke-me"))
+        let snap = await mgr.snapshot
+        #expect(!snap.packages.contains { $0.packageID.rawValue == "com.example.revoke-me" })
+        let pkgs = await mgr.installedPackages()
+        #expect(pkgs.first?.enabled == false)
     }
 }
 
@@ -475,27 +594,28 @@ struct EXT_N16_Tests {
             schema_version = 1
             api_version = "1.0"
             license = "MIT"
+            capabilities = ["panels"]
             [activation]
             events = ["startup"]
             [runtime]
             kind = "data-only"
-            [capabilities]
-            panels = true
             """.write(to: src3.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
         try "MIT".write(to: src3.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
-        // If capabilities table isn't parsed as HostCapability panels, still exercise hostEnvironment gate.
         let mgr3 = ExtensionPackageManager.insecureForTests(installRoot: store3)
         await mgr3.setHostEnvironmentForTests(
             HostEnvironment(apiVersion: .phase9API, capabilities: [.commands], grantedPermissions: [])
         )
-        // Install may succeed; snapshot filtering uses hostEnvironment.
-        if let _ = try? await mgr3.install(from: src3, asDev: false) {
-            let p3 = await mgr3.installedPackages()
-            if let only = p3.first, !only.plan.manifest.requiredHostCapabilities.isEmpty {
-                let ok = await mgr3.isLoadableForSnapshot(only)
-                #expect(ok == false, "missing host capabilities must fail loadable checklist")
-            }
-        }
+        // Install succeeds; loadable checklist must fail on missing host capability `panels`.
+        _ = try await mgr3.install(from: src3, asDev: false)
+        let p3 = await mgr3.installedPackages()
+        #expect(p3.count == 1)
+        let only = p3[0]
+        #expect(only.plan.manifest.requiredHostCapabilities.contains(.panels))
+        let ok = await mgr3.isLoadableForSnapshot(only)
+        #expect(ok == false, "missing host capabilities must fail loadable checklist")
+        await mgr3.rebuildSnapshotForTests()
+        let snapCaps = await mgr3.snapshot
+        #expect(!snapCaps.packages.contains { $0.packageID.rawValue == "com.example.caps" })
 
         // Untrusted verifier → not loadable.
         let store4 = try EXTNFixtures.tempRoot("store-s4")
@@ -619,45 +739,8 @@ struct EXT_N18_Tests {
 @Suite("EXT-N19 package snapshot broadcast")
 struct EXT_N19_Tests {
     @Test func test_EXT_N19_snapshotUsesBroadcastHub() async throws {
-        // Direct hub contract matching ExtensionPackageManager.packageSnapshotStream policy:
-        // dropOldest(capacity:, emitGap: true) + sequenced full snapshots.
-        let hub = AsyncBroadcastHub<ExtensionContributionSnapshot>(maxHistory: 8)
-        let stream = await hub.subscribe(
-            policy: .dropOldest(capacity: 2, emitGap: true),
-            replay: .none
-        )
-        var iterator = stream.makeAsyncIterator()
-
-        await hub.publish(.empty)
-        await hub.publish(.empty)
-        await hub.publish(.empty)
-        await hub.publish(.empty)
-        await hub.publish(.empty)
-
-        var sawValue = false
-        var sawGap = false
-        var lastSeq: UInt64 = 0
-        for _ in 0..<12 {
-            guard let item = await iterator.next() else { break }
-            switch item {
-            case .value(let env):
-                sawValue = true
-                #expect(env.sequence >= 1)
-                lastSeq = max(lastSeq, env.sequence)
-            case .gap(let from, let to):
-                sawGap = true
-                #expect(to > from, "gap contract requires to > from")
-            case .finished:
-                break
-            }
-            if sawValue && sawGap { break }
-        }
-        #expect(sawValue, "hub must deliver sequenced snapshot values")
-        #expect(lastSeq >= 1)
-        // Capacity 2 + 5 publishes forces dropOldest gap under emitGap:true.
-        #expect(sawGap, "dropped items must emit gap markers (resync contract)")
-
-        // Manager uses the same hub type for packageSnapshotStream (compile/runtime wiring).
+        // EXT-N19: force dropOldest **gaps via ExtensionPackageManager.packageSnapshotStream**
+        // consumer backlog (not a standalone AsyncBroadcastHub).
         let store = try EXTNFixtures.tempRoot("store-b")
         let src = try EXTNFixtures.tempRoot("src-b")
         defer {
@@ -665,14 +748,53 @@ struct EXT_N19_Tests {
             try? FileManager.default.removeItem(at: src)
         }
         try EXTNFixtures.writeMinimalPackage(at: src, id: "com.example.hub")
-        let mgr = ExtensionPackageManager.insecureForTests(installRoot: store, maxEventBuffer: 4)
-        // Type of packageSnapshotStream is StreamItem<AsyncBroadcastHub.Envelope> (not bare snapshot).
-        let _: AsyncStream<StreamItem<AsyncBroadcastHub<ExtensionContributionSnapshot>.Envelope>> =
-            await mgr.packageSnapshotStream()
+        // Capacity 2 → delayed consumer + many rebuilds must emit gap markers.
+        let mgr = ExtensionPackageManager.insecureForTests(installRoot: store, maxEventBuffer: 2)
+        let stream = await mgr.packageSnapshotStream()
+
+        // Collector owns the stream; producer floods while consumer is still starting/slow.
+        final class Collect: @unchecked Sendable {
+            var values = 0
+            var gaps = 0
+            var lastSeq: UInt64 = 0
+            var gapFromTo: (UInt64, UInt64)?
+        }
+        let collect = Collect()
+        let collector = Task {
+            for await item in stream {
+                switch item {
+                case .value(let env):
+                    collect.values += 1
+                    collect.lastSeq = max(collect.lastSeq, env.sequence)
+                case .gap(let from, let to):
+                    collect.gaps += 1
+                    collect.gapFromTo = (from, to)
+                case .finished:
+                    return
+                }
+            }
+        }
+
         let genBefore = await mgr.generation
         _ = try await mgr.install(from: src, asDev: false)
+        for _ in 0..<16 {
+            await mgr.rebuildSnapshotForTests()
+        }
         let genAfter = await mgr.generation
-        #expect(genAfter > genBefore, "install must advance snapshot generation via hub publish path")
+        #expect(genAfter > genBefore, "install/rebuild must advance snapshot generation via hub publish")
+
+        // Allow collector to drain buffered/gap events, then cancel (stream never finishes).
+        try await Task.sleep(for: .milliseconds(250))
+        collector.cancel()
+
+        #expect(collect.values >= 1, "packageSnapshotStream must deliver sequenced snapshot values")
+        #expect(collect.lastSeq >= 1)
+        #expect(
+            collect.gaps >= 1,
+            "consumer backlog on packageSnapshotStream must emit gap markers (resync contract)")
+        if let (from, to) = collect.gapFromTo {
+            #expect(to > from, "gap contract requires to > from")
+        }
         let snap = await mgr.snapshot
         #expect(snap.packages.contains { $0.packageID.rawValue == "com.example.hub" })
     }

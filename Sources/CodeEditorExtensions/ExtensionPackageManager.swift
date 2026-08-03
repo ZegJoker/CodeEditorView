@@ -18,6 +18,12 @@ public actor ExtensionPackageManager {
     private let maxEventBuffer: Int
     private var telemetry: StoreTelemetrySink?
     private var revocation: RevocationListDocument = .init()
+    /// Trusted Ed25519 authorities that may issue revocation lists (EXT-N15).
+    private var revocationAuthorities: [RevocationAuthorityKey] = []
+    /// Invoked with package IDs disabled by a newly applied revocation list (EXT-N15 driver stop).
+    private var revokedDriverTerminator: (@Sendable ([ExtensionID]) async -> Void)?
+    /// Last package IDs terminated/disabled by revocation (testable).
+    public private(set) var lastRevokedPackageIDs: [ExtensionID] = []
     private var verifier: (any PackageVerifying)?
     private var installPolicy: ShippingInstallPolicy?
     /// Host environment used for loadable snapshot filtering (EXT-N16).
@@ -230,22 +236,56 @@ public actor ExtensionPackageManager {
 
     public func currentInstallPolicy() -> ShippingInstallPolicy? { installPolicy }
 
-    public func setRevocationList(_ list: RevocationListDocument) throws {
+    /// Configure trusted revocation authorities (EXT-N15). Required for production `setRevocationList`.
+    public func setRevocationAuthorities(_ keys: [RevocationAuthorityKey]) {
+        revocationAuthorities = keys
+    }
+
+    public func revocationAuthorityKeys() -> [RevocationAuthorityKey] { revocationAuthorities }
+
+    /// Register a handler that **immediately** stops running drivers for revoked packages (EXT-N15).
+    /// `ExtensionHostOrchestrator.attachPackageManager` installs this to quarantine/stop instances.
+    public func onPackagesRevoked(_ handler: @escaping @Sendable ([ExtensionID]) async -> Void) {
+        revokedDriverTerminator = handler
+    }
+
+    /// Apply a **signed** revocation list (EXT-N15). Signature is verified fail-closed against
+    /// ``setRevocationAuthorities``; monotonic sequence prevents rollback; revoked packages are
+    /// disabled, removed from snapshots, and drivers are terminated via ``onPackagesRevoked``.
+    public func setRevocationList(_ list: RevocationListDocument) async throws {
+        // Structural + crypto fail-closed (no unsigned marketplace trust).
+        do {
+            try RevocationListCrypto.requireSignedStructure(list)
+        } catch {
+            throw ExtensionError.dataLoad("revocation list incomplete: \(error)")
+        }
+        if list.sequence > 0 || !list.entries.isEmpty {
+            guard !revocationAuthorities.isEmpty else {
+                throw ExtensionError.dataLoad(
+                    "revocation authorities not configured (EXT-N15 fail closed)")
+            }
+            do {
+                try list.verify(authorities: revocationAuthorities)
+            } catch {
+                throw ExtensionError.dataLoad("revocation signature invalid: \(error)")
+            }
+            guard list.isFresh(now: Date(), maxAge: revocationMaxAge) else {
+                throw ExtensionError.dataLoad("revocation list is stale or expired (EXT-N15)")
+            }
+        }
+
         // EXT-N15: monotonic sequence when an epoch is in use.
-        if revocation.sequence > 0, list.sequence > 0 {
+        if revocation.sequence > 0 {
             var current = revocation
             try current.applyMonotonicUpdate(list)
             self.revocation = current
-        } else if revocation.sequence > 0, list.sequence == 0 {
-            // Legacy lists without sequence: accept as operator override but keep epoch.
-            var merged = list
-            merged.sequence = revocation.sequence &+ 1
-            self.revocation = merged
         } else {
             self.revocation = list
         }
         try persistRevocationList()
-        // Immediately drop revoked packages from active snapshots (disable; activate path records denied).
+
+        // Immediately drop revoked packages from active snapshots and terminate drivers.
+        var revoked: [ExtensionID] = []
         for (id, pkg) in packages {
             if revocation.entries.contains(where: {
                 $0.matches(packageID: id.rawValue, version: pkg.currentVersion)
@@ -253,10 +293,15 @@ public actor ExtensionPackageManager {
                 var p = pkg
                 p.enabled = false
                 packages[id] = p
+                revoked.append(id)
             }
         }
+        lastRevokedPackageIDs = revoked
         try persistDurableState()
-        rebuildSnapshot()
+        await rebuildSnapshotPublishing()
+        if !revoked.isEmpty, let terminator = revokedDriverTerminator {
+            await terminator(revoked)
+        }
     }
 
     public func revocationList() -> RevocationListDocument { revocation }
@@ -636,21 +681,29 @@ public actor ExtensionPackageManager {
                 if live.quarantined { continue }
                 let idRoot = packageDirectory(for: id)
                 if var rebuilt = loadInstalledFromPointers(id: id, idRoot: idRoot, base: live) {
-                    // Re-verify staged tree before trusting it as active.
-                    if let v = try? runVerify(packageRoot: rebuilt.installPath), v.quarantined {
+                    // Re-verify staged tree before trusting it as active (EXT-N16 fail-closed).
+                    // Verify failure (throw) or quarantined result → never preserve prior enabled state.
+                    do {
+                        let v = try runVerify(packageRoot: rebuilt.installPath)
+                        if v.quarantined {
+                            rebuilt.quarantined = true
+                            rebuilt.quarantineReason = v.error ?? "recover re-verify failed"
+                            rebuilt.enabled = false
+                            rebuilt.state = .quarantined
+                        } else {
+                            rebuilt.enabled = live.enabled
+                            rebuilt.quarantined = live.quarantined
+                            rebuilt.quarantineReason = live.quarantineReason
+                            rebuilt.state = live.state
+                            rebuilt.trustClass = v.trustClass
+                            rebuilt.contentDigest = live.contentDigest ?? rebuilt.contentDigest
+                            rebuilt.storeKey = live.storeKey ?? rebuilt.storeKey
+                        }
+                    } catch {
                         rebuilt.quarantined = true
-                        rebuilt.quarantineReason = v.error ?? "recover re-verify failed"
+                        rebuilt.quarantineReason = "recover re-verify threw: \(error)"
                         rebuilt.enabled = false
                         rebuilt.state = .quarantined
-                    } else {
-                        // Preserve prior verified state when pointers rebuild cleanly.
-                        rebuilt.enabled = live.enabled
-                        rebuilt.quarantined = live.quarantined
-                        rebuilt.quarantineReason = live.quarantineReason
-                        rebuilt.state = live.state
-                        rebuilt.trustClass = live.trustClass
-                        rebuilt.contentDigest = live.contentDigest ?? rebuilt.contentDigest
-                        rebuilt.storeKey = live.storeKey ?? rebuilt.storeKey
                     }
                     packages[id] = rebuilt
                     continue
@@ -1124,7 +1177,21 @@ public actor ExtensionPackageManager {
         let loadable = packages.values.filter { isLoadableForSnapshot($0) }.map(\.plan)
         snapshot = ImmutableContributionRegistry.build(packages: loadable, generation: generation)
         continuation?.yield(snapshot)
-        Task { await snapshotHub.publish(snapshot) }
+        let snap = snapshot
+        Task { await snapshotHub.publish(snap) }
+    }
+
+    /// Rebuild and **await** hub publish (EXT-N19 deterministic sequencing for revoke/tests).
+    private func rebuildSnapshotPublishing() async {
+        previousSnapshots.append(snapshot)
+        if previousSnapshots.count > 8 {
+            previousSnapshots.removeFirst(previousSnapshots.count - 8)
+        }
+        generation &+= 1
+        let loadable = packages.values.filter { isLoadableForSnapshot($0) }.map(\.plan)
+        snapshot = ImmutableContributionRegistry.build(packages: loadable, generation: generation)
+        continuation?.yield(snapshot)
+        await snapshotHub.publish(snapshot)
     }
 
     /// Full loadable checklist (EXT-N16):
@@ -1179,9 +1246,9 @@ public actor ExtensionPackageManager {
         recoverTransactions()
     }
 
-    /// Recompute contribution snapshot (used by tests after filesystem mutation).
-    public func rebuildSnapshotForTests() {
-        rebuildSnapshot()
+    /// Recompute contribution snapshot and await hub publish (tests / consumer backlog).
+    public func rebuildSnapshotForTests() async {
+        await rebuildSnapshotPublishing()
     }
 
     public func setHostEnvironmentForTests(_ env: HostEnvironment) {
@@ -1379,7 +1446,20 @@ public actor ExtensionPackageManager {
         let url = revocationRoot.appendingPathComponent("list.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         let data = try Data(contentsOf: url)
-        revocation = try JSONDecoder().decode(RevocationListDocument.self, from: data)
+        let loaded = try JSONDecoder().decode(RevocationListDocument.self, from: data)
+        // EXT-N15: fail closed on unsigned/stale durable revocation state.
+        try RevocationListCrypto.requireSignedStructure(loaded)
+        if loaded.sequence > 0 || !loaded.entries.isEmpty {
+            if revocationAuthorities.isEmpty {
+                throw ExtensionError.dataLoad(
+                    "persisted revocation list requires configured authorities (EXT-N15)")
+            }
+            try loaded.verify(authorities: revocationAuthorities)
+            if !loaded.isFresh(now: Date(), maxAge: revocationMaxAge) {
+                throw ExtensionError.dataLoad("persisted revocation list is stale (EXT-N15)")
+            }
+        }
+        revocation = loaded
     }
 }
 

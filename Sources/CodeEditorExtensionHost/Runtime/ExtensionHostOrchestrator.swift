@@ -49,9 +49,16 @@ public actor ExtensionHostOrchestrator {
     }
 
     /// Attach the versioned store manager for install/revocation/quarantine activation gates.
-    public func attachPackageManager(_ manager: ExtensionPackageManager, telemetry: StoreTelemetrySink? = nil) {
+    /// Installs an EXT-N15 driver terminator so revoked packages stop **immediately**.
+    public func attachPackageManager(_ manager: ExtensionPackageManager, telemetry: StoreTelemetrySink? = nil) async {
         storeManager = manager
         activationTelemetry = telemetry
+        await manager.onPackagesRevoked { [weak self] ids in
+            guard let self else { return }
+            for id in ids {
+                await self.quarantine(id: id, reason: "revoked")
+            }
+        }
     }
 
     public func register(package: PreparedExtensionPackage) {

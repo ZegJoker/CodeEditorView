@@ -161,10 +161,20 @@ struct Phase14ActivationGateTests {
         )
         await manager.bootstrap()
         let plan = try await manager.install(from: pkgDir)
-        try await manager.setRevocationList(
-            RevocationListDocument(entries: [
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "p14-act", issuer: "test")
+        await manager.setRevocationAuthorities([authority])
+        var revList = RevocationListDocument(
+            entries: [
                 RevocationEntry(packageID: "com.example.act", version: "*", reason: "blocked")
-            ]))
+            ],
+            sequence: 1,
+            issuer: "test",
+            keyID: "p14-act",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try revList.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try await manager.setRevocationList(revList)
 
         let (services, broker) = try makeServices()
         let orch = ExtensionHostOrchestrator(
@@ -189,6 +199,74 @@ struct Phase14ActivationGateTests {
         } catch {
             #expect(await orch.state(id: plan.packageID) == .quarantined)
         }
+    }
+
+    @Test func test_EXT_N15_liveRevokeStopsRunningDriver() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("p14live-rev-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let pkgDir = root.appendingPathComponent("pkg", isDirectory: true)
+        try FileManager.default.createDirectory(at: pkgDir, withIntermediateDirectories: true)
+        try """
+            id = "com.example.live-rev"
+            name = "LiveRev"
+            version = "1.0.0"
+            schema_version = 1
+            api_version = "1.0"
+            license = "MIT"
+            [activation]
+            events = ["startup"]
+            [runtime]
+            kind = "data-only"
+            """.write(to: pkgDir.appendingPathComponent("extension.toml"), atomically: true, encoding: .utf8)
+        try "MIT".write(to: pkgDir.appendingPathComponent("LICENSE"), atomically: true, encoding: .utf8)
+
+        let manager = ExtensionPackageManager.insecureForTests(
+            installRoot: root,
+            verifier: HostPackageVerifier(policy: .testing)
+        )
+        await manager.bootstrap()
+        let plan = try await manager.install(from: pkgDir)
+
+        let (authority, privateKey) = try RevocationListCrypto.generateAuthorityKeyPair(
+            keyID: "p14-live", issuer: "test")
+        await manager.setRevocationAuthorities([authority])
+
+        let (services, broker) = try makeServices()
+        let orch = ExtensionHostOrchestrator(
+            services: services,
+            broker: broker,
+            policy: .testing
+        )
+        await orch.attachPackageManager(manager)
+        let prepared = PreparedExtensionPackage(
+            packageID: plan.packageID,
+            displayName: plan.displayName,
+            version: plan.version,
+            manifest: plan.manifest,
+            packageRoot: plan.packageRoot,
+            trustClass: .workspaceDev,
+            runtimePreference: .dataOnly
+        )
+        await orch.register(package: prepared)
+        try await orch.start(id: plan.packageID)
+        #expect(await orch.state(id: plan.packageID) == .active)
+
+        var revList = RevocationListDocument(
+            entries: [
+                RevocationEntry(
+                    packageID: "com.example.live-rev", version: "1.0.0", reason: "live-revoke")
+            ],
+            sequence: 1,
+            issuer: "test",
+            keyID: "p14-live",
+            expiresAt: Date().addingTimeInterval(3600)
+        )
+        try revList.sign(privateKeyRaw: privateKey, keyID: authority.keyID, issuer: authority.issuer)
+        try await manager.setRevocationList(revList)
+        // EXT-N15: orchestrator terminator must stop the running driver immediately.
+        #expect(await orch.state(id: plan.packageID) == .quarantined)
     }
 
     @Test func unsignedPackageRootDeniedUnderStrictPolicy() async throws {
