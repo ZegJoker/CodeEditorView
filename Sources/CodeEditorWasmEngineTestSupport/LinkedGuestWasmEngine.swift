@@ -196,6 +196,11 @@ final class ByteMemory: WasmMemoryView, @unchecked Sendable {
     }
     func grow(pages: Int) throws -> Int {
         let old = data.count / 65536
+        let next = data.count + pages * 65536
+        // Test support: cap at 16 MiB to avoid accidental OOM in dual-run.
+        if next > 16 * 1024 * 1024 {
+            throw WasmEngineError.memoryLimitExceeded
+        }
         data.append(Data(count: pages * 65536))
         return old
     }

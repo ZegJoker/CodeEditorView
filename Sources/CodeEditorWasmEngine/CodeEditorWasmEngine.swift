@@ -21,6 +21,8 @@ public protocol WasmMemoryView: Sendable {
     var size: Int { get }
     func read(offset: Int, length: Int) throws -> Data
     func write(offset: Int, data: Data) throws
+    /// Grow linear memory by `pages` (64 KiB each). Returns previous page count.
+    /// Must enforce engine/host limits (WASM-N05); never soft-succeed.
     func grow(pages: Int) throws -> Int
 }
 
@@ -28,7 +30,9 @@ public protocol WasmMemoryView: Sendable {
 public struct WasmHostImports: Sendable {
     public var send: @Sendable (UnsafeRawPointer?, Int32) -> Int32
     public var log: @Sendable (Int32, UnsafeRawPointer?, Int32) -> Void
+    /// Monotonic milliseconds as Int64 (no Int32 truncation). WASM-N07.
     public var monotonicMillis: @Sendable () -> Int64
+    /// Cancellation probe keyed by request id high/low (WASM-N12). Never a sticky global flag.
     public var shouldCancel: @Sendable (Int64, Int64) -> Int32
 
     public init(
@@ -82,12 +86,55 @@ public enum CoreWasmImport: String, Sendable, CaseIterable {
     public static let moduleName = "codeeditor"
 }
 
+/// Typed poll statuses (WASM-N13). Unknown values are ABI errors.
+public enum CoreWasmPollStatus: Int32, Sendable, Hashable, CaseIterable {
+    case idle = 0
+    case guestError = 1
+    case progress = 2
+    case cancelled = 3
+    case backpressure = 4
+    case completed = 5
+    case fatal = 6
+
+    public static func parse(_ raw: Int32) throws -> CoreWasmPollStatus {
+        guard let s = CoreWasmPollStatus(rawValue: raw) else {
+            throw WasmEngineError.pollStatusUnknown(raw)
+        }
+        if s == .fatal {
+            throw WasmEngineError.pollStatusFatal(raw)
+        }
+        return s
+    }
+}
+
 public enum CoreWasmABI {
     public static let version: Int32 = 1
 
-    public static let statusOK: Int32 = 0
-    public static let statusError: Int32 = 1
-    public static let statusBusy: Int32 = 2
-    public static let statusCancelled: Int32 = 3
-    public static let statusBackpressure: Int32 = 4
+    public static let statusOK: Int32 = CoreWasmPollStatus.idle.rawValue
+    public static let statusError: Int32 = CoreWasmPollStatus.guestError.rawValue
+    public static let statusBusy: Int32 = CoreWasmPollStatus.progress.rawValue
+    public static let statusCancelled: Int32 = CoreWasmPollStatus.cancelled.rawValue
+    public static let statusBackpressure: Int32 = CoreWasmPollStatus.backpressure.rawValue
+    public static let statusCompleted: Int32 = CoreWasmPollStatus.completed.rawValue
+    public static let statusFatal: Int32 = CoreWasmPollStatus.fatal.rawValue
+
+    /// Required function exports for core ABI activation.
+    public static let requiredExports: [CoreWasmExport] = [
+        .abiVersion, .alloc, .dealloc, .start, .receive, .poll, .stop,
+    ]
+
+    public static let requiredMemoryExport = "memory"
+}
+
+/// Serial runtime gate: one instance, one executor (WASM-N04).
+public actor WasmSerialRuntime {
+    public init() {}
+
+    public func run<T: Sendable>(_ body: @Sendable () throws -> T) rethrows -> T {
+        try body()
+    }
+
+    public func runAsync<T: Sendable>(_ body: @Sendable () async throws -> T) async rethrows -> T {
+        try await body()
+    }
 }

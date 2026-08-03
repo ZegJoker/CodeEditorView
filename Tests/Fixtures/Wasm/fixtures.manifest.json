@@ -3,9 +3,19 @@
     "malformed.wasm": "invalid magic/body",
     "missing_export.wasm": "missing poll export",
     "conformance.wasm": "happy path linked guest",
-    "infinite_loop.wasm": "poll never completes",
+    "infinite_loop.wasm": "poll never completes (legacy cooperative fixture)",
     "memory_growth.wasm": "memory pressure",
     "flood_host_send.wasm": "host_send flood",
     "bad_schema_start.wasm": "schema mismatch at start"
-  }
+  },
+  "builder_generators": {
+    "WasmModuleBuilder.pureNoncooperativeLoopModule": "WASM-N01 pure loop { br 0 } with no host calls in body",
+    "WasmModuleBuilder.memoryGrowHostileModule": "WASM-N02/N16 unbounded memory.grow loop",
+    "WasmModuleBuilder.missingMemoryExportModule": "WASM-N03 no memory export",
+    "WasmModuleBuilder.hostSendFloodModule": "WASM-N10/N16 host_send flood",
+    "WasmModuleBuilder.logFloodModule": "WASM-N11/N16 host_log flood",
+    "WasmModuleBuilder.infiniteLoopModule": "cooperative cancel loop",
+    "WasmModuleBuilder.conformanceModule": "full core ABI stubs"
+  },
+  "process_isolation": "WASM-N16 tests run pure noncooperative invoke under outer kill timeout so a failed containment cannot hang the test runner"
 }

@@ -14,6 +14,7 @@ required=(
   "memory_growth.wasm"
   "flood_host_send.wasm"
   "bad_schema_start.wasm"
+  "fixtures.manifest.json"
 )
 
 missing=0

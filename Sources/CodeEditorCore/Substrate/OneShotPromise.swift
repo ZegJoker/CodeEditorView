@@ -124,6 +124,11 @@ public final class OneShotPromise<Value: Sendable>: @unchecked Sendable {
         complete(.failure(error))
     }
 
+    /// Non-blocking snapshot of the completed result, if any (WASM-N09 request registration).
+    public var resultIfCompleted: Result<Value, any Error>? {
+        takeCompletedResult()
+    }
+
     public func wait() async throws -> Value {
         try Task.checkCancellation()
         if let completed = takeCompletedResult() {

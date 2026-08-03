@@ -2238,9 +2238,11 @@
       "severity_raw": "P0 isolation failure",
       "title": "watchdog cannot interrupt a noncooperative Wasm loop",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N01_pureNoncooperativeLoopTerminatesWithinDeadline"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N02",
@@ -2248,9 +2250,12 @@
       "severity_raw": "P0",
       "title": "memory growth is not continuously limited",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N02_memoryGrowthContinuouslyLimited",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N02_hostGrowRespectsLimiter"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N03",
@@ -2258,9 +2263,11 @@
       "severity_raw": "P0",
       "title": "missing memory must fail ABI validation",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N03_missingMemoryFailsABIValidation"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N04",
@@ -2268,9 +2275,11 @@
       "severity_raw": "P0 memory/concurrency safety",
       "title": "calls and memory access are not clearly serialized",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N04_callsSerializedOnInstance"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N05",
@@ -2278,9 +2287,11 @@
       "severity_raw": "P1",
       "title": "memory view growth API is incomplete",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N05_memoryGrowIsRealNotStub"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N06",
@@ -2288,9 +2299,11 @@
       "severity_raw": "P0 ABI correctness",
       "title": "unsupported Wasm values must not coerce to zero",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N06_unsupportedValuesDoNotCoerceToZero"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N07",
@@ -2298,9 +2311,11 @@
       "severity_raw": "P1",
       "title": "monotonic clock is not monotonic and may truncate",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N07_monotonicClockIsMonotonicAndWide"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N08",
@@ -2308,9 +2323,11 @@
       "severity_raw": "P0",
       "title": "session-wide deadline expires all future calls",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N08_perRequestDeadlinesNotSessionWide"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N09",
@@ -2318,9 +2335,11 @@
       "severity_raw": "P0",
       "title": "request continuation is installed by an unstructured task",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N09_requestUsesOneShotPromiseRegistration"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N10",
@@ -2328,9 +2347,11 @@
       "severity_raw": "P0/P1",
       "title": "configured limits are not enforced",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N10_configuredLimitsEnforced"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N11",
@@ -2338,9 +2359,11 @@
       "severity_raw": "P1",
       "title": "logs are unbounded",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N11_logsAreBoundedWithTruncation"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N12",
@@ -2348,9 +2371,11 @@
       "severity_raw": "P0 correctness",
       "title": "cancellation is global and never reset",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N12_cancellationIsKeyedByRequestID"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N13",
@@ -2358,9 +2383,11 @@
       "severity_raw": "P1",
       "title": "poll return status is ignored",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N13_unknownPollStatusIsABIError"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N14",
@@ -2368,9 +2395,11 @@
       "severity_raw": "P1",
       "title": "guest allocations are leaked",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N14_guestAllocationsPairedWithDealloc"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N15",
@@ -2378,9 +2407,12 @@
       "severity_raw": "P1 release truth",
       "title": "linked Swift guest simulation must be test-only",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N15_linkedGuestIsTestSupportOnly",
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N15_productionFactoryIsWasmKitOnly"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WASM-N16",
@@ -2388,9 +2420,12 @@
       "severity_raw": "P0 before Stable",
       "title": "adversarial corpus needs truly hostile modules",
       "phase": 9,
-      "status": "open",
-      "regression_tests": [],
-      "notes": ""
+      "status": "fixed",
+      "regression_tests": [
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_hostileCorpusFixturesExist",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_processIsolatedHostileLoopContained"
+      ],
+      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
     },
     {
       "id": "WB-N01",

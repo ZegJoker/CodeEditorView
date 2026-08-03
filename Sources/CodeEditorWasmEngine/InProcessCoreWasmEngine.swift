@@ -63,7 +63,10 @@ final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
         self.imports = imports
         self.limits = limits
         self.kind = kind
-        self.memoryView = InProcessMemory(size: min(limits.maxLinearMemoryBytes, 256 * 1024))
+        self.memoryView = InProcessMemory(
+            size: min(limits.maxLinearMemoryBytes, 256 * 1024),
+            maxBytes: limits.maxLinearMemoryBytes
+        )
         guest.attach(memory: memoryView, imports: imports)
     }
 
@@ -90,7 +93,9 @@ final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
 
     func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
         if isInterrupted { throw WasmEngineError.interrupted }
-        if Date().timeIntervalSince(meters.wallTimeStarted) > durationSeconds(limits.maxWallTime) {
+        let elapsedNanos = WasmMonotonicClock.nowNanos() - meters.wallTimeStartedNanos
+        let limitNanos = durationNanos(limits.maxWallTime)
+        if elapsedNanos > limitNanos {
             interrupt()
             throw WasmEngineError.deadlineExceeded
         }
@@ -143,16 +148,20 @@ final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
         return body()
     }
 
-    private func durationSeconds(_ d: Duration) -> TimeInterval {
+    private func durationNanos(_ d: Duration) -> Int64 {
         let c = d.components
-        return TimeInterval(c.seconds) + TimeInterval(c.attoseconds) / 1e18
+        return c.seconds * 1_000_000_000 + c.attoseconds / 1_000_000_000
     }
 }
 
 final class InProcessMemory: WasmMemoryView, @unchecked Sendable {
     private var storage: Data
     private let lock = NSLock()
-    init(size: Int) { self.storage = Data(count: max(65536, size)) }
+    private let maxBytes: Int
+    init(size: Int, maxBytes: Int = 16 * 1024 * 1024) {
+        self.storage = Data(count: max(65536, size))
+        self.maxBytes = maxBytes
+    }
     var size: Int {
         lock.lock()
         defer { lock.unlock() }
@@ -178,6 +187,10 @@ final class InProcessMemory: WasmMemoryView, @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         let old = storage.count / 65536
+        let next = storage.count + pages * 65536
+        if next > maxBytes {
+            throw WasmEngineError.memoryLimitExceeded
+        }
         storage.append(Data(count: pages * 65536))
         return old
     }
