@@ -80,7 +80,7 @@ struct Phase11ABITests {
     }
 
     @Test func infiniteLoopContained() async throws {
-        let engine = InProcessCoreWasmEngine()
+        let engine = WasmTestEngines.inProcess()
         let session = CoreWasmABISession(
             engine: engine,
             module: WasmModuleBuilder.infiniteLoopModule(),

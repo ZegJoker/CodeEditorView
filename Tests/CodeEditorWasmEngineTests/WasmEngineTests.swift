@@ -1,5 +1,6 @@
 import CodeEditorExtensionProtocol
 import CodeEditorWasmEngine
+import CodeEditorWasmEngineTestSupport
 import Foundation
 import Testing
 

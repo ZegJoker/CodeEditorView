@@ -2240,9 +2240,10 @@
       "phase": 9,
       "status": "fixed",
       "regression_tests": [
-        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N01_pureNoncooperativeLoopTerminatesWithinDeadline"
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N01_pureNoncooperativeLoopTerminatesWithinDeadline",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N01_loopWithoutCancelImportFailsClosed"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N02",
@@ -2255,7 +2256,7 @@
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N02_memoryGrowthContinuouslyLimited",
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N02_hostGrowRespectsLimiter"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N03",
@@ -2267,7 +2268,7 @@
       "regression_tests": [
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N03_missingMemoryFailsABIValidation"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N04",
@@ -2277,9 +2278,10 @@
       "phase": 9,
       "status": "fixed",
       "regression_tests": [
-        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N04_callsSerializedOnInstance"
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N04_callsSerializedOnInstance",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N04_callAndMemoryShareSerialRuntime"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N05",
@@ -2291,7 +2293,7 @@
       "regression_tests": [
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N05_memoryGrowIsRealNotStub"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N06",
@@ -2303,7 +2305,7 @@
       "regression_tests": [
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N06_unsupportedValuesDoNotCoerceToZero"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N07",
@@ -2315,7 +2317,7 @@
       "regression_tests": [
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N07_monotonicClockIsMonotonicAndWide"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N08",
@@ -2327,7 +2329,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N08_perRequestDeadlinesNotSessionWide"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N09",
@@ -2339,7 +2341,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N09_requestUsesOneShotPromiseRegistration"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N10",
@@ -2349,9 +2351,12 @@
       "phase": 9,
       "status": "fixed",
       "regression_tests": [
-        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N10_configuredLimitsEnforced"
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N10_configuredLimitsEnforced",
+        "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N10_maxConcurrentRequestsEnforced",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N10_maxInstancesEnforced",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N10_capabilityCallQuotaOnHostSend"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N11",
@@ -2363,7 +2368,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N11_logsAreBoundedWithTruncation"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N12",
@@ -2375,7 +2380,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N12_cancellationIsKeyedByRequestID"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N13",
@@ -2387,7 +2392,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N13_unknownPollStatusIsABIError"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N14",
@@ -2399,7 +2404,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N14_guestAllocationsPairedWithDealloc"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N15",
@@ -2412,7 +2417,7 @@
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N15_linkedGuestIsTestSupportOnly",
         "Tests/CodeEditorExtensionHostTests/WASMNSessionAuditTests.swift::test_WASM_N15_productionFactoryIsWasmKitOnly"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WASM-N16",
@@ -2423,9 +2428,10 @@
       "status": "fixed",
       "regression_tests": [
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_hostileCorpusFixturesExist",
+        "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_hostileModulesContainedInProcess",
         "Tests/CodeEditorWasmEngineTests/WASMNAuditTests.swift::test_WASM_N16_processIsolatedHostileLoopContained"
       ],
-      "notes": "2026-08-03 TDD: loop instrumentation + fuel/wall interrupt (N01); continuous ResourceLimiter memory/table (N02); missing memory export fail-closed (N03); WasmSerialRuntime (N04); real memory.grow trampoline (N05); unsupported Value throws (N06); ContinuousClock Int64 millis (N07); per-request deadlines (N08); OneShotPromise registration (N09); quotas enforced (N10); bounded log ring (N11); request-keyed cancel (N12); poll status enum (N13); alloc/dealloc pairing (N14); LinkedGuest test-support only (N15); hostile corpus + process-isolated harness (N16)."
+      "notes": "2026-08-03 verifier residual: shared WasmSerialRuntime for call+memory (no DispatchQueue.global); asI32/asI64 fail-closed; maxInstances+capability quotas enforced; real grow success; fromWasmKit v128/ref throws; OneShotPromise pending proof; concurrent keyed cancel; outstandingGuestAllocations metric; InProcess\u2192TestSupport; keyed cancel only; instrumenter fail-closed without cancel import; codeeditor-wasm-harness process isolation + deep_recursion/huge_table/oob/capability_flood fixtures."
     },
     {
       "id": "WB-N01",

@@ -10,10 +10,15 @@ required=(
   "conformance.wasm"
   "malformed.wasm"
   "infinite_loop.wasm"
+  "infinite_loop_pure.wasm"
   "missing_export.wasm"
   "memory_growth.wasm"
   "flood_host_send.wasm"
   "bad_schema_start.wasm"
+  "deep_recursion.wasm"
+  "huge_table.wasm"
+  "oob_memory.wasm"
+  "capability_flood.wasm"
   "fixtures.manifest.json"
 )
 

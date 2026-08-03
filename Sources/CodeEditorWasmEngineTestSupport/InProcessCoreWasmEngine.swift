@@ -1,7 +1,10 @@
+import CodeEditorWasmEngine
 import Foundation
 
 /// Engine that runs ``WasmGuestRuntime``-compatible ABI logic in-process.
-/// Used for dual-run / concurrency proofs; WasmKit backend runs true Wasm modules.
+///
+/// **Test support only** (WASM-N15 residual): not isolation evidence and not a production
+/// default. Lives in ``CodeEditorWasmEngineTestSupport``; WasmKit is the production path.
 ///
 /// Module bytes must start with `\0asm` and pass size limits; content is treated as a
 /// capability token (conformance / malicious markers) selecting guest behavior.

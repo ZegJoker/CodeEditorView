@@ -9,14 +9,15 @@ import os
 
 /// **Real WasmKit-backed engine** — submitted module bytes determine executed behavior.
 ///
-/// Hard containment (WASM-N01…N07):
+/// Hard containment (WASM-N01…N07, N10):
 /// - Loop instrumentation so pure noncooperative loops observe cancel/interrupt
 /// - Continuous ``ResourceLimiter`` for memory/table growth
 /// - Required memory export (no fabricated detached memory)
-/// - Serial actor executor for call/memory access
+/// - **Shared** ``WasmSerialRuntime`` for call **and** memory (WASM-N04)
 /// - Real memory.grow via trampoline module sharing guest memory
 /// - Unsupported values throw (never coerce to zero)
 /// - Monotonic Int64 millis host import
+/// - `maxInstances` / capability-call quotas enforced
 public struct WasmKitEngine: CodeEditorWasmEngine {
     public init() {}
 
@@ -53,11 +54,11 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
         let report = try WasmModuleInstrumenter.validateStructure(module: module, limits: limits)
         #if canImport(WasmKit)
             // Instrument pure loops so wall-time interrupt is observed (WASM-N01).
+            // Uninstrumentable modules fail closed (or require process isolation).
             let instrumented: Data
             do {
                 instrumented = try WasmModuleInstrumenter.instrumentLoopsForCancellation(module)
             } catch {
-                // Uninstrumentable modules require process isolation — fail closed when not available.
                 if limits.requireProcessIsolation {
                     throw WasmEngineError.processIsolationRequired
                 }
@@ -108,7 +109,7 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
         }
     }
 
-    // MARK: - Memory holder for host import closures
+    // MARK: - Memory / cancel / fuel holder
 
     final class GuestMemoryHolder: @unchecked Sendable {
         private let lock = NSLock()
@@ -119,6 +120,11 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
         private var _cancelled: Set<String> = []
         private var _fuel: UInt64 = 0
         private var _maxFuel: UInt64 = .max
+        let capabilityMeter: WasmCapabilityMeter
+
+        init(capabilityMeter: WasmCapabilityMeter) {
+            self.capabilityMeter = capabilityMeter
+        }
 
         func setMemory(_ memory: Memory) {
             lock.lock()
@@ -242,7 +248,9 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
         private let limits: WasmResourceLimits
         private let memoryHolder: GuestMemoryHolder
         private let limiter: WasmKitResourceLimiter
-        private let runtime = WasmSerialRuntime()
+        /// Single serial runtime shared by call + memory (WASM-N04).
+        private let runtime: WasmSerialRuntime
+        private let registryAcquired: Bool
         private let state = OSAllocatedUnfairLock(
             initialState: (interrupted: false, meters: WasmMeters())
         )
@@ -252,6 +260,7 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             var m = state.withLock { $0.meters }
             m.fuelConsumed = memoryHolder.fuelConsumed
             m.memoryBytes = memoryView.size
+            m.capabilityCalls = memoryHolder.capabilityMeter.totalCalls
             return m
         }
         var isInterrupted: Bool {
@@ -264,65 +273,89 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             limits: WasmResourceLimits,
             report: WasmModuleInstrumenter.ValidationReport
         ) async throws -> WasmKitInstance {
-            let module: Module
+            // WASM-N10: maxInstances
+            try WasmInstanceRegistry.shared.acquire(maxInstances: limits.maxInstances)
+
             do {
-                module = try parseWasm(bytes: Array(moduleBytes))
-            } catch {
-                throw WasmEngineError.invalidModule(String(describing: error))
-            }
+                let module: Module
+                do {
+                    module = try parseWasm(bytes: Array(moduleBytes))
+                } catch {
+                    WasmInstanceRegistry.shared.release()
+                    throw WasmEngineError.invalidModule(String(describing: error))
+                }
 
-            var config = EngineConfiguration()
-            config.stackSize = limits.maxStackBytes
-            let engine = Engine(configuration: config)
-            let store = Store(engine: engine)
-            let limiter = WasmKitResourceLimiter(
-                maxMemoryBytes: limits.maxLinearMemoryBytes,
-                maxTableElements: limits.maxTableElements
-            )
-            store.resourceLimiter = limiter
+                var config = EngineConfiguration()
+                config.stackSize = limits.maxStackBytes
+                let engine = Engine(configuration: config)
+                let store = Store(engine: engine)
+                let limiter = WasmKitResourceLimiter(
+                    maxMemoryBytes: limits.maxLinearMemoryBytes,
+                    maxTableElements: limits.maxTableElements
+                )
+                store.resourceLimiter = limiter
 
-            let holder = GuestMemoryHolder()
-            holder.configureFuel(limits.maxFuel)
+                let capMeter = WasmCapabilityMeter(
+                    maxTotal: limits.maxCapabilityCalls,
+                    maxPerSecond: limits.maxCapabilityCallsPerSecond
+                )
+                let holder = GuestMemoryHolder(capabilityMeter: capMeter)
+                holder.configureFuel(limits.maxFuel)
 
-            let hostImports = try buildHostImports(store: store, host: host, holder: holder)
-            let instance: Instance
-            do {
-                instance = try module.instantiate(store: store, imports: hostImports)
-            } catch {
-                throw WasmEngineError.instantiationFailed(String(describing: error))
-            }
+                let hostImports = try buildHostImports(store: store, host: host, holder: holder)
+                let instance: Instance
+                do {
+                    instance = try module.instantiate(store: store, imports: hostImports)
+                } catch {
+                    WasmInstanceRegistry.shared.release()
+                    throw WasmEngineError.instantiationFailed(String(describing: error))
+                }
 
-            // WASM-N03: required memory export — never fabricate detached memory.
-            guard let mem = instance.exports[memory: CoreWasmABI.requiredMemoryExport] else {
-                throw WasmEngineError.missingExport(CoreWasmABI.requiredMemoryExport)
-            }
-            if mem.byteCount > limits.maxLinearMemoryBytes {
-                throw WasmEngineError.memoryLimitExceeded
-            }
-            if limits.requireMemoryMaximum, report.memoryMaxPages == nil {
-                // Engine limiter imposes continuous max — acceptable per audit when limiter present.
-                // Still fail if min already exceeds.
+                // WASM-N03: required memory export — never fabricate detached memory.
+                guard let mem = instance.exports[memory: CoreWasmABI.requiredMemoryExport] else {
+                    WasmInstanceRegistry.shared.release()
+                    throw WasmEngineError.missingExport(CoreWasmABI.requiredMemoryExport)
+                }
                 if mem.byteCount > limits.maxLinearMemoryBytes {
+                    WasmInstanceRegistry.shared.release()
                     throw WasmEngineError.memoryLimitExceeded
                 }
-            }
+                if limits.requireMemoryMaximum, report.memoryMaxPages == nil {
+                    if mem.byteCount > limits.maxLinearMemoryBytes {
+                        WasmInstanceRegistry.shared.release()
+                        throw WasmEngineError.memoryLimitExceeded
+                    }
+                }
 
-            holder.setMemory(mem)
+                holder.setMemory(mem)
 
-            return WasmKitInstance(
-                engine: engine,
-                store: store,
-                instance: instance,
-                memoryView: WasmKitMemoryView(
-                    memory: mem,
+                // One serial runtime shared by calls and memory view (WASM-N04).
+                let runtime = WasmSerialRuntime(label: "codeeditor.wasm.instance.\(UUID().uuidString)")
+
+                return WasmKitInstance(
+                    engine: engine,
                     store: store,
+                    instance: instance,
+                    memoryView: WasmKitMemoryView(
+                        memory: mem,
+                        store: store,
+                        limits: limits,
+                        runtime: runtime
+                    ),
                     limits: limits,
-                    runtime: WasmSerialRuntime()
-                ),
-                limits: limits,
-                memoryHolder: holder,
-                limiter: limiter
-            )
+                    memoryHolder: holder,
+                    limiter: limiter,
+                    runtime: runtime,
+                    registryAcquired: true
+                )
+            } catch {
+                // acquire already released on known failure paths; rethrow others after release
+                if error is WasmEngineError {
+                    throw error
+                }
+                WasmInstanceRegistry.shared.release()
+                throw error
+            }
         }
 
         private init(
@@ -332,7 +365,9 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             memoryView: WasmKitMemoryView,
             limits: WasmResourceLimits,
             memoryHolder: GuestMemoryHolder,
-            limiter: WasmKitResourceLimiter
+            limiter: WasmKitResourceLimiter,
+            runtime: WasmSerialRuntime,
+            registryAcquired: Bool
         ) {
             self.engine = engine
             self.store = store
@@ -341,16 +376,25 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             self.limits = limits
             self.memoryHolder = memoryHolder
             self.limiter = limiter
+            self.runtime = runtime
+            self.registryAcquired = registryAcquired
         }
 
-        func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
-            try await runtime.runAsync {
-                try await self.callSerialized(name, args: args)
+        deinit {
+            if registryAcquired {
+                WasmInstanceRegistry.shared.release()
             }
         }
 
-        private func callSerialized(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
-            // WASM-N04: WasmSerialRuntime actor queues concurrent callers — no concurrent store access.
+        func call(_ name: String, args: [WasmValue]) async throws -> [WasmValue] {
+            // Enter serial runtime first so concurrent callers and memory ops queue (WASM-N04).
+            try await runtime.runAsync {
+                try self.callSerialized(name, args: args)
+            }
+        }
+
+        /// Invoke on the serial queue (no free-threaded DispatchQueue.global hop).
+        private func callSerialized(_ name: String, args: [WasmValue]) throws -> [WasmValue] {
             if isInterrupted {
                 throw WasmEngineError.interrupted
             }
@@ -362,62 +406,38 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             let holder = memoryHolder
             holder.configureFuel(limits.maxFuel)
 
-            final class InvokeBox: @unchecked Sendable {
-                let fn: Function
-                let values: [Value]
-                init(fn: Function, values: [Value]) {
-                    self.fn = fn
-                    self.values = values
-                }
-                func run() throws -> [Value] { try fn.invoke(values) }
-            }
-            let box = InvokeBox(fn: fn, values: values)
+            // Wall-time interrupt from a side thread while invoke runs on the serial queue.
+            // Instrumented pure loops observe the interrupt flag via host_should_cancel probes.
+            let interruptBox = holder
+            let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
+            let deadlineNanos = durationToNanos(wall)
+            timer.schedule(deadline: .now() + .nanoseconds(Int(min(deadlineNanos, Int64(Int.max)))))
+            timer.setEventHandler { interruptBox.interrupt() }
+            timer.resume()
+            defer { timer.cancel() }
 
-            let results: [Value] = try await withThrowingTaskGroup(of: [Value].self) { group in
-                group.addTask {
-                    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[Value], Error>) in
-                        DispatchQueue.global(qos: .userInitiated).async {
-                            do {
-                                cont.resume(returning: try box.run())
-                            } catch {
-                                cont.resume(throwing: error)
-                            }
-                        }
-                    }
-                }
-                group.addTask {
-                    try await Task.sleep(for: wall)
-                    holder.interrupt()
+            let results: [Value]
+            do {
+                results = try fn.invoke(values)
+            } catch {
+                if holder.isInterrupted {
                     throw WasmEngineError.deadlineExceeded
                 }
-                do {
-                    let first = try await group.next()!
-                    group.cancelAll()
-                    // Drain remaining so invoke worker is not abandoned mid-flight after interrupt returns.
-                    while let _ = try? await group.next() {}
-                    return first
-                } catch {
-                    group.cancelAll()
-                    // Wait briefly for instrumented guest to observe interrupt and exit.
-                    let shutdown = ContinuousClock.now + .milliseconds(500)
-                    while ContinuousClock.now < shutdown {
-                        if case .some = try? await group.next() {
-                            break
-                        }
-                        try? await Task.sleep(for: .milliseconds(5))
-                    }
-                    if holder.isInterrupted || self.isInterrupted {
-                        if error is WasmEngineError { throw error }
-                        throw WasmEngineError.interrupted
-                    }
-                    throw error
-                }
+                throw WasmEngineError.trap(String(describing: error))
             }
 
+            if holder.isInterrupted {
+                // Completed after interrupt was raised (fuel/wall) — still fail closed.
+                throw WasmEngineError.interrupted
+            }
+
+            // Do not call memoryView.size here — it re-enters the serial queue (deadlock).
+            let memBytes = memoryView.sizeUnlocked
             state.withLock {
                 $0.meters.budgetConsumed += 1
-                $0.meters.memoryBytes = memoryView.size
+                $0.meters.memoryBytes = memBytes
                 $0.meters.fuelConsumed = holder.fuelConsumed
+                $0.meters.capabilityCalls = holder.capabilityMeter.totalCalls
             }
             return try results.map { try WasmValue.fromWasmKit($0) }
         }
@@ -447,6 +467,11 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             memoryHolder.clearActiveRequest()
         }
 
+        private func durationToNanos(_ d: Duration) -> Int64 {
+            let c = d.components
+            return c.seconds * 1_000_000_000 + c.attoseconds / 1_000_000_000
+        }
+
         private static func buildHostImports(
             store: Store,
             host: WasmHostImports,
@@ -455,8 +480,12 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             var imports = Imports()
 
             let send = Function(store: store, parameters: [.i32, .i32], results: [.i32]) { _, args in
-                let ptr = Int(Int32(bitPattern: args[0].asI32))
-                let len = Int32(bitPattern: args[1].asI32)
+                // WASM-N10: capability call quota (host_send is a capability).
+                if !holder.capabilityMeter.record() {
+                    return [.i32(UInt32(bitPattern: CoreWasmABI.statusBackpressure))]
+                }
+                let ptr = Int(try args[0].requireI32())
+                let len = Int32(bitPattern: try args[1].requireI32())
                 if len < 0 {
                     return [.i32(UInt32(bitPattern: CoreWasmABI.statusError))]
                 }
@@ -476,9 +505,12 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             }
 
             let log = Function(store: store, parameters: [.i32, .i32, .i32], results: []) { _, args in
-                let level = Int32(bitPattern: args[0].asI32)
-                let ptr = Int(Int32(bitPattern: args[1].asI32))
-                let len = Int32(bitPattern: args[2].asI32)
+                if !holder.capabilityMeter.record() {
+                    return []
+                }
+                let level = Int32(bitPattern: try args[0].requireI32())
+                let ptr = Int(try args[1].requireI32())
+                let len = Int32(bitPattern: try args[2].requireI32())
                 if len <= 0 {
                     host.log(level, nil, 0)
                     return []
@@ -498,8 +530,8 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             }
 
             let cancel = Function(store: store, parameters: [.i64, .i64], results: [.i32]) { _, args in
-                let a = Int64(bitPattern: args[0].asI64)
-                let b = Int64(bitPattern: args[1].asI64)
+                let a = Int64(bitPattern: try args[0].requireI64())
+                let b = Int64(bitPattern: try args[1].requireI64())
                 let rc = holder.shouldCancel(a: a, b: b, host: host)
                 return [.i32(UInt32(bitPattern: rc))]
             }
@@ -514,14 +546,14 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
         }
     }
 
-    // MARK: - Memory view with real grow (WASM-N05)
+    // MARK: - Memory view with real grow (WASM-N05) + serial runtime (WASM-N04)
 
     final class WasmKitMemoryView: WasmMemoryView, @unchecked Sendable {
         private let memory: Memory
         private let store: Store
         private let limits: WasmResourceLimits
+        /// Same runtime as the owning instance's `call` path.
         private let runtime: WasmSerialRuntime
-        private let lock = NSLock()
 
         init(memory: Memory, store: Store, limits: WasmResourceLimits, runtime: WasmSerialRuntime) {
             self.memory = memory
@@ -530,83 +562,84 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             self.runtime = runtime
         }
 
+        /// Byte size without taking the serial queue (call path already holds it).
+        var sizeUnlocked: Int { memory.byteCount }
+
         var size: Int {
-            lock.lock()
-            defer { lock.unlock() }
-            return memory.byteCount
+            runtime.runSync { memory.byteCount }
         }
 
         func read(offset: Int, length: Int) throws -> Data {
-            lock.lock()
-            defer { lock.unlock() }
-            let total = memory.byteCount
-            guard offset >= 0, length >= 0, offset <= total, length <= total - offset else {
-                throw WasmEngineError.trap("memory oob read")
-            }
-            if length == 0 { return Data() }
-            return memory.withUnsafeBufferPointer(offset: UInt(offset), count: length) { buf in
-                Data(buf)
+            try runtime.runSync {
+                let total = memory.byteCount
+                guard offset >= 0, length >= 0, offset <= total, length <= total - offset else {
+                    throw WasmEngineError.trap("memory oob read")
+                }
+                if length == 0 { return Data() }
+                return memory.withUnsafeBufferPointer(offset: UInt(offset), count: length) { buf in
+                    Data(buf)
+                }
             }
         }
 
         func write(offset: Int, data: Data) throws {
-            lock.lock()
-            defer { lock.unlock() }
-            let total = memory.byteCount
-            guard offset >= 0, data.count <= total - offset else {
-                throw WasmEngineError.trap("memory oob write")
-            }
-            if data.isEmpty { return }
-            memory.withUnsafeMutableBufferPointer(offset: UInt(offset), count: data.count) { dest in
-                _ = data.copyBytes(to: dest)
+            try runtime.runSync {
+                let total = memory.byteCount
+                guard offset >= 0, data.count <= total - offset else {
+                    throw WasmEngineError.trap("memory oob write")
+                }
+                if data.isEmpty { return }
+                memory.withUnsafeMutableBufferPointer(offset: UInt(offset), count: data.count) { dest in
+                    _ = data.copyBytes(to: dest)
+                }
             }
         }
 
         func grow(pages: Int) throws -> Int {
-            lock.lock()
-            defer { lock.unlock() }
-            guard pages >= 0 else { throw WasmEngineError.trap("negative grow") }
-            let pageSize = 64 * 1024
-            let currentBytes = memory.byteCount
-            let currentPages = currentBytes / pageSize
-            let next = currentBytes + pages * pageSize
-            if next > limits.maxLinearMemoryBytes {
-                throw WasmEngineError.memoryLimitExceeded
+            try runtime.runSync {
+                guard pages >= 0 else { throw WasmEngineError.trap("negative grow") }
+                let pageSize = 64 * 1024
+                let currentBytes = memory.byteCount
+                let next = currentBytes + pages * pageSize
+                if next > limits.maxLinearMemoryBytes {
+                    throw WasmEngineError.memoryLimitExceeded
+                }
+                // Share this memory into a trampoline module that executes memory.grow (WASM-N05).
+                let growModule = Self.makeGrowTrampolineModule()
+                let parsed: Module
+                do {
+                    parsed = try parseWasm(bytes: Array(growModule))
+                } catch {
+                    throw WasmEngineError.notSupported("grow trampoline parse: \(error)")
+                }
+                var imports = Imports()
+                imports.define(module: "env", name: "mem", memory)
+                let inst: Instance
+                do {
+                    inst = try parsed.instantiate(store: store, imports: imports)
+                } catch {
+                    throw WasmEngineError.notSupported("grow trampoline link: \(error)")
+                }
+                guard let fn = inst.exports[function: "grow"] else {
+                    throw WasmEngineError.notSupported("grow export missing")
+                }
+                let result: [Value]
+                do {
+                    result = try fn.invoke([.i32(UInt32(pages))])
+                } catch {
+                    throw WasmEngineError.memoryLimitExceeded
+                }
+                guard let first = result.first else {
+                    throw WasmEngineError.trap("grow empty result")
+                }
+                // Fail closed: never coerce non-i32 to zero (WASM-N06).
+                let old = try first.requireI32()
+                let oldPages = Int32(bitPattern: old)
+                if oldPages < 0 {
+                    throw WasmEngineError.memoryLimitExceeded
+                }
+                return Int(oldPages)
             }
-            // Share this memory into a trampoline module that executes memory.grow (WASM-N05).
-            let growModule = Self.makeGrowTrampolineModule()
-            let parsed: Module
-            do {
-                parsed = try parseWasm(bytes: Array(growModule))
-            } catch {
-                throw WasmEngineError.notSupported("grow trampoline parse: \(error)")
-            }
-            var imports = Imports()
-            imports.define(module: "env", name: "mem", memory)
-            let inst: Instance
-            do {
-                inst = try parsed.instantiate(store: store, imports: imports)
-            } catch {
-                throw WasmEngineError.notSupported("grow trampoline link: \(error)")
-            }
-            guard let fn = inst.exports[function: "grow"] else {
-                throw WasmEngineError.notSupported("grow export missing")
-            }
-            let result: [Value]
-            do {
-                result = try fn.invoke([.i32(UInt32(pages))])
-            } catch {
-                throw WasmEngineError.memoryLimitExceeded
-            }
-            guard let first = result.first, case .i32(let old) = first else {
-                throw WasmEngineError.trap("grow bad result")
-            }
-            let oldPages = Int32(bitPattern: old)
-            if oldPages < 0 {
-                throw WasmEngineError.memoryLimitExceeded
-            }
-            _ = currentPages
-            return Int(oldPages)
         }
 
         /// Mini module: (import "env" "mem" (memory 0)) (func (export "grow") (param i32) (result i32) local.get 0 memory.grow)
@@ -652,6 +685,11 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
             }
         }
 
+        /// Public fail-closed decode for regression tests (WASM-N06).
+        public static func fromWasmKitValue(_ v: Value) throws -> WasmValue {
+            try fromWasmKit(v)
+        }
+
         fileprivate static func fromWasmKit(_ v: Value) throws -> WasmValue {
             switch v {
             case .i32(let u): return .i32(Int32(bitPattern: u))
@@ -669,13 +707,15 @@ public struct WasmKitEngine: CodeEditorWasmEngine {
     }
 
     extension Value {
-        fileprivate var asI32: UInt32 {
+        /// Fail closed — never coerce kind mismatch to zero (WASM-N06).
+        fileprivate func requireI32() throws -> UInt32 {
             if case .i32(let v) = self { return v }
-            return 0
+            throw WasmEngineError.unsupportedValueType("expected i32 got \(self)")
         }
-        fileprivate var asI64: UInt64 {
+
+        fileprivate func requireI64() throws -> UInt64 {
             if case .i64(let v) = self { return v }
-            return 0
+            throw WasmEngineError.unsupportedValueType("expected i64 got \(self)")
         }
     }
 

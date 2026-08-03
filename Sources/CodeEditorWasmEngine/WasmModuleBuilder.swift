@@ -334,6 +334,116 @@ public struct WasmModuleBuilder: Sendable {
         abiVersionOnlyModule()
     }
 
+    /// Deep recursion / stack exhaustion (WASM-N16): poll calls itself until stack limit.
+    public static func deepRecursionModule() -> Data {
+        // poll (func index 9 after 4 imports = local index 5) recursively calls itself.
+        // local.get 0; i32.const 1; i32.add; call self; end — never bottoms out.
+        coreModule(
+            memoryLimits: (min: 1, max: 2),
+            pollBody: [
+                0x20, 0x00,  // local.get 0 (budget)
+                0x41, 0x01,  // i32.const 1
+                0x6A,  // i32.add
+                0x10, 0x09,  // call poll (import count 4 + func index 5 = 9)
+                0x0B,
+            ]
+        )
+    }
+
+    /// Huge table declaration that exceeds maxTableElements (WASM-N16).
+    public static func hugeTableModule() -> Data {
+        var module: [UInt8] = []
+        module += magic + version
+        module += section(1, encodeVector(standardTypes()))
+        var imports: [UInt8] = []
+        imports += importFunc("codeeditor", CoreWasmImport.hostSend.rawValue, typeIndex: 4)
+        imports += importFunc("codeeditor", CoreWasmImport.hostLog.rawValue, typeIndex: 6)
+        imports += importFunc("codeeditor", CoreWasmImport.hostMonotonicMillis.rawValue, typeIndex: 8)
+        imports += importFunc("codeeditor", CoreWasmImport.hostShouldCancel.rawValue, typeIndex: 7)
+        module += section(2, encodeCounted(imports, count: 4))
+        let funcTypes: [UInt8] = [1, 2, 3, 4, 4, 2, 5]
+        module += section(3, encodeCounted(funcTypes.flatMap { uleb(UInt32($0)) }, count: 7))
+        // table section: 1 table funcref min=max=100_000
+        var tableBody: [UInt8] = [0x70, 0x01]  // funcref, flags has max
+        tableBody += uleb(100_000) + uleb(100_000)
+        module += section(4, encodeCounted(tableBody, count: 1))
+        module += section(5, encodeCounted([0x01, 0x01, 0x02], count: 1))
+        var exports: [UInt8] = []
+        exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 4)
+        exports += exportFunc(CoreWasmExport.alloc.rawValue, index: 5)
+        exports += exportFunc(CoreWasmExport.dealloc.rawValue, index: 6)
+        exports += exportFunc(CoreWasmExport.start.rawValue, index: 7)
+        exports += exportFunc(CoreWasmExport.receive.rawValue, index: 8)
+        exports += exportFunc(CoreWasmExport.poll.rawValue, index: 9)
+        exports += exportFunc(CoreWasmExport.stop.rawValue, index: 10)
+        exports += exportMemory("memory", index: 0)
+        module += section(7, encodeCounted(exports, count: 8))
+        module += section(
+            10,
+            encodeCounted(
+                funcBody([0x41, 0x01, 0x0B]) + funcBody([0x41, 0x80, 0x08, 0x0B]) + funcBody([0x0B])
+                    + funcBody([0x41, 0x00, 0x0B]) + funcBody([0x41, 0x00, 0x0B])
+                    + funcBody([0x41, 0x00, 0x0B]) + funcBody([0x0B]),
+                count: 7
+            ))
+        return Data(module)
+    }
+
+    /// Out-of-bounds memory load in poll (WASM-N16).
+    public static func oobMemoryAccessModule() -> Data {
+        coreModule(
+            memoryLimits: (min: 1, max: 2),
+            pollBody: [
+                // i32.const 0x100000; i32.load; drop; i32.const 0
+                0x41, 0x80, 0x80, 0x40,  // i32.const 0x100000 (SLEB)
+                0x28, 0x02, 0x00,  // i32.load align2 offset0
+                0x1A,  // drop
+                0x41, 0x00, 0x0B,
+            ]
+        )
+    }
+
+    /// Capability-call flood via tight host_send loop (WASM-N10/N16).
+    public static func capabilityCallFloodModule() -> Data {
+        hostSendFloodModule()
+    }
+
+    /// Module with a loop but **no** host_should_cancel import — must fail closed at instrument (WASM-N01).
+    public static func pureLoopWithoutCancelImportModule() -> Data {
+        var module: [UInt8] = []
+        module += magic + version
+        // Only host_send import (no cancel)
+        let types = standardTypes()
+        module += section(1, encodeVector(types))
+        var imports: [UInt8] = []
+        imports += importFunc("codeeditor", CoreWasmImport.hostSend.rawValue, typeIndex: 4)
+        module += section(2, encodeCounted(imports, count: 1))
+        let funcTypes: [UInt8] = [1, 2, 3, 4, 4, 2, 5]
+        module += section(3, encodeCounted(funcTypes.flatMap { uleb(UInt32($0)) }, count: 7))
+        module += section(5, encodeCounted([0x01, 0x01, 0x02], count: 1))
+        var exports: [UInt8] = []
+        // import count 1 → first guest func index 1
+        exports += exportFunc(CoreWasmExport.abiVersion.rawValue, index: 1)
+        exports += exportFunc(CoreWasmExport.alloc.rawValue, index: 2)
+        exports += exportFunc(CoreWasmExport.dealloc.rawValue, index: 3)
+        exports += exportFunc(CoreWasmExport.start.rawValue, index: 4)
+        exports += exportFunc(CoreWasmExport.receive.rawValue, index: 5)
+        exports += exportFunc(CoreWasmExport.poll.rawValue, index: 6)
+        exports += exportFunc(CoreWasmExport.stop.rawValue, index: 7)
+        exports += exportMemory("memory", index: 0)
+        module += section(7, encodeCounted(exports, count: 8))
+        let pureLoop: [UInt8] = [0x03, 0x40, 0x0C, 0x00, 0x0B, 0x41, 0x00, 0x0B]
+        module += section(
+            10,
+            encodeCounted(
+                funcBody([0x41, 0x01, 0x0B]) + funcBody([0x41, 0x80, 0x08, 0x0B]) + funcBody([0x0B])
+                    + funcBody([0x41, 0x00, 0x0B]) + funcBody([0x41, 0x00, 0x0B])
+                    + funcBody(pureLoop) + funcBody([0x0B]),
+                count: 7
+            ))
+        return Data(module)
+    }
+
     // MARK: - Shared core module builder
 
     private static func standardTypes() -> [[UInt8]] {

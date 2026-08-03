@@ -54,6 +54,10 @@ public actor CoreWasmABISession {
 
         let imports = WasmHostImports(
             send: { [limits] ptr, len in
+                // WASM-N10: capability call quota (host_send).
+                if !box.recordCapabilityCall() {
+                    return CoreWasmABI.statusBackpressure
+                }
                 if len < 0 { return CoreWasmABI.statusError }
                 if len == 0 { return box.enqueue(Data()) }
                 guard let ptr else { return CoreWasmABI.statusError }
@@ -65,6 +69,10 @@ public actor CoreWasmABISession {
             },
             log: { level, ptr, len in
                 _ = level
+                // WASM-N10: host_log is a capability call.
+                if !box.recordCapabilityCall() {
+                    return
+                }
                 if let ptr, len > 0 {
                     let s = String(bytes: Data(bytes: ptr, count: Int(len)), encoding: .utf8) ?? ""
                     box.log(s)
@@ -74,6 +82,7 @@ public actor CoreWasmABISession {
                 WasmMonotonicClock.nowMillis()
             },
             shouldCancel: { high, low in
+                // Keyed cancel only (WASM-N12) — no sticky global hasCancel.
                 box.isCancelled(high: high, low: low) ? 1 : 0
             }
         )
@@ -120,6 +129,16 @@ public actor CoreWasmABISession {
         payload: Data = Data(),
         timeout: Duration = .seconds(2)
     ) async throws -> Data {
+        try await request(method, payload: payload, timeout: timeout, requestID: ExtensionRequestID())
+    }
+
+    /// Request with an explicit ID so callers can cancel concurrently (WASM-N12).
+    public func request(
+        _ method: ExtensionMethodID,
+        payload: Data = Data(),
+        timeout: Duration = .seconds(2),
+        requestID: ExtensionRequestID
+    ) async throws -> Data {
         guard started else { throw WasmEngineError.trap("not started") }
         if payload.count > limits.maxRequestBytes {
             throw WasmEngineError.requestTooLarge(payload.count)
@@ -128,7 +147,7 @@ public actor CoreWasmABISession {
             throw WasmEngineError.resourceLimit("maxConcurrentRequests")
         }
 
-        let id = ExtensionRequestID()
+        let id = requestID
         let env = ExtensionEnvelope.request(
             id: id,
             method: method,
@@ -142,12 +161,15 @@ public actor CoreWasmABISession {
         }
         tracer.record(method: method, direction: "host→wasm", payload: payload, generation: generation)
 
-        // WASM-N09: register OneShotPromise BEFORE any async work.
+        // WASM-N09: register OneShotPromise BEFORE any async work / receive.
         let promise = OneShotPromise<Data>()
         pending[id.rawValue] = promise
         activeRequestCount += 1
         let (high, low) = Self.splitUUID(id.rawValue)
         messageBox?.setActiveRequest(high: high, low: low)
+
+        // Snapshot for tests: promise must be registered while work is outstanding.
+        assert(pending[id.rawValue] != nil)
 
         defer {
             pending[id.rawValue] = nil
@@ -224,6 +246,18 @@ public actor CoreWasmABISession {
     }
 
     public func conformanceTrace() -> [ConformanceEvent] { tracer.snapshot() }
+
+    /// WASM-N14: outstanding guest alloc slots (must be 0 after paired dealloc).
+    public var outstandingGuestAllocations: Int { outstandingAllocs }
+
+    /// WASM-N09: number of OneShotPromise entries currently registered.
+    public var pendingRequestCount: Int { pending.count }
+
+    /// WASM-N10: concurrent request occupancy.
+    public var concurrentRequestCount: Int { activeRequestCount }
+
+    /// WASM-N10: capability-call counter from the host message box.
+    public var capabilityCallCount: Int { messageBox?.capabilityCallCount ?? 0 }
 
     public func setSlowWork(_ n: Int) {
         slowWorkInjector?(n)
@@ -350,13 +384,9 @@ final class MessageBox: @unchecked Sendable {
     private var logTruncations = 0
     private var logWindowStart = ContinuousClock.now
     private var logBytesInWindow = 0
-
-    /// Test/compat: true if any cancel currently flagged.
-    var hasCancel: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return !cancelledKeys.isEmpty
-    }
+    private var capabilityTotal = 0
+    private var capabilityWindowStart = ContinuousClock.now
+    private var capabilityWindowCount = 0
 
     var logTruncationCount: Int {
         lock.lock()
@@ -370,7 +400,37 @@ final class MessageBox: @unchecked Sendable {
         return logBytes
     }
 
+    var capabilityCallCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return capabilityTotal
+    }
+
+    /// Number of distinct request IDs currently cancelled (keyed only — WASM-N12).
+    var cancelledRequestKeyCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelledKeys.count
+    }
+
     init(limits: WasmResourceLimits) { self.limits = limits }
+
+    /// WASM-N10: enforce maxCapabilityCalls + maxCapabilityCallsPerSecond.
+    @discardableResult
+    func recordCapabilityCall() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let now = ContinuousClock.now
+        if now - capabilityWindowStart >= .seconds(1) {
+            capabilityWindowStart = now
+            capabilityWindowCount = 0
+        }
+        if capabilityTotal >= limits.maxCapabilityCalls { return false }
+        if capabilityWindowCount >= limits.maxCapabilityCallsPerSecond { return false }
+        capabilityTotal += 1
+        capabilityWindowCount += 1
+        return true
+    }
 
     func enqueue(_ data: Data) -> Int32 {
         lock.lock()
@@ -392,19 +452,11 @@ final class MessageBox: @unchecked Sendable {
         return d
     }
 
-    func flagCancel(high: Int64 = 0, low: Int64 = 0) {
+    /// Keyed cancel only (WASM-N12). No zero-arg global sticky flag.
+    func flagCancel(high: Int64, low: Int64) {
         lock.lock()
         cancelledKeys.insert("\(high):\(low)")
-        // Also flag active request if present
-        if activeHigh != 0 || activeLow != 0 {
-            cancelledKeys.insert("\(activeHigh):\(activeLow)")
-        }
         lock.unlock()
-    }
-
-    /// Legacy global flag path used by older tests — maps to zero key.
-    func flagCancel() {
-        flagCancel(high: 0, low: 0)
     }
 
     func clearCancel(high: Int64, low: Int64) {
@@ -430,16 +482,8 @@ final class MessageBox: @unchecked Sendable {
     func isCancelled(high: Int64, low: Int64) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        if cancelledKeys.contains("\(high):\(low)") { return true }
-        if (activeHigh != 0 || activeLow != 0),
-            high == activeHigh, low == activeLow,
-            cancelledKeys.contains("\(activeHigh):\(activeLow)")
-        {
-            return true
-        }
-        // Zero-key global only when explicitly flagged as (0,0)
-        if high == 0, low == 0, cancelledKeys.contains("0:0") { return true }
-        return false
+        // Strict key match only — never a sticky global hasCancel (WASM-N12).
+        return cancelledKeys.contains("\(high):\(low)")
     }
 
     func log(_ s: String) {

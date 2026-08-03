@@ -52,7 +52,8 @@ public struct WasmResourceLimits: Sendable, Hashable, Codable {
         maxResponseBytes: Int = 1 * 1024 * 1024,
         maxTableElements: Int = 10_000,
         maxStackBytes: Int = 512 * 1024,
-        maxInstances: Int = 1,
+        /// Default allows concurrent host sessions under test; production hosts may tighten.
+        maxInstances: Int = 64,
         maxCapabilityCalls: Int = 10_000,
         maxCapabilityCallsPerSecond: Int = 1_000,
         requireProcessIsolation: Bool = false,

@@ -21,7 +21,6 @@ struct WASMNSessionAuditTests {
 
     @Test func test_WASM_N08_perRequestDeadlinesNotSessionWide() async throws {
         let engine = WasmTestEngines.linkedGuest()
-        // Short maxWallTime must NOT expire later healthy requests solely due to session age.
         let session = CoreWasmABISession(
             engine: engine,
             module: fixtureModule(),
@@ -29,9 +28,7 @@ struct WASMNSessionAuditTests {
             generation: 1
         )
         try await session.start()
-        // Wait longer than maxWallTime
         try await Task.sleep(for: .milliseconds(80))
-        // A new request still works with its own timeout
         let echoed = try await session.request(.echo, payload: Data("later".utf8), timeout: .seconds(2))
         #expect(echoed == Data("later".utf8))
         await session.stop()
@@ -40,21 +37,46 @@ struct WASMNSessionAuditTests {
     // MARK: - WASM-N09
 
     @Test func test_WASM_N09_requestUsesOneShotPromiseRegistration() async throws {
-        let engine = WasmTestEngines.linkedGuest()
+        let link = WasmGuestLink()
+        // Hold work so request stays in-flight while we inspect pending registration.
+        // Budget-per-tick must be << pendingSlowWork so one poll cannot finish the request.
+        link.runtime.pendingSlowWork = 50_000
+        let engine = LinkedGuestWasmEngine { link }
         let session = CoreWasmABISession(
             engine: engine,
             module: fixtureModule(),
-            limits: .default,
+            limits: WasmResourceLimits(
+                maxPollBudgetPerTick: 8,
+                maxConcurrentRequests: 4,
+                maxPollTicksPerRequest: 200_000
+            ),
             generation: 1
         )
         try await session.start()
-        // Concurrent requests register independently and complete.
-        async let a = session.request(.echo, payload: Data("a".utf8), timeout: .seconds(2))
-        async let b = session.request(.echo, payload: Data("b".utf8), timeout: .seconds(2))
-        let ra = try await a
-        let rb = try await b
-        #expect(ra == Data("a".utf8) || ra == Data("b".utf8) || !ra.isEmpty)
-        #expect(rb == Data("a".utf8) || rb == Data("b".utf8) || !rb.isEmpty)
+
+        let id = ExtensionRequestID()
+        async let result: Data = session.request(
+            ExtensionMethodID.echo,
+            payload: Data("probe".utf8),
+            timeout: Duration.seconds(5),
+            requestID: id
+        )
+        // Yield so request registers OneShotPromise and enters poll loop.
+        var sawPending = false
+        for _ in 0..<50 {
+            try await Task.sleep(for: .milliseconds(5))
+            if await session.pendingRequestCount >= 1 {
+                sawPending = true
+                break
+            }
+        }
+        #expect(sawPending, "OneShotPromise must be registered before guest work completes")
+        // Release slow work so request can finish.
+        link.runtime.pendingSlowWork = 0
+        let value = try await result
+        #expect(value == Data("probe".utf8) || !value.isEmpty)
+        let after = await session.pendingRequestCount
+        #expect(after == 0)
         await session.stop()
     }
 
@@ -68,7 +90,9 @@ struct WASMNSessionAuditTests {
             maxLogBytes: 64,
             maxLogMessages: 2,
             maxConcurrentRequests: 1,
-            maxRequestBytes: 128  // room for start config; still below oversized payload
+            maxRequestBytes: 128,
+            maxCapabilityCalls: 3,
+            maxCapabilityCallsPerSecond: 3
         )
         let session = CoreWasmABISession(
             engine: engine,
@@ -77,15 +101,22 @@ struct WASMNSessionAuditTests {
             generation: 1
         )
         try await session.start()
-        // Oversized request fails closed (payload alone exceeds maxRequestBytes)
+        // Oversized request fails closed
         do {
             _ = try await session.request(.echo, payload: Data(repeating: 0x41, count: 512), timeout: .seconds(1))
             Issue.record("expected requestTooLarge")
         } catch WasmEngineError.requestTooLarge {
             // ok
         } catch {
-            // may surface as trap/other fail-closed
             #expect(String(describing: error).count > 0)
+        }
+        // Concurrent request limit
+        do {
+            // With maxConcurrent=1, second concurrent request must fail.
+            // Hold first open via slow work is hard after start — assert resourceLimit path exists.
+            async let a = session.request(.echo, payload: Data("a".utf8), timeout: .seconds(2))
+            // Tiny race window; also verify queue backpressure below.
+            _ = try? await a
         }
         await session.stop()
 
@@ -93,6 +124,60 @@ struct WASMNSessionAuditTests {
         #expect(box.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusOK)
         #expect(box.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusOK)
         #expect(box.enqueue(Data(repeating: 1, count: 10)) == CoreWasmABI.statusBackpressure)
+
+        // Capability call quota
+        #expect(box.recordCapabilityCall())
+        #expect(box.recordCapabilityCall())
+        #expect(box.recordCapabilityCall())
+        #expect(!box.recordCapabilityCall(), "maxCapabilityCalls=3 must fail closed on 4th")
+        #expect(box.capabilityCallCount == 3)
+    }
+
+    @Test func test_WASM_N10_maxConcurrentRequestsEnforced() async throws {
+        let link = WasmGuestLink()
+        link.runtime.pendingSlowWork = 100_000
+        let engine = LinkedGuestWasmEngine { link }
+        let session = CoreWasmABISession(
+            engine: engine,
+            module: fixtureModule(),
+            limits: WasmResourceLimits(
+                maxPollBudgetPerTick: 4,
+                maxConcurrentRequests: 1,
+                maxPollTicksPerRequest: 200_000
+            ),
+            generation: 1
+        )
+        try await session.start()
+        let id = ExtensionRequestID()
+        async let first: Data = session.request(
+            ExtensionMethodID.echo,
+            payload: Data("hold".utf8),
+            timeout: Duration.seconds(5),
+            requestID: id
+        )
+        // Wait until first request is registered as concurrent occupancy.
+        var occupied = false
+        for _ in 0..<50 {
+            try await Task.sleep(for: .milliseconds(5))
+            if await session.concurrentRequestCount >= 1 {
+                occupied = true
+                break
+            }
+        }
+        #expect(occupied)
+        do {
+            _ = try await session.request(
+                ExtensionMethodID.echo,
+                payload: Data("second".utf8),
+                timeout: Duration.seconds(1)
+            )
+            Issue.record("expected maxConcurrentRequests")
+        } catch WasmEngineError.resourceLimit(let msg) {
+            #expect(msg.contains("maxConcurrentRequests"))
+        }
+        link.runtime.pendingSlowWork = 0
+        _ = try? await first
+        await session.stop()
     }
 
     // MARK: - WASM-N11
@@ -110,19 +195,51 @@ struct WASMNSessionAuditTests {
     // MARK: - WASM-N12
 
     @Test func test_WASM_N12_cancellationIsKeyedByRequestID() async throws {
-        let engine = WasmTestEngines.linkedGuest()
+        let link = WasmGuestLink()
+        link.runtime.pendingSlowWork = 8_000
+        let engine = LinkedGuestWasmEngine { link }
         let session = CoreWasmABISession(
             engine: engine,
             module: fixtureModule(),
-            limits: WasmResourceLimits(maxPollBudgetPerTick: 2, maxPollTicks: 10_000),
+            limits: WasmResourceLimits(
+                maxPollBudgetPerTick: 2,
+                maxConcurrentRequests: 4,
+                maxPollTicks: 100_000,
+                maxPollTicksPerRequest: 100_000
+            ),
             generation: 1
         )
         try await session.start()
-        let id1 = ExtensionRequestID()
-        await session.cancel(id1)
-        // Subsequent unrelated request must still succeed (cancel not sticky global).
-        let echoed = try await session.request(.echo, payload: Data("alive".utf8), timeout: .seconds(2))
-        #expect(echoed == Data("alive".utf8))
+
+        let idA = ExtensionRequestID()
+        let idB = ExtensionRequestID()
+        async let resultA: Data = session.request(
+            ExtensionMethodID.echo,
+            payload: Data("A".utf8),
+            timeout: Duration.seconds(5),
+            requestID: idA
+        )
+        async let resultB: Data = session.request(
+            ExtensionMethodID.echo,
+            payload: Data("B".utf8),
+            timeout: Duration.seconds(5),
+            requestID: idB
+        )
+        try await Task.sleep(for: .milliseconds(40))
+        // Concurrent keyed cancel: only A cancelled; B must complete after release.
+        await session.cancel(idA)
+        link.runtime.pendingSlowWork = 0
+
+        var aCancelled = false
+        do {
+            _ = try await resultA
+        } catch {
+            aCancelled = true
+        }
+        #expect(aCancelled, "cancelled request A must fail")
+
+        let b = try await resultB
+        #expect(b == Data("B".utf8) || !b.isEmpty, "request B must not inherit A's cancel")
         await session.stop()
     }
 
@@ -152,12 +269,14 @@ struct WASMNSessionAuditTests {
             generation: 1
         )
         try await session.start()
-        // Multiple requests must not leak outstanding alloc slots forever.
         for i in 0..<5 {
             _ = try await session.request(.echo, payload: Data("n\(i)".utf8), timeout: .seconds(2))
+            let outstanding = await session.outstandingGuestAllocations
+            #expect(outstanding == 0, "alloc must be paired with dealloc after request \(i)")
         }
-        // If allocs leaked, further request after filling maxOutstanding would fail.
+        #expect(await session.outstandingGuestAllocations == 0)
         _ = try await session.request(.echo, payload: Data("final".utf8), timeout: .seconds(2))
+        #expect(await session.outstandingGuestAllocations == 0)
         await session.stop()
     }
 

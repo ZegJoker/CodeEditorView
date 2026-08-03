@@ -4,9 +4,14 @@
     "missing_export.wasm": "missing poll export",
     "conformance.wasm": "happy path linked guest",
     "infinite_loop.wasm": "poll never completes (legacy cooperative fixture)",
+    "infinite_loop_pure.wasm": "pure noncooperative loop { br 0 } (WASM-N01/N16)",
     "memory_growth.wasm": "memory pressure",
     "flood_host_send.wasm": "host_send flood",
-    "bad_schema_start.wasm": "schema mismatch at start"
+    "bad_schema_start.wasm": "schema mismatch at start",
+    "deep_recursion.wasm": "deep recursion / stack exhaustion (WASM-N16)",
+    "huge_table.wasm": "table elements over host max (WASM-N16)",
+    "oob_memory.wasm": "out-of-bounds memory load (WASM-N16)",
+    "capability_flood.wasm": "capability-call flood via host_send (WASM-N10/N16)"
   },
   "builder_generators": {
     "WasmModuleBuilder.pureNoncooperativeLoopModule": "WASM-N01 pure loop { br 0 } with no host calls in body",
@@ -14,8 +19,13 @@
     "WasmModuleBuilder.missingMemoryExportModule": "WASM-N03 no memory export",
     "WasmModuleBuilder.hostSendFloodModule": "WASM-N10/N16 host_send flood",
     "WasmModuleBuilder.logFloodModule": "WASM-N11/N16 host_log flood",
+    "WasmModuleBuilder.deepRecursionModule": "WASM-N16 stack exhaustion",
+    "WasmModuleBuilder.hugeTableModule": "WASM-N16 huge table",
+    "WasmModuleBuilder.oobMemoryAccessModule": "WASM-N16 OOB load",
+    "WasmModuleBuilder.capabilityCallFloodModule": "WASM-N10/N16 capability flood",
+    "WasmModuleBuilder.pureLoopWithoutCancelImportModule": "WASM-N01 fail-closed without cancel import",
     "WasmModuleBuilder.infiniteLoopModule": "cooperative cancel loop",
     "WasmModuleBuilder.conformanceModule": "full core ABI stubs"
   },
-  "process_isolation": "WASM-N16 tests run pure noncooperative invoke under outer kill timeout so a failed containment cannot hang the test runner"
+  "process_isolation": "WASM-N16 runs pure noncooperative invoke in codeeditor-wasm-harness (killable OS process) under outer SIGKILL so a failed containment cannot hang the test runner"
 }

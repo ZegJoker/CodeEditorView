@@ -26,6 +26,8 @@ let package = Package(
         .library(name: "CodeEditorExtensionAPI", targets: ["CodeEditorExtensionAPI"]),
         .library(name: "CodeEditorExtensions", targets: ["CodeEditorExtensions"]),
         .executable(name: "codeeditor-extension", targets: ["CodeEditorExtensionCLI"]),
+        /// Killable helper process for hostile Wasm containment (WASM-N01/N16).
+        .executable(name: "codeeditor-wasm-harness", targets: ["CodeEditorWasmHarness"]),
         .library(name: "CodeEditorExtensionHost", targets: ["CodeEditorExtensionHost"]),
         .library(name: "CodeEditorWasmEngine", targets: ["CodeEditorWasmEngine"]),
         .library(name: "CodeEditorWasmEngineWasmKit", targets: ["CodeEditorWasmEngineWasmKit"]),
@@ -179,6 +181,15 @@ let package = Package(
                 "CodeEditorWasmEngine",
                 .product(name: "WasmKit", package: "WasmKit"),
             ]
+        ),
+        // WASM-N16: process-isolated hostile invoke helper (killable OS process).
+        .executableTarget(
+            name: "CodeEditorWasmHarness",
+            dependencies: [
+                "CodeEditorWasmEngine",
+                "CodeEditorWasmEngineWasmKit",
+            ],
+            path: "Sources/CodeEditorWasmHarness"
         ),
         .target(
             name: "CodeEditorExtensionWasmGuest",

@@ -160,15 +160,25 @@ public enum WasmModuleInstrumenter {
             offset = end
         }
 
-        guard let cancelIdx = shouldCancelIndex else {
-            // No cancel import: cannot instrument; callers that need hard interrupt must use process isolation.
-            return module
-        }
         guard let codeRange = codeSectionRange else {
             return module
         }
 
         let codeBody = Array(bytes[codeRange])
+        // Detect whether any function body contains `loop` (0x03) so we fail closed
+        // when pure loops cannot be instrumented (WASM-N01 residual).
+        let hasLoopOpcode = codeBody.contains(0x03)
+
+        guard let cancelIdx = shouldCancelIndex else {
+            if hasLoopOpcode {
+                // Never soft-return an uninstrumented pure-loop module.
+                throw WasmEngineError.invalidModule(
+                    "missing codeeditor_host_should_cancel import; cannot hard-interrupt pure loops (set requireProcessIsolation or declare cancel import)"
+                )
+            }
+            return module
+        }
+
         var i = 0
         let (fnCount, n0) = try readULEB(codeBody, at: i)
         i += n0

@@ -14,7 +14,7 @@ struct Phase16WasmResidualClosureTests {
         let data = loadFixture("conformance")
         #expect(data != nil)
         guard let data else { return }
-        let engine = InProcessCoreWasmEngine()
+        let engine = WasmTestEngines.inProcess()
         try engine.validate(module: data, limits: .default)
     }
 
@@ -22,7 +22,7 @@ struct Phase16WasmResidualClosureTests {
         let data = loadFixture("malformed")
         #expect(data != nil)
         guard let data else { return }
-        let engine = InProcessCoreWasmEngine()
+        let engine = WasmTestEngines.inProcess()
         #expect(throws: WasmEngineError.self) {
             try engine.validate(module: data, limits: WasmResourceLimits.default)
         }
