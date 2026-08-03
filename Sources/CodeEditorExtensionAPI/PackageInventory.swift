@@ -369,27 +369,47 @@ public enum PackageInventoryBuilder {
         }
     }
 
-    /// Declared executable paths from a validated plan + package layout (EXT-N17).
-    /// Binds runtime entrypoint, native-helper, and explicit inventory declarations — not heuristics alone.
+    /// EXT-N17: data-only packages must declare **and contain** zero executable material.
+    /// Declaration alone (or auto-fill from disk) cannot waive this gate.
+    public static func assertDataOnlyHasNoExecutables(
+        inventory: PackageInventoryDocument,
+        declaredPaths: Set<String>
+    ) throws {
+        if let first = declaredPaths.sorted().first {
+            throw PackageInventoryError.undeclaredExecutable(first)
+        }
+        for e in inventory.entries where e.isExecutable {
+            throw PackageInventoryError.undeclaredExecutable(e.relativePath)
+        }
+    }
+
+    /// Declared executable paths from **signed manifest runtime fields** only (EXT-N17).
+    ///
+    /// Does **not** auto-insert paths because a file exists on disk (that was a soft bypass for
+    /// data-only packages shipping `native-helper`). `packageRoot` is retained for API stability
+    /// and future signed-inventory binding; disk presence is never a declaration source.
     public static func declaredExecutablePaths(
         runtimeKind: String?,
         runtimeEntrypoint: String?,
         packageRoot: URL,
         additionalDeclared: Set<String> = []
     ) -> Set<String> {
+        _ = packageRoot
         var paths = additionalDeclared
+        let kind = (runtimeKind ?? "data-only").lowercased()
+        let isDataOnly =
+            kind == "data-only" || kind == "dataonly" || kind == "data_only" || kind.isEmpty
+        // Data-only: no executable declarations from runtime fields (EXT-N17).
+        if isDataOnly {
+            return []
+        }
         if let ep = runtimeEntrypoint, !ep.isEmpty {
             paths.insert(ep)
         }
-        let nativeHelper = packageRoot.appendingPathComponent("native-helper")
-        if FileManager.default.fileExists(atPath: nativeHelper.path) {
+        // Native process runtimes declare the standard helper path via runtime kind —
+        // never because the binary merely exists on disk.
+        if kind.contains("native") || kind == "native-process" || kind == "native_process" {
             paths.insert("native-helper")
-        }
-        // Non-data-only runtimes that name a wasm entrypoint.
-        if let kind = runtimeKind?.lowercased(),
-            kind.contains("wasm") || kind == "swift-wasm" || kind == "native"
-        {
-            if let ep = runtimeEntrypoint { paths.insert(ep) }
         }
         return paths
     }

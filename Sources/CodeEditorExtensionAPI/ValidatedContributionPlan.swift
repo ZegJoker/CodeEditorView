@@ -284,21 +284,36 @@ public enum ExtensionPackageDigest {
 }
 
 /// SHA-256 only (EXT-N03 / EXT-N08). Never `fatalError`/`preconditionFailure` on host paths;
-/// throws ``SecurityDigestError/cryptoUnavailable`` when CryptoKit is absent.
+/// throws ``SecurityDigestError/cryptoUnavailable`` when CryptoKit is absent or forced unavailable.
 #if canImport(CryptoKit)
     import CryptoKit
 
     public struct SHA256Hasher: Sendable {
         private var hasher = SHA256()
-        public init() {}
-        public mutating func update(_ data: Data) { hasher.update(data: data) }
+        private let availability: CryptoAvailability
+        /// - Parameter availability: Production default is ``CryptoAvailability/system``.
+        ///   Pass ``CryptoAvailability/unavailable`` only from tests to force fail-closed.
+        public init(availability: CryptoAvailability = .system) {
+            self.availability = availability
+        }
+        public mutating func update(_ data: Data) {
+            guard availability == .system else { return }
+            hasher.update(data: data)
+        }
         public func finalizeHex() throws -> String {
-            hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
+            switch availability {
+            case .unavailable:
+                throw SecurityDigestError.cryptoUnavailable
+            case .system:
+                return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+            }
         }
     }
 #else
     public struct SHA256Hasher: Sendable {
-        public init() {}
+        public init(availability: CryptoAvailability = .system) {
+            _ = availability
+        }
         public mutating func update(_ chunk: Data) { _ = chunk }
         /// EXT-N03/N08: never return a DJB-like non-crypto fingerprint; never fatal.
         public func finalizeHex() throws -> String {

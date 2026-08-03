@@ -141,12 +141,21 @@ struct EXT_N03_Tests {
     }
 
     @Test func test_EXT_N03_hasherRejectsNonCryptoFallback() throws {
-        // Production hasher must not expose DJB-style short digests; throws when crypto unavailable.
-        var h = SHA256Hasher()
+        // Force cryptoUnavailable even when CryptoKit is present (must not soft-pass via happy path only).
+        var forced = SHA256Hasher(availability: .unavailable)
+        forced.update(Data("abc".utf8))
+        #expect(throws: SecurityDigestError.cryptoUnavailable) {
+            _ = try forced.finalizeHex()
+        }
+        // System path produces full SHA-256 hex; never a DJB-style short fingerprint.
+        var h = SHA256Hasher(availability: .system)
         h.update(Data("abc".utf8))
         let hex = try h.finalizeHex()
         #expect(hex.count == 64)
+        #expect(hex.allSatisfy { $0.isHexDigit })
         #expect(hex != String(format: "%016llx", 5381))
+        // Known SHA-256("abc") prefix — proves real crypto, not empty/placeholder.
+        #expect(hex.hasPrefix("ba7816bf"))
     }
 }
 
@@ -657,7 +666,7 @@ struct EXT_N17_Tests {
                 inventory: inv, declaredPaths: []
             )
         }
-        // Declared path is accepted.
+        // Declared path is accepted for non-data-only.
         try PackageInventoryBuilder.assertNoUndeclaredExecutables(
             inventory: inv, declaredPaths: ["payload.bin"]
         )
@@ -692,6 +701,58 @@ struct EXT_N17_Tests {
         try PackageInventoryBuilder.assertNoUndeclaredExecutables(
             inventory: inv2, declaredPaths: declared
         )
+    }
+
+    /// Residual: data-only + on-disk native-helper must not auto-declare and must fail install.
+    @Test func test_EXT_N17_dataOnlyNativeHelperFailsClosed() async throws {
+        let root = try EXTNFixtures.tempRoot("data-native")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try EXTNFixtures.writeMinimalPackage(at: root, id: "com.example.data-native")
+        // Mach-O magic so content classifier marks executable; basename also forces nativeExecutable.
+        var macho = Data(PackageExecutableClassifier.macho64LE)
+        macho.append(Data(repeating: 0x00, count: 32))
+        try macho.write(to: root.appendingPathComponent("native-helper"))
+
+        // Disk presence alone must NOT auto-declare native-helper for data-only (signed-manifest field only).
+        let plan = try ExtensionPackageLoader.load(directory: root, options: .init(computeDigest: false))
+        #expect(plan.isDataOnlyRuntime)
+        let declared = PackageInventoryBuilder.declaredExecutablePaths(
+            runtimeKind: plan.manifestRuntimeKind,
+            runtimeEntrypoint: plan.manifestRuntimeEntrypoint,
+            packageRoot: root
+        )
+        #expect(declared.isEmpty, "data-only must not auto-declare native-helper from disk presence")
+        #expect(!declared.contains("native-helper"))
+
+        let inv = try PackageInventoryBuilder.build(
+            packageRoot: root, declaredExecutablePaths: declared)
+        #expect(inv.executableEntries.contains { $0.relativePath == "native-helper" })
+        #expect(throws: PackageInventoryError.undeclaredExecutable("native-helper")) {
+            try PackageInventoryBuilder.assertNoUndeclaredExecutables(
+                inventory: inv, declaredPaths: declared
+            )
+        }
+        // Explicit data-only gate: zero executables allowed even if somehow declared.
+        #expect(throws: PackageInventoryError.self) {
+            try PackageInventoryBuilder.assertDataOnlyHasNoExecutables(
+                inventory: inv, declaredPaths: ["native-helper"]
+            )
+        }
+        #expect(throws: PackageInventoryError.self) {
+            try PackageInventoryBuilder.assertDataOnlyHasNoExecutables(
+                inventory: inv, declaredPaths: []
+            )
+        }
+
+        // Install path must fail closed (not soft-pass when declared auto-fills).
+        let store = try EXTNFixtures.tempRoot("data-native-store")
+        defer { try? FileManager.default.removeItem(at: store) }
+        let mgr = ExtensionPackageManager.insecureForTests(installRoot: store)
+        await #expect(throws: ExtensionError.self) {
+            try await mgr.install(from: root, asDev: true)
+        }
+        let snap = await mgr.snapshot
+        #expect(snap.packages.isEmpty)
     }
 }
 

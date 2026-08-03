@@ -102,25 +102,30 @@ struct EXT_N04_N05_N06_SigningTests {
             )
         )
         #expect(trust == .trustedSigned)
-        // Mutating publisher.json alone must not change the signed statement binding.
+        // Mutating publisher.json subject must fail closed (EXT-N06): hard throw, no soft OR.
         let pubURL = root.appendingPathComponent("publisher.json")
-        if FileManager.default.fileExists(atPath: pubURL.path) {
-            var pub = try JSONSerialization.jsonObject(with: Data(contentsOf: pubURL)) as! [String: String]
-            pub["subject"] = "Evil"
-            try JSONSerialization.data(withJSONObject: pub).write(to: pubURL)
-            // Statement still has correct subject — verify should still check statement subject.
-            // If publisher.json is only advisory, statement remains source of truth.
-            let report = try? ExtensionPackageVerifier.verifyDetailed(
-                packageRoot: root,
-                policy: ExtensionTrustPolicy(trustedKeys: [
-                    ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Example Publisher")
-                ])
-            )
-            // Either fails (publisher mismatch) or still trusted via statement — subject in statement wins.
-            if let report {
-                #expect(report.publisher == "Example Publisher" || !report.errors.isEmpty || report.trustClass != .trustedSigned)
-            }
+        #expect(FileManager.default.fileExists(atPath: pubURL.path), "sign must write publisher.json")
+        var pub = try JSONSerialization.jsonObject(with: Data(contentsOf: pubURL)) as! [String: String]
+        #expect(pub["subject"] == "Example Publisher")
+        pub["subject"] = "Evil"
+        try JSONSerialization.data(withJSONObject: pub).write(to: pubURL)
+        let policy = ExtensionTrustPolicy(
+            allowUnknownSelfSigned: false,
+            trustedKeys: [
+                ExtensionPublisherKey(keyID: kp.keyID, publicKeyRaw: kp.publicKeyRaw, subject: "Example Publisher")
+            ]
+        )
+        #expect(throws: PackageSignatureError.self) {
+            _ = try ExtensionPackageVerifier.verify(packageRoot: root, policy: policy)
         }
+        #expect(throws: PackageSignatureError.self) {
+            _ = try ExtensionPackageVerifier.verifyDetailed(packageRoot: root, policy: policy)
+        }
+        // Canonical statement still binds the original publisher (not the mutated file).
+        let stmtData = try Data(contentsOf: root.appendingPathComponent("signed-statement.json"))
+        let stmt = try JSONDecoder().decode(SignedPackageStatement.self, from: stmtData)
+        #expect(stmt.publisher.subject == "Example Publisher")
+        #expect(stmt.publisher.subject != "Evil")
     }
 }
 

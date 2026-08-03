@@ -525,15 +525,20 @@ public enum ExtensionPackageVerifier {
                 } catch let e as PackageSBOM.SBOMError {
                     throw PackageSignatureError.license(String(describing: e))
                 }
-                // EXT-N17: every package must declare all executable material; data-only must declare none.
+                // EXT-N17: every package must declare all executable material; data-only must have zero.
+                let declared = declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
                 let inv = try PackageInventoryBuilder.build(
                     packageRoot: packageRoot,
-                    declaredExecutablePaths: declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
+                    declaredExecutablePaths: declared
                 )
-                let declared = declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
                 try PackageInventoryBuilder.assertNoUndeclaredExecutables(
                     inventory: inv, declaredPaths: declared
                 )
+                if plan.isDataOnlyRuntime {
+                    try PackageInventoryBuilder.assertDataOnlyHasNoExecutables(
+                        inventory: inv, declaredPaths: declared
+                    )
+                }
             }
 
             if !hasChecksums && !hasSig {

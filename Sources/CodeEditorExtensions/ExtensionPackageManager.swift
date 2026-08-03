@@ -332,7 +332,7 @@ public actor ExtensionPackageManager {
         }
         plan.digest = sourceDigest
 
-        // EXT-N17: bind declared executables from signed manifest; fail closed on undeclared.
+        // EXT-N17: bind declared executables from signed manifest only (never disk auto-declare).
         let declared = PackageInventoryBuilder.declaredExecutablePaths(
             runtimeKind: plan.manifestRuntimeKind,
             runtimeEntrypoint: plan.manifestRuntimeEntrypoint,
@@ -341,13 +341,19 @@ public actor ExtensionPackageManager {
         // Re-build inventory with declaration binding so declared wasm/native are typed correctly.
         let boundInventory = try PackageInventoryBuilder.build(
             packageRoot: source, limits: limits, declaredExecutablePaths: declared)
-        try PackageInventoryBuilder.assertNoUndeclaredExecutables(
-            inventory: boundInventory, declaredPaths: declared
-        )
-        // Data-only runtimes must declare no executables at all.
-        if plan.isDataOnlyRuntime, !boundInventory.executableEntries.isEmpty, declared.isEmpty {
+        do {
+            try PackageInventoryBuilder.assertNoUndeclaredExecutables(
+                inventory: boundInventory, declaredPaths: declared
+            )
+            // Data-only runtimes must contain **zero** executables (not merely "declared.isEmpty").
+            if plan.isDataOnlyRuntime {
+                try PackageInventoryBuilder.assertDataOnlyHasNoExecutables(
+                    inventory: boundInventory, declaredPaths: declared
+                )
+            }
+        } catch let invErr as PackageInventoryError {
             throw ExtensionError.dataLoad(
-                "data-only package contains undeclared executable content (EXT-N17)"
+                "executable content policy (EXT-N17): \(invErr)"
             )
         }
 
