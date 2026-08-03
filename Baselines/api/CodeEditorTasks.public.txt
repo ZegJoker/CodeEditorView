@@ -10,8 +10,11 @@ enum ProblemMatcherEngine
 enum TaskCommands
 enum TaskError | sendable=1
 enum TaskExecutionKind | sendable=1
+enum TaskFailure | sendable=1
 enum TaskGroup | sendable=1
+enum TaskNodeOutcome | sendable=1
 enum TaskOutputEvent | sendable=1
+enum TaskOutputStream | sendable=1
 enum TaskPresentationReveal | sendable=1
 enum TaskRunState | sendable=1
 enum TaskVariableResolver
@@ -30,17 +33,29 @@ func definition(id: TaskID)
 func diagnostics(for uri: DocumentURI)
 func emit(stderr text: String)
 func emit(stdout text: String)
+func emitRawStderr(_ data: Data)
+func emitRawStdout(_ data: Data)
+func exclusiveGroupLastOutcome(group: String)
+func executeGraph(id root: TaskID)
 func feed(_ text: String)
 func finish()
+func finish(reason: StreamFinishReason )
+func finishAll(reason: StreamFinishReason )
 func flush()
+func makeEventStream(capacity: Int )
 func match( line: String, matcher: ProblemMatcher, cwd: URL?, workspaceRoot: URL? )
 func matchAll( text: String, matchers: [ProblemMatcher], cwd: URL?, workspaceRoot: URL? )
 func normalizePath( _ raw: String, cwd: URL?, workspaceRoot: URL? )
 func publish(uri: DocumentURI, diagnostics: [LanguageDiagnostic], owner: String)
+func rawStderrBytes()
+func rawStderrViewport(from offset: UInt64, maxBytes: Int)
+func rawStdoutBytes()
+func rawStdoutViewport(from offset: UInt64, maxBytes: Int)
 func register( into registry: CommandRegistry, onRun: @escaping @MainActor () | isolation=@MainActor attr=discardableResult
 func register(_ definition: TaskDefinition)
 func registerMatcher(_ matcher: ProblemMatcher)
 func resolve( _ text: String, variables: [String: String], environment: [String: String] , allowEmpty: Bool )
+func resolve( against text: String, contentState: DocumentContentStateID )
 func resolveDefinition( _ definition: TaskDefinition, extraVariables: [String: String] )
 func resolveOrder(_ root: TaskID)
 func resolvedRange(in text: String)
@@ -52,13 +67,16 @@ func setVariables(_ variables: [String: String])
 func start(_ definition: TaskDefinition, output: OutputChannel)
 func start(id: TaskID) | attr=discardableResult
 func swiftCompiler(owner: String )
+func validateReadinessPattern(_ pattern: String?)
 func wait()
 init ( id: ProblemMatcherID, owner: String, pattern: NSRegularExpression, fileGroup: Int , lineGroup: Int , columnGroup: Int , severityGroup: Int? , messageGroup: Int , multilineEndPattern: NSRegularExpression? , maxProblems: Int )
 init ( id: TaskID, label: String, executable: String, arguments: [String] , cwd: URL? , environment: [String: String] , dependsOn: [TaskID] , problemMatchers: [ProblemMatcherID] , group: TaskGroup , execution: TaskExecutionKind , presentation: TaskPresentation )
 init ( id: UUID )
 init ( platformProfile: PlatformCapabilityProfile )
+init ( range: CodeEditorCore.TextRange, contentState: DocumentContentStateID, position: TaskSourcePosition )
 init ( reveal: TaskPresentationReveal , echo: Bool , focus: Bool , panel: String? )
-init ( run: TaskRun, processHandle: ProcessHandle?, readinessPattern: String? )
+init ( root: TaskID, order: [TaskID], outcomes: [TaskID: TaskNodeOutcome], rootHandle: TaskExecutionHandle? )
+init ( run: TaskRun, processHandle: ProcessHandle?, readinessPattern: String?, maxCollectedBytes: Int )
 init ( runner: any TaskRunner )
 init ( uri: DocumentURI?, path: String, diagnostic: LanguageDiagnostic, position: TaskSourcePosition )
 init ()
@@ -80,12 +98,15 @@ struct ProblemMatcher | sendable=1
 struct ProblemMatcherID | sendable=1
 struct ProcessTaskRunner
 struct TaskDefinition | sendable=1
+struct TaskGraphReport | sendable=1
 struct TaskID | sendable=1
 struct TaskPresentation | sendable=1
 struct TaskRun | sendable=1
 struct TaskRunResult | sendable=1
 struct TaskSourcePosition | sendable=1
+struct VersionedProblemRange | sendable=1
 var allProblems
+var allowsDependents
 var arguments
 var cancel
 var collectedStderr
@@ -93,12 +114,15 @@ var collectedStdout
 var column
 var columnGroup
 var concurrencyGroup
+var contentState
 var cwd
 var date
 var defaultTimeout
 var definitionID
 var dependsOn
 var diagnostic
+var droppedLineCount
+var droppedOutputByteCount
 var echo
 var encoding
 var endedAt
@@ -115,16 +139,21 @@ var id
 var isBackground
 var isError
 var isExclusive
+var isFailureOrSkip
+var isFinished
 var isReady
 var label
 var line
 var lineGroup
 var lines
+var maxCollectedBytes
 var maxLines
 var maxProblems
 var messageGroup
 var multilineEndPattern
 var name
+var order
+var outcomes
 var owner
 var panel
 var path
@@ -134,10 +163,14 @@ var position
 var presentation
 var problemMatchers
 var processService
+var range
 var rawValue
 var readinessPattern
 var results
 var reveal
+var root
+var rootHandle
+var rootOutcome
 var run
 var runID
 var runOptions
@@ -152,4 +185,5 @@ var timeout
 var uri
 var useShell
 var variables
+var wasOutputTruncated
 var wasTruncated

@@ -1,9 +1,9 @@
 {
-  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da",
-  "generated_at": "2026-08-02T18:37:13Z",
+  "commit": "321153c945a796828b0ccfde33dd8dc9fad139b1",
+  "generated_at": "2026-08-03T03:42:19Z",
   "ios18": "job/local/ios-not-run",
   "macos15": "job/local/macos",
-  "run_id": "local-20260802T183713Z",
+  "run_id": "local-20260803T034219Z",
   "schema_version": 1,
   "status": "partial",
   "toolchain": "Apple Swift version 6.3 (swiftlang-6.3.0.123.5 clang-2100.0.123.102)"

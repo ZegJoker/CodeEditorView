@@ -1,5 +1,6 @@
 actor LocalWorkspaceFileSystem
 class DocumentLeaseRegistry | isolation=@MainActor
+class DocumentLifecycleCoordinator | isolation=@MainActor
 class EditorLayoutStore | isolation=@MainActor
 class EditorPane | isolation=@MainActor
 class FSEventsWorkspaceWatcher | sendable=1
@@ -9,27 +10,43 @@ class Workspace | isolation=@MainActor
 class WorkspaceCloseCoordinator | isolation=@MainActor
 class WorkspaceEditService | isolation=@MainActor
 class WorkspaceFileTree | isolation=@MainActor
+class WorkspaceTransactionCoordinator | isolation=@MainActor
+enum BulkCloseAtomicity | sendable=1
 enum CloseDecision | sendable=1
 enum CloseTransactionResult | sendable=1
+enum DescriptorRelativeIO | sendable=1
+enum DescriptorRelativeIOError | sendable=1
 enum DirtyTabClosePolicy | sendable=1
 enum DocumentLeaseOwner | sendable=1
+enum DocumentLifecycleCloseReason | sendable=1
+enum DocumentLifecycleError | sendable=1
 enum EditorLayoutNode | sendable=1
 enum EditorSplitAxis | sendable=1
+enum EntryKind | sendable=1
+enum Format
+enum RollbackOwnerKind | sendable=1
 enum WorkspaceEditError | sendable=1
 enum WorkspaceEditFaultPoint | sendable=1
 enum WorkspaceError | sendable=1
+enum WorkspaceFSProgressEvent | sendable=1
 enum WorkspaceFileEvent | sendable=1
 enum WorkspaceFileOperation | sendable=1
 enum WorkspaceFileSystemError | sendable=1
+enum WorkspaceHiddenFilePolicy | sendable=1
 enum WorkspacePath
 enum WorkspacePathSecurity | sendable=1
+enum WorkspaceRecoveryOutcome | sendable=1
 enum WorkspaceRestoration
 enum WorkspaceRestorationError | sendable=1
+enum WorkspaceStreamItem | sendable=1
 enum WorkspaceSymlinkPolicy | sendable=1
+enum WorkspaceTransactionError | sendable=1
+enum WorkspaceTransactionState | sendable=1
 enum WorkspaceTrust | sendable=1
 enum WorkspaceTrustCapability | sendable=1
 enum WorkspaceWatchSignal | sendable=1
 func acquire(documentID: DocumentID, owner: DocumentLeaseOwner)
+func activate() | attr=discardableResult
 func addRoot(directoryURL: URL)
 func allPaneIDs()
 func allows(_ capability: WorkspaceTrustCapability)
@@ -39,10 +56,13 @@ func apply(_ event: WorkspaceFileEvent)
 func assertSameVolume(url: URL, root: URL)
 func back()
 func cachedChildren(of id: WorkspaceItemID)
+func capture(directory url: URL)
 func captureRestorationState()
 func captureRestorationStateAsync()
 func children(of id: WorkspaceItemID) | attr=discardableResult
 func children(of item: WorkspaceItemID)
+func close( documentID: DocumentID, reason: DocumentLifecycleCloseReason ) | attr=discardableResult
+func close(_ fd: Int32)
 func close(pane: EditorPaneID)
 func close(tab id: EditorTabID) | attr=discardableResult
 func closeOtherTabs(keeping tabID: EditorTabID, in paneID: EditorPaneID)
@@ -50,6 +70,8 @@ func closePane(_ id: EditorPaneID)
 func closeTab(_ tabID: EditorTabID, in paneID: EditorPaneID)
 func closeTabsToTheRight(of tabID: EditorTabID, in paneID: EditorPaneID)
 func collapse(_ id: WorkspaceItemID)
+func commit(_ prepared: PreparedWorkspaceTransaction)
+func computeChecksum(for journal: DurableWorkspaceJournal)
 func copy(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?)
 func count(for documentID: DocumentID)
 func createDirectory(in parent: WorkspaceItemID, name: String)
@@ -57,26 +79,39 @@ func createDirectory(in parent: WorkspaceItemID, name: String) | attr=discardabl
 func createFile( in parent: WorkspaceItemID, name: String, contents: Data ) | attr=discardableResult
 func createFile(in parent: WorkspaceItemID, name: String, contents: Data)
 func decode(_ data: Data)
+func decodeJournal(from data: Data)
+func decodePayload(_ data: Data)
 func decodeRaw(_ data: Data)
 func delete(item: WorkspaceItemID)
-func deleteItem(_ id: WorkspaceItemID)
+func deleteItem( _ id: WorkspaceItemID, policy: DirtyTabClosePolicy? )
+func document(id: DocumentID)
+func document(uri: DocumentURI)
 func emit(_ signal: WorkspaceWatchSignal)
 func encode(_ workspace: Workspace) | isolation=@MainActor
+func encodeJournal(_ journal: DurableWorkspaceJournal)
+func encodePayload()
 func entries()
 func events()
 func expand(_ id: WorkspaceItemID)
 func forward()
+func handleFinalLeaseRelease(documentID: DocumentID)
+func handleFinalLeaseReleaseSync(documentID: DocumentID)
 func hasLeases(for documentID: DocumentID)
 func invalidate(_ id: WorkspaceItemID)
 func invalidateAll()
 func isContained(url: URL, inRoot root: URL)
 func isExpanded(_ id: WorkspaceItemID)
 func isLoaded(_ id: WorkspaceItemID)
+func isRegistered(_ id: DocumentID)
 func item(for uri: DocumentURI)
 func join(_ base: String, _ name: String)
 func keepTabOpen(_ tabID: EditorTabID, in paneID: EditorPaneID)
-func local( rootDirectories: [URL], settings: WorkspaceSettings )
+func listDirectory(dirfd: Int32)
+func local( rootDirectories: [URL], settings: WorkspaceSettings , journalRoot: URL? )
+func makeCanonicalDecoder()
+func makeCanonicalEncoder()
 func migrate(_ state: WorkspaceRestorationState)
+func mkdirAt(dirfd: Int32, relativePath: String, mode: mode_t )
 func move(item: WorkspaceItemID, to parent: WorkspaceItemID, newName: String?)
 func moveTab(from: Int, to: Int)
 func moveTab(from: Int, to: Int, in paneID: EditorPaneID)
@@ -84,124 +119,203 @@ func navigateBack()
 func navigateForward()
 func normalize()
 func normalize(_ path: String)
+func noteRemoved(item: WorkspaceItemID)
 func open( sessionID: EditorSessionID, documentID: DocumentID, documentURI: DocumentURI, preview: Bool ) | attr=discardableResult
 func open( uri: DocumentURI, in paneID: EditorPaneID, preview: Bool ) | attr=discardableResult
+func open( uri: DocumentURI, provider: any DocumentContentProvider ) | attr=discardableResult
+func openAt(dirfd: Int32, relativePath: String, flags: Int32, mode: mode_t )
+func openDirectory(at url: URL)
 func openDocument(uri: DocumentURI) | attr=discardableResult
+func openDocumentsUnder(item: WorkspaceItemID)
+func openExisting(_ document: TextDocument) | attr=discardableResult
 func openInActivePane( uri: DocumentURI, preview: Bool ) | attr=discardableResult
+func openNestedDirectory(rootDirfd: Int32, segments: [String])
+func openNestedFile(rootDirfd: Int32, relativePath: String)
 func owners(for documentID: DocumentID)
+func parentDirfdAndName( rootDirfd: Int32, relativePath: String )
 func pin(tab id: EditorTabID)
 func pinTab(_ tabID: EditorTabID, in paneID: EditorPaneID)
+func planBulkClose( candidates: [CloseCandidate], policy: DirtyTabClosePolicy? , atomicity: BulkCloseAtomicity )
+func prepare(_ request: WorkspaceTransactionRequest)
 func preview(_ edit: WorkspaceEdit)
+func progressEvents()
 func promote(to level: WorkspaceTrust)
 func promotePreviewIfNeeded(tab id: EditorTabID)
 func promotePreviewTabs(for documentID: DocumentID)
 func push(_ entry: NavigationEntry)
+func readFile(fd: Int32, maxBytes: Int)
+func recoverPendingTransactions()
 func refreshRoots()
+func relativeComponents(_ relativePath: String)
 func release(documentID: DocumentID, owner: DocumentLeaseOwner) | attr=discardableResult
 func releaseAll(forTab tabID: EditorTabID) | attr=discardableResult
 func removeAll()
 func removeRoot(_ id: WorkspaceRootID)
 func removeRoot(id: WorkspaceRootID)
+func rename(documentID: DocumentID, to newURI: DocumentURI)
+func renameAt( fromDirfd: Int32, fromRelative: String, toDirfd: Int32, toRelative: String )
 func renameItem(_ id: WorkspaceItemID, to newName: String) | attr=discardableResult
 func replaceRoot(_ node: EditorLayoutNode)
 func requestCloseAllTabs( policy: DirtyTabClosePolicy? ) | attr=discardableResult
-func requestCloseOtherTabs( keeping tabID: EditorTabID, in paneID: EditorPaneID )
+func requestCloseOtherTabs( keeping tabID: EditorTabID, in paneID: EditorPaneID, policy: DirtyTabClosePolicy? )
 func requestClosePane( _ id: EditorPaneID, policy: DirtyTabClosePolicy? ) | attr=discardableResult
 func requestCloseTab( _ tabID: EditorTabID, in paneID: EditorPaneID, policy: DirtyTabClosePolicy? ) | attr=discardableResult
-func requestCloseTabsToTheRight( of tabID: EditorTabID, in paneID: EditorPaneID )
+func requestCloseTabsToTheRight( of tabID: EditorTabID, in paneID: EditorPaneID, policy: DirtyTabClosePolicy? )
 func resolveDecisions( candidates: [CloseCandidate], policy: DirtyTabClosePolicy? )
 func resolveUnderRoot( root: URL, relative: RelativeWorkspacePath, options: WorkspacePathResolveOptions )
 func resolveUnderRoot( root: URL, relativePath: String, options: WorkspacePathResolveOptions )
 func restore( from state: WorkspaceRestorationState, fileSystem: any WorkspaceFileSystem, documentProvider: any DocumentContentProvider )
 func restore( tabs restored: [EditorTab], selectedTabID: EditorTabID?, previewTabID: EditorTabID? )
+func restore(_ archive: WorkspaceArchive, to destination: URL)
 func select(tab id: EditorTabID)
 func selectTab(_ tabID: EditorTabID, in paneID: EditorPaneID)
 func setActivePane(_ id: EditorPaneID)
 func setEntries(_ entries: [NavigationEntry], index: Int)
 func setFractions(split id: EditorSplitID, fractions: [Double])
 func setSplitFractions(_ id: EditorSplitID, fractions: [Double])
+func shouldList(name: String)
 func signalRescan(rootID: WorkspaceRootID?)
 func simulateOverflow(rootID: WorkspaceRootID)
 func snapshot()
 func split( pane: EditorPaneID, axis: EditorSplitAxis, newPane: EditorPaneID, fraction: Double )
 func splitActivePane(axis: EditorSplitAxis, fraction: Double ) | attr=discardableResult
 func start( rootID: WorkspaceRootID, url: URL, excludedNames: Set<String>, onEvent: @escaping @Sendable (WorkspaceWatchSignal)
+func statAt(dirfd: Int32, relativePath: String)
 func stop(rootID: WorkspaceRootID)
 func stopAll()
+func unlinkAt(dirfd: Int32, relativePath: String, directory: Bool )
 func updateTabURIs(documentID: DocumentID, uri: DocumentURI)
 func updateURI(documentID: DocumentID, uri: DocumentURI)
 func uri(for item: WorkspaceItemID)
 func validate(_ edit: WorkspaceEdit)
 func validateRelativePath(_ path: String)
+func workspaceEvents()
+func writeNewFile(dirfd: Int32, name: String, contents: Data, mode: mode_t )
+init ( candidates: [CloseCandidate], decisions: [DocumentID: CloseDecision], atomicity: BulkCloseAtomicity )
 init ( documentChanges: [DocumentChange] , fileOperations: [WorkspaceFileOperation] )
 init ( documentID: DocumentID, uri: DocumentURI, isDirty: Bool, remainingTabCount: Int )
 init ( documentURI: DocumentURI, documentID: DocumentID? , sessionID: EditorSessionID? , selection: CodeEditorCore.TextRange? , scrollY: Double? )
-init ( excludedNames: Set<String> , ".DS_Store"], followSymlinks: Bool , watchExcludedNames: Set<String> , "node_modules", ".build", "DerivedData"], pathResolveOptions: WorkspacePathResolveOptions )
+init ( excludedNames: Set<String> , ".DS_Store"], followSymlinks: Bool , watchExcludedNames: Set<String> , "node_modules", ".build", "DerivedData"], pathResolveOptions: WorkspacePathResolveOptions , hiddenFilePolicy: WorkspaceHiddenFilePolicy , revealedHiddenNames: Set<String> , ".env", ".editorconfig", ".swift-format"], filesystemLimits: WorkspaceFilesystemLimits )
+init ( formatVersion: Int , entries: [Entry], supportedEntryKinds: [EntryKind] )
+init ( formatVersion: Int , transactionID: String, createdAt: Date, workspaceID: String, state: WorkspaceTransactionState, operations: [String], backupRelativePaths: [String], rootPaths: [String], resourceOwners: [RollbackResourceOwner], checksum: String )
 init ( id: EditorPaneID, tabs: [RestoredTab], selectedTabID: EditorTabID?, previewTabID: EditorTabID? )
 init ( id: EditorTabID )
 init ( id: EditorTabID, documentURI: DocumentURI, isPreview: Bool, isPinned: Bool, selection: CodeEditorCore.TextRange? , scrollY: Double? )
 init ( id: WorkspaceID )
+init ( maxDepth: Int , maxFileCount: Int , maxBytes: UInt64 , batchSize: Int , maxElapsed: TimeInterval )
+init ( relativePath: String, kind: EntryKind, dataBase64: String? , linkDestination: String? , posixPermissions: UInt16? , modificationTime: TimeInterval? )
 init ( rootDirectories: [URL], settings: WorkspaceSettings , enablesDirectoryWatching: Bool , watcher: (any WorkspaceFileWatchBackend)
 init ( schemaVersion: Int , workspaceID: WorkspaceID, roots: [WorkspaceRoot], layout: EditorLayoutNode, panes: [RestoredPane], activePaneID: EditorPaneID?, focusHistory: [EditorPaneID], navigation: [NavigationEntry], navigationIndex: Int )
 init ( settings: WorkspaceSettings , enablesDirectoryWatching: Bool , watcher: (any WorkspaceFileWatchBackend)
-init ( symlinkPolicy: WorkspaceSymlinkPolicy , requireSameVolume: Bool )
+init ( symlinkPolicy: WorkspaceSymlinkPolicy , requireSameVolume: Bool , useDescriptorRelativeIO: Bool )
+init ( transactionID: String, state: WorkspaceTransactionState, request: WorkspaceTransactionRequest, journalURL: URL?, journalDirectory: URL?, resourceOwners: [RollbackResourceOwner], undoCheckpoints: [DocumentID: Int], captures: [PreparedCapture], expectedDocumentVersions: [DocumentID: DocumentVersion], expectedFileIdentities: [DocumentURI: DocumentFileIdentity] )
 init ( uri: DocumentURI, documentID: DocumentID? , expectedVersion: DocumentVersion? , expectedFileIdentity: DocumentFileIdentity? , transaction: EditTransaction )
+init ( uri: DocumentURI, isDirectory: Bool, owner: RollbackOwnerKind, backupFileName: String? , archive: WorkspaceArchive? , fileBytes: Data? , posixPermissions: NSNumber? , modificationDate: Date? )
 init ( workspaceID: WorkspaceID, revision: UInt64, roots: [WorkspaceRoot], openDocumentIDs: [DocumentID], documentVersions: [DocumentURI: DocumentVersion], activePaneID: EditorPaneID?, trust: WorkspaceTrustState )
 init ()
 init (capacity: Int )
 init (defaultPolicy: DirtyTabClosePolicy )
 init (directoryURL: URL, id: WorkspaceRootID ))
+init (edit: WorkspaceEdit, revalidateIdentities: Bool )
 init (fileSystem: any WorkspaceFileSystem)
 init (id: EditorPaneID ), tabs: [EditorTab] , selectedTabID: EditorTabID? )
 init (id: WorkspaceItemID, name: String, isDirectory: Bool, uri: DocumentURI)
 init (id: WorkspaceRootID ), uri: DocumentURI, name: String)
 init (level: WorkspaceTrust , trustedRootIDs: Set<WorkspaceRootID> )
 init (rawValue: UUID)
+init (registry: DocumentRegistry ))
+init (results: [WorkspaceRecoveryItem])
 init (root: EditorLayoutNode)
 init (rootID: WorkspaceRootID, path: String)
+init (roots: [WorkspaceRoot], sequence: UInt64)
+init (sequence: UInt64, event: Event)
 init (singlePane id: EditorPaneID)
 init (tab: EditorTab, replacedPreview: EditorTab? )
+init (transactionID: String, outcome: WorkspaceRecoveryOutcome, detail: String)
+init (transactionID: String, state: WorkspaceTransactionState, result: WorkspaceEditResult? )
+init (uri: String, owner: RollbackOwnerKind, relativeBackup: String? )
 init (validating path: String)
 init (workspace: Workspace, journalRoot: URL? )
 protocol WorkspaceCloseDelegate | sendable=1
 protocol WorkspaceFileSystem | sendable=1
 protocol WorkspaceFileWatchBackend | sendable=1
+struct BulkCloseDecisionPlan | sendable=1
 struct CloseCandidate | sendable=1
 struct DocumentChange | sendable=1
+struct DurableWorkspaceJournal | sendable=1
 struct EditorPaneID | sendable=1
 struct EditorSplitID | sendable=1
 struct EditorTab | sendable=1
 struct EditorTabID | sendable=1
+struct Entry | sendable=1
 struct NavigationEntry | sendable=1
 struct OpenResult | sendable=1
+struct PreparedCapture | sendable=1
+struct PreparedWorkspaceTransaction | sendable=1
 struct RelativeWorkspacePath | sendable=1
 struct RestoredPane | sendable=1
 struct RestoredTab | sendable=1
+struct RollbackResourceOwner | sendable=1
+struct WorkspaceArchive | sendable=1
 struct WorkspaceEdit | sendable=1
 struct WorkspaceEditPreview | sendable=1
 struct WorkspaceEditResult | sendable=1
+struct WorkspaceEventEnvelope | sendable=1
+struct WorkspaceFilesystemLimits | sendable=1
+struct WorkspaceFilesystemSnapshot | sendable=1
 struct WorkspaceID | sendable=1
 struct WorkspaceItem | sendable=1
 struct WorkspaceItemID | sendable=1
 struct WorkspacePathResolveOptions | sendable=1
+struct WorkspaceRecoveryItem | sendable=1
+struct WorkspaceRecoveryReport | sendable=1
 struct WorkspaceRestorationState | sendable=1
 struct WorkspaceRoot | sendable=1
 struct WorkspaceRootID | sendable=1
 struct WorkspaceSettings | sendable=1
 struct WorkspaceSnapshot | sendable=1
+struct WorkspaceTransactionReceipt | sendable=1
+struct WorkspaceTransactionRequest | sendable=1
 struct WorkspaceTrustState | sendable=1
+var O_CLOEXEC
+var O_CREAT
+var O_DIRECTORY
+var O_EXCL
+var O_NOFOLLOW
+var O_RDONLY
+var O_RDWR
+var O_TRUNC
+var O_WRONLY
 var activePaneID
 var appliedDocumentChanges
+var archive
+var atomicity
+var backupFileName
+var backupRelativePaths
+var batchSize
+var bulkCloseAtomicity
 var canGoBack
 var canGoForward
+var candidates
 var capacity
+var captures
+var checksum
+var claimsByteExactMetadata
+var claimsFullPOSIXMatrix
 var closeCoordinator
 var completedFileOperations
+var createdAt
 var current
+var currentFormatVersion
 var currentSchemaVersion
+var dataBase64
+var decisions
 var defaultPolicy
 var delegate
 var description
+var detail
+var didOpen | isolation=@MainActor
+var didRename | isolation=@MainActor
 var documentChangeCount
 var documentChanges
 var documentID
@@ -210,17 +324,27 @@ var documentProvider
 var documentURI
 var documentVersions
 var documents
+var edit
 var enablesDirectoryWatching
+var entries
+var event
 var excludedNames
+var expectedDocumentVersions
+var expectedFileIdentities
 var expectedFileIdentity
 var expectedVersion
 var faultPoint
+var fileBytes
 var fileOperationCount
 var fileOperations
 var fileSystem
 var fileTree
+var filesystemLimits
 var focusHistory
 var followSymlinks
+var formatVersion
+var hasCancel
+var hiddenFilePolicy
 var id
 var inverse
 var isDirectory
@@ -228,11 +352,22 @@ var isDirty
 var isPinned
 var isPreview
 var isRoot
+var journalDirectory
 var journalRoot
 var journalURL
+var kind
 var lastComponent
 var layout
+var leases
 var level
+var lifecycle
+var linkDestination
+var maxBytes
+var maxDepth
+var maxElapsed
+var maxFileCount
+var modificationDate
+var modificationTime
 var name
 var navigation
 var navigationHistory
@@ -240,20 +375,34 @@ var navigationIndex
 var onFinalRelease
 var openDocumentIDs
 var openDocumentsAffected
+var operations
+var outcome
+var owner
 var panes
 var parent
 var parentPath
 var path
 var pathResolveOptions
 var pathString
+var posixPermissions
 var previewTabID
 var rawValue
+var registeredCount
+var relativeBackup
+var relativePath
 var remainingTabCount
 var replacedPreview
+var request
 var requireSameVolume
+var resourceOwners
+var result
+var results
+var revalidateIdentities
+var revealedHiddenNames
 var revision
 var root
 var rootID
+var rootPaths
 var roots
 var schemaVersion
 var scrollY
@@ -261,15 +410,25 @@ var segments
 var selectedTab
 var selectedTabID
 var selection
+var sequence
 var sessionID
 var settings
+var state
+var supportedEntryKinds
+var supportedKinds
 var symlinkPolicy
 var tab
 var tabs
 var transaction
+var transactionID
+var trashRoot
 var trust
 var trusted
 var trustedRootIDs
+var undoCheckpoints
 var uri
+var useDescriptorRelativeIO
+var version
 var watchExcludedNames
+var willClose | isolation=@MainActor
 var workspaceID

@@ -1,8 +1,14 @@
+Sources/CodeEditorCommands/CommandID.swift:139:public final class RegistrationToken: CommandDisposable, @unchecked Sendable {
+Sources/CodeEditorCommands/CommandID.swift:167:public final class CommandRegistrationToken: CommandDisposable, @unchecked Sendable {
 Sources/CodeEditorCore/Index/LineIndex.swift:79:public struct LinePosition<Payload: LinePayload>: @unchecked Sendable {
-Sources/CodeEditorCore/Platform/ProcessService.swift:284:    public final class ProcessHandle: @unchecked Sendable {
-Sources/CodeEditorCore/Platform/ProcessService.swift:92:    public final class ProcessHandle: @unchecked Sendable {
+Sources/CodeEditorCore/Platform/ProcessService.swift:224:public final class ProcessHandle: @unchecked Sendable {
+Sources/CodeEditorCore/Platform/ProcessService.swift:571:public final class ProcessHandle: @unchecked Sendable {
+Sources/CodeEditorCore/Platform/ProcessService.swift:618:final class ProcessEventPublishQueue: @unchecked Sendable {
 Sources/CodeEditorCore/Selection/ColumnSelectionBuilder.swift:10:/// `@unchecked Sendable`: `CTLine` is not Sendable; fragments are value snapshots
 Sources/CodeEditorCore/Selection/ColumnSelectionBuilder.swift:12:public struct ColumnSelectionFragment: @unchecked Sendable {
+Sources/CodeEditorCore/Substrate/FramedRPCConnection.swift:107:public final class InMemoryByteTransport: ByteTransport, @unchecked Sendable {
+Sources/CodeEditorCore/Substrate/OneShotPromise.swift:251:public final class DeadlineScheduler: @unchecked Sendable {
+Sources/CodeEditorCore/Substrate/OneShotPromise.swift:78:public final class OneShotPromise<Value: Sendable>: @unchecked Sendable {
 Sources/CodeEditorDAP/DAPErrors.swift:46:public final class DAPLog: @unchecked Sendable {
 Sources/CodeEditorDAP/DAPErrors.swift:97:public struct DAPJSONObject: @unchecked Sendable {
 Sources/CodeEditorDAP/Transport/DAPMessageFraming.swift:21:    public final class Decoder: @unchecked Sendable {
@@ -10,17 +16,18 @@ Sources/CodeEditorDAP/Transport/DAPTransport.swift:12:private final class DAPPro
 Sources/CodeEditorDAP/Transport/DAPTransport.swift:137:public final class DAPProcessTransport: DAPTransport, @unchecked Sendable {
 Sources/CodeEditorDAP/Transport/DAPTransport.swift:153:    private final class StderrBox: @unchecked Sendable {
 Sources/CodeEditorDAP/Transport/DAPTransport.swift:25:public final class DAPTCPConnectTransport: DAPTransport, @unchecked Sendable {
-Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:25:            final class Box: @unchecked Sendable {
-Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:64:            final class Box: @unchecked Sendable {
+Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:113:            final class Box: @unchecked Sendable {
+Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:166:            final class Box: @unchecked Sendable {
+Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:28:            final class Box: @unchecked Sendable {
+Sources/CodeEditorDocuments/DocumentIO/CoordinatedFileIO.swift:67:            final class Box: @unchecked Sendable {
 Sources/CodeEditorExtensionAPI/ExtensionDisposable.swift:31:public final class CompositeExtensionDisposable: ExtensionDisposable, @unchecked Sendable {
 Sources/CodeEditorExtensionAPI/ExtensionDisposable.swift:9:public final class ExtensionRegistrationToken: ExtensionDisposable, @unchecked Sendable {
 Sources/CodeEditorExtensionAPI/ExtensionStatus.swift:69:public final class ExtensionLog: @unchecked Sendable {
 Sources/CodeEditorExtensionGuest/ExtensionGuestRuntime.swift:431:public final class GuestExtensionContext: ExtensionAuthorContext, @unchecked Sendable {
 Sources/CodeEditorExtensionGuest/ExtensionGuestRuntime.swift:486:public final class StdioWireTransport: ExtensionWireTransport, @unchecked Sendable {
 Sources/CodeEditorExtensionHost/Adapters/RemoteLanguageServiceProviders.swift:8:public final class RemoteProviderRegistration: @unchecked Sendable {
-Sources/CodeEditorExtensionHost/Broker/CapabilityBroker.swift:870:final class DownloadRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
-Sources/CodeEditorExtensionHost/Conformance/ConformanceTrace.swift:38:public final class ConformanceTracer: @unchecked Sendable {
-Sources/CodeEditorExtensionHost/Debug/TerminalDAPRunInTerminalHandler.swift:41:public final class TerminalInvokeCounter: @unchecked Sendable {
+Sources/CodeEditorExtensionHost/Broker/CapabilityBroker.swift:1525:final class DownloadRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+Sources/CodeEditorExtensionHost/Conformance/ConformanceTrace.swift:36:public final class ConformanceTracer: @unchecked Sendable {
 Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:176:private final class MCPTransportState: @unchecked Sendable {
 Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:202:public final class MCPTestTransport: MCPTransport, @unchecked Sendable {
 Sources/CodeEditorExtensionHost/MCP/MCPClientSession.swift:203:    private final class State: @unchecked Sendable {
@@ -30,50 +37,54 @@ Sources/CodeEditorExtensionHost/RPC/RPCFraming.swift:12:    public final class D
 Sources/CodeEditorExtensionHost/Transport/NativeHelperProcessTransport.swift:7:public final class NativeHelperProcessTransport: ExtensionWireTransport, @unchecked Sendable {
 Sources/CodeEditorExtensionHost/Transport/RemoteExtensionTransport.swift:10:private final class ProcessTransportState: @unchecked Sendable {
 Sources/CodeEditorExtensionHost/Transport/RemoteExtensionTransport.swift:23:public final class ProcessRemoteExtensionTransport: RemoteExtensionTransport, @unchecked Sendable {
-Sources/CodeEditorExtensionHost/Wasm/CoreWasmABISession.swift:222:final class MessageBox: @unchecked Sendable {
-Sources/CodeEditorExtensionHost/Wasm/WasmGuestLink.swift:53:final class GuestMemory: WasmMemoryView, @unchecked Sendable {
-Sources/CodeEditorExtensionHost/Wasm/WasmGuestLink.swift:8:public final class WasmGuestLink: LinkedWasmGuest, @unchecked Sendable {
+Sources/CodeEditorExtensionHost/Wasm/CoreWasmABISession.swift:374:final class MessageBox: @unchecked Sendable {
 Sources/CodeEditorExtensionProtocol/CBOR/CBORFraming.swift:18:    public final class Decoder: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionRegistrars.swift:10:public final class CommandContributionRegistrar: @unchecked Sendable {
-Sources/CodeEditorExtensions/ContributionRegistrars.swift:218:public final class PanelContributionRegistrar: @unchecked Sendable {
-Sources/CodeEditorExtensions/ContributionRegistrars.swift:258:public final class ThemeContributionRegistrar: @unchecked Sendable {
-Sources/CodeEditorExtensions/ContributionRegistrars.swift:282:public final class SnippetContributionRegistrar: @unchecked Sendable {
-Sources/CodeEditorExtensions/ContributionRegistrars.swift:306:public final class IconThemeContributionRegistrar: @unchecked Sendable {
+Sources/CodeEditorExtensions/ContributionRegistrars.swift:112:public final class LanguageServiceContributionRegistrar: @unchecked Sendable {
+Sources/CodeEditorExtensions/ContributionRegistrars.swift:232:public final class PanelContributionRegistrar: @unchecked Sendable {
+Sources/CodeEditorExtensions/ContributionRegistrars.swift:272:public final class ThemeContributionRegistrar: @unchecked Sendable {
+Sources/CodeEditorExtensions/ContributionRegistrars.swift:296:public final class SnippetContributionRegistrar: @unchecked Sendable {
+Sources/CodeEditorExtensions/ContributionRegistrars.swift:320:public final class IconThemeContributionRegistrar: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionRegistrars.swift:33:public final class KeybindingContributionRegistrar: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionRegistrars.swift:74:public final class LanguageContributionRegistrar: @unchecked Sendable {
-Sources/CodeEditorExtensions/ContributionRegistrars.swift:98:public final class LanguageServiceContributionRegistrar: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionStores.swift:11:public final class PanelContributionStore: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionStores.swift:131:public final class IconThemeContributionStore: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionStores.swift:51:public final class ThemeContributionStore: @unchecked Sendable {
 Sources/CodeEditorExtensions/ContributionStores.swift:90:public final class SnippetContributionStore: @unchecked Sendable {
 Sources/CodeEditorExtensions/ExtensionContext.swift:5:public final class ExtensionContext: ExtensionAuthorContext, @unchecked Sendable {
-Sources/CodeEditorExtensions/ExtensionPackageManager.swift:929:public final class StoreTelemetrySink: @unchecked Sendable {
+Sources/CodeEditorExtensions/ExtensionPackageManager.swift:1495:public final class StoreTelemetrySink: @unchecked Sendable {
 Sources/CodeEditorExtensions/ExtensionStorage.swift:5:public final class ExtensionStorage: @unchecked Sendable {
 Sources/CodeEditorExtensionWasmGuest/WasmGuestRuntime.swift:6:public final class WasmGuestRuntime: @unchecked Sendable {
 Sources/CodeEditorLanguageJSON/CodeEditorLanguageJSON.swift:22:    private final class State: @unchecked Sendable {
-Sources/CodeEditorLanguages/CodeEditorLanguagesBootstrap.swift:54:    private final class State: @unchecked Sendable {
-Sources/CodeEditorLanguageSupport/LanguageRegistry.swift:46:public final class LanguageRegistry: @unchecked Sendable {
+Sources/CodeEditorLanguages/CodeEditorLanguagesBootstrap.swift:57:    private final class State: @unchecked Sendable {
+Sources/CodeEditorLanguageSupport/LanguageRegistrationRecord.swift:48:public final class LanguageRegistrationToken: @unchecked Sendable {
+Sources/CodeEditorLanguageSupport/LanguageRegistry.swift:57:public final class LanguageRegistry: @unchecked Sendable {
 Sources/CodeEditorLanguageSwift/CodeEditorLanguageSwift.swift:20:    private final class State: @unchecked Sendable {
 Sources/CodeEditorLSP/Adapters/LSPLanguageServiceProviders.swift:8:public final class LSPProviderRegistration: @unchecked Sendable {
-Sources/CodeEditorLSP/LSPErrors.swift:52:public final class LSPLog: @unchecked Sendable {
-Sources/CodeEditorLSP/LSPJSON.swift:17:public struct LSPAnyJSON: @unchecked Sendable {
-Sources/CodeEditorLSP/LSPJSON.swift:4:public struct LSPJSONObject: @unchecked Sendable {
+Sources/CodeEditorLSP/LSPErrors.swift:59:public final class LSPLog: @unchecked Sendable {
+Sources/CodeEditorLSP/LSPJSON.swift:134:public struct LSPJSONObject: @unchecked Sendable {
+Sources/CodeEditorLSP/LSPJSON.swift:151:public struct LSPAnyJSON: @unchecked Sendable {
 Sources/CodeEditorLSP/Transport/LSPMessageFraming.swift:29:    public final class Decoder: @unchecked Sendable {
 Sources/CodeEditorLSP/Transport/LSPTransport.swift:13:private final class TransportState: @unchecked Sendable {
 Sources/CodeEditorLSP/Transport/LSPTransport.swift:27:public final class LSPTestTransport: LSPTransport, @unchecked Sendable {
 Sources/CodeEditorLSP/Transport/LSPTransport.swift:87:public final class LSPProcessTransport: LSPTransport, @unchecked Sendable {
-Sources/CodeEditorSourceControl/Git/GitCLIProvider.swift:6:public final class GitCLIProvider: SourceControlProvider, @unchecked Sendable {
-Sources/CodeEditorTasks/OutputChannel.swift:19:public final class OutputChannel: @unchecked Sendable {
-Sources/CodeEditorTasks/ProblemMatcher.swift:228:    public final class StreamingState: @unchecked Sendable {
-Sources/CodeEditorTasks/ProblemMatcher.swift:313:public final class StreamingProblemMatcherEngine: @unchecked Sendable {
-Sources/CodeEditorTasks/TaskRunner.swift:20:public final class TaskExecutionHandle: @unchecked Sendable {
-Sources/CodeEditorTerminal/PTYTerminalBackend.swift:160:    public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
-Sources/CodeEditorTerminal/PTYTerminalBackend.swift:7:    public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
-Sources/CodeEditorTerminal/TerminalScreen.swift:40:public final class TerminalScreen: @unchecked Sendable {
-Sources/CodeEditorTerminal/VTParser.swift:13:public final class VTParser: @unchecked Sendable {
+Sources/CodeEditorSourceControl/SourceControlService.swift:370:private final class UncheckedServiceBox: @unchecked Sendable {
+Sources/CodeEditorTasks/OutputChannel.swift:20:public final class OutputChannel: @unchecked Sendable {
+Sources/CodeEditorTasks/ProblemMatcher.swift:260:    public final class StreamingState: @unchecked Sendable {
+Sources/CodeEditorTasks/ProblemMatcher.swift:350:public final class StreamingProblemMatcherEngine: @unchecked Sendable {
+Sources/CodeEditorTasks/TaskRunner.swift:25:public final class TaskExecutionHandle: @unchecked Sendable {
+Sources/CodeEditorTasks/TaskRunner.swift:590:final class TaskEventPublishQueue: @unchecked Sendable {
+Sources/CodeEditorTasks/TaskRunner.swift:607:final class TaskCompletionGate: @unchecked Sendable {
+Sources/CodeEditorTerminal/PTYTerminalBackend.swift:163:    public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
+Sources/CodeEditorTerminal/PTYTerminalBackend.swift:9:    public final class PTYTerminalBackend: TerminalBackend, @unchecked Sendable {
+Sources/CodeEditorTerminal/TerminalScreen.swift:46:public final class TerminalScreen: @unchecked Sendable {
+Sources/CodeEditorTerminal/VTParser.swift:18:public final class VTParser: @unchecked Sendable {
 Sources/CodeEditorTreeSitter/TreeSitterConfiguration.swift:45:    private final class Box: @unchecked Sendable {
-Sources/CodeEditorTreeSitter/TreeSitterConfigurationFactory.swift:91:    private final class Cache: @unchecked Sendable {
+Sources/CodeEditorTreeSitter/TreeSitterConfigurationFactory.swift:111:    private final class Cache: @unchecked Sendable {
+Sources/CodeEditorView/Core/Layout/CaretNavigationEngine.swift:28:public struct EditorLayoutSnapshot: @unchecked Sendable {
+Sources/CodeEditorView/Core/Layout/CaretNavigationEngine.swift:29:    public struct Fragment: @unchecked Sendable {
 Sources/CodeEditorView/Core/Layout/LayoutSnapshot.swift:33:extension LaidOutFragment: @unchecked Sendable {}
+Sources/CodeEditorView/Core/Layout/NativeInputContracts.swift:7:    public struct AttributedSubstringResult: @unchecked Sendable {
 Sources/CodeEditorView/Platform/Shared/CursorBlinkController.swift:6:package final class CursorBlinkController: @unchecked Sendable {
 Sources/CodeEditorView/Platform/Shared/EditorSignposts.swift:58:public final class EditorPerformanceHarness: @unchecked Sendable {
 Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:307:extension EditorConfiguration: @unchecked Sendable {}
@@ -81,17 +92,24 @@ Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:308:extension EditorCon
 Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:309:extension EditorConfiguration.Behavior: @unchecked Sendable {}
 Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:310:extension EditorConfiguration.Layout: @unchecked Sendable {}
 Sources/CodeEditorView/SwiftUI/EditorConfiguration.swift:311:extension EditorConfiguration.Peripherals: @unchecked Sendable {}
-Sources/CodeEditorWasmEngine/InProcessCoreWasmEngine.swift:152:final class InProcessMemory: WasmMemoryView, @unchecked Sendable {
-Sources/CodeEditorWasmEngine/InProcessCoreWasmEngine.swift:187:final class WasmGuestBridge: @unchecked Sendable {
-Sources/CodeEditorWasmEngine/InProcessCoreWasmEngine.swift:52:final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
-Sources/CodeEditorWasmEngine/LinkedGuestWasmEngine.swift:144:final class InfiniteLoopInstance: CodeEditorWasmInstance, @unchecked Sendable {
-Sources/CodeEditorWasmEngine/LinkedGuestWasmEngine.swift:182:final class ByteMemory: WasmMemoryView, @unchecked Sendable {
-Sources/CodeEditorWasmEngine/LinkedGuestWasmEngine.swift:70:public final class LinkedGuestWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
-Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:132:    final class WasmKitInstance: CodeEditorWasmInstance, @unchecked Sendable {
-Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:225:            final class InvokeBox: @unchecked Sendable {
-Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:350:    final class WasmKitMemoryView: WasmMemoryView, @unchecked Sendable {
-Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:70:    final class GuestMemoryHolder: @unchecked Sendable {
-Sources/CodeEditorWorkbench/WorkspaceIndexService.swift:12:public final class FileTreeIndexService: WorkspaceIndexService, @unchecked Sendable {
+Sources/CodeEditorWasmEngine/CodeEditorWasmEngine.swift:134:public final class WasmSerialRuntime: @unchecked Sendable {
+Sources/CodeEditorWasmEngine/CodeEditorWasmEngine.swift:170:public final class WasmInstanceRegistry: @unchecked Sendable {
+Sources/CodeEditorWasmEngine/CodeEditorWasmEngine.swift:208:public final class WasmCapabilityMeter: @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/InProcessCoreWasmEngine.swift:160:final class InProcessMemory: WasmMemoryView, @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/InProcessCoreWasmEngine.swift:203:final class WasmGuestBridge: @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/InProcessCoreWasmEngine.swift:55:final class InProcessWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/LinkedGuestWasmEngine.swift:147:final class InfiniteLoopInstance: CodeEditorWasmInstance, @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/LinkedGuestWasmEngine.swift:185:final class ByteMemory: WasmMemoryView, @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/LinkedGuestWasmEngine.swift:73:public final class LinkedGuestWasmInstance: CodeEditorWasmInstance, @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/WasmGuestLinkAdapter.swift:52:final class GuestMemory: WasmMemoryView, @unchecked Sendable {
+Sources/CodeEditorWasmEngineTestSupport/WasmGuestLinkAdapter.swift:7:public final class WasmGuestLink: LinkedWasmGuest, @unchecked Sendable {
+Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:114:    final class GuestMemoryHolder: @unchecked Sendable {
+Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:243:    final class WasmKitInstance: CodeEditorWasmInstance, @unchecked Sendable {
+Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:551:    final class WasmKitMemoryView: WasmMemoryView, @unchecked Sendable {
+Sources/CodeEditorWasmEngineWasmKit/WasmKitEngine.swift:83:    final class WasmKitResourceLimiter: ResourceLimiter, @unchecked Sendable {
+Sources/CodeEditorWorkbench/UtilityPanels.swift:247:                final class SessionBox: @unchecked Sendable {
+Sources/CodeEditorWorkbench/WorkbenchTaskBag.swift:10:public final class WorkbenchTaskBag: @unchecked Sendable {
+Sources/CodeEditorWorkbench/WorkspaceIndexService.swift:194:public final class FileTreeIndexService: WorkspaceIndexService, @unchecked Sendable {
 Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:202:    public final class FSEventsWorkspaceWatcher: WorkspaceFileWatchBackend, @unchecked Sendable {
 Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:232:public final class MockWorkspaceFileWatcher: WorkspaceFileWatchBackend, @unchecked Sendable {
 Sources/CodeEditorWorkspace/WorkspaceFileWatcher.swift:28:/// Lock-protected; `@unchecked Sendable` documents external synchronization.

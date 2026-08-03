@@ -8,6 +8,7 @@ enum CompatibilityFeatureKey | sendable=1
 enum CompatibilityFeatureStatus | sendable=1
 enum CompatibilityProfileLoader
 enum ContributionPrecedence | sendable=1
+enum CryptoAvailability | sendable=1
 enum DebugAdapterBinarySource | sendable=1
 enum DebugAdapterDiagnosticCode | sendable=1
 enum DebugAdapterLifecycleState | sendable=1
@@ -21,6 +22,7 @@ enum DynamicInstallationPolicy | sendable=1
 enum ExecutableExtensionPolicy | sendable=1
 enum ExtensionActivationEvent | sendable=1
 enum ExtensionArtifactOrigin | sendable=1
+enum ExtensionCompatibilityLevel | sendable=1
 enum ExtensionError | sendable=1
 enum ExtensionIdentityError | sendable=1
 enum ExtensionInactiveReason | sendable=1
@@ -44,8 +46,17 @@ enum MCPBinarySource | sendable=1
 enum MCPLifecycleState | sendable=1
 enum MCPProviderError | sendable=1
 enum MCPTransportKind | sendable=1
+enum PackageContentKind | sendable=1
+enum PackageExecutableClassifier
 enum PackageInstallState | sendable=1
+enum PackageInventoryBuilder
+enum PackageInventoryError | sendable=1
+enum PackageSignatureMeta
 enum PackageSourceFormat | sendable=1
+enum RevocationListCrypto
+enum RevocationListError | sendable=1
+enum SecurityDigest
+enum SecurityDigestError | sendable=1
 enum Severity | sendable=1
 enum SlashCommandError | sendable=1
 enum SlashCommandSanitize
@@ -54,22 +65,35 @@ func activate(in context: any ExtensionAuthorContext)
 func activationString(_ e: ExtensionActivationEvent)
 func add(_ token: any ExtensionDisposable)
 func append( extensionID: ExtensionID? , level: ExtensionLogLevel, message: String )
+func applyMonotonicUpdate(_ next: RevocationListDocument)
 func asPackageDiagnostic()
 func asSuggestion()
+func assertDataOnlyHasNoExecutables( inventory: PackageInventoryDocument, declaredPaths: Set<String> )
+func assertNoUndeclaredExecutables( inventory: PackageInventoryDocument, declaredPaths: Set<String> )
+func build( packageRoot: URL, limits: PackageInventoryLimits , declaredExecutablePaths: Set<String> )
 func build( packages: [ValidatedContributionPlan], generation: UInt64 )
+func canonicalPayload(_ document: RevocationListDocument)
+func classify( relativePath: String, header: Data, isMeta: Bool, declaredExecutable: Bool, unixExecutable: Bool )
 func clear()
 func compute(packageRoot: URL)
 func contains(_ version: SemanticVersion)
 func deactivate()
+func declaredExecutablePaths( runtimeKind: String?, runtimeEntrypoint: String?, packageRoot: URL, additionalDeclared: Set<String> )
 func dispose()
 func evaluate( packageID: String, origin: ExtensionArtifactOrigin, requestedRuntime: ExtensionRuntimeKindDTO, hostProfile: ExtensionHostProfile, hasRemoteDescriptor: Bool )
+func finalizeHex()
 func from( hostProfile: ExtensionHostProfile, platform: PlatformCapabilityProfile )
 func from(_ min: SemanticVersion)
 func from(platformProfile: PlatformCapabilityProfile)
 func fromContributions(_ contributions: [LanguageServerContribution])
+func generateAuthorityKeyPair(keyID: String, issuer: String)
+func hasUnixExecuteBit(at url: URL)
 func initializationOptions( serverID: String, context: LanguageServerResolveContext )
 func invalidate(packageID: String?)
+func isFresh(now: Date ), maxAge: TimeInterval )
+func isMeta(_ relativePath: String)
 func isPathContained(url: URL, within root: URL)
+func level(for feature: String)
 func load(directory: URL, options: LoadOptions )
 func load(toml: String)
 func load(url: URL)
@@ -81,20 +105,30 @@ func parse( data: Data )
 func parse( string: String )
 func parse(_ string: String)
 func parseActivationEvent(_ raw: String)
+func readHeader(of url: URL, maxBytes: Int )
 func register(serverID: String, languages: [String])
 func requestClassification(adapterID: String, command: String)
+func requireSignedStructure(_ document: RevocationListDocument)
 func resolveConfigurations( adapterID: String, context: LanguageServerResolveContext )
 func sanitizeMarkdown(_ text: String)
 func servers(forLanguage languageID: String)
+func sha256Hex( _ data: Data, availability: CryptoAvailability )
+func sha256HexFile( at url: URL, chunkSize: Int , availability: CryptoAvailability )
 func shipping(_ id: ShippingProfileID)
+func sign( _ document: inout RevocationListDocument, privateKeyRaw: Data, keyID: String, issuer: String )
+func sign(privateKeyRaw: Data, keyID: String, issuer: String)
 func status(for key: CompatibilityFeatureKey)
 func status(forRaw key: String)
 func toExtensionManifest()
 func transformCompletionLabel(_ item: CompletionLabelTransform)
 func transformSymbolLabel(_ item: SymbolLabelTransform)
 func transformVariablePresentation( name: String, value: String, type: String? )
+func update(_ chunk: Data)
+func update(_ data: Data)
 func validate(_ raw: String)
 func validateArguments(_ args: String, maxLength: Int)
+func verify( _ document: RevocationListDocument, authorities: [RevocationAuthorityKey] )
+func verify(authorities: [RevocationAuthorityKey])
 func which(_ name: String)
 func workspaceConfiguration( serverID: String, items: [WorkspaceConfigurationItem] )
 func writePackageTemplate( into root: URL, packageID: ExtensionID, displayName: String )
@@ -110,6 +144,7 @@ init ( dynamicInstallation: DynamicInstallationPolicy, executableExtensionPolicy
 init ( event: String, packageID: String? , fromVersion: String? , toVersion: String? , success: Bool, reason: String? , todos: Int? , timestamp: Date )
 init ( extensionID: ExtensionID, uri: String? , languageID: String? , workspaceRootPaths: [String] )
 init ( extensionID: ExtensionID? , level: ExtensionLogLevel, message: String, date: Date )
+init ( feature: String, level: ExtensionCompatibilityLevel, evidenceTests: [String] , notes: String? )
 init ( generation: UInt64, packages: [ValidatedContributionPlan], themes: [ThemeContribution], snippets: [SnippetContribution], iconThemes: [IconThemeContribution], languages: [LanguageDefinitionDTO], keybindings: [KeybindingOverrideDTO], grammars: [GrammarContribution] , queries: [QueryContribution] , collisions: [ContributionCollision] )
 init ( id: ExtensionID, displayName: String, state: ExtensionState, grantedPermissions: Set<ExtensionPermission> , lastError: String? )
 init ( id: ExtensionID, displayName: String, version: SemanticVersion )
@@ -127,13 +162,16 @@ init ( id: String, title: String, languages: [String] , sourcePath: String? , do
 init ( id: String, title: String? , languages: [String] , sourcePath: String? , extensionID: ExtensionID? )
 init ( kind: String, contributionID: String, winnerPackageID: ExtensionID, loserPackageID: ExtensionID, rule: String )
 init ( languageID: String, kind: String, relativePath: String, extensionID: ExtensionID? )
+init ( maxFileCount: Int , maxDirectoryDepth: Int , maxFileBytes: Int , maxTotalBytes: Int , maxPathLength: Int , maxComponentLength: Int , maxManifestBytes: Int )
 init ( name: String, type: String, request: DebugConfigurationRequest , bodyJSON: Data? )
 init ( os: String, arch: String, isSimulator: Bool , profileName: String , processLaunchAllowed: Bool )
-init ( packageID: ExtensionID, displayName: String, version: SemanticVersion, manifest: ExtensionManifest, packageRoot: URL? , sourceFormat: PackageSourceFormat, digest: String? , themes: [ThemeContribution] , snippets: [SnippetContribution] , iconThemes: [IconThemeContribution] , languages: [LanguageDefinitionDTO] , keybindings: [KeybindingOverrideDTO] , grammars: [GrammarContribution] , queries: [QueryContribution] , languageServers: [LanguageServerContribution] , debugAdapters: [DebugAdapterContribution] , mcpServers: [MCPServerContribution] , slashCommands: [SlashCommandContribution] , documentationPackages: [DocumentationPackageContribution] , assets: [AssetContribution] , diagnostics: [ExtensionPackageDiagnostic] , unsupportedFields: [String] , parityProfile: String , generation: UInt64 )
+init ( packageID: ExtensionID, displayName: String, version: SemanticVersion, manifest: ExtensionManifest, packageRoot: URL? , sourceFormat: PackageSourceFormat, digest: String? , themes: [ThemeContribution] , snippets: [SnippetContribution] , iconThemes: [IconThemeContribution] , languages: [LanguageDefinitionDTO] , keybindings: [KeybindingOverrideDTO] , grammars: [GrammarContribution] , queries: [QueryContribution] , languageServers: [LanguageServerContribution] , debugAdapters: [DebugAdapterContribution] , mcpServers: [MCPServerContribution] , slashCommands: [SlashCommandContribution] , documentationPackages: [DocumentationPackageContribution] , assets: [AssetContribution] , diagnostics: [ExtensionPackageDiagnostic] , unsupportedFields: [String] , parityProfile: String , generation: UInt64 , manifestRuntimeKind: String? , manifestRuntimeEntrypoint: String? )
 init ( packageID: String, version: String, localPath: URL? , remoteURL: URL? , digest: String? )
 init ( packageID: String, version: String, trustClass: ExtensionTrustClassDTO, enabled: Bool, quarantined: Bool, lastError: String? , publisher: String? )
 init ( platform: ExtensionPlatformInfo , extensionID: ExtensionID, worktree: WorktreeHandleID? , project: ProjectHandleID? , settings: SettingsHandleID? , storage: StorageHandleID? , settingsValues: [String: String] , workspaceRootPaths: [String] , environmentValues: [String: String] , whichResults: [String: String] , projectMetadata: ProjectMetadataSnapshot )
+init ( profile: String , features: [ExtensionFeatureCompatibility] , zedBinaryCompatibility: Bool )
 init ( profile: String , upstreamCommit: String , manifestSchema: Int , swiftExtensionAPI: String , features: [String: CompatibilityFeatureStatus] )
+init ( schema: Int , entries: [PackageInventoryEntry], inventorySHA256: String, packageSHA256: String )
 init ( serverID: String, displayName: String, command: String, arguments: [String] , environment: [String: String] , secretEnvironment: [String: SecretReference] , workingDirectoryRelative: String? , transport: MCPTransportKind , binarySource: MCPBinarySource, startupTimeoutMS: Int , extensionID: ExtensionID? )
 init ( serverID: String, displayName: String, languages: [String] , command: String, arguments: [String] , environment: [String: String] , workingDirectoryRelative: String? , transport: LanguageServerTransportKind , initializationOptionsJSON: Data? , binarySource: LanguageServerBinarySource, extensionID: ExtensionID? )
 init ( serverID: String, displayName: String? , command: String? , arguments: [String] , transport: MCPTransportKind , startupTimeoutMS: Int , downloadURL: String? , downloadDigest: String? , npmPackage: String? , npmVersion: String? , npmBin: String? , extensionID: ExtensionID? )
@@ -141,13 +179,16 @@ init ( serverID: String, displayName: String? , languages: [String] , command: S
 init ( serverID: String, extensionID: ExtensionID, state: LanguageServerLifecycleState, message: String? , progress: Double? , lastError: String? , binaryPath: String? , updatedAt: Date )
 init ( serverID: String, extensionID: ExtensionID, state: MCPLifecycleState, message: String? , lastError: String? , updatedAt: Date )
 init ( shippingProfileID: ShippingProfileID, platform: HostPlatform, allowedRuntimes: Set<ExtensionRuntimeKindDTO>, dynamicInstallation: DynamicInstallationPolicy, executableExtensionPolicy: ExecutableExtensionPolicy, localProcessSupport: CapabilityAvailabilityDTO, localPTYSupport: CapabilityAvailabilityDTO, remoteFallbackAvailable: Bool, enterpriseOptions: EnterpriseProfileOptions? )
+init ( version: Int , updatedAt: Date )
 init ()
 init (_ tokens: [any ExtensionDisposable] )
 init (_ value: CapabilityAvailability)
 init (adapterID: String, configuration: DebugConfiguration, confidence: Double )
+init (availability: CryptoAvailability )
 init (code: String, severity: Severity, message: String, path: String? )
 init (extensionID: ExtensionID, worktreeRoot: String? , projectName: String? )
 init (id: String, title: String, uri: String, snippet: String, packageID: String)
+init (keyID: String, publicKeyRaw: Data, issuer: String)
 init (kind: String? , attributes: [String] , visibility: String? )
 init (label: String, detail: String? , insertText: String? , filterText: String? )
 init (major: Int, minor: Int , patch: Int )
@@ -163,12 +204,12 @@ init (packageID: String, fraction: Double, message: String? )
 init (packageID: String? , version: String? , keyID: String? , reason: String)
 init (rawValue: String)
 init (relativePath: String, absoluteURL: URL? )
+init (relativePath: String, size: UInt64, sha256: String, kind: PackageContentKind)
 init (schemaVersion: Int , packages: [ExtensionIndexEntry] )
 init (section: String? , scopeURI: String? )
 init (serversByLanguage: [String: [String]] )
 init (stringLiteral value: String)
 init (validating raw: String)
-init (version: Int , updatedAt: Date ), entries: [RevocationEntry] )
 init (version: String, artifactPath: String, digest: String? , channel: String )
 protocol CodeEditorExtension | sendable=1
 protocol DebugAdapterProvider | sendable=1
@@ -196,7 +237,9 @@ struct DocumentationIndexProgress | sendable=1
 struct DocumentationPackageContribution | sendable=1
 struct DocumentationPackageSuggestion | sendable=1
 struct ExtensionArtifactRef | sendable=1
+struct ExtensionCompatibilityReport | sendable=1
 struct ExtensionContributionSnapshot | sendable=1
+struct ExtensionFeatureCompatibility | sendable=1
 struct ExtensionHostProfile | sendable=1
 struct ExtensionID | sendable=1
 struct ExtensionIndexDocument | sendable=1
@@ -224,13 +267,18 @@ struct LoadOptions | sendable=1
 struct MCPServerContribution | sendable=1
 struct MCPServerLaunchPlan | sendable=1
 struct MCPServerStatus | sendable=1
+struct PackageInventoryDocument | sendable=1
+struct PackageInventoryEntry | sendable=1
+struct PackageInventoryLimits | sendable=1
 struct PanelContribution | sendable=1
 struct ProjectHandleID | sendable=1
 struct ProjectMetadataSnapshot | sendable=1
 struct QueryContribution | sendable=1
 struct Result | sendable=1
+struct RevocationAuthorityKey | sendable=1
 struct RevocationEntry | sendable=1
 struct RevocationListDocument | sendable=1
+struct SHA256Hasher | sendable=1
 struct SecretReference | sendable=1
 struct SemanticVersion | sendable=1
 struct SettingsHandleID | sendable=1
@@ -305,6 +353,7 @@ var documentationPackages
 var downloadDigest
 var downloadURL
 var dynamicInstallation
+var elfMagic
 var empty
 var enabled
 var enforcePathContainment
@@ -314,9 +363,13 @@ var environment
 var environmentValues
 var event
 var events
+var evidenceTests
+var executableEntries
 var executableExtensionPolicy
 var expectedDigest
+var expiresAt
 var extensionID
+var feature
 var features
 var fileExtensions
 var fileIcons
@@ -335,8 +388,13 @@ var iconThemes
 var id
 var initializationOptionsJSON
 var insertText
+var inventorySHA256
+var isDataOnlyRuntime
+var isExecutable
 var isFinal
+var isGeneralTOML
 var isSimulator
+var issuer
 var key
 var keyID
 var keybindings
@@ -344,6 +402,7 @@ var kind
 var kindName
 var label
 var languageID
+var languageName
 var languageServers
 var languages
 var lastError
@@ -354,14 +413,25 @@ var localPTYSupport
 var localPath
 var localProcessSupport
 var loserPackageID
+var macho32LE
+var macho64LE
+var machoFatLE
 var major
 var manifest
+var manifestRuntimeEntrypoint
+var manifestRuntimeKind
 var manifestSchema
 var markdown
 var maxArgumentLength
 var maxChunkBytes
+var maxComponentLength
+var maxDirectoryDepth
 var maxExclusive
+var maxFileBytes
+var maxFileCount
 var maxManifestBytes
+var maxPathLength
+var maxTotalBytes
 var mcpServers
 var message
 var min
@@ -369,16 +439,20 @@ var minimal
 var minor
 var modifiers
 var name
+var names
+var notes
 var npmBin
 var npmPackage
 var npmVersion
 var os
 var packageID
 var packageRoot
+var packageSHA256
 var packages
 var parityProfile
 var patch
 var path
+var peMagic
 var permissions
 var phase13Default
 var phase16Default
@@ -386,6 +460,7 @@ var phase9API
 var plan
 var platform
 var postDebugTaskID
+var preAlphaDefault
 var preDebugTaskID
 var prefix
 var priority
@@ -396,9 +471,11 @@ var progress
 var project
 var projectMetadata
 var projectName
+var publicKeyRaw
 var publisher
 var quarantined
 var queries
+var rank
 var rawValue
 var reason
 var reasons
@@ -419,16 +496,21 @@ var rootPaths
 var rule
 var runtimeEntrypoint
 var runtimeKind
+var schema
 var schemaVersion
 var scopeURI
 var secretEnvironment
 var section
+var sequence
 var serverID
 var serversByLanguage
 var settings
 var settingsValues
 var severity
+var sha256
 var shippingProfileID
+var signature
+var size
 var slashCommands
 var slot
 var snippet
@@ -461,10 +543,12 @@ var uri
 var version
 var versions
 var visibility
+var wasmMagic
 var whichResults
 var winnerPackageID
 var workingDirectoryRelative
 var workspaceRootPaths
 var worktree
 var worktreeRoot
+var zedBinaryCompatibility
 var zero

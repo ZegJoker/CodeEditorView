@@ -52,6 +52,7 @@ func install(snippets: SnippetContributionRegistrar?)
 func install(storage: ExtensionStorage?)
 func install(themes: ThemeContributionRegistrar?)
 func installedPackages()
+func isLoadableForSnapshot(_ pkg: InstalledPackage)
 func load(from directory: URL, allowLegacyJSON: Bool )
 func load(json: Data)
 func load(packageRoot: URL)
@@ -61,13 +62,17 @@ func makeExtension(from plan: ValidatedContributionPlan)
 func makeFull( commands: CommandRegistry ) | isolation=@MainActor
 func makeOverride()
 func materialize( ref: ExtensionArtifactRef, into destinationDirectory: URL )
+func onPackagesRevoked(_ handler: @escaping @Sendable ([ExtensionID]) async -> Void) | sendable=1
 func package(id: ExtensionID)
 func packageDirectory(for id: ExtensionID)
+func packageSnapshotStream()
 func panels(slot: String)
 func quarantine(id: ExtensionID, reason: String)
 func readAll()
 func readFile(relativePath: String)
+func rebuildSnapshotForTests()
 func recoverCorruptedState()
+func recoverIncompleteTransactions()
 func register( _ ext: any CodeEditorExtension, grantedPermissions override: Set<ExtensionPermission>? )
 func register( id: String, slot: String, title: String, priority: Int ) | attr=discardableResult
 func register(_ command: EditorCommand) | isolation=@MainActor attr=discardableResult
@@ -92,9 +97,12 @@ func repairStoreBootstrap()
 func requirePermission(_ permission: ExtensionPermission)
 func resolve( index: ExtensionIndexDocument, id: ExtensionID, version: String? , channel: String , baseURL: URL? )
 func resolvedFileURL(forRelativePath relativePath: String)
+func revocationAuthorityKeys()
 func revocationList()
 func rollback(id: ExtensionID)
+func setHostEnvironmentForTests(_ env: HostEnvironment)
 func setInstallPolicy(_ policy: ShippingInstallPolicy?)
+func setRevocationAuthorities(_ keys: [RevocationAuthorityKey])
 func setRevocationList(_ list: RevocationListDocument)
 func setTelemetry(_ sink: StoreTelemetrySink?)
 func setValue(_ data: Data, forKey key: String)
@@ -103,7 +111,9 @@ func snippets(languageID: String?)
 func status(id: ExtensionID)
 func teardown()
 func theme(id: String)
+func totalDiskBytesUsed()
 func track(_ disposable: any ExtensionDisposable)
+func transactionJournalPhases() throws -> [(id: String, phase: String)
 func trustPromptIfNeeded(for id: ExtensionID)
 func trustStatusItems()
 func uninstall(id: ExtensionID, purgeData: Bool )
@@ -120,19 +130,19 @@ init ( commandRegistry: CommandRegistry? , keybindingRegistry: KeybindingRegistr
 init ( environment: HostEnvironment , services: ExtensionHostServices, log: ExtensionLog )
 init ( extensionID: ExtensionID, grantedPermissions: Set<ExtensionPermission>, log: ExtensionLog )
 init ( extensionID: ExtensionID, rootDirectory: URL, grantedPermissions: Set<ExtensionPermission> )
+init ( fileURL: URL, maxFileBytes: Int , maxTotalBytes: Int )
 init ( installRoot: URL, maxEventBuffer: Int , verifier: (any PackageVerifying)
 init ( installRoot: URL, policy: ShippingInstallPolicy, verifier: any PackageVerifying, maxEventBuffer: Int , telemetry: StoreTelemetrySink? )
 init ( manifest: ExtensionManifest, themes: [ThemeContribution] , snippets: [SnippetContribution] , keybindingOverrides: [KeybindingOverrideDTO] , languageDefinitions: [LanguageDefinitionDTO] , iconThemes: [IconThemeContribution] , plan: ValidatedContributionPlan? )
+init ( registry: LanguageRegistry , owner: ContributionOwner , priority: Int )
 init ( requireLicense: Bool , requireSBOM: Bool , allowedLicenses: Set<String> , "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "CC0-1.0", "Unlicense", ] )
 init ( spdxVersion: String , dataLicense: String , spdxId: String , name: String, documentNamespace: String, creationInfo: CreationInfo, packages: [Package], files: [File] )
 init ( store: PanelContributionStore, extensionID: ExtensionID, grantedPermissions: Set<ExtensionPermission> )
 init ()
 init (allowHTTP: Bool )
-init (fileURL: URL)
 init (plan: ValidatedContributionPlan)
 init (registry: CommandRegistry)
 init (registry: KeybindingRegistry)
-init (registry: LanguageRegistry )
 init (registry: LanguageServiceRegistry, extensionID: ExtensionID)
 init (store: IconThemeContributionStore, extensionID: ExtensionID)
 init (store: SnippetContributionStore, extensionID: ExtensionID)
@@ -151,14 +161,17 @@ struct InstalledPackage | sendable=1
 struct LicensePolicy | sendable=1
 struct Package | sendable=1
 struct PackageVerifyResult | sendable=1
+var activeRoot
 var algorithm
 var allowHTTP
 var allowedLicenses
+var blobsRoot
 var cacheRoot
 var canActivate
 var checksumValue
 var checksums
 var commandRegistry
+var contentDigest
 var copyrightText
 var created
 var creationInfo
@@ -173,13 +186,17 @@ var enabled
 var environment
 var error
 var extensionID
+var failNextWriteForTests
 var fileName
 var files
 var grantedPermissions
+var hostEnvironment
+var hostStateRoot
 var iconThemeStore
 var iconThemes
 var installPath
 var installRoot
+var installsMetaRoot
 var isDev
 var keybindingOverrides
 var keybindingRegistry
@@ -190,6 +207,8 @@ var licenseConcluded
 var licenseDeclared
 var log
 var manifest
+var maxFileBytes
+var maxTotalBytes
 var name
 var packages
 var packagesRoot
@@ -203,6 +222,7 @@ var quarantineReason
 var quarantined
 var requireLicense
 var requireSBOM
+var revocationMaxAge
 var revocationRoot
 var rootDirectory
 var services
@@ -214,9 +234,11 @@ var spdxVersion
 var state
 var stateRoot
 var storageRoot
+var storeKey
 var strict
 var telemetryRoot
 var themeStore
 var themes
+var transactionsRoot
 var trustClass
 var versionInfo

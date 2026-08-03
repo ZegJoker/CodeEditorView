@@ -1,13 +1,21 @@
+actor GitCLIProvider
+actor SCMRepositoryGate
 actor SourceControlService
-class GitCLIProvider | sendable=1
+enum GitPatchBuilder
 enum GitPorcelain
 enum GitRepositoryDiscovery
 enum SCMCommands
 enum SCMConflictSide | sendable=1
 enum SCMError | sendable=1
+enum SCMLogSanitizer
+enum SCMOperationCategory | sendable=1
+enum SCMPathState | sendable=1
 enum SCMProgressEvent | sendable=1
 enum SCMState | sendable=1
+func acquire(_ category: SCMOperationCategory)
 func allProviderIDs()
+func assertClean(repositoryRoot: URL, relativePaths: [String])
+func binding(_ lifecycle: DocumentLifecycleCoordinator) | isolation=@MainActor
 func blame(uri: DocumentURI)
 func branches()
 func cancel()
@@ -23,8 +31,15 @@ func discover(from start: URL)
 func discoverAndRegister( roots: [URL], platformProfile: PlatformCapabilityProfile )
 func fetch(remote: String? )
 func fetch(remote: String?)
+func finishProgressStreamForTests()
+func git(repositoryRoot: URL)
+func gitEnvironmentForRemote(host: String)
+func handleWatchSignal(_ signal: WorkspaceWatchSignal)
 func log(limit: Int )
 func log(limit: Int)
+func makePatch(path: String, hunk: SCMDiffHunk)
+func makeProgressStream( policy: AsyncBroadcastHub<SCMProgressEvent>.OverflowPolicy , emitGap: true)
+func makeStatusStream( policy: AsyncBroadcastHub<SCMStatusSnapshot>.OverflowPolicy , emitGap: true)
 func mapXY(_ x: Character, _ y: Character) -> (SCMState, Bool)
 func parseDiff(_ raw: String, path: String)
 func parseStatus(_ text: String, repositoryRoot: URL)
@@ -33,37 +48,51 @@ func pull(remote: String? , branch: String? )
 func pull(remote: String?, branch: String?)
 func push(remote: String? , branch: String? )
 func push(remote: String?, branch: String?)
+func quotePath(_ path: String)
 func refresh() | attr=discardableResult
 func register( into registry: CommandRegistry, onRefresh: @escaping @MainActor () | isolation=@MainActor attr=discardableResult
 func registerProvider(_ provider: any SourceControlProvider)
+func release(_ category: SCMOperationCategory)
 func remotes()
+func removeProvider(id: String)
+func requireCredentials(for request: SCMAuthRequest)
 func resolveConflict(uri: DocumentURI, side: SCMConflictSide)
+func resolveCredentials(for request: SCMAuthRequest)
+func sanitize(_ text: String)
 func selectProvider(id: String)
+func setDocumentCoordinator(_ coordinator: SCMDocumentCoordinator?)
 func setProvider(_ provider: (any SourceControlProvider)?)
+func setTrusted(_ value: Bool)
 func stage(uris: [DocumentURI])
 func stageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI)
+func startStatusWatching( root: URL? , debounce: Duration )
 func status()
+func stopStatusWatching()
 func tags()
 func unstage(uris: [DocumentURI])
 func unstageHunk(_ hunk: SCMDiffHunk, uri: DocumentURI)
 func validateRelativePath(_ path: String, root: URL)
-init ( header: String, oldStart: Int, oldCount: Int, newStart: Int, newCount: Int, lines: [String] )
+init ( header: String, oldStart: Int, oldCount: Int, newStart: Int, newCount: Int, lines: [String], noNewlineAtEndOfFile: Bool )
+init ( repositoryID: String, statuses: [SCMFileStatus], isStale: Bool , sequence: UInt64 )
 init ( repositoryRoot: URL, executable: URL )
+init ( uri: DocumentURI, path: String, index: SCMPathState, worktree: SCMPathState, originalPath: String? , isSubmodule: Bool , isIntentToAdd: Bool , unmerged: Bool )
 init ( uri: DocumentURI, path: String, state: SCMState, staged: Bool , originalPath: String? , isSubmodule: Bool )
 init ()
 init (branches: [SCMBranch] , current: String? )
+init (check: @escaping Check)
 init (hash: String, subject: String, author: String? , date: String? )
 init (id: String , reason: String)
+init (id: UUID ))
 init (lineNumber: Int, commitHash: String, author: String? , summary: String? , content: String)
 init (name: String)
 init (name: String, isCurrent: Bool , isRemote: Bool )
 init (name: String, url: String? )
-init (path: String, raw: String, hunks: [SCMDiffHunk] )
+init (path: String, raw: String, hunks: [SCMDiffHunk] , isBinary: Bool )
 init (protocolName: String, host: String, path: String)
+init (rawValue: String)
 init (username: String? , password: String? )
 protocol SCMAuthCallback | sendable=1
 protocol SourceControlProvider | sendable=1
-protocol SourceControlProviderDefaults
 struct SCMAuthRequest | sendable=1
 struct SCMBlameLine | sendable=1
 struct SCMBranch | sendable=1
@@ -72,10 +101,15 @@ struct SCMCommit | sendable=1
 struct SCMCredentials | sendable=1
 struct SCMDiff | sendable=1
 struct SCMDiffHunk | sendable=1
+struct SCMDocumentCoordinator | sendable=1
 struct SCMFileStatus | sendable=1
 struct SCMRemote | sendable=1
+struct SCMRepositoryIdentity | sendable=1
+struct SCMStatusSnapshot | sendable=1
 struct SCMTag | sendable=1
 struct UnavailableSourceControlProvider
+typealias Check | sendable=1
+var alwaysClean
 var auth
 var author
 var branches
@@ -84,38 +118,50 @@ var commitHash
 var content
 var current
 var date
-var executable
+var hasDocumentCoordinator
+var hasUnstagedChanges
 var hash
 var header
 var host
 var hunks
 var id
+var index
+var isBinary
 var isCurrent
+var isIntentToAdd
 var isRemote
+var isStale
 var isSubmodule
 var lineNumber
 var lines
 var name
 var newCount
 var newStart
+var noNewlineAtEndOfFile
 var oldCount
 var oldStart
+var operationGate
+var operationGateID
 var originalPath
 var password
 var path
-var platformProfile
 var protocolName
 var raw
+var rawValue
 var reason
 var refresh
-var repositoryRoot
+var repositoryID
+var repositoryIdentity
+var sequence
 var stage
 var staged
 var state
-var statusStream
+var statusWatchRootID
+var statuses
 var subject
 var summary
-var trusted
+var unmerged
 var uri
 var url
 var username
+var worktree

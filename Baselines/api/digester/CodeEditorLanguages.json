@@ -368,6 +368,41 @@
           },
           {
             "kind": "Function",
+            "name": "bootstrap",
+            "printedName": "bootstrap(into:installEnvironment:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistry",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry",
+                "usr": "s:25CodeEditorLanguageSupport0C8RegistryC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:19CodeEditorLanguagesAAO9bootstrap4into18installEnvironmentSb0aB15LanguageSupport0H8RegistryC_SbtFZ",
+            "mangledName": "$s19CodeEditorLanguagesAAO9bootstrap4into18installEnvironmentSb0aB15LanguageSupport0H8RegistryC_SbtFZ",
+            "moduleName": "CodeEditorLanguages",
+            "static": true,
+            "declAttributes": [
+              "DiscardableResult"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "installOnDemandBootstrapHook",
             "printedName": "installOnDemandBootstrapHook()",
             "children": [
@@ -572,6 +607,105 @@
             "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO17parserUnavailableyACSScACmF",
             "mangledName": "$s19CodeEditorLanguages17LanguageLoadErrorO17parserUnavailableyACSScACmF",
             "moduleName": "CodeEditorLanguages"
+          },
+          {
+            "kind": "Var",
+            "name": "malformedQuery",
+            "printedName": "malformedQuery",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguages.LanguageLoadError.Type) -> (Swift.String, Swift.String) -> CodeEditorLanguages.LanguageLoadError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String, Swift.String) -> CodeEditorLanguages.LanguageLoadError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageLoadError",
+                        "printedName": "CodeEditorLanguages.LanguageLoadError",
+                        "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(Swift.String, detail: Swift.String)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguages.LanguageLoadError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageLoadError",
+                        "printedName": "CodeEditorLanguages.LanguageLoadError",
+                        "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO14malformedQueryyACSS_SStcACmF",
+            "mangledName": "$s19CodeEditorLanguages17LanguageLoadErrorO14malformedQueryyACSS_SStcACmF",
+            "moduleName": "CodeEditorLanguages"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageLoadError",
+                "printedName": "CodeEditorLanguages.LanguageLoadError",
+                "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageLoadError",
+                "printedName": "CodeEditorLanguages.LanguageLoadError",
+                "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:19CodeEditorLanguages17LanguageLoadErrorO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s19CodeEditorLanguages17LanguageLoadErrorO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguages",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
           }
         ],
         "declKind": "Enum",
@@ -586,6 +720,13 @@
             "printedName": "Copyable",
             "usr": "s:s8CopyableP",
             "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
           },
           {
             "kind": "Conformance",
@@ -625,7 +766,7 @@
           {
             "kind": "Function",
             "name": "languageConfiguration",
-            "printedName": "languageConfiguration(for:)",
+            "printedName": "languageConfiguration(for:registry:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -646,11 +787,18 @@
                 "name": "CodeLanguage",
                 "printedName": "CodeEditorLanguageSupport.CodeLanguage",
                 "usr": "s:25CodeEditorLanguageSupport0aC0V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistry",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport0C8RegistryC"
               }
             ],
             "declKind": "Func",
-            "usr": "s:25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration3for15SwiftTreeSitter0cG0VSgAA0aC0V_tKFZ",
-            "mangledName": "$s25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration3for15SwiftTreeSitter0cG0VSgAA0aC0V_tKFZ",
+            "usr": "s:25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration3for8registry15SwiftTreeSitter0cG0VSgAA0aC0V_AA0C8RegistryCtKFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration3for8registry15SwiftTreeSitter0cG0VSgAA0aC0V_AA0C8RegistryCtKFZ",
             "moduleName": "CodeEditorLanguages",
             "static": true,
             "declAttributes": [
@@ -663,7 +811,7 @@
           {
             "kind": "Function",
             "name": "languageConfiguration",
-            "printedName": "languageConfiguration(id:)",
+            "printedName": "languageConfiguration(id:registry:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -684,11 +832,18 @@
                 "name": "String",
                 "printedName": "Swift.String",
                 "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistry",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport0C8RegistryC"
               }
             ],
             "declKind": "Func",
-            "usr": "s:25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration2id15SwiftTreeSitter0cG0VSgSS_tKFZ",
-            "mangledName": "$s25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration2id15SwiftTreeSitter0cG0VSgSS_tKFZ",
+            "usr": "s:25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration2id8registry15SwiftTreeSitter0cG0VSgSS_AA0C8RegistryCtKFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport0A9LanguagesO0abE0E21languageConfiguration2id8registry15SwiftTreeSitter0cG0VSgSS_AA0C8RegistryCtKFZ",
             "moduleName": "CodeEditorLanguages",
             "static": true,
             "declAttributes": [
@@ -786,6 +941,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -857,6 +1014,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

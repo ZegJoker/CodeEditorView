@@ -270,6 +270,90 @@
             "mangledName": "$ss16SendableMetatypeP"
           }
         ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "WasmValue",
+        "printedName": "WasmValue",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "fromWasmKitValue",
+            "printedName": "fromWasmKitValue(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "WasmValue",
+                "printedName": "CodeEditorWasmEngine.WasmValue",
+                "usr": "s:20CodeEditorWasmEngine0C5ValueO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Value",
+                "printedName": "WasmTypes.Value",
+                "usr": "s:9WasmTypes5ValueO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorWasmEngine0C5ValueO0abcdC3KitE04fromcfE0yAC0C5Types0E0OKFZ",
+            "mangledName": "$s20CodeEditorWasmEngine0C5ValueO0abcdC3KitE04fromcfE0yAC0C5Types0E0OKFZ",
+            "moduleName": "CodeEditorWasmEngineWasmKit",
+            "static": true,
+            "isFromExtension": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:20CodeEditorWasmEngine0C5ValueO",
+        "mangledName": "$s20CodeEditorWasmEngine0C5ValueO",
+        "moduleName": "CodeEditorWasmEngine",
+        "isExternal": true,
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
       }
     ],
     "json_format_version": 8,
@@ -291,6 +375,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/BitCollections.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
@@ -363,6 +449,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

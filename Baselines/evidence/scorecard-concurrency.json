@@ -1,7 +1,7 @@
 {
   "allowlist": "Baselines/unchecked-sendable-allowlist.txt",
-  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da",
-  "generated_at": "2026-08-02T18:37:13Z",
+  "commit": "321153c945a796828b0ccfde33dd8dc9fad139b1",
+  "generated_at": "2026-08-03T03:42:19Z",
   "schema_version": 1,
   "status": "fail",
   "swift6_errors": null,

@@ -29,16 +29,16 @@ class MCPTestTransport | sendable=1
 class NativeHelperProcessTransport | sendable=1
 class ProcessRemoteExtensionTransport | sendable=1
 class RemoteProviderRegistration | sendable=1
-class TerminalInvokeCounter | sendable=1
-class WasmGuestLink | sendable=1
 enum BrokerError | sendable=1
 enum DebugLaunchPlanError | sendable=1
+enum EngineKind | sendable=1
 enum ExtensionHostError | sendable=1
 enum ExtensionInstanceEvent | sendable=1
 enum ExtensionInstanceState | sendable=1
 enum ExtensionPackageSigner
 enum ExtensionPackageVerifier
 enum ExtensionProcessState | sendable=1
+enum ExtensionProductionSurface
 enum ExtensionRPCCodec
 enum ExtensionRPCEnvelope | sendable=1
 enum ExtensionRPCFraming
@@ -58,25 +58,24 @@ enum NativeHelperLaunchPolicy
 enum NativeProcessTrustNotice
 enum PackageSignatureError | sendable=1
 enum Phase13WireCodec
+enum ProcessArgumentMatcher | sendable=1
 enum RemoteExtensionLaunch | sendable=1
 enum RemoteLanguageServiceProviders
 enum RuntimeSelectionError | sendable=1
 enum RuntimeSelector
 enum WasmEngineFactory
-func abiVersion()
 func activate()
 func all()
 func allContributions()
 func allDiagnostics()
 func allEntries(packageID: String? )
 func allStatuses()
-func alloc(_ length: Int32)
 func append(_ data: Data)
 func apply(keyring: PublisherKeyring)
 func assertNativeLaunchAllowed( trust: ExtensionTrustClass, policy: ExtensionTrustPolicy )
+func atomicWrite( data: Data, to url: URL, mode: mode_t, retainBackup: Bool, injectFailureAfterBackup: Bool )
 func attachPackageManager(_ manager: ExtensionPackageManager, telemetry: StoreTelemetrySink? )
 func attachStore(_ manager: ExtensionPackageManager)
-func bindHost(imports: WasmHostImports, limits: WasmResourceLimits)
 func build( extensionID: ExtensionID, broker: CapabilityBroker, workspaceRoots: [URL] , whichNames: [String] , environmentNames: Set<String> , platform: ExtensionPlatformInfo )
 func buildIndex( package: DocumentationPackageSuggestion, extensionID: ExtensionID, context: LanguageServerResolveContext, worktreeRoot: URL? )
 func bytesInUse()
@@ -84,6 +83,7 @@ func call(_ method: ExtensionRPCMethod, payload: Data ))
 func callTool(name: String, arguments: MCPJSON ))
 func cancel(_ id: ExtensionRequestID)
 func cancel(_ requestID: ExtensionRequestID)
+func canonicalJSONData()
 func clear()
 func clear(extensionID: ExtensionID)
 func clearQuarantine(id: ExtensionID)
@@ -91,7 +91,7 @@ func close()
 func compatibilityStatus(for commandID: String)
 func conformanceTrace()
 func currentLanguageMap()
-func dealloc(_ ptr: Int32, _ length: Int32)
+func declaredExecutablePaths( plan: ValidatedContributionPlan, packageRoot: URL )
 func decode(_ data: Data)
 func decodeCompletionLabel(_ data: Data)
 func decodeConfigurationItems(_ data: Data)
@@ -107,9 +107,9 @@ func dispatchDocs( method: ExtensionMethodID, payload: Data, provider: any Docum
 func dispatchMCP( method: ExtensionMethodID, payload: Data, provider: any MCPServerProvider, extensionID: ExtensionID, status: MCPServerStatus? , onRestart: (@Sendable (String)
 func dispatchSlash( method: ExtensionMethodID, payload: Data, provider: any SlashCommandProvider, extensionID: ExtensionID, worktreeRoot: String? )
 func dispose()
-func downloadFetch( handle: BrokerHandleID, urlString: String, expectedDigest: String? )
+func downloadFetch( caller: ExtensionID, handle: BrokerHandleID, urlString: String, expectedDigest: String? )
 func downloadHandle(extensionID: ExtensionID)
-func downloadWriteFixture( handle: BrokerHandleID, host: String, path: String, data: Data, expectedDigest: String? )
+func downloadWriteFixture( caller: ExtensionID, handle: BrokerHandleID, host: String, path: String, data: Data, expectedDigest: String? , sourceURL: String? )
 func encode(_ body: Data)
 func encode(_ envelope: ExtensionRPCEnvelope)
 func encodeCompletionLabel(_ item: CompletionLabelTransform)
@@ -124,17 +124,14 @@ func evaluateInstall( hasNativeExecutable: Bool, hasWasm: Bool, isDataOnly: Bool
 func execute( commandID: String, arguments: String, extensionID: ExtensionID, worktreeRoot: String? )
 func fileDigests(packageRoot: URL)
 func generateKeyPair(keyID: String ).uuidString)
-func inProcess()
 func instance(id: ExtensionID) -> (any ExtensionInstance)
 func invalidate(packageID: String?, extensionID: ExtensionID? )
 func isCompatible(with peer: ExtensionRPCProtocolVersion)
 func isProcessAlive(_ pid: Int32)
 func languageServerLaunchDecision()
-func linkedGuest()
 func listPrompts()
 func listResources()
 func load(from url: URL)
-func make()
 func makePair() -> (client: MCPTestTransport, server: MCPTestTransport)
 func markCrashed(reason: String)
 func mintHandlesJSON(extensionID: ExtensionID)
@@ -142,28 +139,29 @@ func noteCrash(id: ExtensionID, reason: String)
 func notify(_ method: String, params: MCPJSON)
 func notifySettingsChanged( extensionID: ExtensionID, changedKeys: Set<String>, registry: LanguageServiceRegistry, workspaceRoots: [URL] )
 func npmHandle(extensionID: ExtensionID)
-func npmInstall(handle: BrokerHandleID, package: String, version: String?)
+func npmInstall( caller: ExtensionID, handle: BrokerHandleID, package: String, version: String? )
 func parseArguments(_ data: Data)
 func parseID( _ data: Data, keys: [String] , "serverID", "commandID", "packageID", "id"] )
 func parseServerID(_ data: Data)
-func payloadDigest(_ data: Data)
+func payloadDigest( _ data: Data, availability: CryptoAvailability )
 func ping()
-func poll(_ budget: Int32)
 func pollOnce()
+func pollOnce(forRequest requestID: UUID?)
 func prepare( package: PreparedExtensionPackage, policy: ExtensionExecutionPolicy )
 func processAllowed(executable: String, arguments: [String] )
+func processAwaitExit( caller: ExtensionID, handle: BrokerHandleID )
+func processEvents( caller: ExtensionID, handle: BrokerHandleID )
 func processHandle(extensionID: ExtensionID)
 func processIdentifier()
-func processKill(handle: BrokerHandleID)
+func processKill(caller: ExtensionID, handle: BrokerHandleID)
 func processLaunchDecision()
-func processSpawn( handle: BrokerHandleID, executable: String, arguments: [String], currentDirectory: String? )
+func processSpawn( caller: ExtensionID, handle: BrokerHandleID, executable: String, arguments: [String], currentDirectory: String? )
+func production()
 func projectHandle(extensionID: ExtensionID)
-func projectInfo(handle: BrokerHandleID)
+func projectInfo(caller: ExtensionID, handle: BrokerHandleID)
 func provider(for extensionID: ExtensionID) -> (any LanguageServerProvider)
 func quarantine(id: ExtensionID, reason: String)
-func receive(ptr: Int32, len: Int32)
 func record( method: ExtensionMethodID, direction: String, payload: Data, errorCode: Int? , generation: UInt64 )
-func record(_ args: [String])
 func record(_ event: ConformanceEvent)
 func recordDiagnostic(_ d: DebugAdapterDiagnostic)
 func recordDiagnostic(_ d: LanguageServerDiagnostic)
@@ -227,13 +225,13 @@ func setSlashCommandProvider(_ provider: (any SlashCommandProvider)?)
 func setSlashCommandService(_ service: SlashCommandService?)
 func setSlowWork(_ n: Int)
 func setStatus(_ status: MCPServerStatus)
-func settingsGet(handle: BrokerHandleID, key: String)
+func settingsGet(caller: ExtensionID, handle: BrokerHandleID, key: String)
 func settingsHandle(extensionID: ExtensionID)
-func settingsSet(handle: BrokerHandleID, key: String, value: String)
+func settingsSet(caller: ExtensionID, handle: BrokerHandleID, key: String, value: String)
+func sha256Hex( _ data: Data, availability: CryptoAvailability )
 func shipping( _ id: ShippingProfileID, trust: ExtensionTrustPolicy? )
 func shutdown()
 func sign(packageRoot: URL, privateKeyRaw: Data, keyID: String, subject: String)
-func simulation()
 func snapshot()
 func start( plan: DebugAdapterLaunchPlan, extensionID: ExtensionID, workspaceRoots: [URL] , runInTerminal: (any DAPRunInTerminalHandler) | attr=discardableResult
 func start( plan: LanguageServerLaunchPlan, extensionID: ExtensionID, registry: LanguageServiceRegistry, workspaceRoots: [URL] , provider: (any LanguageServerProvider) | attr=discardableResult
@@ -241,7 +239,6 @@ func start( plan: MCPServerLaunchPlan, extensionID: ExtensionID, workspaceRoots:
 func start( prepared: PreparedExtension, handshake: ExtensionHostHandshake, broker: CapabilityBroker )
 func start( serverID: String, extensionID: ExtensionID, registry: LanguageServiceRegistry, workspaceRoots: [URL] , seedPlan: LanguageServerLaunchPlan? , settingsWatch: Set<String> , "languageServer.path", "lsp.path"] ) | attr=discardableResult
 func start()
-func start(configPtr: Int32, configLen: Int32)
 func start(id: ExtensionID)
 func start(plan: MCPServerLaunchPlan)
 func startAllCompatible()
@@ -252,16 +249,15 @@ func status(adapterID: String, extensionID: ExtensionID)
 func status(serverID: String, extensionID: ExtensionID)
 func statuses()
 func stop()
-func stop(_ reason: Int32)
 func stop(adapterID: String, extensionID: ExtensionID)
 func stop(id: ExtensionID)
 func stop(id: ExtensionID, reason: ExtensionStopReason )
 func stop(reason: ExtensionStopReason)
 func stop(serverID: String)
 func stop(serverID: String, extensionID: ExtensionID)
-func storageGet(handle: BrokerHandleID, key: String)
+func storageGet(caller: ExtensionID, handle: BrokerHandleID, key: String)
 func storageHandle(extensionID: ExtensionID)
-func storageSet(handle: BrokerHandleID, key: String, value: Data)
+func storageSet(caller: ExtensionID, handle: BrokerHandleID, key: String, value: Data)
 func suggest( extensionID: ExtensionID, context: LanguageServerResolveContext )
 func terminateProcessGroup()
 func toggle(id: ExtensionID)
@@ -275,21 +271,20 @@ func verify( packageRoot: URL, policy: ExtensionTrustPolicy )
 func verify(packageRoot: URL)
 func verifyDetailed( packageRoot: URL, policy: ExtensionTrustPolicy )
 func wasmKit()
-func worktreeEnvironment( handle: BrokerHandleID, names: Set<String>, allowed: Set<String> )
+func worktreeEnvironment( caller: ExtensionID, handle: BrokerHandleID, names: Set<String>, allowed: Set<String> )
 func worktreeHandle(extensionID: ExtensionID, root: URL? )
-func worktreeList(handle: BrokerHandleID, relative: String )
-func worktreeRead(handle: BrokerHandleID, relative: String)
-func worktreeWhich(handle: BrokerHandleID, name: String)
+func worktreeList( caller: ExtensionID, handle: BrokerHandleID, relative: String )
+func worktreeRead( caller: ExtensionID, handle: BrokerHandleID, relative: String )
+func worktreeWhich(caller: ExtensionID, handle: BrokerHandleID, name: String)
 func writeChecksums(packageRoot: URL)
-func writeKeyPair(_ pair: KeyPair, to directory: URL)
+func writeKeyPair( _ pair: KeyPair, to directory: URL, injectFailureAfterBackup: Bool )
 init ( accepted: Bool, protocolVersion: ExtensionRPCProtocolVersion , hostCapabilities: Set<HostCapability> , grantedPermissions: Set<ExtensionPermission> , rejectReason: String? )
 init ( allowWorkspaceDevNative: Bool , allowUntrustedNative: Bool , allowUnknownSelfSigned: Bool , trustedKeys: [ExtensionPublisherKey] , revokedKeyIDs: Set<String> , licensePolicy: PackageSBOM.LicensePolicy )
-init ( backend: MockTerminalBackend, manager: TerminalSessionManager, counter: TerminalInvokeCounter )
 init ( broker: CapabilityBroker, pool: DebugAdapterPool )
 init ( broker: CapabilityBroker, pool: LanguageServerPool )
 init ( descriptor: RemoteExtensionDescriptor, environment: HostEnvironment, policy: RemoteExtensionHostPolicy , transportFactory: (@Sendable () async throws -> any RemoteExtensionTransport)
 init ( engine: any CodeEditorWasmEngine )
-init ( engine: any CodeEditorWasmEngine, module: Data, limits: WasmResourceLimits , generation: UInt64 )
+init ( engine: any CodeEditorWasmEngine, module: Data, limits: WasmResourceLimits , generation: UInt64 , slowWorkInjector: ((Int) -> Void)
 init ( environment: HostEnvironment , limits: ExtensionHostLimits , generation: UInt64 , requireSchemaMatch: Bool )
 init ( environment: HostEnvironment , services: ExtensionHostServices, discovery: any RemoteExtensionDiscovery, policy: RemoteExtensionHostPolicy )
 init ( executable: URL, arguments: [String] , currentDirectory: URL? , platformProfile: PlatformCapabilityProfile )
@@ -306,6 +301,8 @@ init ( packageID: ExtensionID, displayName: String, version: SemanticVersion, ma
 init ( plan: MCPServerLaunchPlan, transportFactory: (@Sendable () async throws -> any MCPTransport)
 init ( protocolVersion: ExtensionRPCProtocolVersion , extensionManifest: ExtensionManifest, processID: Int32? )
 init ( requestTimeout: Duration )
+init ( schema: Int , extensionID: String, version: String, publisher: Publisher, manifestSHA256: String, inventorySHA256: String, packageSHA256: String, createdAt: String, minimumHostAPI: String, maximumHostAPI: String? )
+init ( service: TerminalService, transportFactory: @escaping @Sendable ()
 init ( services: ExtensionHostServices, broker: CapabilityBroker, environment: HostEnvironment , policy: ExtensionExecutionPolicy )
 init ( transport: any RemoteExtensionTransport, maxPayloadBytes: Int , defaultTimeout: Duration )
 init ( trust: ExtensionTrustPolicy , prefersSandbox: Bool , allowsRemoteProviders: Bool , maxRestarts: Int , restartBackoffMS: [Int] , 500, 2000], quarantineCrashThreshold: Int , platformAllowsNativeProcess: Bool , shippingProfileID: ShippingProfileID? , platformProfile: PlatformCapabilityProfile )
@@ -316,7 +313,8 @@ init (allowed: Bool, reasons: [String] )
 init (broker: CapabilityBroker, pool: MCPServerPool ))
 init (checks: [String: Bool])
 init (code: Int, message: String)
-init (command: String, argsGlob: [String] )
+init (command: String, argumentMatcher: ProcessArgumentMatcher )
+init (command: String, exactArguments: [String])
 init (config: Config)
 init (descriptors: [RemoteExtensionDescriptor] )
 init (dto: ExtensionRuntimeKindDTO)
@@ -326,20 +324,23 @@ init (host: String, pathPrefix: [String] )
 init (id: UUID ), method: ExtensionRPCMethod, payload: Data ), timeoutMS: Int )
 init (id: UUID, result: Data? , error: ExtensionRPCErrorPayload? )
 init (keyID: String, publicKeyRaw: Data, subject: String)
-init (keys: [ExtensionPublisherKey] , revokedKeyIDs: Set<String> )
 init (lastPong: Date? , consecutiveTimeouts: Int , rssBytes: UInt64? )
+init (lease: BrokerHandleID, pid: Int32, supervisorLeaseID: UUID)
 init (major: Int, minor: Int )
-init (manager: TerminalSessionManager)
+init (name: String, roots: [BrokerProjectRoot])
 init (package: PreparedExtensionPackage, kind: ExtensionRuntimeKind)
 init (package: String, version: String? )
+init (path: String, uri: String)
 init (platformProfile: PlatformCapabilityProfile ))
 init (policy: ExtensionTrustPolicy )
 init (progress: [DocumentationIndexProgress], entries: [DocumentationIndexEntry])
 init (rawValue: String ).uuidString)
-init (runtime: WasmGuestRuntime ))
+init (schema: Int , keys: [ExtensionPublisherKey] , revokedKeyIDs: Set<String> )
 init (services: ExtensionHostServices, environment: HostEnvironment )
 init (storageRoot: URL, maxBytes: Int , maxEntries: Int )
+init (subject: String, keyID: String)
 init (transport: any MCPTransport)
+init (url: URL)
 protocol ExtensionInstance | sendable=1
 protocol ExtensionRuntimeDriver | sendable=1
 protocol LanguageServerConfigurationSource | sendable=1
@@ -348,6 +349,9 @@ protocol RemoteExtensionDiscovery | sendable=1
 protocol RemoteExtensionTransport | sendable=1
 struct BrokerHandle | sendable=1
 struct BrokerHandleID | sendable=1
+struct BrokerProcessLease | sendable=1
+struct BrokerProjectInfo | sendable=1
+struct BrokerProjectRoot | sendable=1
 struct BuiltInSwiftRuntimeDriver
 struct Config | sendable=1
 struct ConformanceEvent | sendable=1
@@ -368,7 +372,6 @@ struct ExtensionTrustPolicy | sendable=1
 struct HostPackageVerifier
 struct KeyPair | sendable=1
 struct MCPJSON | sendable=1
-struct MockTerminalDAPRunInTerminalHandler
 struct NPMAllow | sendable=1
 struct NativeProcessRuntimeDriver
 struct OrchestratorStatus | sendable=1
@@ -376,36 +379,40 @@ struct PackageVerifyReport | sendable=1
 struct PreparedExtension | sendable=1
 struct PreparedExtensionPackage | sendable=1
 struct ProcessAllow | sendable=1
+struct Publisher | sendable=1
 struct PublisherKeyring | sendable=1
 struct RemoteExtensionDescriptor | sendable=1
 struct RemoteExtensionHostPolicy | sendable=1
 struct RemoteExtensionStatus | sendable=1
 struct RemoteToolingCoordinator | sendable=1
 struct Result | sendable=1
+struct SignedPackageStatement | sendable=1
 struct StaticRemoteExtensionDiscovery
 struct SwiftWasmRuntimeDriver
 struct TerminalDAPRunInTerminalHandler
 var accepted
 var allowBundledWasm
 var allowDownloadableWasm
+var allowInsecureHTTP
 var allowUnknownSelfSigned
 var allowUntrustedNative
 var allowWorkspaceDevNative
 var allowed
 var allowsRemoteProviders
-var argsGlob
+var argumentMatcher
 var autoRestart
-var backend
 var broker
 var builtInExtension
+var capabilityCallCount
 var checks
 var code
 var command
 var completionDelayNanoseconds
 var completionItems
+var concurrentRequestCount
+var conformanceGuestIsPublicLibraryProduct
 var consecutiveTimeouts
-var count
-var counter
+var createdAt
 var current
 var defaultAllowedEnvironmentNames
 var defaultTimeout
@@ -436,46 +443,61 @@ var hostProfile
 var id
 var inbound
 var incompatibleProtocol
+var inventorySHA256
 var isRunning
 var keyID
 var keys
 var kind
 var labelHooks
-var lastArgs
 var lastError
 var lastPong
 var launch
+var lease
 var licensePolicy
 var limits
+var linkedGuestSimulationIsProductionDefault
 var major
-var manager
 var manifest
+var manifestSHA256
 var maxBytes
 var maxDownloadBytes
 var maxEntries
+var maxKeyCount
+var maxKeyLength
+var maxMutationsPerWindow
 var maxPayloadBytes
 var maxResponseBytes
 var maxRestarts
+var maxSettingsBytes
+var maxValueBytes
 var maxWorktreeReadBytes
-var memoryView
+var maximumHostAPI
 var message
 var method
 var methodNotFound
+var minimumHostAPI
 var minor
+var mutationWindow
+var name
 var nativeExecutable
 var npmAllowlist
 var npmRegistryRoot
 var operations
 var origin
+var outstandingGuestAllocations
 var oversizedResponse
 var package
 var packageID
 var packageRoot
+var packageSHA256
 var passed
+var path
 var pathPrefix
 var payload
 var payloadDigest
 var payloadTooLarge
+var pendingRequestCount
+var pid
 var plan
 var platformAllowsNativeProcess
 var platformProfile
@@ -486,6 +508,8 @@ var privateKeyRaw
 var processAllowlist
 var processID
 var processState
+var productionEngineKind
+var productionWasmFactoryKinds
 var progress
 var projectName
 var protocolVersion
@@ -500,10 +524,13 @@ var requireSchemaMatch
 var restartBackoffMS
 var result
 var revokedKeyIDs
+var roots
 var rssBytes
 var runtime
 var runtimeKindDTO
 var runtimePreference
+var schema
+var service
 var services
 var shippingProfileID
 var state
@@ -513,15 +540,18 @@ var storageQuotaBytes
 var storageRoot
 var strict
 var subject
+var supervisorLeaseID
 var taskService
 var testing
 var timeout
 var timeoutMS
 var toolCacheRoot
+var transportFactory | sendable=1
 var trust
 var trustClass
 var trustedKeys
 var updates
+var uri
 var version
 var wasmModuleData
 var wasmModuleURL

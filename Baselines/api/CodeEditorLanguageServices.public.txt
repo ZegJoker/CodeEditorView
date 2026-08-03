@@ -11,6 +11,7 @@ enum LanguageServiceVersioning
 enum MarkupKind | sendable=1
 enum MergePolicy | sendable=1
 enum SymbolKind | sendable=1
+enum WorkspaceResourceOperation | sendable=1
 func allHealthSnapshots()
 func callHierarchyItems(_ batches: [[CallHierarchyItem]])
 func capped()
@@ -72,6 +73,7 @@ func prepareTypeHierarchy( for request: PositionRequest, currentVersion: @escapi
 func prepareTypeHierarchy(for request: PositionRequest)
 func pullDiagnostics( for request: DocumentRequest, currentVersion: @escaping @Sendable ()
 func pullDiagnostics(for request: DocumentRequest)
+func rangesIntersect( _ a: CodeEditorCore.TextRange, _ b: CodeEditorCore.TextRange )
 func recordCancel(id: ProviderID)
 func recordFailure(id: ProviderID, message: String)
 func recordSuccess(id: ProviderID)
@@ -125,6 +127,7 @@ init ( document: DocumentSnapshot, context: LanguageServiceContext )
 init ( document: DocumentSnapshot, position: TextPosition, context: LanguageServiceContext )
 init ( document: DocumentSnapshot, position: TextPosition, trigger: CompletionTrigger , context: LanguageServiceContext )
 init ( document: DocumentSnapshot, range: CodeEditorCore.TextRange, context: LanguageServiceContext )
+init ( documentEdits: [DocumentEditPlan] , versionedDocumentEdits: [VersionedDocumentEditPlan] , resourceOperations: [WorkspaceResourceOperation] , changeAnnotations: [String: WorkspaceChangeAnnotation] )
 init ( id: ProviderID , selector: DocumentSelector , priority: Int , completionItems: [CompletionItem] , hover: Hover? , definitions: [LocationLink] , declarations: [LocationLink] , implementations: [LocationLink] , references: [Location] , diagnostics: [LanguageDiagnostic] , documentSymbols: [DocumentSymbol] , workspaceSymbols: [WorkspaceSymbol] , formatEdits: [TextEditPlan] , renamePlan: WorkspaceEditPlan )
 init ( label: String, documentation: MarkupContent? , parameters: [ParameterInformation] )
 init ( label: String, kind: CompletionItemKind? , detail: String? , documentation: MarkupContent? , insertText: String? , textEdit: TextEditPlan? , additionalTextEdits: [TextEditPlan] , sortText: String? , filterText: String? , commandID: String? )
@@ -145,13 +148,14 @@ init ( title: String, kind: String? , edit: WorkspaceEditPlan? , commandID: Stri
 init ()
 init (appliedEdit: WorkspaceEditPlan? , message: String? )
 init (content: MarkupContent, range: CodeEditorCore.TextRange? )
-init (documentEdits: [DocumentEditPlan] )
+init (documentEdits: [DocumentEditPlan])
 init (from: CallHierarchyItem, fromRanges: [CodeEditorCore.TextRange])
 init (isIncomplete: Bool , items: [CompletionItem])
 init (kind: CompletionTriggerKind , character: String? )
 init (kind: MarkupKind , value: String)
 init (kind: String , resultID: String? , items: [LanguageDiagnostic])
 init (label: String, documentation: MarkupContent? )
+init (label: String, needsConfirmation: Bool , description: String? )
 init (name: String, kind: SymbolKind, location: Location, containerName: String? )
 init (nsRange: NSRange, newText: String)
 init (position: TextPosition, label: String, kind: InlayHintKind? )
@@ -167,6 +171,7 @@ init (tabSize: Int , insertSpaces: Bool )
 init (to: CallHierarchyItem, fromRanges: [CodeEditorCore.TextRange])
 init (uri: DocumentURI, edits: [TextEditPlan])
 init (uri: DocumentURI, range: CodeEditorCore.TextRange)
+init (uri: DocumentURI, version: Int? , edits: [TextEditPlan])
 protocol CallHierarchyProvider
 protocol CodeActionProvider
 protocol CompletionProvider
@@ -233,6 +238,8 @@ struct SemanticTokenSpan | sendable=1
 struct SignatureHelp | sendable=1
 struct SignatureInformation | sendable=1
 struct TextEditPlan | sendable=1
+struct VersionedDocumentEditPlan | sendable=1
+struct WorkspaceChangeAnnotation | sendable=1
 struct WorkspaceEditPlan | sendable=1
 struct WorkspaceSymbol | sendable=1
 var activeParameter
@@ -246,6 +253,7 @@ var blue
 var callHierarchy
 var cancelCount
 var capture
+var changeAnnotations
 var character
 var children
 var code
@@ -260,6 +268,7 @@ var context
 var declarations
 var definitions
 var delayNanoseconds
+var description
 var detail
 var diagnostics
 var document
@@ -318,6 +327,7 @@ var maxSemanticTokens
 var maxSymbols
 var message
 var name
+var needsConfirmation
 var newText
 var originSelectionRange
 var parameters
@@ -334,6 +344,7 @@ var red
 var references
 var registry
 var renamePlan
+var resourceOperations
 var resultID
 var schemePatterns
 var sections
@@ -363,5 +374,7 @@ var trigger
 var typeHierarchy
 var uri
 var value
+var version
+var versionedDocumentEdits
 var workspaceRootURIs
 var workspaceSymbols

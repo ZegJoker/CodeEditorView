@@ -1,71 +1,124 @@
-class LinkedGuestWasmInstance | sendable=1
+class WasmCapabilityMeter | sendable=1
+class WasmInstanceRegistry | sendable=1
+class WasmSerialRuntime | sendable=1
 enum CoreWasmABI
 enum CoreWasmExport | sendable=1
 enum CoreWasmImport | sendable=1
+enum CoreWasmPollStatus | sendable=1
 enum WasmEngineError | sendable=1
+enum WasmModuleInstrumenter
+enum WasmMonotonicClock
 enum WasmValue | sendable=1
 func abiVersionConstantModule(value: Int32)
 func abiVersionOnlyModule()
-func call(_ name: String, args: [WasmValue])
+func acquire(maxInstances: Int)
+func capabilityCallFloodModule()
 func conformanceModule()
+func deepRecursionModule()
+func encodeULEB(_ value: UInt32)
+func growHelperModule()
 func hostSendEchoModule()
+func hostSendFloodModule()
+func hugeTableModule()
 func infiniteLoopModule()
-func instantiate( module: Data, imports: WasmHostImports, limits: WasmResourceLimits )
-func interrupt()
+func instrumentLoopsForCancellation(_ module: Data)
+func logFloodModule()
 func malformedModule()
+func memoryGrowHostileModule()
 func missingExportModule()
-func validate(module: Data, limits: WasmResourceLimits)
+func missingMemoryExportModule()
+func nowMillis()
+func nowNanos()
+func oobMemoryAccessModule()
+func parse(_ raw: Int32)
+func pureLoopWithoutCancelImportModule()
+func pureNoncooperativeLoopModule()
+func record() | attr=discardableResult
+func release()
+func resetForTests()
+func runAsync() | sendable=1
+func runSync()
+func validateStructure( module: Data, limits: WasmResourceLimits )
 init ( maxLinearMemoryBytes: Int , maxWallTime: Duration )
 init ( send: @escaping @Sendable (UnsafeRawPointer?, Int32)
-init ( wallTimeStarted: Date )
+init ( wallTimeStartedNanos: Int64 )
 init ()
-init (factory: @escaping GuestFactory)
-init (guest: any LinkedWasmGuest, limits: WasmResourceLimits)
+init (label: String )
+init (maxTotal: Int, maxPerSecond: Int)
 protocol CodeEditorWasmEngine | sendable=1
 protocol CodeEditorWasmInstance | sendable=1
-protocol LinkedWasmGuest | sendable=1
 protocol WasmMemoryView | sendable=1
-struct InProcessCoreWasmEngine
-struct LinkedGuestWasmEngine
+struct ValidationReport | sendable=1
 struct WasmHostImports | sendable=1
 struct WasmMeters | sendable=1
 struct WasmModuleBuilder | sendable=1
 struct WasmResourceLimits | sendable=1
-typealias CodeEditorWasmSimulationEngine
-typealias GuestFactory | sendable=1
+var activeCount
 var budgetConsumed
-var guest
+var capabilityCalls
+var exportNames
+var fuelConsumed
+var functionCount
+var hasMemoryExport
+var hasShouldCancelImport
 var hostSendBytes
 var hostSendMessages
 var i32
 var i64
+var importCount
 var interrupted
-var isInterrupted
 var log | sendable=1
 var logBytes
+var logMessages
+var logTruncations
 var magic
+var maxCapabilityCalls
+var maxCapabilityCallsPerSecond
 var maxConcurrentRequests
+var maxFuel
 var maxHostSendQueueBytes
 var maxHostSendQueueMessages
+var maxInstances
 var maxLinearMemoryBytes
 var maxLogBytes
+var maxLogBytesPerSecond
+var maxLogMessages
 var maxModuleBytes
+var maxOutstandingGuestAllocations
 var maxPollBudgetPerTick
 var maxPollTicks
+var maxPollTicksPerRequest
+var maxRequestBytes
+var maxResponseBytes
+var maxStackBytes
+var maxTableElements
 var maxWallTime
-var memory
 var memoryBytes
-var meters
+var memoryMaxPages
+var memoryMinPages
 var moduleName
 var monotonicMillis | sendable=1
+var outstandingAllocations
+var pageSize
 var pollTicks
+var requireMemoryMaximum
+var requireProcessIsolation
+var requiredExports
+var requiredMemoryExport
 var send | sendable=1
+var shared
 var shouldCancel | sendable=1
+var shouldCancelImportIndex
 var statusBackpressure
 var statusBusy
 var statusCancelled
+var statusCompleted
 var statusError
+var statusFatal
 var statusOK
+var tableMaxElements
 var tight
+var totalCalls
 var version
 var wallTimeStarted
+var wallTimeStartedNanos

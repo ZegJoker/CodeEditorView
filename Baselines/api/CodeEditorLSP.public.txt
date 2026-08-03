@@ -1,4 +1,5 @@
 actor LSPDiagnosticStore
+actor LSPDocumentLane
 actor LSPDocumentSynchronizer
 actor LSPJSONRPCConnection
 actor LSPPositionMapCache
@@ -11,46 +12,71 @@ class LSPProcessTransport | sendable=1
 class LSPProviderRegistration | sendable=1
 class LSPTestTransport | sendable=1
 enum DecodeError | sendable=1
+enum JSONValue | sendable=1
 enum LSPClientProviders
+enum LSPDocumentOpenPhase | sendable=1
 enum LSPError | sendable=1
 enum LSPLogLevel | sendable=1
 enum LSPMessageFraming
 enum LSPProtocolVersion
+enum LSPSyncPolicy | sendable=1
 enum LanguageServerLaunch | sendable=1
 enum LanguageServerState | sendable=1
+enum MessageLane | sendable=1
 enum RequestID | sendable=1
+enum TextDocumentSyncKind | sendable=1
 func allDiagnostics(uri: DocumentURI)
 func allOpenDocuments()
 func append(_ data: Data)
 func append(level: LSPLogLevel, message: String, serverID: String? )
+func applyDynamicRegistrations(_ regs: [[String: Any]])
+func applyDynamicUnregistrations(_ unregs: [[String: Any]])
+func bumpServerGeneration(_ serverID: String) | attr=discardableResult
 func cancelRequest(id: RequestID)
+func classify( method: String?, hasID: Bool, isResponse: Bool )
 func clear(uri: DocumentURI)
 func clearAll()
 func clearServer(_ serverID: String)
 func close()
+func close(flush: Bool )
 func close(uri: DocumentURI)
+func decodeWorkspaceEdit(_ dict: [String: Any])
 func diagnostics(serverID: String, uri: DocumentURI)
-func didChange( uri: DocumentURI, version: DocumentVersion, changes: [LSPContentChange], fullText: String )
 func didChangeRaw( uri: DocumentURI, version: DocumentVersion, contentChanges: [[String: Any]], fullText: String )
 func didClose(uri: DocumentURI)
 func didOpen( uri: DocumentURI, languageID: String, version: DocumentVersion, text: String )
 func didSave(uri: DocumentURI, text: String?)
 func dispose()
+func documentOpenPhase(uri: DocumentURI)
+func documentPhase(uri: DocumentURI)
+func dynamicRegistration(id: String)
 func dynamicRegistrationIDs()
 func encode(_ body: Data)
+func encode(to encoder: Encoder)
 func encodeJSONObject(_ object: Any)
+func events( policy: AsyncBroadcastHub<LSPDiagnosticPublication>.OverflowPolicy , emitGap: true )
+func flushPendingFullText()
+func fullResync(version: DocumentVersion, text: String)
+func handleSequenceGap(document: TextDocument, languageID: String)
+func hash(into hasher: inout Hasher)
 func invalidate(uri: DocumentURI)
 func isDynamicallyEnabled(_ method: String)
+func jsonValue()
+func latestPublication(serverID: String, uri: DocumentURI)
 func makePair() -> (client: LSPTestTransport, server: LSPTestTransport)
 func map(for uri: DocumentURI, version: DocumentVersion, text: String)
 func markFailed()
+func markGap()
+func noteEventSequence(_ sequence: UInt64)
 func noteSaved(uri: DocumentURI, text: String?)
 func notify()
 func notifyDictionary(_ method: String, params: LSPJSONObject?)
 func open(document: TextDocument, languageID: String)
+func open(languageID: String, version: DocumentVersion, text: String)
 func openDocumentState(uri: DocumentURI)
 func position(utf16Offset: Int) -> (line: Int, character: Int)
 func positionMap(uri: DocumentURI)
+func publish( serverID: String, serverGeneration: UInt64, uri: DocumentURI, version: Int?, items: [LSPStoredDiagnostic], source: String? )
 func publish( serverID: String, uri: DocumentURI, version: Int?, items: [LSPStoredDiagnostic] )
 func refreshSnapshotResolver()
 func register( session: LanguageServerSession, into registry: LanguageServiceRegistry, selector: DocumentSelector , priority: Int , completionLabelHook: LSPCompletionLabelHook? , symbolLabelHook: LSPSymbolLabelHook? )
@@ -59,14 +85,24 @@ func removeAll()
 func request()
 func requestDictionary( _ method: String, params: LSPJSONObject? )
 func requestJSON()
+func requestJSONValue( _ method: String, params: LSPJSONObject? )
 func requestOptionalJSON()
+func requireText(for uri: DocumentURI)
 func reset()
 func respond(id: RequestID, result: Any?)
 func respondError(id: RequestID, code: Int, message: String)
 func restart()
 func restart(id: LanguageServerID)
+func save(text: String?)
+func scheduleDebouncedFullText(_ snapshot: DocumentSnapshot)
 func send(_ data: Data)
+func sendDidChangeFull( uri: DocumentURI, version: DocumentVersion, text: String )
+func sendDidChangeRaw( uri: DocumentURI, version: DocumentVersion, contentChanges: [[String: Any]], fullText: String )
+func sendDidClose(uri: DocumentURI)
+func sendDidOpen( uri: DocumentURI, languageID: String, version: DocumentVersion, text: String )
+func sendDidSave(uri: DocumentURI, text: String?)
 func server(for definition: LanguageServerDefinition) | attr=discardableResult
+func serverGeneration(for serverID: String)
 func session(poolKey: String)
 func sessionMatching(id: LanguageServerID)
 func set(_ resolver: any WorkspaceSnapshotResolver)
@@ -77,8 +113,12 @@ func shutdown()
 func shutdownAll()
 func snapshot(for uri: DocumentURI)
 func start()
-func text(for uri: DocumentURI)
+func synchronize( document: DocumentID, uri: DocumentURI, from old: DocumentSnapshot, applying transaction: AppliedEditTransaction, to new: DocumentSnapshot )
+func synchronize( document: TextDocument, from old: DocumentSnapshot, applying transaction: AppliedEditTransaction, to new: DocumentSnapshot )
+func synchronize( from old: DocumentSnapshot, applying transaction: AppliedEditTransaction, to new: DocumentSnapshot )
 func utf16Offset(line: Int, character: Int)
+func workspaceEdit(from plan: WorkspaceEditPlan)
+init ( changeDebounceNanoseconds: UInt64 , syncPolicy: LSPSyncPolicy )
 init ( definition: LanguageServerDefinition, log: LSPLog )
 init ( executable: URL, arguments: [String] , environment: [String: String]? , currentDirectory: URL? , platformProfile: PlatformCapabilityProfile )
 init ( id: LanguageServerID, displayName: String, languages: Set<String> , documentSelector: DocumentSelector , launch: LanguageServerLaunch, workspaceRootURIs: [DocumentURI] , environment: [String: String] , currentDirectory: URL? , initializationOptions: LSPJSONObject? )
@@ -88,13 +128,20 @@ init ( maxBodyBytes: Int , maxBufferBytes: Int )
 init ( maxConcurrentRequests: Int , requestTimeout: Duration )
 init ( maxDiskBytes: UInt64 , openDocumentText: @escaping @Sendable (DocumentURI) async -> (String, DocumentVersion?)
 init ( transport: any LSPTransport, log: LSPLog )
+init ( uri: DocumentURI, serverID: String, source: String? , serverGeneration: UInt64, documentVersion: Int?, sequence: UInt64, items: [LSPStoredDiagnostic] )
 init ()
 init (_ dictionary: [String: Any])
+init (_ json: JSONValue)
 init (_ resolver: any WorkspaceSnapshotResolver ))
 init (_ value: Any?)
-init (changeDebounceNanoseconds: UInt64 , preferIncremental: Bool )
+init (changeDebounceNanoseconds: UInt64 , preferIncremental: Bool)
+init (data: Data)
+init (from decoder: Decoder)
+init (id: String, method: String, registerOptions: LSPJSONObject? )
+init (jsonObject raw: Any)
 init (log: LSPLog ))
 init (maxEvents: Int )
+init (maxItemsPerDocument: Int )
 init (range: CodeEditorCore.TextRange? , text: String)
 init (rawValue: String)
 init (serverID: String, uri: DocumentURI)
@@ -102,6 +149,7 @@ init (session: LanguageServerSession, options: LSPSyncOptions )
 init (stringLiteral value: String)
 init (token: String, kind: String, message: String? , percentage: Int? )
 init (uri: DocumentURI, languageID: String, version: DocumentVersion, text: String)
+init (uri: DocumentURI, session: LanguageServerSession, options: LSPSyncOptions)
 init (uri: DocumentURI, text: String, version: DocumentVersion? )
 init (uri: DocumentURI, version: DocumentVersion?, diagnostics: [LanguageDiagnostic])
 init (version: DocumentVersion, text: String)
@@ -111,7 +159,9 @@ struct DefaultWorkspaceSnapshotResolver
 struct Key | sendable=1
 struct LSPAnyJSON | sendable=1
 struct LSPContentChange | sendable=1
+struct LSPDiagnosticPublication | sendable=1
 struct LSPDiagnosticsEvent | sendable=1
+struct LSPDynamicRegistrationRecord | sendable=1
 struct LSPJSONObject | sendable=1
 struct LSPLogEvent | sendable=1
 struct LSPOpenDocumentState | sendable=1
@@ -127,6 +177,8 @@ struct TextSnapshot | sendable=1
 typealias LSPCompletionLabelHook | sendable=1
 typealias LSPSymbolLabelHook | sendable=1
 var applyEditHandler | sendable=1
+var arrayValue
+var boolValue
 var budgets
 var callHierarchy
 var changeDebounceNanoseconds
@@ -153,6 +205,7 @@ var documentHighlight
 var documentLink
 var documentSelector
 var documentSymbol
+var documentVersion
 var empty
 var endCharacter
 var endLine
@@ -169,6 +222,9 @@ var incrementalSync
 var initializationOptions
 var inlayHint
 var inlayHintResolve
+var isNull
+var items
+var jsonObject
 var kind
 var languageID
 var languages
@@ -184,8 +240,11 @@ var maxConcurrentRequests
 var maxDiskBytes
 var maxStderrBytes
 var message
+var method
 var minor
 var null
+var numberValue
+var objectValue
 var openDocumentText | sendable=1
 var percentage
 var poolKey
@@ -197,6 +256,7 @@ var range
 var rangeFormatting
 var rawValue
 var references
+var registerOptions
 var rename
 var requestTimeout
 var restartInitialBackoff
@@ -205,14 +265,20 @@ var restartMaxBackoff
 var semanticTokens
 var semanticTokensDelta
 var semanticTokensRange
+var sequence
+var serverGeneration
 var serverID
 var severity
 var showMessageRequestHandler | sendable=1
 var signatureHelp
 var snapshotResolver
+var source
 var stderrBytes
+var stringValue
 var supportedCommands
+var syncPolicy
 var text
+var textDocumentSyncKind
 var token
 var typeHierarchy
 var uri

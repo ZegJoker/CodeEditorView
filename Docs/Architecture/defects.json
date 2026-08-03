@@ -348,7 +348,7 @@
       "status": "fixed",
       "summary": "LanguageDocumentActor off-main; provider delegates highlights",
       "regression_tests": [
-        "Tests/CodeEditorTreeSitterTests/Phase6TreeSitterTests.swift"
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift"
       ]
     },
     {
@@ -737,7 +737,7 @@
       "status": "fixed",
       "summary": "Generation-tagged highlights; stale discarded",
       "regression_tests": [
-        "Tests/CodeEditorTreeSitterTests/Phase6TreeSitterTests.swift"
+        "Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift"
       ]
     },
     {

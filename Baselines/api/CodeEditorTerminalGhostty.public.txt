@@ -1,39 +1,130 @@
 actor GhosttyRunInTerminalHandler
 actor GhosttySessionController
 class GhosttySurfaceView | isolation=@MainActor
+enum Action | sendable=1
+enum Button | sendable=1
+enum GhosttyIMEEvent | sendable=1
+enum GhosttyIntegrationLevel | sendable=1
+enum GhosttyNativeInput
+enum GhosttyPhysicalKey | sendable=1
+enum ReportingMode | sendable=1
+func applyIMEMarkedText(_ string: Any)
 func applySnapshot(_ text: String)
+func applySnapshot(_ text: String, generation: UInt64 )
+func applyViewportDelta(_ delta: GhosttyViewportDelta)
+func becomeFirstResponder()
+func becomeFirstResponder() | attr=discardableResult
 func bindSession(_ id: TerminalSessionID)
+func cancelIME()
+func currentGeneration()
+func deleteBackward()
+func encode()
+func encodeFocus(_ event: GhosttyFocusEvent)
+func encodeKey(_ event: GhosttyKeyEvent)
+func encodeMouse(_ event: GhosttyMouseEvent)
+func encodePaste(_ text: String, bracketed: Bool)
+func flagsChanged(from event: NSEvent, previous: NSEvent.ModifierFlags)
+func flagsChanged(with event: NSEvent)
+func flagsChangedEvent( macOSKeyCode code: UInt16, modifierFlagsRaw: UInt, previousModifierFlagsRaw: UInt )
 func from(snapshot: String, title: String, isRunning: Bool)
+func handlePresses(_ presses: Set<UIPress>)
+func insertText(_ insertString: Any)
+func insertText(_ text: String)
 func keyDown(with event: NSEvent)
+func keyEvent( macOSKeyCode code: UInt16, modifierFlagsRaw: UInt, action: GhosttyKeyEvent.Action , composing: Bool , text: String? )
+func keyEvent(from event: NSEvent, action: GhosttyKeyEvent.Action )
 func keyInput(_ bytes: Data)
+func keyUp(with event: NSEvent)
 func layout()
 func makeNSView(context: Context)
 func makeUIView(context: Context)
+func mods(from flags: UInt)
+func mouseDown(with event: NSEvent)
+func mouseDragged(with event: NSEvent)
+func mouseEvent( from event: NSEvent, action: GhosttyMouseEvent.Action, cellSize: CGSize, reportingMode: GhosttyMouseEvent.ReportingMode )
+func mouseUp(with event: NSEvent)
+func paste(_ sender: Any?)
+func performPaste(_ text: String)
+func physicalKey(macOSKeyCode code: UInt16)
+func pullViewportDelta()
+func resignFirstResponder()
+func resignFirstResponder() | attr=discardableResult
 func resize(cols: Int, rows: Int, widthPx: Int , heightPx: Int )
+func rightMouseDown(with event: NSEvent)
 func runInTerminal(args: DAPRunInTerminalArgs)
+func scrollWheel(with event: NSEvent)
 func shutdown()
 func snapshotUTF8()
-func textDidChange(_ notification: Notification)
 func updateNSView(_ nsView: GhosttySurfaceView, context: Context)
 func updateUIView(_ uiView: GhosttySurfaceView, context: Context)
 func write(_ bytes: Data)
+init ( button: Button , action: Action , mods: UInt16 , col: Int , row: Int , reportingMode: ReportingMode )
+init ( generation: UInt64, cols: Int, rows: Int, lines: [String], dirtyLineIndices: [Int], fullRefresh: Bool )
 init ( id: TerminalSessionID )
+init ( key: UInt32 , mods: UInt16 , action: Action , composing: Bool , text: String? )
 init ( screenText: String , cursorLine: Int , cursorColumn: Int , title: String , isRunning: Bool )
 init ( service: TerminalService, transportFactory: @escaping @Sendable ()
-init ( sessionID: TerminalSessionID, snapshot: String, onKeyData: @escaping (Data)
-init (sessionID: TerminalSessionID ))
+init ( sessionID: TerminalSessionID )
+init ( sessionID: TerminalSessionID, snapshot: String , generation: UInt64 , viewportDelta: GhosttyViewportDelta? , integrationLevel: GhosttyIntegrationLevel , onKeyEvent: @escaping (GhosttyKeyEvent)
+init (focused: Bool, reportingEnabled: Bool )
 struct GhosttyAccessibilityAdapter | sendable=1
+struct GhosttyFocusEvent | sendable=1
+struct GhosttyKeyEvent | sendable=1
+struct GhosttyMouseEvent | sendable=1
 struct GhosttySurfaceRepresentable
+struct GhosttyViewportDelta | sendable=1
 var accessibilityLabel
 var accessibilityValue
+var action
+var bracketedPasteEnabled
+var button
+var cachedLineCount
+var cellSize
+var col
+var cols
+var committedKeyEvent
+var composing
+var currentIntegrationLevel
 var cursorColumn
 var cursorLine
+var defaultApplicationCursorSequence
+var defaultNormalModeSequence
+var dirtyLineIndices
+var focusReportingEnabled
+var focused
+var fullRefresh
+var generation
+var hasText
 var id
+var integrationClaim
+var integrationLevel
+var isIMEComposing
 var isLinked
 var isRunning
+var joinedPlainText
+var key
+var lines
+var modAlt
+var modCtrl
+var modShift
+var modSuper
+var mods
+var mouseReportingMode
+var onFocusEvent
+var onIMEEvent
 var onKeyData
+var onKeyEvent
+var onMouseEvent
+var onPasteData
+var reportingEnabled
+var reportingMode
+var row
+var rows
 var screenText
 var sessionID
 var shimABI
 var snapshot
+var text
 var title
+var usesDirtyLineRendering
+var viewportDelta

@@ -1,3 +1,4 @@
+func fromWasmKitValue(_ v: Value)
 func instantiate( module: Data, imports: WasmHostImports, limits: WasmResourceLimits )
 func validate(module: Data, limits: WasmResourceLimits)
 func withDefaultGuestFactory( _ factory: @escaping ()

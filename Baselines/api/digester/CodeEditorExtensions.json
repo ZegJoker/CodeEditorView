@@ -13,6 +13,13 @@
       },
       {
         "kind": "Import",
+        "name": "CodeEditorCore",
+        "printedName": "CodeEditorCore",
+        "declKind": "Import",
+        "moduleName": "CodeEditorExtensions"
+      },
+      {
+        "kind": "Import",
         "name": "CodeEditorExtensionAPI",
         "printedName": "CodeEditorExtensionAPI",
         "declKind": "Import",
@@ -125,14 +132,15 @@
               }
             ],
             "declKind": "Func",
-            "usr": "s:20CodeEditorExtensions28CommandContributionRegistrarC8registery0aB12ExtensionAPI0H10Disposable_p0aB8Commands0bD0VF",
-            "mangledName": "$s20CodeEditorExtensions28CommandContributionRegistrarC8registery0aB12ExtensionAPI0H10Disposable_p0aB8Commands0bD0VF",
+            "usr": "s:20CodeEditorExtensions28CommandContributionRegistrarC8registery0aB12ExtensionAPI0H10Disposable_p0aB8Commands0bD0VKF",
+            "mangledName": "$s20CodeEditorExtensions28CommandContributionRegistrarC8registery0aB12ExtensionAPI0H10Disposable_p0aB8Commands0bD0VKF",
             "moduleName": "CodeEditorExtensions",
             "declAttributes": [
               "Final",
               "DiscardableResult",
               "Custom"
             ],
+            "throwing": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -154,12 +162,13 @@
               }
             ],
             "declKind": "Func",
-            "usr": "s:20CodeEditorExtensions28CommandContributionRegistrarC13registerAsyncy0aB12ExtensionAPI0I10Disposable_p0aB8Commands0bD0VYaF",
-            "mangledName": "$s20CodeEditorExtensions28CommandContributionRegistrarC13registerAsyncy0aB12ExtensionAPI0I10Disposable_p0aB8Commands0bD0VYaF",
+            "usr": "s:20CodeEditorExtensions28CommandContributionRegistrarC13registerAsyncy0aB12ExtensionAPI0I10Disposable_p0aB8Commands0bD0VYaKF",
+            "mangledName": "$s20CodeEditorExtensions28CommandContributionRegistrarC13registerAsyncy0aB12ExtensionAPI0I10Disposable_p0aB8Commands0bD0VYaKF",
             "moduleName": "CodeEditorExtensions",
             "declAttributes": [
               "Final"
             ],
+            "throwing": true,
             "funcSelfKind": "NonMutating"
           }
         ],
@@ -356,7 +365,7 @@
           {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(registry:)",
+            "printedName": "init(registry:owner:priority:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -370,11 +379,25 @@
                 "printedName": "CodeEditorLanguageSupport.LanguageRegistry",
                 "hasDefaultArg": true,
                 "usr": "s:25CodeEditorLanguageSupport0C8RegistryC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:20CodeEditorExtensions29LanguageContributionRegistrarC8registryAC0abD7Support0D8RegistryC_tcfc",
-            "mangledName": "$s20CodeEditorExtensions29LanguageContributionRegistrarC8registryAC0abD7Support0D8RegistryC_tcfc",
+            "usr": "s:20CodeEditorExtensions29LanguageContributionRegistrarC8registry5owner8priorityAC0abD7Support0D8RegistryC_AG0E5OwnerVSitcfc",
+            "mangledName": "$s20CodeEditorExtensions29LanguageContributionRegistrarC8registry5owner8priorityAC0abD7Support0D8RegistryC_AG0E5OwnerVSitcfc",
             "moduleName": "CodeEditorExtensions",
             "init_kind": "Designated"
           },
@@ -5454,6 +5477,236 @@
           },
           {
             "kind": "Var",
+            "name": "lastRevokedPackageIDs",
+            "printedName": "lastRevokedPackageIDs",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorExtensionAPI.ExtensionID]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ExtensionID",
+                    "printedName": "CodeEditorExtensionAPI.ExtensionID",
+                    "usr": "s:22CodeEditorExtensionAPI0C2IDV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC011lastRevokedE3IDsSay0abD3API0D2IDVGvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC011lastRevokedE3IDsSay0abD3API0D2IDVGvp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorExtensionAPI.ExtensionID]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ExtensionID",
+                        "printedName": "CodeEditorExtensionAPI.ExtensionID",
+                        "usr": "s:22CodeEditorExtensionAPI0C2IDV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC011lastRevokedE3IDsSay0abD3API0D2IDVGvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC011lastRevokedE3IDsSay0abD3API0D2IDVGvg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "hostEnvironment",
+            "printedName": "hostEnvironment",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "HostEnvironment",
+                "printedName": "CodeEditorExtensionAPI.HostEnvironment",
+                "usr": "s:22CodeEditorExtensionAPI15HostEnvironmentV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC15hostEnvironment0abD3API04HostH0Vvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC15hostEnvironment0abD3API04HostH0Vvp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "HostEnvironment",
+                    "printedName": "CodeEditorExtensionAPI.HostEnvironment",
+                    "usr": "s:22CodeEditorExtensionAPI15HostEnvironmentV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC15hostEnvironment0abD3API04HostH0Vvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC15hostEnvironment0abD3API04HostH0Vvg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "HostEnvironment",
+                    "printedName": "CodeEditorExtensionAPI.HostEnvironment",
+                    "usr": "s:22CodeEditorExtensionAPI15HostEnvironmentV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC15hostEnvironment0abD3API04HostH0Vvs",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC15hostEnvironment0abD3API04HostH0Vvs",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "revocationMaxAge",
+            "printedName": "revocationMaxAge",
+            "children": [
+              {
+                "kind": "TypeNameAlias",
+                "name": "TimeInterval",
+                "printedName": "Foundation.TimeInterval",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Double",
+                    "printedName": "Swift.Double",
+                    "usr": "s:Sd"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16revocationMaxAgeSdvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16revocationMaxAgeSdvp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "TimeInterval",
+                    "printedName": "Foundation.TimeInterval",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Double",
+                        "printedName": "Swift.Double",
+                        "usr": "s:Sd"
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16revocationMaxAgeSdvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16revocationMaxAgeSdvg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "TimeInterval",
+                    "printedName": "Foundation.TimeInterval",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Double",
+                        "printedName": "Swift.Double",
+                        "usr": "s:Sd"
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16revocationMaxAgeSdvs",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16revocationMaxAgeSdvs",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
             "name": "packagesRoot",
             "printedName": "packagesRoot",
             "children": [
@@ -5706,6 +5959,191 @@
                 "declKind": "Accessor",
                 "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC13downloadsRoot10Foundation3URLVvg",
                 "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC13downloadsRoot10Foundation3URLVvg",
+                "moduleName": "CodeEditorExtensions",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "blobsRoot",
+            "printedName": "blobsRoot",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "URL",
+                "printedName": "Foundation.URL",
+                "usr": "s:10Foundation3URLV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC9blobsRoot10Foundation3URLVvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC9blobsRoot10Foundation3URLVvp",
+            "moduleName": "CodeEditorExtensions",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "URL",
+                    "printedName": "Foundation.URL",
+                    "usr": "s:10Foundation3URLV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC9blobsRoot10Foundation3URLVvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC9blobsRoot10Foundation3URLVvg",
+                "moduleName": "CodeEditorExtensions",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "installsMetaRoot",
+            "printedName": "installsMetaRoot",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "URL",
+                "printedName": "Foundation.URL",
+                "usr": "s:10Foundation3URLV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16installsMetaRoot10Foundation3URLVvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16installsMetaRoot10Foundation3URLVvp",
+            "moduleName": "CodeEditorExtensions",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "URL",
+                    "printedName": "Foundation.URL",
+                    "usr": "s:10Foundation3URLV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16installsMetaRoot10Foundation3URLVvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16installsMetaRoot10Foundation3URLVvg",
+                "moduleName": "CodeEditorExtensions",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "activeRoot",
+            "printedName": "activeRoot",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "URL",
+                "printedName": "Foundation.URL",
+                "usr": "s:10Foundation3URLV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC10activeRoot10Foundation3URLVvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC10activeRoot10Foundation3URLVvp",
+            "moduleName": "CodeEditorExtensions",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "URL",
+                    "printedName": "Foundation.URL",
+                    "usr": "s:10Foundation3URLV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC10activeRoot10Foundation3URLVvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC10activeRoot10Foundation3URLVvg",
+                "moduleName": "CodeEditorExtensions",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "transactionsRoot",
+            "printedName": "transactionsRoot",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "URL",
+                "printedName": "Foundation.URL",
+                "usr": "s:10Foundation3URLV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16transactionsRoot10Foundation3URLVvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16transactionsRoot10Foundation3URLVvp",
+            "moduleName": "CodeEditorExtensions",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "URL",
+                    "printedName": "Foundation.URL",
+                    "usr": "s:10Foundation3URLV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC16transactionsRoot10Foundation3URLVvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC16transactionsRoot10Foundation3URLVvg",
+                "moduleName": "CodeEditorExtensions",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "hostStateRoot",
+            "printedName": "hostStateRoot",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "URL",
+                "printedName": "Foundation.URL",
+                "usr": "s:10Foundation3URLV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC13hostStateRoot10Foundation3URLVvp",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC13hostStateRoot10Foundation3URLVvp",
+            "moduleName": "CodeEditorExtensions",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "URL",
+                    "printedName": "Foundation.URL",
+                    "usr": "s:10Foundation3URLV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC13hostStateRoot10Foundation3URLVvg",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC13hostStateRoot10Foundation3URLVvg",
                 "moduleName": "CodeEditorExtensions",
                 "accessorKind": "get"
               }
@@ -6682,6 +7120,200 @@
               },
               {
                 "kind": "Var",
+                "name": "contentDigest",
+                "printedName": "contentDigest",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V13contentDigestSSSgvp",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V13contentDigestSSSgvp",
+                "moduleName": "CodeEditorExtensions",
+                "declAttributes": [
+                  "HasInitialValue",
+                  "HasStorage"
+                ],
+                "hasStorage": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Optional",
+                        "printedName": "Swift.String?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sq"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V13contentDigestSSSgvg",
+                    "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V13contentDigestSSSgvg",
+                    "moduleName": "CodeEditorExtensions",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "get"
+                  },
+                  {
+                    "kind": "Accessor",
+                    "name": "Set",
+                    "printedName": "Set()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Optional",
+                        "printedName": "Swift.String?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sq"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V13contentDigestSSSgvs",
+                    "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V13contentDigestSSSgvs",
+                    "moduleName": "CodeEditorExtensions",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "set"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "storeKey",
+                "printedName": "storeKey",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V8storeKeySSSgvp",
+                "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V8storeKeySSSgvp",
+                "moduleName": "CodeEditorExtensions",
+                "declAttributes": [
+                  "HasInitialValue",
+                  "HasStorage"
+                ],
+                "hasStorage": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Optional",
+                        "printedName": "Swift.String?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sq"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V8storeKeySSSgvg",
+                    "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V8storeKeySSSgvg",
+                    "moduleName": "CodeEditorExtensions",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "get"
+                  },
+                  {
+                    "kind": "Accessor",
+                    "name": "Set",
+                    "printedName": "Set()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Optional",
+                        "printedName": "Swift.String?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ],
+                        "usr": "s:Sq"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V8storeKeySSSgvs",
+                    "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V8storeKeySSSgvs",
+                    "moduleName": "CodeEditorExtensions",
+                    "implicit": true,
+                    "declAttributes": [
+                      "Transparent"
+                    ],
+                    "accessorKind": "set"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
                 "name": "canActivate",
                 "printedName": "canActivate",
                 "children": [
@@ -7257,6 +7889,113 @@
           },
           {
             "kind": "Function",
+            "name": "setRevocationAuthorities",
+            "printedName": "setRevocationAuthorities(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorExtensionAPI.RevocationAuthorityKey]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "RevocationAuthorityKey",
+                    "printedName": "CodeEditorExtensionAPI.RevocationAuthorityKey",
+                    "usr": "s:22CodeEditorExtensionAPI22RevocationAuthorityKeyV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC24setRevocationAuthoritiesyySay0abD3API0H12AuthorityKeyVGF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC24setRevocationAuthoritiesyySay0abD3API0H12AuthorityKeyVGF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "revocationAuthorityKeys",
+            "printedName": "revocationAuthorityKeys()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorExtensionAPI.RevocationAuthorityKey]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "RevocationAuthorityKey",
+                    "printedName": "CodeEditorExtensionAPI.RevocationAuthorityKey",
+                    "usr": "s:22CodeEditorExtensionAPI22RevocationAuthorityKeyV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC23revocationAuthorityKeysSay0abD3API010RevocationH3KeyVGyF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC23revocationAuthorityKeysSay0abD3API010RevocationH3KeyVGyF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "onPackagesRevoked",
+            "printedName": "onPackagesRevoked(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "([CodeEditorExtensionAPI.ExtensionID]) async -> Swift.Void",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "Void",
+                    "printedName": "Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorExtensionAPI.ExtensionID]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ExtensionID",
+                        "printedName": "CodeEditorExtensionAPI.ExtensionID",
+                        "usr": "s:22CodeEditorExtensionAPI0C2IDV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC17onPackagesRevokedyyySay0abD3API0D2IDVGYaYbcF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC17onPackagesRevokedyyySay0abD3API0D2IDVGYaYbcF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "setRevocationList",
             "printedName": "setRevocationList(_:)",
             "children": [
@@ -7273,8 +8012,8 @@
               }
             ],
             "declKind": "Func",
-            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC17setRevocationListyy0abD3API0hI8DocumentVKF",
-            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC17setRevocationListyy0abD3API0hI8DocumentVKF",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC17setRevocationListyy0abD3API0hI8DocumentVYaKF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC17setRevocationListyy0abD3API0hI8DocumentVYaKF",
             "moduleName": "CodeEditorExtensions",
             "throwing": true,
             "funcSelfKind": "NonMutating"
@@ -7294,6 +8033,40 @@
             "declKind": "Func",
             "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC14revocationList0abD3API010RevocationH8DocumentVyF",
             "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC14revocationList0abD3API010RevocationH8DocumentVyF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "packageSnapshotStream",
+            "printedName": "packageSnapshotStream()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "AsyncStream",
+                "printedName": "_Concurrency.AsyncStream<CodeEditorCore.StreamItem<CodeEditorCore.AsyncBroadcastHub<CodeEditorExtensionAPI.ExtensionContributionSnapshot>.Envelope>>",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "StreamItem",
+                    "printedName": "CodeEditorCore.StreamItem<CodeEditorCore.AsyncBroadcastHub<CodeEditorExtensionAPI.ExtensionContributionSnapshot>.Envelope>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Envelope",
+                        "printedName": "CodeEditorCore.AsyncBroadcastHub<CodeEditorExtensionAPI.ExtensionContributionSnapshot>.Envelope",
+                        "usr": "s:14CodeEditorCore17AsyncBroadcastHubC8EnvelopeV"
+                      }
+                    ],
+                    "usr": "s:14CodeEditorCore10StreamItemO"
+                  }
+                ],
+                "usr": "s:ScS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC21packageSnapshotStreamScSy0aB4Core0I4ItemOyAE17AsyncBroadcastHubC8EnvelopeVy0abD3API0d12ContributionH0V_GGGyYaF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC21packageSnapshotStreamScSy0aB4Core0I4ItemOyAE17AsyncBroadcastHubC8EnvelopeVy0abD3API0d12ContributionH0V_GGGyYaF",
             "moduleName": "CodeEditorExtensions",
             "funcSelfKind": "NonMutating"
           },
@@ -7699,6 +8472,127 @@
             "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC19trustPromptIfNeeded3for0abD3API05TrustH10DescriptorVSgAF0D2IDV_tF",
             "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC19trustPromptIfNeeded3for0abD3API05TrustH10DescriptorVSgAF0D2IDV_tF",
             "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "isLoadableForSnapshot",
+            "printedName": "isLoadableForSnapshot(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "InstalledPackage",
+                "printedName": "CodeEditorExtensions.ExtensionPackageManager.InstalledPackage",
+                "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC09InstalledE0V"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC21isLoadableForSnapshotySbAC09InstalledE0VF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC21isLoadableForSnapshotySbAC09InstalledE0VF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "recoverIncompleteTransactions",
+            "printedName": "recoverIncompleteTransactions()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC29recoverIncompleteTransactionsyyF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC29recoverIncompleteTransactionsyyF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "rebuildSnapshotForTests",
+            "printedName": "rebuildSnapshotForTests()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC23rebuildSnapshotForTestsyyYaF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC23rebuildSnapshotForTestsyyYaF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setHostEnvironmentForTests",
+            "printedName": "setHostEnvironmentForTests(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "HostEnvironment",
+                "printedName": "CodeEditorExtensionAPI.HostEnvironment",
+                "usr": "s:22CodeEditorExtensionAPI15HostEnvironmentV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC26setHostEnvironmentForTestsyy0abD3API0hI0VF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC26setHostEnvironmentForTestsyy0abD3API0hI0VF",
+            "moduleName": "CodeEditorExtensions",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "transactionJournalPhases",
+            "printedName": "transactionJournalPhases()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[(id: Swift.String, phase: Swift.String)]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Tuple",
+                    "printedName": "(id: Swift.String, phase: Swift.String)",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions23ExtensionPackageManagerC24transactionJournalPhasesSaySS2id_SS5phasetGyKF",
+            "mangledName": "$s20CodeEditorExtensions23ExtensionPackageManagerC24transactionJournalPhasesSaySS2id_SS5phasetGyKF",
+            "moduleName": "CodeEditorExtensions",
+            "throwing": true,
             "funcSelfKind": "NonMutating"
           },
           {
@@ -8313,9 +9207,279 @@
         "printedName": "StoreTelemetrySink",
         "children": [
           {
+            "kind": "Var",
+            "name": "maxFileBytes",
+            "printedName": "maxFileBytes",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC12maxFileBytesSivp",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC12maxFileBytesSivp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "Final",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC12maxFileBytesSivg",
+                "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC12maxFileBytesSivg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "maxTotalBytes",
+            "printedName": "maxTotalBytes",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC13maxTotalBytesSivp",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC13maxTotalBytesSivp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "Final",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC13maxTotalBytesSivg",
+                "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC13maxTotalBytesSivg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "writeFailureCount",
+            "printedName": "writeFailureCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC17writeFailureCountSivp",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC17writeFailureCountSivp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC17writeFailureCountSivg",
+                "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC17writeFailureCountSivg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "rotationCount",
+            "printedName": "rotationCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC13rotationCountSivp",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC13rotationCountSivp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC13rotationCountSivg",
+                "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC13rotationCountSivg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "failNextWriteForTests",
+            "printedName": "failNextWriteForTests",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC21failNextWriteForTestsSbvp",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC21failNextWriteForTestsSbvp",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC21failNextWriteForTestsSbvg",
+                "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC21failNextWriteForTestsSbvg",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC21failNextWriteForTestsSbvs",
+                "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC21failNextWriteForTestsSbvs",
+                "moduleName": "CodeEditorExtensions",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(fileURL:)",
+            "printedName": "init(fileURL:maxFileBytes:maxTotalBytes:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -8328,11 +9492,25 @@
                 "name": "URL",
                 "printedName": "Foundation.URL",
                 "usr": "s:10Foundation3URLV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC7fileURLAC10Foundation0H0V_tcfc",
-            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC7fileURLAC10Foundation0H0V_tcfc",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC7fileURL12maxFileBytes0i5TotalK0AC10Foundation0H0V_S2itcfc",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC7fileURL12maxFileBytes0i5TotalK0AC10Foundation0H0V_S2itcfc",
             "moduleName": "CodeEditorExtensions",
             "init_kind": "Designated"
           },
@@ -8356,6 +9534,27 @@
             "declKind": "Func",
             "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC6appendyy0aB12ExtensionAPI0dE5EventVF",
             "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC6appendyy0aB12ExtensionAPI0dE5EventVF",
+            "moduleName": "CodeEditorExtensions",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "totalDiskBytesUsed",
+            "printedName": "totalDiskBytesUsed()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:20CodeEditorExtensions18StoreTelemetrySinkC18totalDiskBytesUsedSiyF",
+            "mangledName": "$s20CodeEditorExtensions18StoreTelemetrySinkC18totalDiskBytesUsedSiyF",
             "moduleName": "CodeEditorExtensions",
             "declAttributes": [
               "Final"
@@ -14036,6 +15235,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -14107,6 +15308,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

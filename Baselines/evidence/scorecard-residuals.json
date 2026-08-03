@@ -9,171 +9,85 @@
     "CodeEditorCommands": [
       "CMD/UI residual open \u2014 phase 3"
     ],
-    "CodeEditorWorkspace": [],
-    "CodeEditorWorkbench": [],
+    "CodeEditorWorkspace": [
+      "WSP residual open \u2014 phase 4"
+    ],
+    "CodeEditorWorkbench": [
+      "WB residual open \u2014 phase 10"
+    ],
     "CodeEditorView": [
       "CMD/UI residual open \u2014 phase 3"
     ],
-    "CodeEditorLanguageSupport": [],
-    "CodeEditorLanguageServices": [],
+    "CodeEditorLanguageSupport": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
+    "CodeEditorLanguageServices": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
     "CodeEditorExtensionAPI": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorExtensionProtocol": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorExtensionGuest": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorWasmEngine": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorWasmEngineWasmKit": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorExtensionWasmGuest": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorExtensions": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "CodeEditorExtensionHost": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
-    "CodeEditorLSP": [],
-    "CodeEditorDAP": [],
+    "CodeEditorLSP": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
+    "CodeEditorDAP": [
+      "DAP residual open \u2014 phase 7"
+    ],
     "CodeEditorSearch": [
       "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
     "CodeEditorTasks": [
       "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
-    "CodeEditorTerminal": [],
+    "CodeEditorTerminal": [
+      "TERM residual open \u2014 phase 8"
+    ],
     "CodeEditorSourceControl": [
       "SEARCH/TASKS/SCM residual open \u2014 phase 5"
     ],
-    "CodeEditorTreeSitter": [],
-    "CodeEditorLanguageSwift": [],
-    "CodeEditorLanguageJSON": [],
-    "CodeEditorLanguages": [],
-    "CodeEditorTerminalGhostty": [],
+    "CodeEditorTreeSitter": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
+    "CodeEditorLanguageSwift": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
+    "CodeEditorLanguageJSON": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
+    "CodeEditorLanguages": [
+      "LANG/LSP residual open \u2014 phase 6"
+    ],
+    "CodeEditorTerminalGhostty": [
+      "TERM residual open \u2014 phase 8"
+    ],
     "codeeditor-extension": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ],
     "ConformanceExtensionGuest": [
-      "BROKER-N01",
-      "BROKER-N02",
-      "BROKER-N03",
-      "BROKER-N04",
-      "BROKER-N05",
-      "BROKER-N06",
-      "BROKER-N07",
-      "BROKER-N08",
-      "BROKER-N09",
-      "BROKER-N10",
-      "BROKER-N11",
-      "BROKER-N12"
+      "EXT residual open \u2014 phase 9"
     ]
   },
-  "generated_at": "2026-08-02T18:37:13Z",
-  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da"
+  "generated_at": "2026-08-03T03:42:19Z",
+  "commit": "321153c945a796828b0ccfde33dd8dc9fad139b1"
 }

@@ -5268,6 +5268,1489 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "VersionedDocumentEditPlan",
+        "printedName": "VersionedDocumentEditPlan",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "uri",
+            "printedName": "uri",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "DocumentURI",
+                "printedName": "CodeEditorDocuments.DocumentURI",
+                "usr": "s:19CodeEditorDocuments11DocumentURIV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri0aB9Documents0F3URIVvp",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri0aB9Documents0F3URIVvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DocumentURI",
+                    "printedName": "CodeEditorDocuments.DocumentURI",
+                    "usr": "s:19CodeEditorDocuments11DocumentURIV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri0aB9Documents0F3URIVvg",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri0aB9Documents0F3URIVvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DocumentURI",
+                    "printedName": "CodeEditorDocuments.DocumentURI",
+                    "usr": "s:19CodeEditorDocuments11DocumentURIV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri0aB9Documents0F3URIVvs",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri0aB9Documents0F3URIVvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "version",
+            "printedName": "version",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.Int?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV7versionSiSgvp",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV7versionSiSgvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.Int?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV7versionSiSgvg",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV7versionSiSgvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.Int?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV7versionSiSgvs",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV7versionSiSgvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "edits",
+            "printedName": "edits",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.TextEditPlan]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TextEditPlan",
+                    "printedName": "CodeEditorLanguageServices.TextEditPlan",
+                    "usr": "s:26CodeEditorLanguageServices12TextEditPlanV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV5editsSayAA04TextgH0VGvp",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV5editsSayAA04TextgH0VGvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageServices.TextEditPlan]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TextEditPlan",
+                        "printedName": "CodeEditorLanguageServices.TextEditPlan",
+                        "usr": "s:26CodeEditorLanguageServices12TextEditPlanV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV5editsSayAA04TextgH0VGvg",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV5editsSayAA04TextgH0VGvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageServices.TextEditPlan]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TextEditPlan",
+                        "printedName": "CodeEditorLanguageServices.TextEditPlan",
+                        "usr": "s:26CodeEditorLanguageServices12TextEditPlanV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV5editsSayAA04TextgH0VGvs",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV5editsSayAA04TextgH0VGvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(uri:version:edits:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedDocumentEditPlan",
+                "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "DocumentURI",
+                "printedName": "CodeEditorDocuments.DocumentURI",
+                "usr": "s:19CodeEditorDocuments11DocumentURIV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.Int?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.TextEditPlan]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TextEditPlan",
+                    "printedName": "CodeEditorLanguageServices.TextEditPlan",
+                    "usr": "s:26CodeEditorLanguageServices12TextEditPlanV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri7version5editsAC0aB9Documents0F3URIV_SiSgSayAA04TextgH0VGtcfc",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV3uri7version5editsAC0aB9Documents0F3URIV_SiSgSayAA04TextgH0VGtcfc",
+            "moduleName": "CodeEditorLanguageServices",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedDocumentEditPlan",
+                "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedDocumentEditPlan",
+                "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageServices",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV6encode2toys7Encoder_p_tKF",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV9hashValueSivp",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV9hashValueSivp",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV9hashValueSivg",
+                "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV9hashValueSivg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedDocumentEditPlan",
+                "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV",
+        "mangledName": "$s26CodeEditorLanguageServices25VersionedDocumentEditPlanV",
+        "moduleName": "CodeEditorLanguageServices",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "WorkspaceResourceOperation",
+        "printedName": "WorkspaceResourceOperation",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "create",
+            "printedName": "create",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageServices.WorkspaceResourceOperation.Type) -> (CodeEditorDocuments.DocumentURI, Swift.Bool?) -> CodeEditorLanguageServices.WorkspaceResourceOperation",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDocuments.DocumentURI, Swift.Bool?) -> CodeEditorLanguageServices.WorkspaceResourceOperation",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(uri: CodeEditorDocuments.DocumentURI, overwrite: Swift.Bool?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DocumentURI",
+                            "printedName": "CodeEditorDocuments.DocumentURI",
+                            "usr": "s:19CodeEditorDocuments11DocumentURIV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Swift.Bool?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Bool",
+                                "printedName": "Swift.Bool",
+                                "usr": "s:Sb"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO6createyAC0aB9Documents11DocumentURIV_SbSgtcACmF",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO6createyAC0aB9Documents11DocumentURIV_SbSgtcACmF",
+            "moduleName": "CodeEditorLanguageServices"
+          },
+          {
+            "kind": "Var",
+            "name": "rename",
+            "printedName": "rename",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageServices.WorkspaceResourceOperation.Type) -> (CodeEditorDocuments.DocumentURI, CodeEditorDocuments.DocumentURI, Swift.Bool?) -> CodeEditorLanguageServices.WorkspaceResourceOperation",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDocuments.DocumentURI, CodeEditorDocuments.DocumentURI, Swift.Bool?) -> CodeEditorLanguageServices.WorkspaceResourceOperation",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(from: CodeEditorDocuments.DocumentURI, to: CodeEditorDocuments.DocumentURI, overwrite: Swift.Bool?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DocumentURI",
+                            "printedName": "CodeEditorDocuments.DocumentURI",
+                            "usr": "s:19CodeEditorDocuments11DocumentURIV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DocumentURI",
+                            "printedName": "CodeEditorDocuments.DocumentURI",
+                            "usr": "s:19CodeEditorDocuments11DocumentURIV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Swift.Bool?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Bool",
+                                "printedName": "Swift.Bool",
+                                "usr": "s:Sb"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO6renameyAC0aB9Documents11DocumentURIV_AGSbSgtcACmF",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO6renameyAC0aB9Documents11DocumentURIV_AGSbSgtcACmF",
+            "moduleName": "CodeEditorLanguageServices"
+          },
+          {
+            "kind": "Var",
+            "name": "delete",
+            "printedName": "delete",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageServices.WorkspaceResourceOperation.Type) -> (CodeEditorDocuments.DocumentURI, Swift.Bool?) -> CodeEditorLanguageServices.WorkspaceResourceOperation",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDocuments.DocumentURI, Swift.Bool?) -> CodeEditorLanguageServices.WorkspaceResourceOperation",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(uri: CodeEditorDocuments.DocumentURI, recursive: Swift.Bool?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DocumentURI",
+                            "printedName": "CodeEditorDocuments.DocumentURI",
+                            "usr": "s:19CodeEditorDocuments11DocumentURIV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Swift.Bool?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Bool",
+                                "printedName": "Swift.Bool",
+                                "usr": "s:Sb"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO6deleteyAC0aB9Documents11DocumentURIV_SbSgtcACmF",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO6deleteyAC0aB9Documents11DocumentURIV_SbSgtcACmF",
+            "moduleName": "CodeEditorLanguageServices"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceResourceOperation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceResourceOperation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageServices",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO6encode2toys7Encoder_p_tKF",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO9hashValueSivp",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO9hashValueSivp",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO9hashValueSivg",
+                "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO9hashValueSivg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceResourceOperation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO4fromACs7Decoder_p_tKcfc",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO",
+        "mangledName": "$s26CodeEditorLanguageServices26WorkspaceResourceOperationO",
+        "moduleName": "CodeEditorLanguageServices",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "WorkspaceChangeAnnotation",
+        "printedName": "WorkspaceChangeAnnotation",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "label",
+            "printedName": "label",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5labelSSvp",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5labelSSvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5labelSSvg",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5labelSSvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5labelSSvs",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5labelSSvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "needsConfirmation",
+            "printedName": "needsConfirmation",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV17needsConfirmationSbvp",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV17needsConfirmationSbvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV17needsConfirmationSbvg",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV17needsConfirmationSbvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV17needsConfirmationSbvs",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV17needsConfirmationSbvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "description",
+            "printedName": "description",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV11descriptionSSSgvp",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV11descriptionSSSgvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV11descriptionSSSgvg",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV11descriptionSSSgvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV11descriptionSSSgvs",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV11descriptionSSSgvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(label:needsConfirmation:description:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceChangeAnnotation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "hasDefaultArg": true,
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5label17needsConfirmation11descriptionACSS_SbSSSgtcfc",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV5label17needsConfirmation11descriptionACSS_SbSSSgtcfc",
+            "moduleName": "CodeEditorLanguageServices",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceChangeAnnotation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceChangeAnnotation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageServices",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV6encode2toys7Encoder_p_tKF",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV9hashValueSivp",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV9hashValueSivp",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV9hashValueSivg",
+                "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV9hashValueSivg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceChangeAnnotation",
+                "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "CodeEditorLanguageServices",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV",
+        "mangledName": "$s26CodeEditorLanguageServices25WorkspaceChangeAnnotationV",
+        "moduleName": "CodeEditorLanguageServices",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
         "name": "WorkspaceEditPlan",
         "printedName": "WorkspaceEditPlan",
         "children": [
@@ -5368,6 +6851,396 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "versionedDocumentEdits",
+            "printedName": "versionedDocumentEdits",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.VersionedDocumentEditPlan]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "VersionedDocumentEditPlan",
+                    "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                    "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV22versionedDocumentEditsSayAA09VersionedifG0VGvp",
+            "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV22versionedDocumentEditsSayAA09VersionedifG0VGvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageServices.VersionedDocumentEditPlan]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "VersionedDocumentEditPlan",
+                        "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                        "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV22versionedDocumentEditsSayAA09VersionedifG0VGvg",
+                "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV22versionedDocumentEditsSayAA09VersionedifG0VGvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageServices.VersionedDocumentEditPlan]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "VersionedDocumentEditPlan",
+                        "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                        "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV22versionedDocumentEditsSayAA09VersionedifG0VGvs",
+                "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV22versionedDocumentEditsSayAA09VersionedifG0VGvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "resourceOperations",
+            "printedName": "resourceOperations",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.WorkspaceResourceOperation]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "WorkspaceResourceOperation",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                    "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV18resourceOperationsSayAA0E17ResourceOperationOGvp",
+            "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV18resourceOperationsSayAA0E17ResourceOperationOGvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageServices.WorkspaceResourceOperation]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV18resourceOperationsSayAA0E17ResourceOperationOGvg",
+                "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV18resourceOperationsSayAA0E17ResourceOperationOGvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageServices.WorkspaceResourceOperation]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceResourceOperation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                        "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV18resourceOperationsSayAA0E17ResourceOperationOGvs",
+                "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV18resourceOperationsSayAA0E17ResourceOperationOGvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "changeAnnotations",
+            "printedName": "changeAnnotations",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : CodeEditorLanguageServices.WorkspaceChangeAnnotation]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "WorkspaceChangeAnnotation",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                    "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV17changeAnnotationsSDySSAA0E16ChangeAnnotationVGvp",
+            "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV17changeAnnotationsSDySSAA0E16ChangeAnnotationVGvp",
+            "moduleName": "CodeEditorLanguageServices",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : CodeEditorLanguageServices.WorkspaceChangeAnnotation]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceChangeAnnotation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                        "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV17changeAnnotationsSDySSAA0E16ChangeAnnotationVGvg",
+                "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV17changeAnnotationsSDySSAA0E16ChangeAnnotationVGvg",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : CodeEditorLanguageServices.WorkspaceChangeAnnotation]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "WorkspaceChangeAnnotation",
+                        "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                        "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV17changeAnnotationsSDySSAA0E16ChangeAnnotationVGvs",
+                "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV17changeAnnotationsSDySSAA0E16ChangeAnnotationVGvs",
+                "moduleName": "CodeEditorLanguageServices",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(documentEdits:versionedDocumentEdits:resourceOperations:changeAnnotations:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "WorkspaceEditPlan",
+                "printedName": "CodeEditorLanguageServices.WorkspaceEditPlan",
+                "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.DocumentEditPlan]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DocumentEditPlan",
+                    "printedName": "CodeEditorLanguageServices.DocumentEditPlan",
+                    "usr": "s:26CodeEditorLanguageServices16DocumentEditPlanV"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.VersionedDocumentEditPlan]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "VersionedDocumentEditPlan",
+                    "printedName": "CodeEditorLanguageServices.VersionedDocumentEditPlan",
+                    "usr": "s:26CodeEditorLanguageServices25VersionedDocumentEditPlanV"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageServices.WorkspaceResourceOperation]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "WorkspaceResourceOperation",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceResourceOperation",
+                    "usr": "s:26CodeEditorLanguageServices26WorkspaceResourceOperationO"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : CodeEditorLanguageServices.WorkspaceChangeAnnotation]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "WorkspaceChangeAnnotation",
+                    "printedName": "CodeEditorLanguageServices.WorkspaceChangeAnnotation",
+                    "usr": "s:26CodeEditorLanguageServices25WorkspaceChangeAnnotationV"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:26CodeEditorLanguageServices17WorkspaceEditPlanV13documentEdits017versionedDocumentI018resourceOperations17changeAnnotationsACSayAA0kfG0VG_SayAA09VersionedkfG0VGSayAA0E17ResourceOperationOGSDySSAA0E16ChangeAnnotationVGtcfc",
+            "mangledName": "$s26CodeEditorLanguageServices17WorkspaceEditPlanV13documentEdits017versionedDocumentI018resourceOperations17changeAnnotationsACSayAA0kfG0VG_SayAA09VersionedkfG0VGSayAA0E17ResourceOperationOGSDySSAA0E16ChangeAnnotationVGtcfc",
+            "moduleName": "CodeEditorLanguageServices",
+            "init_kind": "Designated"
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init(documentEdits:)",
@@ -5390,7 +7263,6 @@
                     "usr": "s:26CodeEditorLanguageServices16DocumentEditPlanV"
                   }
                 ],
-                "hasDefaultArg": true,
                 "usr": "s:Sa"
               }
             ],
@@ -29059,6 +30931,37 @@
           },
           {
             "kind": "Function",
+            "name": "rangesIntersect",
+            "printedName": "rangesIntersect(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TextRange",
+                "printedName": "CodeEditorCore.TextRange",
+                "usr": "s:14CodeEditorCore9TextRangeV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TextRange",
+                "printedName": "CodeEditorCore.TextRange",
+                "usr": "s:14CodeEditorCore9TextRangeV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:26CodeEditorLanguageServices0C15ServiceSanitizeO15rangesIntersectySb0aB4Core9TextRangeV_AGtFZ",
+            "mangledName": "$s26CodeEditorLanguageServices0C15ServiceSanitizeO15rangesIntersectySb0aB4Core9TextRangeV_AGtFZ",
+            "moduleName": "CodeEditorLanguageServices",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "sanitizeEdit",
             "printedName": "sanitizeEdit(_:documentLength:)",
             "children": [
@@ -38131,6 +40034,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -38202,6 +40107,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

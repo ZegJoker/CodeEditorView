@@ -40,7 +40,7 @@ Every **fixed** row must list `regression_tests` that exist under `Tests/` or ha
 | TASK-002 | P1 | CodeEditorTasks | fixed | Streaming matcher across chunks + multiline EOF flush | Tests/CodeEditorTasksTests/TaskTests.swift, Tests/CodeEditorTasksTests/Phase7TaskTests.swift |
 | UI-001 | P1 | CodeEditorView | fixed | Grapheme UITextInput/nav/delete; BiDi helpers; selection geometry; marked session | Tests/CodeEditorViewTests/EditorControllerTests.swift, Tests/CodeEditorViewTests/NativeInputPhase3Tests.swift |
 | SCM-001 | P1 | CodeEditorSourceControl | fixed | Porcelain -z rename/unicode/conflict/copy fixtures | Tests/CodeEditorSourceControlTests/SCMTests.swift, Tests/CodeEditorSourceControlTests/Phase7SCMTests.swift |
-| TS-001 | P1 | CodeEditorTreeSitter | fixed | LanguageDocumentActor off-main; provider delegates highlights | Tests/CodeEditorTreeSitterTests/Phase6TreeSitterTests.swift |
+| TS-001 | P1 | CodeEditorTreeSitter | fixed | LanguageDocumentActor off-main; provider delegates highlights | Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift |
 | WB-001 | P1 | CodeEditorWorkbench | fixed | Real utility panels | Tests/CodeEditorWorkbenchTests/WorkbenchLogicTests.swift, Tests/CodeEditorWorkbenchTests/Phase16AccessibilityTests.swift |
 | DOC-005 | P0 | CodeEditorDocuments | fixed | Streaming readContentAndIdentity; no Data(contentsOf) identity path | Tests/CodeEditorDocumentsTests/TextDocumentTests.swift, Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift |
 | DOC-006 | P1 | CodeEditorDocuments | fixed | CoordinatedFileIO once-resume box; test-proven | Tests/CodeEditorDocumentsTests/TextDocumentTests.swift, Tests/CodeEditorDocumentsTests/DocumentIOSafetyTests.swift |
@@ -76,7 +76,7 @@ Every **fixed** row must list `regression_tests` that exist under `Tests/` or ha
 | LSP-007 | P1 | CodeEditorLSP | fixed | applyEdit plan path (WorkspaceEditPlan) retained + tests | Tests/CodeEditorLSPTests/LSPClientTests.swift, Tests/CodeEditorLSPTests/Phase6ResidualTests.swift |
 | LSP-008 | P1 | CodeEditorLSP | fixed | LSPDiagnosticStore version-aware clear on empty/server | Tests/CodeEditorLSPTests/LSPClientTests.swift, Tests/CodeEditorLSPTests/Phase6ResidualTests.swift |
 | LSP-009 | P1 | CodeEditorLSP | fixed | scripts/check-real-lsp.sh hard when REQUIRE_REAL_LSP=1 | Tests/CodeEditorLSPTests/LSPClientTests.swift, Tests/CodeEditorLSPTests/Phase6ResidualTests.swift |
-| TS-002 | P1 | CodeEditorTreeSitter | fixed | Generation-tagged highlights; stale discarded | Tests/CodeEditorTreeSitterTests/Phase6TreeSitterTests.swift |
+| TS-002 | P1 | CodeEditorTreeSitter | fixed | Generation-tagged highlights; stale discarded | Tests/CodeEditorTreeSitterTests/LANGNAuditTests.swift |
 | TASK-003 | P1 | CodeEditorTasks | fixed | Cancel waits process death; exclusive slot held until exit | Tests/CodeEditorTasksTests/TaskTests.swift, Tests/CodeEditorTasksTests/Phase7TaskTests.swift |
 | TASK-004 | P1 | CodeEditorTasks | fixed | Bounded output single marker; unresolved vars throw | Tests/CodeEditorTasksTests/TaskTests.swift, Tests/CodeEditorTasksTests/Phase7TaskTests.swift |
 | TASK-005 | P1 | CodeEditorTasks | fixed | FakeTaskRunner only in Tests/CodeEditorTasksTests | Tests/CodeEditorTasksTests/TaskTests.swift, Tests/CodeEditorTasksTests/Phase7TaskTests.swift |

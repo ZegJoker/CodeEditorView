@@ -4581,6 +4581,43 @@
           },
           {
             "kind": "Var",
+            "name": "initializing",
+            "printedName": "initializing",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorDAP.DebugAdapterState.Type) -> CodeEditorDAP.DebugAdapterState",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DebugAdapterState",
+                    "printedName": "CodeEditorDAP.DebugAdapterState",
+                    "usr": "s:13CodeEditorDAP17DebugAdapterStateO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorDAP.DebugAdapterState.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DebugAdapterState",
+                        "printedName": "CodeEditorDAP.DebugAdapterState",
+                        "usr": "s:13CodeEditorDAP17DebugAdapterStateO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:13CodeEditorDAP17DebugAdapterStateO12initializingyA2CmF",
+            "mangledName": "$s13CodeEditorDAP17DebugAdapterStateO12initializingyA2CmF",
+            "moduleName": "CodeEditorDAP"
+          },
+          {
+            "kind": "Var",
             "name": "initialized",
             "printedName": "initialized",
             "children": [
@@ -4725,6 +4762,43 @@
             "declKind": "EnumElement",
             "usr": "s:13CodeEditorDAP17DebugAdapterStateO7stoppedyA2CmF",
             "mangledName": "$s13CodeEditorDAP17DebugAdapterStateO7stoppedyA2CmF",
+            "moduleName": "CodeEditorDAP"
+          },
+          {
+            "kind": "Var",
+            "name": "terminating",
+            "printedName": "terminating",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorDAP.DebugAdapterState.Type) -> CodeEditorDAP.DebugAdapterState",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DebugAdapterState",
+                    "printedName": "CodeEditorDAP.DebugAdapterState",
+                    "usr": "s:13CodeEditorDAP17DebugAdapterStateO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorDAP.DebugAdapterState.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DebugAdapterState",
+                        "printedName": "CodeEditorDAP.DebugAdapterState",
+                        "usr": "s:13CodeEditorDAP17DebugAdapterStateO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:13CodeEditorDAP17DebugAdapterStateO11terminatingyA2CmF",
+            "mangledName": "$s13CodeEditorDAP17DebugAdapterStateO11terminatingyA2CmF",
             "moduleName": "CodeEditorDAP"
           },
           {
@@ -13659,6 +13733,69 @@
           },
           {
             "kind": "Var",
+            "name": "lastFailure",
+            "printedName": "lastFailure",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorDAP.DAPError?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DAPError",
+                    "printedName": "CodeEditorDAP.DAPError",
+                    "usr": "s:13CodeEditorDAP8DAPErrorO"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:13CodeEditorDAP19DebugAdapterSessionC11lastFailureAA8DAPErrorOSgvp",
+            "mangledName": "$s13CodeEditorDAP19DebugAdapterSessionC11lastFailureAA8DAPErrorOSgvp",
+            "moduleName": "CodeEditorDAP",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "CodeEditorDAP.DAPError?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DAPError",
+                        "printedName": "CodeEditorDAP.DAPError",
+                        "usr": "s:13CodeEditorDAP8DAPErrorO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:13CodeEditorDAP19DebugAdapterSessionC11lastFailureAA8DAPErrorOSgvg",
+                "mangledName": "$s13CodeEditorDAP19DebugAdapterSessionC11lastFailureAA8DAPErrorOSgvg",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
             "name": "events",
             "printedName": "events",
             "children": [
@@ -14104,6 +14241,70 @@
                 "accessorKind": "get"
               }
             ]
+          },
+          {
+            "kind": "Function",
+            "name": "requestedBreakpoints",
+            "printedName": "requestedBreakpoints(sourcePath:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorDAP.DAPSourceBreakpoint]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DAPSourceBreakpoint",
+                    "printedName": "CodeEditorDAP.DAPSourceBreakpoint",
+                    "usr": "s:13CodeEditorDAP19DAPSourceBreakpointV"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:13CodeEditorDAP19DebugAdapterSessionC20requestedBreakpoints10sourcePathSayAA19DAPSourceBreakpointVGSS_tF",
+            "mangledName": "$s13CodeEditorDAP19DebugAdapterSessionC20requestedBreakpoints10sourcePathSayAA19DAPSourceBreakpointVGSS_tF",
+            "moduleName": "CodeEditorDAP",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "verifiedBreakpoints",
+            "printedName": "verifiedBreakpoints(sourcePath:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorDAP.DAPBreakpoint]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DAPBreakpoint",
+                    "printedName": "CodeEditorDAP.DAPBreakpoint",
+                    "usr": "s:13CodeEditorDAP13DAPBreakpointV"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:13CodeEditorDAP19DebugAdapterSessionC19verifiedBreakpoints10sourcePathSayAA13DAPBreakpointVGSS_tF",
+            "mangledName": "$s13CodeEditorDAP19DebugAdapterSessionC19verifiedBreakpoints10sourcePathSayAA13DAPBreakpointVGSS_tF",
+            "moduleName": "CodeEditorDAP",
+            "funcSelfKind": "NonMutating"
           },
           {
             "kind": "Function",
@@ -15017,6 +15218,31 @@
             "funcSelfKind": "NonMutating"
           },
           {
+            "kind": "Function",
+            "name": "exceptionInfo",
+            "printedName": "exceptionInfo(threadId:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "DAPJSONObject",
+                "printedName": "CodeEditorDAP.DAPJSONObject",
+                "usr": "s:13CodeEditorDAP13DAPJSONObjectV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:13CodeEditorDAP19DebugAdapterSessionC13exceptionInfo8threadIdAA13DAPJSONObjectVSi_tYaKF",
+            "mangledName": "$s13CodeEditorDAP19DebugAdapterSessionC13exceptionInfo8threadIdAA13DAPJSONObjectVSi_tYaKF",
+            "moduleName": "CodeEditorDAP",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
             "kind": "Var",
             "name": "unownedExecutor",
             "printedName": "unownedExecutor",
@@ -15376,6 +15602,357 @@
             ]
           },
           {
+            "kind": "TypeDecl",
+            "name": "MessageLane",
+            "printedName": "MessageLane",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "response",
+                "printedName": "response",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type) -> CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MessageLane",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                        "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "MessageLane",
+                            "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO8responseyA2EmF",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO8responseyA2EmF",
+                "moduleName": "CodeEditorDAP"
+              },
+              {
+                "kind": "Var",
+                "name": "stateOrdered",
+                "printedName": "stateOrdered",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type) -> CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MessageLane",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                        "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "MessageLane",
+                            "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO12stateOrderedyA2EmF",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO12stateOrderedyA2EmF",
+                "moduleName": "CodeEditorDAP"
+              },
+              {
+                "kind": "Var",
+                "name": "independent",
+                "printedName": "independent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type) -> CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MessageLane",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                        "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "MessageLane",
+                            "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO11independentyA2EmF",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO11independentyA2EmF",
+                "moduleName": "CodeEditorDAP"
+              },
+              {
+                "kind": "Var",
+                "name": "reverseRequest",
+                "printedName": "reverseRequest",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type) -> CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "MessageLane",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                        "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "MessageLane",
+                            "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO14reverseRequestyA2EmF",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO14reverseRequestyA2EmF",
+                "moduleName": "CodeEditorDAP"
+              },
+              {
+                "kind": "Function",
+                "name": "__derived_enum_equals",
+                "printedName": "__derived_enum_equals(_:_:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "MessageLane",
+                    "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                    "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "MessageLane",
+                    "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                    "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+                  }
+                ],
+                "declKind": "Func",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO21__derived_enum_equalsySbAE_AEtFZ",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO21__derived_enum_equalsySbAE_AEtFZ",
+                "moduleName": "CodeEditorDAP",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Implements",
+                  "Semantics"
+                ],
+                "funcSelfKind": "NonMutating"
+              },
+              {
+                "kind": "Function",
+                "name": "hash",
+                "printedName": "hash(into:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Hasher",
+                    "printedName": "Swift.Hasher",
+                    "paramValueOwnership": "InOut",
+                    "usr": "s:s6HasherV"
+                  }
+                ],
+                "declKind": "Func",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO4hash4intoys6HasherVz_tF",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO4hash4intoys6HasherVz_tF",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "funcSelfKind": "NonMutating"
+              },
+              {
+                "kind": "Var",
+                "name": "hashValue",
+                "printedName": "hashValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO9hashValueSivp",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO9hashValueSivp",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO9hashValueSivg",
+                    "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO9hashValueSivg",
+                    "moduleName": "CodeEditorDAP",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO",
+            "moduleName": "CodeEditorDAP",
+            "isEnumExhaustive": true,
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "unexpectedTransportCloseCount",
+            "printedName": "unexpectedTransportCloseCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC29unexpectedTransportCloseCountSivp",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC29unexpectedTransportCloseCountSivp",
+            "moduleName": "CodeEditorDAP",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC29unexpectedTransportCloseCountSivg",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC29unexpectedTransportCloseCountSivg",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Var",
             "name": "requestTimeout",
             "printedName": "requestTimeout",
@@ -15511,9 +16088,150 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "earlyResponseCount",
+            "printedName": "earlyResponseCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivp",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivp",
+            "moduleName": "CodeEditorDAP",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivg",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivg",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "lateResponseCount",
+            "printedName": "lateResponseCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC17lateResponseCountSivp",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC17lateResponseCountSivp",
+            "moduleName": "CodeEditorDAP",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC17lateResponseCountSivg",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC17lateResponseCountSivg",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "duplicateResponseCount",
+            "printedName": "duplicateResponseCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC22duplicateResponseCountSivp",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC22duplicateResponseCountSivp",
+            "moduleName": "CodeEditorDAP",
+            "declAttributes": [
+              "HasInitialValue",
+              "SetterAccess",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC22duplicateResponseCountSivg",
+                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC22duplicateResponseCountSivg",
+                "moduleName": "CodeEditorDAP",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(transport:log:requestTimeout:maxBodyBytes:)",
+            "printedName": "init(transport:log:requestTimeout:maxBodyBytes:maxConcurrentReverseRequests:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -15547,11 +16265,18 @@
                 "printedName": "Swift.Int",
                 "hasDefaultArg": true,
                 "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC9transport3log14requestTimeout12maxBodyBytesAcA12DAPTransport_p_AA6DAPLogCs8DurationVSitcfc",
-            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC9transport3log14requestTimeout12maxBodyBytesAcA12DAPTransport_p_AA6DAPLogCs8DurationVSitcfc",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC9transport3log14requestTimeout12maxBodyBytes0I25ConcurrentReverseRequestsAcA12DAPTransport_p_AA6DAPLogCs8DurationVS2itcfc",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC9transport3log14requestTimeout12maxBodyBytes0I25ConcurrentReverseRequestsAcA12DAPTransport_p_AA6DAPLogCs8DurationVS2itcfc",
             "moduleName": "CodeEditorDAP",
             "init_kind": "Designated"
           },
@@ -15684,6 +16409,55 @@
           },
           {
             "kind": "Function",
+            "name": "setTransportClosedHandler",
+            "printedName": "setTransportClosedHandler(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(() async -> Swift.Void)?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "() async -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC25setTransportClosedHandleryyyyYaYbcSgF",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC25setTransportClosedHandleryyyyYaYbcSgF",
+            "moduleName": "CodeEditorDAP",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "requestDictionary",
             "printedName": "requestDictionary(_:arguments:)",
             "children": [
@@ -15780,51 +16554,60 @@
             "funcSelfKind": "NonMutating"
           },
           {
-            "kind": "Var",
-            "name": "earlyResponseCount",
-            "printedName": "earlyResponseCount",
+            "kind": "Function",
+            "name": "classify",
+            "printedName": "classify(type:event:command:)",
             "children": [
               {
                 "kind": "TypeNominal",
-                "name": "Int",
-                "printedName": "Swift.Int",
-                "usr": "s:Si"
-              }
-            ],
-            "declKind": "Var",
-            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivp",
-            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivp",
-            "moduleName": "CodeEditorDAP",
-            "declAttributes": [
-              "HasInitialValue",
-              "SetterAccess",
-              "HasStorage"
-            ],
-            "hasStorage": true,
-            "accessors": [
+                "name": "MessageLane",
+                "printedName": "CodeEditorDAP.DAPJSONRPCConnection.MessageLane",
+                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC11MessageLaneO"
+              },
               {
-                "kind": "Accessor",
-                "name": "Get",
-                "printedName": "Get()",
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "Int",
-                    "printedName": "Swift.Int",
-                    "usr": "s:Si"
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
                   }
                 ],
-                "declKind": "Accessor",
-                "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivg",
-                "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC18earlyResponseCountSivg",
-                "moduleName": "CodeEditorDAP",
-                "implicit": true,
-                "declAttributes": [
-                  "Transparent"
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
                 ],
-                "accessorKind": "get"
+                "usr": "s:Sq"
               }
-            ]
+            ],
+            "declKind": "Func",
+            "usr": "s:13CodeEditorDAP20DAPJSONRPCConnectionC8classify4type5event7commandAC11MessageLaneOSS_SSSgAJtFZ",
+            "mangledName": "$s13CodeEditorDAP20DAPJSONRPCConnectionC8classify4type5event7commandAC11MessageLaneOSS_SSSgAJtFZ",
+            "moduleName": "CodeEditorDAP",
+            "static": true,
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
           },
           {
             "kind": "Var",
@@ -17401,6 +18184,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -17472,6 +18257,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

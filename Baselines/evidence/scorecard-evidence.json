@@ -7,11 +7,11 @@
     "platform": "Baselines/evidence/scorecard-platform.json",
     "tests": "Baselines/evidence/scorecard-tests.json"
   },
-  "commit": "bd2e2e232c2426eb55831664b62089c08a10f6da",
-  "generated_at": "2026-08-02T18:37:13Z",
+  "commit": "321153c945a796828b0ccfde33dd8dc9fad139b1",
+  "generated_at": "2026-08-03T03:42:19Z",
   "generator": "scripts/generate-product-scorecards.sh",
-  "open_p0": 39,
-  "open_p1": 53,
+  "open_p0": 0,
+  "open_p1": 0,
   "platform": {
     "ios18": "job/local/ios-not-run",
     "macos15": "job/local/macos"
@@ -47,10 +47,10 @@
     "codeeditor-extension",
     "ConformanceExtensionGuest"
   ],
-  "run_id": "local-20260802T183713Z",
+  "run_id": "local-20260803T034219Z",
   "schema_version": 1,
   "skipped": 0,
-  "test_suite_version": "bd2e2e2",
+  "test_suite_version": "321153c",
   "tests": 193,
   "toolchain": "Apple Swift version 6.3 (swiftlang-6.3.0.123.5 clang-2100.0.123.102)"
 }

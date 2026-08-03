@@ -5,67 +5,115 @@ enum SearchError | sendable=1
 enum SearchEvent | sendable=1
 enum SearchMatchMode | sendable=1
 enum SearchReplaceBuilder
+enum SearchReplaceError | sendable=1
 enum SearchReplaceService | isolation=@MainActor
+enum SearchSkipReason | sendable=1
+enum WorkspaceGlobMatcher
 func append(contentsOf other: GitIgnoreRules)
 func apply( plan: SearchReplacePlan, to workspace: Workspace, preserveCase: Bool )
 func applyPreserveCase(matched: String, replacement: String)
+func commit( pinned: PinnedReplace, to workspace: Workspace )
+func isExcluded( path: String, excludes: [String], caseSensitive: Bool )
 func isIgnored(relativePath: String, isDirectory: Bool)
+func isIncluded( path: String, includes: [String], caseSensitive: Bool )
 func load(root: URL, maxFiles: Int )
 func makeWorkspaceEdit( plan: SearchReplacePlan, openDocumentVersions: [DocumentURI: DocumentVersion] , documentTexts: [DocumentURI: String] , preserveCase: Bool )
+func matches(_ path: String)
 func parse(fileContents: String, basePath: String )
+func pin( matches: [SearchMatch], from workspace: Workspace, query: SearchQuery, replacement: String, preserveCase: Bool )
 func register( into registry: CommandRegistry, onFindInFiles: @escaping @MainActor () | isolation=@MainActor attr=discardableResult
 func replacementText( for match: SearchMatch, template: String, query: SearchQuery, fullText: String? , preserveCase: Bool )
 func search( _ query: SearchQuery, context: WorkspaceSearchContext )
+init ( discovered: Int , eligible: Int , opened: Int , decoded: Int , scanned: Int , matched: Int , matchCount: Int , skipped: Int , failed: Int , cancelled: Int )
 init ( id: UUID )
-init ( pattern: String, matchMode: SearchMatchMode , caseSensitive: Bool , isRegex: Bool , wholeWord: Bool , includeGlobs: [String] , excludeGlobs: [String] , maxFileBytes: Int , maxResults: Int )
-init ( rootDirectories: [URL] , openDocuments: [DocumentURI: String] , openDocumentVersions: [DocumentURI: DocumentVersion] )
+init ( maxFileBytes: Int , respectGitIgnore: Bool , maxConcurrentWorkers: Int , maxMatchesPerFile: Int , perFileTimeBudgetNanoseconds: UInt64 )
+init ( pattern: String, isNegation: Bool, directoryOnly: Bool, anchored: Bool, hasSlash: Bool, basePath: String )
+init ( pattern: String, matchMode: SearchMatchMode , caseSensitive: Bool , isRegex: Bool , wholeWord: Bool , includeGlobs: [String] , excludeGlobs: [String] , maxFileBytes: Int , maxResults: Int , timeBudgetNanoseconds: UInt64? )
+init ( plan: SearchReplacePlan, documents: [DocumentURI: SearchReplacePinnedDocument], preserveCase: Bool )
+init ( query: SearchQuery, replacement: String, matches: [SearchMatch], pinnedDocuments: [DocumentURI: SearchReplacePinnedDocument] )
+init ( rootDirectories: [URL] , openDocuments: [DocumentURI: String] , openDocumentVersions: [DocumentURI: DocumentVersion] , openDocumentContentStates: [DocumentURI: DocumentContentStateID] , openDocumentFileIdentities: [DocumentURI: DocumentFileIdentity] )
+init ( uri: DocumentURI, version: DocumentVersion, contentState: DocumentContentStateID, fileIdentity: DocumentFileIdentity? , text: String )
+init (_ pattern: String, caseSensitive: Bool )
 init (context: WorkspaceSearchContext, backendOptions: NativeSearchBackend ))
 init (filesScanned: Int, matchesFound: Int, currentPath: String? )
-init (maxFileBytes: Int , respectGitIgnore: Bool )
-init (pattern: String, isNegation: Bool, directoryOnly: Bool, basePath: String)
-init (query: SearchQuery, replacement: String, matches: [SearchMatch])
+init (path: String, reason: SearchSkipReason, detail: String? )
 init (rules: [Rule] , alwaysExcludeNames: Set<String> , ".DS_Store"])
 protocol SearchBackend | sendable=1
 struct GitIgnoreRules | sendable=1
 struct NativeSearchBackend
+struct PinnedReplace | sendable=1
 struct Rule | sendable=1
+struct SearchCompletionMetrics | sendable=1
 struct SearchMatch | sendable=1
 struct SearchProgress | sendable=1
 struct SearchQuery | sendable=1
+struct SearchReplacePinnedDocument | sendable=1
 struct SearchReplacePlan | sendable=1
+struct SearchSkip | sendable=1
+struct WorkspaceGlobPattern | sendable=1
 struct WorkspaceSearchContext | sendable=1
 var alwaysExcludeNames
+var anchored
 var basePath
+var cancelled
 var caseSensitive
 var column
+var contentState
 var currentPath
+var decoded
 var defaultExcludes
+var detail
 var directoryOnly
+var discovered
 var displayName
+var documents
+var eligible
 var excludeGlobs
+var failed
+var fileIdentity
 var filesScanned
+var filesWithMatches
 var findInFiles
 var fromOpenDocument
+var hasSlash
 var id
 var includeGlobs
 var isNegation
 var isRegex
 var line
+var matchCount
 var matchMode
+var matched
 var matches
 var matchesFound
+var maxConcurrentWorkers
 var maxFileBytes
+var maxMatchesPerFile
 var maxResults
+var openDocumentContentStates
+var openDocumentFileIdentities
 var openDocumentVersions
 var openDocuments
+var opened
+var path
 var pattern
+var perFileTimeBudgetNanoseconds
+var pinnedDocuments
+var plan
+var preserveCase
 var preview
 var query
 var range
+var reason
 var replaceInFiles
 var replacement
 var respectGitIgnore
 var rootDirectories
 var rules
+var scanned
+var skipped
+var text
+var timeBudgetNanoseconds
 var uri
+var version
 var wholeWord

@@ -828,6 +828,92 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "droppedLineCount",
+            "printedName": "droppedLineCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks13OutputChannelC16droppedLineCountSivp",
+            "mangledName": "$s15CodeEditorTasks13OutputChannelC16droppedLineCountSivp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks13OutputChannelC16droppedLineCountSivg",
+                "mangledName": "$s15CodeEditorTasks13OutputChannelC16droppedLineCountSivg",
+                "moduleName": "CodeEditorTasks",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isFinished",
+            "printedName": "isFinished",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks13OutputChannelC10isFinishedSbvp",
+            "mangledName": "$s15CodeEditorTasks13OutputChannelC10isFinishedSbvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks13OutputChannelC10isFinishedSbvg",
+                "mangledName": "$s15CodeEditorTasks13OutputChannelC10isFinishedSbvg",
+                "moduleName": "CodeEditorTasks",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Function",
             "name": "append",
             "printedName": "append(_:)",
@@ -900,6 +986,33 @@
             "declKind": "Func",
             "usr": "s:15CodeEditorTasks13OutputChannelC5clearyyF",
             "mangledName": "$s15CodeEditorTasks13OutputChannelC5clearyyF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "finish",
+            "printedName": "finish(reason:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "StreamFinishReason",
+                "printedName": "CodeEditorCore.StreamFinishReason",
+                "hasDefaultArg": true,
+                "usr": "s:14CodeEditorCore18StreamFinishReasonO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks13OutputChannelC6finish6reasony0aB4Core18StreamFinishReasonO_tF",
+            "mangledName": "$s15CodeEditorTasks13OutputChannelC6finish6reasony0aB4Core18StreamFinishReasonO_tF",
             "moduleName": "CodeEditorTasks",
             "declAttributes": [
               "Final"
@@ -1021,6 +1134,30 @@
             "declKind": "Func",
             "usr": "s:15CodeEditorTasks21OutputChannelRegistryC3allSayAA0dE0CGyF",
             "mangledName": "$s15CodeEditorTasks21OutputChannelRegistryC3allSayAA0dE0CGyF",
+            "moduleName": "CodeEditorTasks",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "finishAll",
+            "printedName": "finishAll(reason:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "StreamFinishReason",
+                "printedName": "CodeEditorCore.StreamFinishReason",
+                "hasDefaultArg": true,
+                "usr": "s:14CodeEditorCore18StreamFinishReasonO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks21OutputChannelRegistryC9finishAll6reasony0aB4Core18StreamFinishReasonO_tF",
+            "mangledName": "$s15CodeEditorTasks21OutputChannelRegistryC9finishAll6reasony0aB4Core18StreamFinishReasonO_tF",
             "moduleName": "CodeEditorTasks",
             "funcSelfKind": "NonMutating"
           },
@@ -2872,6 +3009,412 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "VersionedProblemRange",
+        "printedName": "VersionedProblemRange",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "range",
+            "printedName": "range",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TextRange",
+                "printedName": "CodeEditorCore.TextRange",
+                "usr": "s:14CodeEditorCore9TextRangeV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV5range0aB4Core04TextF0Vvp",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV5range0aB4Core04TextF0Vvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TextRange",
+                    "printedName": "CodeEditorCore.TextRange",
+                    "usr": "s:14CodeEditorCore9TextRangeV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV5range0aB4Core04TextF0Vvg",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV5range0aB4Core04TextF0Vvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TextRange",
+                    "printedName": "CodeEditorCore.TextRange",
+                    "usr": "s:14CodeEditorCore9TextRangeV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV5range0aB4Core04TextF0Vvs",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV5range0aB4Core04TextF0Vvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "contentState",
+            "printedName": "contentState",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "DocumentContentStateID",
+                "printedName": "CodeEditorCore.DocumentContentStateID",
+                "usr": "s:14CodeEditorCore22DocumentContentStateIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV12contentState0aB4Core015DocumentContentH2IDVvp",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV12contentState0aB4Core015DocumentContentH2IDVvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DocumentContentStateID",
+                    "printedName": "CodeEditorCore.DocumentContentStateID",
+                    "usr": "s:14CodeEditorCore22DocumentContentStateIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV12contentState0aB4Core015DocumentContentH2IDVvg",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV12contentState0aB4Core015DocumentContentH2IDVvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "DocumentContentStateID",
+                    "printedName": "CodeEditorCore.DocumentContentStateID",
+                    "usr": "s:14CodeEditorCore22DocumentContentStateIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV12contentState0aB4Core015DocumentContentH2IDVvs",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV12contentState0aB4Core015DocumentContentH2IDVvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "position",
+            "printedName": "position",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TaskSourcePosition",
+                "printedName": "CodeEditorTasks.TaskSourcePosition",
+                "usr": "s:15CodeEditorTasks18TaskSourcePositionV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV8positionAA18TaskSourcePositionVvp",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV8positionAA18TaskSourcePositionVvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskSourcePosition",
+                    "printedName": "CodeEditorTasks.TaskSourcePosition",
+                    "usr": "s:15CodeEditorTasks18TaskSourcePositionV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV8positionAA18TaskSourcePositionVvg",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV8positionAA18TaskSourcePositionVvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskSourcePosition",
+                    "printedName": "CodeEditorTasks.TaskSourcePosition",
+                    "usr": "s:15CodeEditorTasks18TaskSourcePositionV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV8positionAA18TaskSourcePositionVvs",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV8positionAA18TaskSourcePositionVvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(range:contentState:position:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedProblemRange",
+                "printedName": "CodeEditorTasks.VersionedProblemRange",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TextRange",
+                "printedName": "CodeEditorCore.TextRange",
+                "usr": "s:14CodeEditorCore9TextRangeV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "DocumentContentStateID",
+                "printedName": "CodeEditorCore.DocumentContentStateID",
+                "usr": "s:14CodeEditorCore22DocumentContentStateIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskSourcePosition",
+                "printedName": "CodeEditorTasks.TaskSourcePosition",
+                "usr": "s:15CodeEditorTasks18TaskSourcePositionV"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV5range12contentState8positionAC0aB4Core04TextF0V_AG015DocumentContentI2IDVAA18TaskSourcePositionVtcfc",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV5range12contentState8positionAC0aB4Core04TextF0V_AG015DocumentContentI2IDVAA18TaskSourcePositionVtcfc",
+            "moduleName": "CodeEditorTasks",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedProblemRange",
+                "printedName": "CodeEditorTasks.VersionedProblemRange",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedProblemRange",
+                "printedName": "CodeEditorTasks.VersionedProblemRange",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorTasks",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks21VersionedProblemRangeV9hashValueSivp",
+            "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV9hashValueSivp",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV9hashValueSivg",
+                "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV9hashValueSivg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:15CodeEditorTasks21VersionedProblemRangeV",
+        "mangledName": "$s15CodeEditorTasks21VersionedProblemRangeV",
+        "moduleName": "CodeEditorTasks",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
         "name": "MatchedProblem",
         "printedName": "MatchedProblem",
         "children": [
@@ -3259,6 +3802,37 @@
             "declKind": "Func",
             "usr": "s:15CodeEditorTasks14MatchedProblemV13resolvedRange2in0aB4Core04TextG0VSS_tKF",
             "mangledName": "$s15CodeEditorTasks14MatchedProblemV13resolvedRange2in0aB4Core04TextG0VSS_tKF",
+            "moduleName": "CodeEditorTasks",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "resolve",
+            "printedName": "resolve(against:contentState:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "VersionedProblemRange",
+                "printedName": "CodeEditorTasks.VersionedProblemRange",
+                "usr": "s:15CodeEditorTasks21VersionedProblemRangeV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "DocumentContentStateID",
+                "printedName": "CodeEditorCore.DocumentContentStateID",
+                "usr": "s:14CodeEditorCore22DocumentContentStateIDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks14MatchedProblemV7resolve7against12contentStateAA09VersionedE5RangeVSS_0aB4Core015DocumentContentI2IDVtKF",
+            "mangledName": "$s15CodeEditorTasks14MatchedProblemV7resolve7against12contentStateAA09VersionedE5RangeVSS_0aB4Core015DocumentContentI2IDVtKF",
             "moduleName": "CodeEditorTasks",
             "throwing": true,
             "funcSelfKind": "NonMutating"
@@ -4563,14 +5137,15 @@
               }
             ],
             "declKind": "Func",
-            "usr": "s:15CodeEditorTasks12TaskCommandsO8register4into5onRun0H6Cancel0abE017CommandDisposable_pAH0K8RegistryC_yyYbScMYccyyYbScMYcctFZ",
-            "mangledName": "$s15CodeEditorTasks12TaskCommandsO8register4into5onRun0H6Cancel0abE017CommandDisposable_pAH0K8RegistryC_yyYbScMYccyyYbScMYcctFZ",
+            "usr": "s:15CodeEditorTasks12TaskCommandsO8register4into5onRun0H6Cancel0abE017CommandDisposable_pAH0K8RegistryC_yyYbScMYccyyYbScMYcctKFZ",
+            "mangledName": "$s15CodeEditorTasks12TaskCommandsO8register4into5onRun0H6Cancel0abE017CommandDisposable_pAH0K8RegistryC_yyYbScMYccyyYbScMYcctKFZ",
             "moduleName": "CodeEditorTasks",
             "static": true,
             "declAttributes": [
               "DiscardableResult",
               "Custom"
             ],
+            "throwing": true,
             "funcSelfKind": "NonMutating"
           }
         ],
@@ -10280,6 +10855,269 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "TaskOutputStream",
+        "printedName": "TaskOutputStream",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "stdout",
+            "printedName": "stdout",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskOutputStream.Type) -> CodeEditorTasks.TaskOutputStream",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskOutputStream",
+                    "printedName": "CodeEditorTasks.TaskOutputStream",
+                    "usr": "s:15CodeEditorTasks16TaskOutputStreamO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskOutputStream.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskOutputStream",
+                        "printedName": "CodeEditorTasks.TaskOutputStream",
+                        "usr": "s:15CodeEditorTasks16TaskOutputStreamO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks16TaskOutputStreamO6stdoutyA2CmF",
+            "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO6stdoutyA2CmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "stderr",
+            "printedName": "stderr",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskOutputStream.Type) -> CodeEditorTasks.TaskOutputStream",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskOutputStream",
+                    "printedName": "CodeEditorTasks.TaskOutputStream",
+                    "usr": "s:15CodeEditorTasks16TaskOutputStreamO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskOutputStream.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskOutputStream",
+                        "printedName": "CodeEditorTasks.TaskOutputStream",
+                        "usr": "s:15CodeEditorTasks16TaskOutputStreamO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks16TaskOutputStreamO6stderryA2CmF",
+            "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO6stderryA2CmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(rawValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorTasks.TaskOutputStream?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskOutputStream",
+                    "printedName": "CodeEditorTasks.TaskOutputStream",
+                    "usr": "s:15CodeEditorTasks16TaskOutputStreamO"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:15CodeEditorTasks16TaskOutputStreamO8rawValueACSgSS_tcfc",
+            "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO8rawValueACSgSS_tcfc",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "declAttributes": [
+              "Inlinable"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "RawValue",
+            "printedName": "RawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:15CodeEditorTasks16TaskOutputStreamO8RawValuea",
+            "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO8RawValuea",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true
+          },
+          {
+            "kind": "Var",
+            "name": "rawValue",
+            "printedName": "rawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks16TaskOutputStreamO8rawValueSSvp",
+            "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO8rawValueSSvp",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks16TaskOutputStreamO8rawValueSSvg",
+                "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO8rawValueSSvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Inlinable"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:15CodeEditorTasks16TaskOutputStreamO",
+        "mangledName": "$s15CodeEditorTasks16TaskOutputStreamO",
+        "moduleName": "CodeEditorTasks",
+        "enumRawTypeName": "String",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "RawRepresentable",
+            "printedName": "RawRepresentable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "RawValue",
+                "printedName": "RawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:SY",
+            "mangledName": "$sSY"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
         "name": "TaskOutputEvent",
         "printedName": "TaskOutputEvent",
         "children": [
@@ -10381,6 +11219,69 @@
             "declKind": "EnumElement",
             "usr": "s:15CodeEditorTasks15TaskOutputEventO6stderryACSScACmF",
             "mangledName": "$s15CodeEditorTasks15TaskOutputEventO6stderryACSScACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "outputTruncated",
+            "printedName": "outputTruncated",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskOutputEvent.Type) -> (CodeEditorTasks.TaskOutputStream, Swift.Int) -> CodeEditorTasks.TaskOutputEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTasks.TaskOutputStream, Swift.Int) -> CodeEditorTasks.TaskOutputEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskOutputEvent",
+                        "printedName": "CodeEditorTasks.TaskOutputEvent",
+                        "usr": "s:15CodeEditorTasks15TaskOutputEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(stream: CodeEditorTasks.TaskOutputStream, droppedBytes: Swift.Int)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "TaskOutputStream",
+                            "printedName": "CodeEditorTasks.TaskOutputStream",
+                            "usr": "s:15CodeEditorTasks16TaskOutputStreamO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Int",
+                            "printedName": "Swift.Int",
+                            "usr": "s:Si"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskOutputEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskOutputEvent",
+                        "printedName": "CodeEditorTasks.TaskOutputEvent",
+                        "usr": "s:15CodeEditorTasks15TaskOutputEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks15TaskOutputEventO15outputTruncatedyAcA0dE6StreamO_SitcACmF",
+            "mangledName": "$s15CodeEditorTasks15TaskOutputEventO15outputTruncatedyAcA0dE6StreamO_SitcACmF",
             "moduleName": "CodeEditorTasks"
           },
           {
@@ -10604,6 +11505,1383 @@
             "printedName": "Hashable",
             "usr": "s:SH",
             "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TaskNodeOutcome",
+        "printedName": "TaskNodeOutcome",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "succeeded",
+            "printedName": "succeeded",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskNodeOutcome.Type) -> CodeEditorTasks.TaskNodeOutcome",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskNodeOutcome",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                    "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO9succeededyA2CmF",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO9succeededyA2CmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "failed",
+            "printedName": "failed",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskNodeOutcome.Type) -> (CodeEditorTasks.TaskFailure) -> CodeEditorTasks.TaskNodeOutcome",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTasks.TaskFailure) -> CodeEditorTasks.TaskNodeOutcome",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO6failedyAcA0D7FailureOcACmF",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO6failedyAcA0D7FailureOcACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "cancelled",
+            "printedName": "cancelled",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskNodeOutcome.Type) -> CodeEditorTasks.TaskNodeOutcome",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskNodeOutcome",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                    "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO9cancelledyA2CmF",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO9cancelledyA2CmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "skippedBecauseDependency",
+            "printedName": "skippedBecauseDependency",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskNodeOutcome.Type) -> (CodeEditorTasks.TaskID) -> CodeEditorTasks.TaskNodeOutcome",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTasks.TaskID) -> CodeEditorTasks.TaskNodeOutcome",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskID",
+                        "printedName": "CodeEditorTasks.TaskID",
+                        "usr": "s:15CodeEditorTasks6TaskIDV"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO24skippedBecauseDependencyyAcA0D2IDVcACmF",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO24skippedBecauseDependencyyAcA0D2IDVcACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "isFailureOrSkip",
+            "printedName": "isFailureOrSkip",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO15isFailureOrSkipSbvp",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO15isFailureOrSkipSbvp",
+            "moduleName": "CodeEditorTasks",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO15isFailureOrSkipSbvg",
+                "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO15isFailureOrSkipSbvg",
+                "moduleName": "CodeEditorTasks",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "allowsDependents",
+            "printedName": "allowsDependents",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO16allowsDependentsSbvp",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO16allowsDependentsSbvp",
+            "moduleName": "CodeEditorTasks",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO16allowsDependentsSbvg",
+                "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO16allowsDependentsSbvg",
+                "moduleName": "CodeEditorTasks",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskNodeOutcome",
+                "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskNodeOutcome",
+                "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorTasks",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO9hashValueSivp",
+            "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO9hashValueSivp",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO9hashValueSivg",
+                "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO9hashValueSivg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO",
+        "mangledName": "$s15CodeEditorTasks15TaskNodeOutcomeO",
+        "moduleName": "CodeEditorTasks",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TaskFailure",
+        "printedName": "TaskFailure",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "exitCode",
+            "printedName": "exitCode",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskFailure.Type) -> (Swift.Int) -> CodeEditorTasks.TaskFailure",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.Int) -> CodeEditorTasks.TaskFailure",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Int",
+                        "printedName": "Swift.Int",
+                        "usr": "s:Si"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskFailure.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks11TaskFailureO04exitA0yACSicACmF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO04exitA0yACSicACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "timedOut",
+            "printedName": "timedOut",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskFailure.Type) -> CodeEditorTasks.TaskFailure",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskFailure",
+                    "printedName": "CodeEditorTasks.TaskFailure",
+                    "usr": "s:15CodeEditorTasks11TaskFailureO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskFailure.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks11TaskFailureO8timedOutyA2CmF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO8timedOutyA2CmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "processFailed",
+            "printedName": "processFailed",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskFailure.Type) -> (Swift.String) -> CodeEditorTasks.TaskFailure",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> CodeEditorTasks.TaskFailure",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskFailure.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks11TaskFailureO13processFailedyACSScACmF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO13processFailedyACSScACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "invalidDefinition",
+            "printedName": "invalidDefinition",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskFailure.Type) -> (Swift.String) -> CodeEditorTasks.TaskFailure",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> CodeEditorTasks.TaskFailure",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskFailure.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks11TaskFailureO17invalidDefinitionyACSScACmF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO17invalidDefinitionyACSScACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "notReady",
+            "printedName": "notReady",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskFailure.Type) -> (CodeEditorTasks.TaskID) -> CodeEditorTasks.TaskFailure",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorTasks.TaskID) -> CodeEditorTasks.TaskFailure",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskID",
+                        "printedName": "CodeEditorTasks.TaskID",
+                        "usr": "s:15CodeEditorTasks6TaskIDV"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskFailure.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks11TaskFailureO8notReadyyAcA0D2IDVcACmF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO8notReadyyAcA0D2IDVcACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Var",
+            "name": "concurrencyConflict",
+            "printedName": "concurrencyConflict",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorTasks.TaskFailure.Type) -> (Swift.String) -> CodeEditorTasks.TaskFailure",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> CodeEditorTasks.TaskFailure",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorTasks.TaskFailure.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskFailure",
+                        "printedName": "CodeEditorTasks.TaskFailure",
+                        "usr": "s:15CodeEditorTasks11TaskFailureO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:15CodeEditorTasks11TaskFailureO19concurrencyConflictyACSScACmF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO19concurrencyConflictyACSScACmF",
+            "moduleName": "CodeEditorTasks"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskFailure",
+                "printedName": "CodeEditorTasks.TaskFailure",
+                "usr": "s:15CodeEditorTasks11TaskFailureO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskFailure",
+                "printedName": "CodeEditorTasks.TaskFailure",
+                "usr": "s:15CodeEditorTasks11TaskFailureO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks11TaskFailureO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorTasks",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks11TaskFailureO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks11TaskFailureO9hashValueSivp",
+            "mangledName": "$s15CodeEditorTasks11TaskFailureO9hashValueSivp",
+            "moduleName": "CodeEditorTasks",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks11TaskFailureO9hashValueSivg",
+                "mangledName": "$s15CodeEditorTasks11TaskFailureO9hashValueSivg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:15CodeEditorTasks11TaskFailureO",
+        "mangledName": "$s15CodeEditorTasks11TaskFailureO",
+        "moduleName": "CodeEditorTasks",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TaskGraphReport",
+        "printedName": "TaskGraphReport",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "root",
+            "printedName": "root",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TaskID",
+                "printedName": "CodeEditorTasks.TaskID",
+                "usr": "s:15CodeEditorTasks6TaskIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskGraphReportV4rootAA0D2IDVvp",
+            "mangledName": "$s15CodeEditorTasks15TaskGraphReportV4rootAA0D2IDVvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskID",
+                    "printedName": "CodeEditorTasks.TaskID",
+                    "usr": "s:15CodeEditorTasks6TaskIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV4rootAA0D2IDVvg",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV4rootAA0D2IDVvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskID",
+                    "printedName": "CodeEditorTasks.TaskID",
+                    "usr": "s:15CodeEditorTasks6TaskIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV4rootAA0D2IDVvs",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV4rootAA0D2IDVvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "order",
+            "printedName": "order",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorTasks.TaskID]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskID",
+                    "printedName": "CodeEditorTasks.TaskID",
+                    "usr": "s:15CodeEditorTasks6TaskIDV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskGraphReportV5orderSayAA0D2IDVGvp",
+            "mangledName": "$s15CodeEditorTasks15TaskGraphReportV5orderSayAA0D2IDVGvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorTasks.TaskID]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskID",
+                        "printedName": "CodeEditorTasks.TaskID",
+                        "usr": "s:15CodeEditorTasks6TaskIDV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV5orderSayAA0D2IDVGvg",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV5orderSayAA0D2IDVGvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorTasks.TaskID]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskID",
+                        "printedName": "CodeEditorTasks.TaskID",
+                        "usr": "s:15CodeEditorTasks6TaskIDV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV5orderSayAA0D2IDVGvs",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV5orderSayAA0D2IDVGvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "outcomes",
+            "printedName": "outcomes",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[CodeEditorTasks.TaskID : CodeEditorTasks.TaskNodeOutcome]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskID",
+                    "printedName": "CodeEditorTasks.TaskID",
+                    "usr": "s:15CodeEditorTasks6TaskIDV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskNodeOutcome",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                    "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskGraphReportV8outcomesSDyAA0D2IDVAA0D11NodeOutcomeOGvp",
+            "mangledName": "$s15CodeEditorTasks15TaskGraphReportV8outcomesSDyAA0D2IDVAA0D11NodeOutcomeOGvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[CodeEditorTasks.TaskID : CodeEditorTasks.TaskNodeOutcome]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskID",
+                        "printedName": "CodeEditorTasks.TaskID",
+                        "usr": "s:15CodeEditorTasks6TaskIDV"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV8outcomesSDyAA0D2IDVAA0D11NodeOutcomeOGvg",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV8outcomesSDyAA0D2IDVAA0D11NodeOutcomeOGvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[CodeEditorTasks.TaskID : CodeEditorTasks.TaskNodeOutcome]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskID",
+                        "printedName": "CodeEditorTasks.TaskID",
+                        "usr": "s:15CodeEditorTasks6TaskIDV"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskNodeOutcome",
+                        "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                        "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV8outcomesSDyAA0D2IDVAA0D11NodeOutcomeOGvs",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV8outcomesSDyAA0D2IDVAA0D11NodeOutcomeOGvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "rootHandle",
+            "printedName": "rootHandle",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorTasks.TaskExecutionHandle?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskExecutionHandle",
+                    "printedName": "CodeEditorTasks.TaskExecutionHandle",
+                    "usr": "s:15CodeEditorTasks19TaskExecutionHandleC"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskGraphReportV10rootHandleAA0d9ExecutionH0CSgvp",
+            "mangledName": "$s15CodeEditorTasks15TaskGraphReportV10rootHandleAA0d9ExecutionH0CSgvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "CodeEditorTasks.TaskExecutionHandle?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskExecutionHandle",
+                        "printedName": "CodeEditorTasks.TaskExecutionHandle",
+                        "usr": "s:15CodeEditorTasks19TaskExecutionHandleC"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV10rootHandleAA0d9ExecutionH0CSgvg",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV10rootHandleAA0d9ExecutionH0CSgvg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "CodeEditorTasks.TaskExecutionHandle?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskExecutionHandle",
+                        "printedName": "CodeEditorTasks.TaskExecutionHandle",
+                        "usr": "s:15CodeEditorTasks19TaskExecutionHandleC"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV10rootHandleAA0d9ExecutionH0CSgvs",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV10rootHandleAA0d9ExecutionH0CSgvs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(root:order:outcomes:rootHandle:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TaskGraphReport",
+                "printedName": "CodeEditorTasks.TaskGraphReport",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskID",
+                "printedName": "CodeEditorTasks.TaskID",
+                "usr": "s:15CodeEditorTasks6TaskIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorTasks.TaskID]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskID",
+                    "printedName": "CodeEditorTasks.TaskID",
+                    "usr": "s:15CodeEditorTasks6TaskIDV"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[CodeEditorTasks.TaskID : CodeEditorTasks.TaskNodeOutcome]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskID",
+                    "printedName": "CodeEditorTasks.TaskID",
+                    "usr": "s:15CodeEditorTasks6TaskIDV"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskNodeOutcome",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                    "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                  }
+                ],
+                "usr": "s:SD"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorTasks.TaskExecutionHandle?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskExecutionHandle",
+                    "printedName": "CodeEditorTasks.TaskExecutionHandle",
+                    "usr": "s:15CodeEditorTasks19TaskExecutionHandleC"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:15CodeEditorTasks15TaskGraphReportV4root5order8outcomes0G6HandleAcA0D2IDV_SayAIGSDyAiA0D11NodeOutcomeOGAA0d9ExecutionJ0CSgtcfc",
+            "mangledName": "$s15CodeEditorTasks15TaskGraphReportV4root5order8outcomes0G6HandleAcA0D2IDV_SayAIGSDyAiA0D11NodeOutcomeOGAA0d9ExecutionJ0CSgtcfc",
+            "moduleName": "CodeEditorTasks",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "rootOutcome",
+            "printedName": "rootOutcome",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TaskNodeOutcome",
+                "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks15TaskGraphReportV11rootOutcomeAA0d4NodeH0Ovp",
+            "mangledName": "$s15CodeEditorTasks15TaskGraphReportV11rootOutcomeAA0d4NodeH0Ovp",
+            "moduleName": "CodeEditorTasks",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskNodeOutcome",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                    "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV11rootOutcomeAA0d4NodeH0Ovg",
+                "mangledName": "$s15CodeEditorTasks15TaskGraphReportV11rootOutcomeAA0d4NodeH0Ovg",
+                "moduleName": "CodeEditorTasks",
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:15CodeEditorTasks15TaskGraphReportV",
+        "mangledName": "$s15CodeEditorTasks15TaskGraphReportV",
+        "moduleName": "CodeEditorTasks",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
           },
           {
             "kind": "Conformance",
@@ -11042,6 +13320,49 @@
               "Implements",
               "Semantics"
             ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "validateReadinessPattern",
+            "printedName": "validateReadinessPattern(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Foundation.NSRegularExpression?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NSRegularExpression",
+                    "printedName": "Foundation.NSRegularExpression",
+                    "usr": "c:objc(cs)NSRegularExpression"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks9TaskErrorO24validateReadinessPatternySo19NSRegularExpressionCSgSSSgKFZ",
+            "mangledName": "$s15CodeEditorTasks9TaskErrorO24validateReadinessPatternySo19NSRegularExpressionCSgSSSgKFZ",
+            "moduleName": "CodeEditorTasks",
+            "static": true,
+            "isFromExtension": true,
+            "throwing": true,
             "funcSelfKind": "NonMutating"
           }
         ],
@@ -11490,27 +13811,19 @@
           },
           {
             "kind": "Var",
-            "name": "events",
-            "printedName": "events",
+            "name": "maxCollectedBytes",
+            "printedName": "maxCollectedBytes",
             "children": [
               {
                 "kind": "TypeNominal",
-                "name": "AsyncStream",
-                "printedName": "_Concurrency.AsyncStream<CodeEditorTasks.TaskOutputEvent>",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "TaskOutputEvent",
-                    "printedName": "CodeEditorTasks.TaskOutputEvent",
-                    "usr": "s:15CodeEditorTasks15TaskOutputEventO"
-                  }
-                ],
-                "usr": "s:ScS"
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
               }
             ],
             "declKind": "Var",
-            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvp",
-            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvp",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC17maxCollectedBytesSivp",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC17maxCollectedBytesSivp",
             "moduleName": "CodeEditorTasks",
             "declAttributes": [
               "Final",
@@ -11526,22 +13839,14 @@
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "AsyncStream",
-                    "printedName": "_Concurrency.AsyncStream<CodeEditorTasks.TaskOutputEvent>",
-                    "children": [
-                      {
-                        "kind": "TypeNominal",
-                        "name": "TaskOutputEvent",
-                        "printedName": "CodeEditorTasks.TaskOutputEvent",
-                        "usr": "s:15CodeEditorTasks15TaskOutputEventO"
-                      }
-                    ],
-                    "usr": "s:ScS"
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvg",
-                "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvg",
+                "usr": "s:15CodeEditorTasks19TaskExecutionHandleC17maxCollectedBytesSivg",
+                "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC17maxCollectedBytesSivg",
                 "moduleName": "CodeEditorTasks",
                 "implicit": true,
                 "declAttributes": [
@@ -11555,7 +13860,7 @@
           {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(run:processHandle:readinessPattern:)",
+            "printedName": "init(run:processHandle:readinessPattern:maxCollectedBytes:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -11596,12 +13901,20 @@
                   }
                 ],
                 "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC3run07processF016readinessPatternAcA0D3RunV_0aB4Core07ProcessF0CSgSSSgtcfc",
-            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC3run07processF016readinessPatternAcA0D3RunV_0aB4Core07ProcessF0CSgSSSgtcfc",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC3run07processF016readinessPattern17maxCollectedBytesAcA0D3RunV_0aB4Core07ProcessF0CSgSSSgSitKcfc",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC3run07processF016readinessPattern17maxCollectedBytesAcA0D3RunV_0aB4Core07ProcessF0CSgSSSgSitKcfc",
             "moduleName": "CodeEditorTasks",
+            "throwing": true,
             "init_kind": "Designated"
           },
           {
@@ -11646,6 +13959,230 @@
                 "accessorKind": "get"
               }
             ]
+          },
+          {
+            "kind": "Var",
+            "name": "isFinished",
+            "printedName": "isFinished",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC10isFinishedSbvp",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC10isFinishedSbvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks19TaskExecutionHandleC10isFinishedSbvg",
+                "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC10isFinishedSbvg",
+                "moduleName": "CodeEditorTasks",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "wasOutputTruncated",
+            "printedName": "wasOutputTruncated",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC18wasOutputTruncatedSbvp",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC18wasOutputTruncatedSbvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks19TaskExecutionHandleC18wasOutputTruncatedSbvg",
+                "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC18wasOutputTruncatedSbvg",
+                "moduleName": "CodeEditorTasks",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "droppedOutputByteCount",
+            "printedName": "droppedOutputByteCount",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC22droppedOutputByteCountSivp",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC22droppedOutputByteCountSivp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks19TaskExecutionHandleC22droppedOutputByteCountSivg",
+                "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC22droppedOutputByteCountSivg",
+                "moduleName": "CodeEditorTasks",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "events",
+            "printedName": "events",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "AsyncStream",
+                "printedName": "_Concurrency.AsyncStream<CodeEditorTasks.TaskOutputEvent>",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskOutputEvent",
+                    "printedName": "CodeEditorTasks.TaskOutputEvent",
+                    "usr": "s:15CodeEditorTasks15TaskOutputEventO"
+                  }
+                ],
+                "usr": "s:ScS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvp",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "AsyncStream",
+                    "printedName": "_Concurrency.AsyncStream<CodeEditorTasks.TaskOutputEvent>",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TaskOutputEvent",
+                        "printedName": "CodeEditorTasks.TaskOutputEvent",
+                        "usr": "s:15CodeEditorTasks15TaskOutputEventO"
+                      }
+                    ],
+                    "usr": "s:ScS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvg",
+                "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC6eventsScSyAA0D11OutputEventOGvg",
+                "moduleName": "CodeEditorTasks",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "makeEventStream",
+            "printedName": "makeEventStream(capacity:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "AsyncStream",
+                "printedName": "_Concurrency.AsyncStream<CodeEditorTasks.TaskOutputEvent>",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskOutputEvent",
+                    "printedName": "CodeEditorTasks.TaskOutputEvent",
+                    "usr": "s:15CodeEditorTasks15TaskOutputEventO"
+                  }
+                ],
+                "usr": "s:ScS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC15makeEventStream8capacityScSyAA0d6OutputH0OGSi_tF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC15makeEventStream8capacityScSyAA0d6OutputH0OGSi_tF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
           },
           {
             "kind": "Function",
@@ -11817,6 +14354,114 @@
           },
           {
             "kind": "Function",
+            "name": "rawStdoutBytes",
+            "printedName": "rawStdoutBytes()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC14rawStdoutBytes10Foundation4DataVyYaF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC14rawStdoutBytes10Foundation4DataVyYaF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "rawStderrBytes",
+            "printedName": "rawStderrBytes()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC14rawStderrBytes10Foundation4DataVyYaF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC14rawStderrBytes10Foundation4DataVyYaF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "rawStdoutViewport",
+            "printedName": "rawStdoutViewport(from:maxBytes:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ViewportRead",
+                "printedName": "CodeEditorCore.BoundedByteSpool.ViewportRead",
+                "usr": "s:14CodeEditorCore16BoundedByteSpoolC12ViewportReadV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC17rawStdoutViewport4from8maxBytes0aB4Core16BoundedByteSpoolC0I4ReadVs6UInt64V_SitYaF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC17rawStdoutViewport4from8maxBytes0aB4Core16BoundedByteSpoolC0I4ReadVs6UInt64V_SitYaF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "rawStderrViewport",
+            "printedName": "rawStderrViewport(from:maxBytes:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ViewportRead",
+                "printedName": "CodeEditorCore.BoundedByteSpool.ViewportRead",
+                "usr": "s:14CodeEditorCore16BoundedByteSpoolC12ViewportReadV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC17rawStderrViewport4from8maxBytes0aB4Core16BoundedByteSpoolC0I4ReadVs6UInt64V_SitYaF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC17rawStderrViewport4from8maxBytes0aB4Core16BoundedByteSpoolC0I4ReadVs6UInt64V_SitYaF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "emit",
             "printedName": "emit(stdout:)",
             "children": [
@@ -11861,6 +14506,58 @@
             "declKind": "Func",
             "usr": "s:15CodeEditorTasks19TaskExecutionHandleC4emit6stderrySS_tF",
             "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC4emit6stderrySS_tF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "emitRawStdout",
+            "printedName": "emitRawStdout(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC13emitRawStdoutyy10Foundation4DataVYaF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC13emitRawStdoutyy10Foundation4DataVYaF",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "emitRawStderr",
+            "printedName": "emitRawStderr(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks19TaskExecutionHandleC13emitRawStderryy10Foundation4DataVYaF",
+            "mangledName": "$s15CodeEditorTasks19TaskExecutionHandleC13emitRawStderryy10Foundation4DataVYaF",
             "moduleName": "CodeEditorTasks",
             "declAttributes": [
               "Final"
@@ -12001,17 +14698,10 @@
             "printedName": "processService",
             "children": [
               {
-                "kind": "TypeNameAlias",
-                "name": "ProcessSupervisor",
-                "printedName": "CodeEditorCore.ProcessSupervisor",
-                "children": [
-                  {
-                    "kind": "TypeNominal",
-                    "name": "ProcessService",
-                    "printedName": "CodeEditorCore.ProcessService",
-                    "usr": "s:14CodeEditorCore14ProcessServiceV"
-                  }
-                ]
+                "kind": "TypeNominal",
+                "name": "ProcessService",
+                "printedName": "CodeEditorCore.ProcessService",
+                "usr": "s:14CodeEditorCore14ProcessServiceV"
               }
             ],
             "declKind": "Var",
@@ -12030,17 +14720,10 @@
                 "printedName": "Get()",
                 "children": [
                   {
-                    "kind": "TypeNameAlias",
-                    "name": "ProcessSupervisor",
-                    "printedName": "CodeEditorCore.ProcessSupervisor",
-                    "children": [
-                      {
-                        "kind": "TypeNominal",
-                        "name": "ProcessService",
-                        "printedName": "CodeEditorCore.ProcessService",
-                        "usr": "s:14CodeEditorCore14ProcessServiceV"
-                      }
-                    ]
+                    "kind": "TypeNominal",
+                    "name": "ProcessService",
+                    "printedName": "CodeEditorCore.ProcessService",
+                    "usr": "s:14CodeEditorCore14ProcessServiceV"
                   }
                 ],
                 "declKind": "Accessor",
@@ -12153,9 +14836,81 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "maxCollectedBytes",
+            "printedName": "maxCollectedBytes",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:15CodeEditorTasks17ProcessTaskRunnerV17maxCollectedBytesSivp",
+            "mangledName": "$s15CodeEditorTasks17ProcessTaskRunnerV17maxCollectedBytesSivp",
+            "moduleName": "CodeEditorTasks",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks17ProcessTaskRunnerV17maxCollectedBytesSivg",
+                "mangledName": "$s15CodeEditorTasks17ProcessTaskRunnerV17maxCollectedBytesSivg",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:15CodeEditorTasks17ProcessTaskRunnerV17maxCollectedBytesSivs",
+                "mangledName": "$s15CodeEditorTasks17ProcessTaskRunnerV17maxCollectedBytesSivs",
+                "moduleName": "CodeEditorTasks",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(platformProfile:defaultTimeout:)",
+            "printedName": "init(platformProfile:defaultTimeout:maxCollectedBytes:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -12184,11 +14939,18 @@
                 ],
                 "hasDefaultArg": true,
                 "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:15CodeEditorTasks17ProcessTaskRunnerV15platformProfile14defaultTimeoutAC0aB4Core018PlatformCapabilityH0V_s8DurationVSgtcfc",
-            "mangledName": "$s15CodeEditorTasks17ProcessTaskRunnerV15platformProfile14defaultTimeoutAC0aB4Core018PlatformCapabilityH0V_s8DurationVSgtcfc",
+            "usr": "s:15CodeEditorTasks17ProcessTaskRunnerV15platformProfile14defaultTimeout17maxCollectedBytesAC0aB4Core018PlatformCapabilityH0V_s8DurationVSgSitcfc",
+            "mangledName": "$s15CodeEditorTasks17ProcessTaskRunnerV15platformProfile14defaultTimeout17maxCollectedBytesAC0aB4Core018PlatformCapabilityH0V_s8DurationVSgSitcfc",
             "moduleName": "CodeEditorTasks",
             "init_kind": "Designated"
           },
@@ -12696,6 +15458,38 @@
           },
           {
             "kind": "Function",
+            "name": "exclusiveGroupLastOutcome",
+            "printedName": "exclusiveGroupLastOutcome(group:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorTasks.TaskNodeOutcome?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TaskNodeOutcome",
+                    "printedName": "CodeEditorTasks.TaskNodeOutcome",
+                    "usr": "s:15CodeEditorTasks15TaskNodeOutcomeO"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks11TaskServiceC25exclusiveGroupLastOutcome5groupAA0d4NodeI0OSgSS_tF",
+            "mangledName": "$s15CodeEditorTasks11TaskServiceC25exclusiveGroupLastOutcome5groupAA0d4NodeI0OSgSS_tF",
+            "moduleName": "CodeEditorTasks",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "resolveOrder",
             "printedName": "resolveOrder(_:)",
             "children": [
@@ -12723,6 +15517,31 @@
             "declKind": "Func",
             "usr": "s:15CodeEditorTasks11TaskServiceC12resolveOrderySayAA0D2IDVGAFKF",
             "mangledName": "$s15CodeEditorTasks11TaskServiceC12resolveOrderySayAA0D2IDVGAFKF",
+            "moduleName": "CodeEditorTasks",
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "executeGraph",
+            "printedName": "executeGraph(id:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TaskGraphReport",
+                "printedName": "CodeEditorTasks.TaskGraphReport",
+                "usr": "s:15CodeEditorTasks15TaskGraphReportV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TaskID",
+                "printedName": "CodeEditorTasks.TaskID",
+                "usr": "s:15CodeEditorTasks6TaskIDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:15CodeEditorTasks11TaskServiceC12executeGraph2idAA0dG6ReportVAA0D2IDV_tYaKF",
+            "mangledName": "$s15CodeEditorTasks11TaskServiceC12executeGraph2idAA0dG6ReportVAA0D2IDV_tYaKF",
             "moduleName": "CodeEditorTasks",
             "throwing": true,
             "funcSelfKind": "NonMutating"
@@ -12957,6 +15776,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -13028,6 +15849,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

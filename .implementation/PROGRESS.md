@@ -26,7 +26,7 @@
 | 9b | capability broker | 16 | verified |
 | 9c | Wasm | 16 | fixed |
 | 10 | workbench | 7 | verified |
-| F | final residual gate | all 174 | open |
+| F | final residual gate | all 174 | **PASS** |
 
 ## Rules for implementers
 
@@ -39,6 +39,8 @@
 7. Commit after each finding or tight related group with message including finding IDs.
 
 ## Log
+
+- 2026-08-03: **final residual gate PASS** — 174 findings fixed/verified (0 open); P0 spot-check green; production-fake greps clean; closed release-truth residuals (REL-N03 defects TS paths, REL-N06 API baselines+digester, REL-N07 sendable allowlist/dossier, REL-N08 DAP required_commands). Targeted audit suites green (DOC/CORE/WSP/LSP/DAP/TER/EXT/BROKER/WASM/WB/REL/SCM/SRCH/TASK/LANG/CMD/UI). See `.implementation/FINAL-GATE-REPORT.md`.
 
 - 2026-08-03: batch workbench verified — WB-N01, WB-N02, WB-N03, WB-N04, WB-N05, WB-N06, WB-N07 status set to `verified` (all previously fixed with regression tests; WBN filter green, residual closed).
 - 2026-08-03: Phase 10 workbench verifier residual — WB-N04 watcher-driven incremental index (`FileTreeIndexService.startWatching` + debounced root refresh/overflow rescan; `cancelScan` clears `isScanning`; off-main engine probe); WB-N05 bagged all UtilityPanels + WorkbenchEditorArea Tasks (panel/pane TaskBags, terminal `deactivate`); WB-N01 `makeBodyWithErrorPresentation` invocation proof. `swift test --filter WBN`: 30 passed; CodeEditorWorkbenchTests (ex-long perf): 82 passed.

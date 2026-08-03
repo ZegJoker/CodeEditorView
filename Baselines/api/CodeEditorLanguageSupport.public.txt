@@ -1,3 +1,4 @@
+class LanguageRegistrationToken | sendable=1
 class LanguageRegistry | sendable=1
 enum CaptureName | sendable=1
 enum CodeLanguages | sendable=1
@@ -6,11 +7,18 @@ enum LanguageDetector | sendable=1
 enum LanguagePackError | sendable=1
 enum LanguagePackRegistration | sendable=1
 enum LanguageRegistrationDiagnostic | sendable=1
+enum LanguageRegistrationPolicy | sendable=1
 enum QueryKind | sendable=1
+enum TSLanguageOwnership | sendable=1
 enum TreeSitterLanguageID | sendable=1
 func allDefinitions()
+func allEffectiveRecords()
+func allRecords(for id: LanguageID)
 func definition(for id: LanguageID)
 func detect( filename: String, contentPrefix: String? , in registry: LanguageRegistry )
+func dispose()
+func effectiveRecord(for id: LanguageID)
+func extensionPackage(_ packageID: String)
 func from(capture: String)
 func hasParser(for id: LanguageID)
 func hasQueryProvider(for id: LanguageID)
@@ -19,11 +27,14 @@ func language(forFileExtension ext: String)
 func language(id: LanguageID)
 func language(id: String)
 func language(id: TreeSitterLanguageID)
+func languageRef(for id: LanguageID)
 func parser(for id: LanguageID)
 func queryURL(for id: LanguageID, kind: QueryKind)
 func queryURL(for id: LanguageID, query: String)
 func queryURL(for name: String )
 func record(_ error: LanguagePackError)
+func record(for tokenID: LanguageRegistrationTokenID)
+func register( _ definition: LanguageDefinition, owner: ContributionOwner, priority: Int , policy: LanguageRegistrationPolicy , parserFactory: ParserFactory? , queryProvider: QueryURLProvider? ) | attr=discardableResult
 func register(_ definition: LanguageDefinition) | attr=discardableResult
 func registerParser(for id: LanguageID, factory: @escaping ParserFactory)
 func registerQueryProvider(for id: LanguageID, provider: @escaping QueryURLProvider)
@@ -32,28 +43,40 @@ func resetForTests()
 func setDocumentText(_ text: String)
 func setUp(documentLength: Int, languageID: String?)
 func snapshot()
+func unregister(owner: ContributionOwner)
+func unregister(tokenID: LanguageRegistrationTokenID)
 func unregisterAll(for id: LanguageID)
 func unregisterDefinition(for id: LanguageID)
 func unregisterParser(for id: LanguageID)
 func unregisterQueryProvider(for id: LanguageID)
 func validateCompleteness(for id: LanguageID)
 func willApplyEdit(range: NSRange)
-init ( definitions: [LanguageDefinition], languageIDsWithParsers: Set<LanguageID>, languageIDsWithQueries: Set<LanguageID>, generation: UInt64 )
+init ( definitions: [LanguageDefinition], languageIDsWithParsers: Set<LanguageID>, languageIDsWithQueries: Set<LanguageID>, generation: UInt64, effectiveRecords: [LanguageRegistrationRecord] )
+init ( didBecomeEffective: Bool, record: LanguageRegistrationRecord, token: LanguageRegistrationToken, diagnostics: [LanguageRegistrationDiagnostic] )
 init ( id: LanguageID, displayName: String, tsName: String, fileExtensions: Set<String> , aliases: Set<String> , filenames: Set<String> , firstLinePatterns: [String] , contentPatterns: [String] , detectionPriority: Int , lineComment: String , blockComment: (String, String) , "")
+init ( id: LanguageRegistrationTokenID )
 init ( id: TreeSitterLanguageID, tsName: String, displayName: String, extensions: Set<String>, lineComment: String , rangeComment: (String, String) , "")
+init ( languageID: LanguageID, owner: ContributionOwner, generation: UInt64, priority: Int, definition: LanguageDefinition, tokenID: LanguageRegistrationTokenID )
 init ()
 init (_ language: CodeLanguage)
 init (didRegister: Bool, diagnostics: [LanguageRegistrationDiagnostic] )
+init (languageID: LanguageID, pointer: OpaquePointer, ownership: TSLanguageOwnership)
 init (range: NSRange, capture: CaptureName? , rawCapture: String? )
 init (rawValue: String)
+init (rawValue: UUID ))
 init (stringLiteral value: String)
 protocol HighlightProviding | isolation=@MainActor
 struct CodeLanguage | sendable=1
+struct ContributionOwner | sendable=1
 struct HighlightRange | sendable=1
 struct LanguageDefinition | sendable=1
 struct LanguageID | sendable=1
+struct LanguageOwnedRegistrationResult | sendable=1
+struct LanguageRegistrationRecord | sendable=1
 struct LanguageRegistrationResult | sendable=1
+struct LanguageRegistrationTokenID | sendable=1
 struct LanguageRegistrySnapshot | sendable=1
+struct TSLanguageRef | sendable=1
 typealias ParserFactory | sendable=1
 typealias QueryURLProvider | sendable=1
 var additionalQueries
@@ -65,20 +88,26 @@ var allowsComments
 var bash
 var blockComment
 var brackets
+var builtIn
 var c
 var cSharp
 var capture
 var contentPatterns
 var cpp
 var css
+var currentGeneration
 var dart
+var definition
 var definitions
 var description
+var descriptor
 var detectionPriority
 var diagnostics
+var didBecomeEffective
 var didRegister
 var displayName
 var dockerfile
+var effectiveRecords
 var elixir
 var errors
 var extensions
@@ -92,9 +121,11 @@ var go
 var goMod
 var haskell
 var highlightable
+var host
 var html
 var id
 var insertSpaces
+var isDisposed
 var isHighlightFamily
 var java
 var javascript
@@ -113,19 +144,24 @@ var markdownInline
 var maxContentBytes
 var objc
 var ocaml
+var owner
+var ownership
 var parent
 var perl
 var php
 var plainText
+var pointer
 var preferredDebuggers
 var preferredFormatters
 var preferredLanguageServers
+var priority
 var python
 var queryKinds
 var range
 var rangeComment
 var rawCapture
 var rawValue
+var record
 var regex
 var ruby
 var rust
@@ -134,6 +170,8 @@ var shared
 var sql
 var swift
 var tabSize
+var token
+var tokenID
 var toml
 var tsName
 var tsx

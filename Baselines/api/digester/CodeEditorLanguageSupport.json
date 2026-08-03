@@ -5102,6 +5102,452 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "ContributionOwner",
+        "printedName": "ContributionOwner",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "rawValue",
+            "printedName": "rawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV8rawValueSSvp",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV8rawValueSSvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV8rawValueSSvg",
+                "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV8rawValueSSvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(rawValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV8rawValueACSS_tcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV8rawValueACSS_tcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(stringLiteral:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV13stringLiteralACSS_tcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV13stringLiteralACSS_tcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "builtIn",
+            "printedName": "builtIn",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV7builtInACvpZ",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV7builtInACvpZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ContributionOwner",
+                    "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                    "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV7builtInACvgZ",
+                "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV7builtInACvgZ",
+                "moduleName": "CodeEditorLanguageSupport",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "host",
+            "printedName": "host",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV4hostACvpZ",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV4hostACvpZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ContributionOwner",
+                    "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                    "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV4hostACvgZ",
+                "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV4hostACvgZ",
+                "moduleName": "CodeEditorLanguageSupport",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "extensionPackage",
+            "printedName": "extensionPackage(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV16extensionPackageyACSSFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV16extensionPackageyACSSFZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "ExtendedGraphemeClusterLiteralType",
+            "printedName": "ExtendedGraphemeClusterLiteralType",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV34ExtendedGraphemeClusterLiteralTypea",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV34ExtendedGraphemeClusterLiteralTypea",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "RawValue",
+            "printedName": "RawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV8RawValuea",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV8RawValuea",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "StringLiteralType",
+            "printedName": "StringLiteralType",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV17StringLiteralTypea",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV17StringLiteralTypea",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true
+          },
+          {
+            "kind": "TypeAlias",
+            "name": "UnicodeScalarLiteralType",
+            "printedName": "UnicodeScalarLiteralType",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV24UnicodeScalarLiteralTypea",
+            "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV24UnicodeScalarLiteralTypea",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV",
+        "mangledName": "$s25CodeEditorLanguageSupport17ContributionOwnerV",
+        "moduleName": "CodeEditorLanguageSupport",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "ExpressibleByExtendedGraphemeClusterLiteral",
+            "printedName": "ExpressibleByExtendedGraphemeClusterLiteral",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "ExtendedGraphemeClusterLiteralType",
+                "printedName": "ExtendedGraphemeClusterLiteralType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s43ExpressibleByExtendedGraphemeClusterLiteralP",
+            "mangledName": "$ss43ExpressibleByExtendedGraphemeClusterLiteralP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "ExpressibleByStringLiteral",
+            "printedName": "ExpressibleByStringLiteral",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "StringLiteralType",
+                "printedName": "StringLiteralType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s26ExpressibleByStringLiteralP",
+            "mangledName": "$ss26ExpressibleByStringLiteralP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "ExpressibleByUnicodeScalarLiteral",
+            "printedName": "ExpressibleByUnicodeScalarLiteral",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "UnicodeScalarLiteralType",
+                "printedName": "UnicodeScalarLiteralType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:s33ExpressibleByUnicodeScalarLiteralP",
+            "mangledName": "$ss33ExpressibleByUnicodeScalarLiteralP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "RawRepresentable",
+            "printedName": "RawRepresentable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "RawValue",
+                "printedName": "RawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:SY",
+            "mangledName": "$sSY"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
         "name": "HighlightProvidingError",
         "printedName": "HighlightProvidingError",
         "children": [
@@ -11268,6 +11714,158 @@
           },
           {
             "kind": "Var",
+            "name": "malformedQuery",
+            "printedName": "malformedQuery",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguagePackError.Type) -> (CodeEditorLanguageSupport.LanguageID, Swift.String, Swift.String?, Swift.String) -> CodeEditorLanguageSupport.LanguagePackError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.LanguageID, Swift.String, Swift.String?, Swift.String) -> CodeEditorLanguageSupport.LanguagePackError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguagePackError",
+                        "printedName": "CodeEditorLanguageSupport.LanguagePackError",
+                        "usr": "s:25CodeEditorLanguageSupport0C9PackErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(language: CodeEditorLanguageSupport.LanguageID, query: Swift.String, path: Swift.String?, detail: Swift.String)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "LanguageID",
+                            "printedName": "CodeEditorLanguageSupport.LanguageID",
+                            "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Swift.String?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "String",
+                                "printedName": "Swift.String",
+                                "usr": "s:SS"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguagePackError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguagePackError",
+                        "printedName": "CodeEditorLanguageSupport.LanguagePackError",
+                        "usr": "s:25CodeEditorLanguageSupport0C9PackErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C9PackErrorO14malformedQueryyAcA0C2IDV_S2SSgSStcACmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C9PackErrorO14malformedQueryyAcA0C2IDV_S2SSgSStcACmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
+            "name": "unreadableQuery",
+            "printedName": "unreadableQuery",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguagePackError.Type) -> (CodeEditorLanguageSupport.LanguageID, Swift.String, Swift.String) -> CodeEditorLanguageSupport.LanguagePackError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.LanguageID, Swift.String, Swift.String) -> CodeEditorLanguageSupport.LanguagePackError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguagePackError",
+                        "printedName": "CodeEditorLanguageSupport.LanguagePackError",
+                        "usr": "s:25CodeEditorLanguageSupport0C9PackErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(language: CodeEditorLanguageSupport.LanguageID, query: Swift.String, path: Swift.String)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "LanguageID",
+                            "printedName": "CodeEditorLanguageSupport.LanguageID",
+                            "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguagePackError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguagePackError",
+                        "printedName": "CodeEditorLanguageSupport.LanguagePackError",
+                        "usr": "s:25CodeEditorLanguageSupport0C9PackErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C9PackErrorO15unreadableQueryyAcA0C2IDV_S2StcACmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C9PackErrorO15unreadableQueryyAcA0C2IDV_S2StcACmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
             "name": "description",
             "printedName": "description",
             "children": [
@@ -11505,6 +12103,1655 @@
         "mangledName": "$s25CodeEditorLanguageSupport0C16PackRegistrationO",
         "moduleName": "CodeEditorLanguageSupport",
         "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LanguageRegistrationTokenID",
+        "printedName": "LanguageRegistrationTokenID",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "rawValue",
+            "printedName": "rawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UUID",
+                "printedName": "Foundation.UUID",
+                "usr": "s:10Foundation4UUIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV8rawValue10Foundation4UUIDVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV8rawValue10Foundation4UUIDVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UUID",
+                    "printedName": "Foundation.UUID",
+                    "usr": "s:10Foundation4UUIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV8rawValue10Foundation4UUIDVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV8rawValue10Foundation4UUIDVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(rawValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UUID",
+                "printedName": "Foundation.UUID",
+                "hasDefaultArg": true,
+                "usr": "s:10Foundation4UUIDV"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV8rawValueAC10Foundation4UUIDV_tcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV8rawValueAC10Foundation4UUIDV_tcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV6encode2toys7Encoder_p_tKF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV9hashValueSivp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV9hashValueSivp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV9hashValueSivg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV9hashValueSivg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV",
+        "mangledName": "$s25CodeEditorLanguageSupport0C19RegistrationTokenIDV",
+        "moduleName": "CodeEditorLanguageSupport",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LanguageRegistrationRecord",
+        "printedName": "LanguageRegistrationRecord",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "languageID",
+            "printedName": "languageID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10languageIDAA0cH0Vvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10languageIDAA0cH0Vvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageID",
+                    "printedName": "CodeEditorLanguageSupport.LanguageID",
+                    "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10languageIDAA0cH0Vvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10languageIDAA0cH0Vvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "owner",
+            "printedName": "owner",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV5ownerAA17ContributionOwnerVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV5ownerAA17ContributionOwnerVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "ContributionOwner",
+                    "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                    "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV5ownerAA17ContributionOwnerVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV5ownerAA17ContributionOwnerVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "generation",
+            "printedName": "generation",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10generations6UInt64Vvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10generations6UInt64Vvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10generations6UInt64Vvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10generations6UInt64Vvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "priority",
+            "printedName": "priority",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV8prioritySivp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV8prioritySivp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV8prioritySivg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV8prioritySivg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "definition",
+            "printedName": "definition",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageDefinition",
+                "printedName": "CodeEditorLanguageSupport.LanguageDefinition",
+                "usr": "s:25CodeEditorLanguageSupport0C10DefinitionV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10definitionAA0C10DefinitionVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10definitionAA0C10DefinitionVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageDefinition",
+                    "printedName": "CodeEditorLanguageSupport.LanguageDefinition",
+                    "usr": "s:25CodeEditorLanguageSupport0C10DefinitionV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10definitionAA0C10DefinitionVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10definitionAA0C10DefinitionVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "tokenID",
+            "printedName": "tokenID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV7tokenIDAA0ce5TokenH0Vvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV7tokenIDAA0ce5TokenH0Vvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationTokenID",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                    "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV7tokenIDAA0ce5TokenH0Vvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV7tokenIDAA0ce5TokenH0Vvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(languageID:owner:generation:priority:definition:tokenID:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationRecord",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageDefinition",
+                "printedName": "CodeEditorLanguageSupport.LanguageDefinition",
+                "usr": "s:25CodeEditorLanguageSupport0C10DefinitionV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10languageID5owner10generation8priority10definition05tokenH0AcA0cH0V_AA17ContributionOwnerVs6UInt64VSiAA0C10DefinitionVAA0ce5TokenH0Vtcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10languageID5owner10generation8priority10definition05tokenH0AcA0cH0V_AA17ContributionOwnerVs6UInt64VSiAA0C10DefinitionVAA0ce5TokenH0Vtcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "descriptor",
+            "printedName": "descriptor",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageDefinition",
+                "printedName": "CodeEditorLanguageSupport.LanguageDefinition",
+                "usr": "s:25CodeEditorLanguageSupport0C10DefinitionV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10descriptorAA0C10DefinitionVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10descriptorAA0C10DefinitionVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageDefinition",
+                    "printedName": "CodeEditorLanguageSupport.LanguageDefinition",
+                    "usr": "s:25CodeEditorLanguageSupport0C10DefinitionV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV10descriptorAA0C10DefinitionVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV10descriptorAA0C10DefinitionVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_struct_equals",
+            "printedName": "__derived_struct_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationRecord",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationRecord",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV23__derived_struct_equalsySbAC_ACtFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV23__derived_struct_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV9hashValueSivp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV9hashValueSivp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV9hashValueSivg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV9hashValueSivg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV",
+        "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationRecordV",
+        "moduleName": "CodeEditorLanguageSupport",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LanguageRegistrationToken",
+        "printedName": "LanguageRegistrationToken",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "id",
+            "printedName": "id",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC2idAA0ceF2IDVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC2idAA0ceF2IDVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationTokenID",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                    "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC2idAA0ceF2IDVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC2idAA0ceF2IDVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isDisposed",
+            "printedName": "isDisposed",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC10isDisposedSbvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC10isDisposedSbvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC10isDisposedSbvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC10isDisposedSbvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(id:onDispose:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationToken",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationToken",
+                "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "() -> Swift.Void",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "Void",
+                    "printedName": "Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC2id9onDisposeAcA0ceF2IDV_yyYbctcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC2id9onDisposeAcA0ceF2IDV_yyYbctcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "dispose",
+            "printedName": "dispose()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC7disposeyyF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC7disposeyyF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC",
+        "mangledName": "$s25CodeEditorLanguageSupport0C17RegistrationTokenC",
+        "moduleName": "CodeEditorLanguageSupport",
+        "declAttributes": [
+          "Final"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LanguageRegistrationPolicy",
+        "printedName": "LanguageRegistrationPolicy",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "retainByPriority",
+            "printedName": "retainByPriority",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguageRegistrationPolicy.Type) -> CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationPolicy",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationPolicy",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                        "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO16retainByPriorityyA2CmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO16retainByPriorityyA2CmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
+            "name": "rejectUnlessHigherPriority",
+            "printedName": "rejectUnlessHigherPriority",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguageRegistrationPolicy.Type) -> CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationPolicy",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationPolicy",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                        "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO26rejectUnlessHigherPriorityyA2CmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO26rejectUnlessHigherPriorityyA2CmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationPolicy",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationPolicy",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO9hashValueSivp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO9hashValueSivp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO9hashValueSivg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO9hashValueSivg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO",
+        "mangledName": "$s25CodeEditorLanguageSupport0C18RegistrationPolicyO",
+        "moduleName": "CodeEditorLanguageSupport",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LanguageOwnedRegistrationResult",
+        "printedName": "LanguageOwnedRegistrationResult",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "didBecomeEffective",
+            "printedName": "didBecomeEffective",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffectiveSbvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffectiveSbvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffectiveSbvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffectiveSbvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffectiveSbvs",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffectiveSbvs",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "record",
+            "printedName": "record",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationRecord",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV6recordAA0cF6RecordVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV6recordAA0cF6RecordVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV6recordAA0cF6RecordVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV6recordAA0cF6RecordVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV6recordAA0cF6RecordVvs",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV6recordAA0cF6RecordVvs",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "token",
+            "printedName": "token",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationToken",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationToken",
+                "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV5tokenAA0cF5TokenCvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV5tokenAA0cF5TokenCvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationToken",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationToken",
+                    "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV5tokenAA0cF5TokenCvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV5tokenAA0cF5TokenCvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationToken",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationToken",
+                    "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV5tokenAA0cF5TokenCvs",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV5tokenAA0cF5TokenCvs",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "diagnostics",
+            "printedName": "diagnostics",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationDiagnostic]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationDiagnostic",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                    "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV11diagnosticsSayAA0cF10DiagnosticOGvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV11diagnosticsSayAA0cF10DiagnosticOGvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationDiagnostic]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV11diagnosticsSayAA0cF10DiagnosticOGvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV11diagnosticsSayAA0cF10DiagnosticOGvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationDiagnostic]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV11diagnosticsSayAA0cF10DiagnosticOGvs",
+                "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV11diagnosticsSayAA0cF10DiagnosticOGvs",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(didBecomeEffective:record:token:diagnostics:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageOwnedRegistrationResult",
+                "printedName": "CodeEditorLanguageSupport.LanguageOwnedRegistrationResult",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationRecord",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationToken",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationToken",
+                "usr": "s:25CodeEditorLanguageSupport0C17RegistrationTokenC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationDiagnostic]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationDiagnostic",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                    "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffective6record5token11diagnosticsACSb_AA0cF6RecordVAA0cF5TokenCSayAA0cF10DiagnosticOGtcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV18didBecomeEffective6record5token11diagnosticsACSb_AA0cF6RecordVAA0cF5TokenCSayAA0cF10DiagnosticOGtcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV",
+        "mangledName": "$s25CodeEditorLanguageSupport0C23OwnedRegistrationResultV",
+        "moduleName": "CodeEditorLanguageSupport",
         "conformances": [
           {
             "kind": "Conformance",
@@ -11902,9 +14149,105 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "effectiveRecords",
+            "printedName": "effectiveRecords",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationRecord]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C16RegistrySnapshotV16effectiveRecordsSayAA0C18RegistrationRecordVGvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C16RegistrySnapshotV16effectiveRecordsSayAA0C18RegistrationRecordVGvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationRecord]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationRecord",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                        "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C16RegistrySnapshotV16effectiveRecordsSayAA0C18RegistrationRecordVGvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C16RegistrySnapshotV16effectiveRecordsSayAA0C18RegistrationRecordVGvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationRecord]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationRecord",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                        "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C16RegistrySnapshotV16effectiveRecordsSayAA0C18RegistrationRecordVGvs",
+                "mangledName": "$s25CodeEditorLanguageSupport0C16RegistrySnapshotV16effectiveRecordsSayAA0C18RegistrationRecordVGvs",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(definitions:languageIDsWithParsers:languageIDsWithQueries:generation:)",
+            "printedName": "init(definitions:languageIDsWithParsers:languageIDsWithQueries:generation:effectiveRecords:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -11959,11 +14302,26 @@
                 "name": "UInt64",
                 "printedName": "Swift.UInt64",
                 "usr": "s:s6UInt64V"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationRecord]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sa"
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:25CodeEditorLanguageSupport0C16RegistrySnapshotV11definitions22languageIDsWithParsers0hiJ7Queries10generationACSayAA0C10DefinitionVG_ShyAA0C2IDVGAMs6UInt64Vtcfc",
-            "mangledName": "$s25CodeEditorLanguageSupport0C16RegistrySnapshotV11definitions22languageIDsWithParsers0hiJ7Queries10generationACSayAA0C10DefinitionVG_ShyAA0C2IDVGAMs6UInt64Vtcfc",
+            "usr": "s:25CodeEditorLanguageSupport0C16RegistrySnapshotV11definitions22languageIDsWithParsers0hiJ7Queries10generation16effectiveRecordsACSayAA0C10DefinitionVG_ShyAA0C2IDVGANs6UInt64VSayAA0C18RegistrationRecordVGtcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport0C16RegistrySnapshotV11definitions22languageIDsWithParsers0hiJ7Queries10generation16effectiveRecordsACSayAA0C10DefinitionVG_ShyAA0C2IDVGANs6UInt64VSayAA0C18RegistrationRecordVGtcfc",
             "moduleName": "CodeEditorLanguageSupport",
             "init_kind": "Designated"
           },
@@ -12407,6 +14765,221 @@
             "declKind": "EnumElement",
             "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO22missingHighlightsQueryyAcA0C2IDVcACmF",
             "mangledName": "$s25CodeEditorLanguageSupport0C22RegistrationDiagnosticO22missingHighlightsQueryyAcA0C2IDVcACmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
+            "name": "ownershipMismatch",
+            "printedName": "ownershipMismatch",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguageRegistrationDiagnostic.Type) -> (CodeEditorLanguageSupport.LanguageID, CodeEditorLanguageSupport.LanguageRegistrationTokenID, CodeEditorLanguageSupport.LanguageRegistrationTokenID?) -> CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.LanguageID, CodeEditorLanguageSupport.LanguageRegistrationTokenID, CodeEditorLanguageSupport.LanguageRegistrationTokenID?) -> CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(CodeEditorLanguageSupport.LanguageID, expected: CodeEditorLanguageSupport.LanguageRegistrationTokenID, actual: CodeEditorLanguageSupport.LanguageRegistrationTokenID?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "LanguageID",
+                            "printedName": "CodeEditorLanguageSupport.LanguageID",
+                            "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "LanguageRegistrationTokenID",
+                            "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                            "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "LanguageRegistrationTokenID",
+                                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO17ownershipMismatchyAcA0C2IDV_AA0ce5TokenI0VAHSgtcACmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C22RegistrationDiagnosticO17ownershipMismatchyAcA0C2IDV_AA0ce5TokenI0VAHSgtcACmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
+            "name": "lowerPriorityIgnored",
+            "printedName": "lowerPriorityIgnored",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguageRegistrationDiagnostic.Type) -> (CodeEditorLanguageSupport.LanguageID, CodeEditorLanguageSupport.ContributionOwner, CodeEditorLanguageSupport.ContributionOwner) -> CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.LanguageID, CodeEditorLanguageSupport.ContributionOwner, CodeEditorLanguageSupport.ContributionOwner) -> CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(CodeEditorLanguageSupport.LanguageID, existingOwner: CodeEditorLanguageSupport.ContributionOwner, incomingOwner: CodeEditorLanguageSupport.ContributionOwner)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "LanguageID",
+                            "printedName": "CodeEditorLanguageSupport.LanguageID",
+                            "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ContributionOwner",
+                            "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ContributionOwner",
+                            "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO20lowerPriorityIgnoredyAcA0C2IDV_AA17ContributionOwnerVAHtcACmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C22RegistrationDiagnosticO20lowerPriorityIgnoredyAcA0C2IDV_AA17ContributionOwnerVAHtcACmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
+            "name": "replacedByHigherPriority",
+            "printedName": "replacedByHigherPriority",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.LanguageRegistrationDiagnostic.Type) -> (CodeEditorLanguageSupport.LanguageID, CodeEditorLanguageSupport.ContributionOwner, CodeEditorLanguageSupport.ContributionOwner) -> CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorLanguageSupport.LanguageID, CodeEditorLanguageSupport.ContributionOwner, CodeEditorLanguageSupport.ContributionOwner) -> CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(CodeEditorLanguageSupport.LanguageID, previousOwner: CodeEditorLanguageSupport.ContributionOwner, newOwner: CodeEditorLanguageSupport.ContributionOwner)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "LanguageID",
+                            "printedName": "CodeEditorLanguageSupport.LanguageID",
+                            "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ContributionOwner",
+                            "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ContributionOwner",
+                            "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                            "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "LanguageRegistrationDiagnostic",
+                        "printedName": "CodeEditorLanguageSupport.LanguageRegistrationDiagnostic",
+                        "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport0C22RegistrationDiagnosticO24replacedByHigherPriorityyAcA0C2IDV_AA17ContributionOwnerVAHtcACmF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C22RegistrationDiagnosticO24replacedByHigherPriorityyAcA0C2IDV_AA17ContributionOwnerVAHtcACmF",
             "moduleName": "CodeEditorLanguageSupport"
           },
           {
@@ -13073,6 +15646,325 @@
           {
             "kind": "Function",
             "name": "register",
+            "printedName": "register(_:owner:priority:policy:parserFactory:queryProvider:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageOwnedRegistrationResult",
+                "printedName": "CodeEditorLanguageSupport.LanguageOwnedRegistrationResult",
+                "usr": "s:25CodeEditorLanguageSupport0C23OwnedRegistrationResultV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageDefinition",
+                "printedName": "CodeEditorLanguageSupport.LanguageDefinition",
+                "usr": "s:25CodeEditorLanguageSupport0C10DefinitionV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "hasDefaultArg": true,
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationPolicy",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationPolicy",
+                "hasDefaultArg": true,
+                "usr": "s:25CodeEditorLanguageSupport0C18RegistrationPolicyO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry.ParserFactory?",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "ParserFactory",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistry.ParserFactory",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "() -> Swift.OpaquePointer?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Swift.OpaquePointer?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "OpaquePointer",
+                                "printedName": "Swift.OpaquePointer",
+                                "usr": "s:s13OpaquePointerV"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistry.QueryURLProvider?",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "QueryURLProvider",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistry.QueryURLProvider",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(Swift.String) -> Foundation.URL?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Foundation.URL?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "URL",
+                                "printedName": "Foundation.URL",
+                                "usr": "s:10Foundation3URLV"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC8register_5owner8priority6policy13parserFactory13queryProviderAA0C23OwnedRegistrationResultVAA0C10DefinitionV_AA17ContributionOwnerVSiAA0cO6PolicyOs13OpaquePointerVSgyYbcSg10Foundation3URLVSgSSYbcSgtF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC8register_5owner8priority6policy13parserFactory13queryProviderAA0C23OwnedRegistrationResultVAA0C10DefinitionV_AA17ContributionOwnerVSiAA0cO6PolicyOs13OpaquePointerVSgyYbcSg10Foundation3URLVSgSSYbcSgtF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final",
+              "DiscardableResult"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "unregister",
+            "printedName": "unregister(tokenID:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC10unregister7tokenIDyAA0c17RegistrationTokenH0V_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC10unregister7tokenIDyAA0c17RegistrationTokenH0V_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "unregister",
+            "printedName": "unregister(owner:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ContributionOwner",
+                "printedName": "CodeEditorLanguageSupport.ContributionOwner",
+                "usr": "s:25CodeEditorLanguageSupport17ContributionOwnerV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC10unregister5owneryAA17ContributionOwnerV_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC10unregister5owneryAA17ContributionOwnerV_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "record",
+            "printedName": "record(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageRegistrationTokenID",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationTokenID",
+                "usr": "s:25CodeEditorLanguageSupport0C19RegistrationTokenIDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC6record3forAA0C18RegistrationRecordVSgAA0cH7TokenIDV_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC6record3forAA0C18RegistrationRecordVSgAA0cH7TokenIDV_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "effectiveRecord",
+            "printedName": "effectiveRecord(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC15effectiveRecord3forAA0c12RegistrationG0VSgAA0C2IDV_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC15effectiveRecord3forAA0c12RegistrationG0VSgAA0C2IDV_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "allRecords",
+            "printedName": "allRecords(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationRecord]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC10allRecords3forSayAA0C18RegistrationRecordVGAA0C2IDV_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC10allRecords3forSayAA0C18RegistrationRecordVGAA0C2IDV_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "allEffectiveRecords",
+            "printedName": "allEffectiveRecords()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[CodeEditorLanguageSupport.LanguageRegistrationRecord]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageRegistrationRecord",
+                    "printedName": "CodeEditorLanguageSupport.LanguageRegistrationRecord",
+                    "usr": "s:25CodeEditorLanguageSupport0C18RegistrationRecordV"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC19allEffectiveRecordsSayAA0C18RegistrationRecordVGyF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC19allEffectiveRecordsSayAA0C18RegistrationRecordVGyF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "register",
             "printedName": "register(_:)",
             "children": [
               {
@@ -13210,6 +16102,49 @@
             "funcSelfKind": "NonMutating"
           },
           {
+            "kind": "Var",
+            "name": "currentGeneration",
+            "printedName": "currentGeneration",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt64",
+                "printedName": "Swift.UInt64",
+                "usr": "s:s6UInt64V"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC17currentGenerations6UInt64Vvp",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC17currentGenerations6UInt64Vvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UInt64",
+                    "printedName": "Swift.UInt64",
+                    "usr": "s:s6UInt64V"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport0C8RegistryC17currentGenerations6UInt64Vvg",
+                "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC17currentGenerations6UInt64Vvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Function",
             "name": "registerParser",
             "printedName": "registerParser(for:factory:)",
@@ -13323,6 +16258,41 @@
             "declKind": "Func",
             "usr": "s:25CodeEditorLanguageSupport0C8RegistryC6parser3fors13OpaquePointerVSgAA0C2IDV_tF",
             "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC6parser3fors13OpaquePointerVSgAA0C2IDV_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "languageRef",
+            "printedName": "languageRef(for:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageRef?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TSLanguageRef",
+                    "printedName": "CodeEditorLanguageSupport.TSLanguageRef",
+                    "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport0C8RegistryC11languageRef3forAA010TSLanguageG0VSgAA0C2IDV_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport0C8RegistryC11languageRef3forAA010TSLanguageG0VSgAA0C2IDV_tF",
             "moduleName": "CodeEditorLanguageSupport",
             "declAttributes": [
               "Final"
@@ -14440,6 +17410,550 @@
             ],
             "usr": "s:SY",
             "mangledName": "$sSY"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TSLanguageOwnership",
+        "printedName": "TSLanguageOwnership",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "staticGrammarSymbol",
+            "printedName": "staticGrammarSymbol",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.TSLanguageOwnership.Type) -> CodeEditorLanguageSupport.TSLanguageOwnership",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TSLanguageOwnership",
+                    "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                    "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TSLanguageOwnership",
+                        "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                        "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO19staticGrammarSymbolyA2CmF",
+            "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO19staticGrammarSymbolyA2CmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Var",
+            "name": "retainedExternal",
+            "printedName": "retainedExternal",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorLanguageSupport.TSLanguageOwnership.Type) -> CodeEditorLanguageSupport.TSLanguageOwnership",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TSLanguageOwnership",
+                    "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                    "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "TSLanguageOwnership",
+                        "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                        "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO16retainedExternalyA2CmF",
+            "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO16retainedExternalyA2CmF",
+            "moduleName": "CodeEditorLanguageSupport"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageOwnership",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageOwnership",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO9hashValueSivp",
+            "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO9hashValueSivp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO9hashValueSivg",
+                "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO9hashValueSivg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO",
+        "mangledName": "$s25CodeEditorLanguageSupport19TSLanguageOwnershipO",
+        "moduleName": "CodeEditorLanguageSupport",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "TSLanguageRef",
+        "printedName": "TSLanguageRef",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "languageID",
+            "printedName": "languageID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV10languageIDAA0cH0Vvp",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV10languageIDAA0cH0Vvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "LanguageID",
+                    "printedName": "CodeEditorLanguageSupport.LanguageID",
+                    "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV10languageIDAA0cH0Vvg",
+                "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV10languageIDAA0cH0Vvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "ownership",
+            "printedName": "ownership",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageOwnership",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV9ownershipAA0E9OwnershipOvp",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV9ownershipAA0E9OwnershipOvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "declAttributes": [
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "TSLanguageOwnership",
+                    "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                    "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV9ownershipAA0E9OwnershipOvg",
+                "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV9ownershipAA0E9OwnershipOvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "pointer",
+            "printedName": "pointer",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "OpaquePointer",
+                "printedName": "Swift.OpaquePointer",
+                "usr": "s:s13OpaquePointerV"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV7pointers13OpaquePointerVvp",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV7pointers13OpaquePointerVvp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "OpaquePointer",
+                    "printedName": "Swift.OpaquePointer",
+                    "usr": "s:s13OpaquePointerV"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV7pointers13OpaquePointerVvg",
+                "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV7pointers13OpaquePointerVvg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(languageID:pointer:ownership:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageRef",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageRef",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LanguageID",
+                "printedName": "CodeEditorLanguageSupport.LanguageID",
+                "usr": "s:25CodeEditorLanguageSupport0C2IDV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "OpaquePointer",
+                "printedName": "Swift.OpaquePointer",
+                "usr": "s:s13OpaquePointerV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageOwnership",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageOwnership",
+                "usr": "s:25CodeEditorLanguageSupport19TSLanguageOwnershipO"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV10languageID7pointer9ownershipAcA0cH0V_s13OpaquePointerVAA0E9OwnershipOtcfc",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV10languageID7pointer9ownershipAcA0cH0V_s13OpaquePointerVAA0E9OwnershipOtcfc",
+            "moduleName": "CodeEditorLanguageSupport",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "==",
+            "printedName": "==(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageRef",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageRef",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "TSLanguageRef",
+                "printedName": "CodeEditorLanguageSupport.TSLanguageRef",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV2eeoiySbAC_ACtFZ",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV2eeoiySbAC_ACtFZ",
+            "moduleName": "CodeEditorLanguageSupport",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV4hash4intoys6HasherVz_tF",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorLanguageSupport",
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV9hashValueSivp",
+            "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV9hashValueSivp",
+            "moduleName": "CodeEditorLanguageSupport",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV9hashValueSivg",
+                "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV9hashValueSivg",
+                "moduleName": "CodeEditorLanguageSupport",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:25CodeEditorLanguageSupport13TSLanguageRefV",
+        "mangledName": "$s25CodeEditorLanguageSupport13TSLanguageRefV",
+        "moduleName": "CodeEditorLanguageSupport",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
           },
           {
             "kind": "Conformance",
@@ -16358,6 +19872,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -16429,6 +19945,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

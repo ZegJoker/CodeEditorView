@@ -1,26 +1,33 @@
-actor LanguageDocumentActor
+actor ParseSession
 actor TreeSitterLanguageRuntime
 class TreeSitterHighlightProvider | isolation=@MainActor
 enum EngineError | sendable=1
 enum Error | sendable=1
 enum QuerySetDiagnostic | sendable=1
+enum QuerySetError | sendable=1
 enum QuerySetLoader | sendable=1
 enum TreeSitterConfigurationFactory | sendable=1
 enum TreeSitterEdit
 enum TreeSitterLanguageEnvironment | sendable=1
 func applyEdit( range: NSRange, delta: Int, newText: String )
 func applyEdit(range: NSRange, delta: Int)
+func applyEditReturningGeneration( range: NSRange, delta: Int, newText: String )
 func codeLanguage(id: String)
 func combinedHighlightsSource( language: CodeLanguage, registry: LanguageRegistry , limits: TreeSitterQueryLimits )
-func configure(_ config: LanguageConfiguration)
+func compile( languageID: LanguageID, kind: QueryKind, source: String, language: Language, path: String? )
+func configure(_ config: LanguageConfiguration, languageRef: TSLanguageRef? )
 func currentGeneration()
 func identifierRange(atUTF16Offset location: Int)
+func identifierRangeAsync(atUTF16Offset location: Int)
 func indexSet(from tsRanges: [TSRange], documentLength: Int)
 func install(_ provider: any TreeSitterConfigurationProviding)
+func isCurrent(documentVersion ver: UInt64, languageGeneration langGen: UInt64)
 func isCurrent(generation gen: UInt64)
 func languageConfiguration(for languageID: String)
+func languageRef(registry: LanguageRegistry )
+func loadAndCompile( languageID: LanguageID, kinds: Set<QueryKind>, language: Language, registry: LanguageRegistry , limits: TreeSitterQueryLimits , required: Set<QueryKind> )
 func loadAsync(language: CodeLanguage)
-func loadSources( languageID: LanguageID, kinds: Set<QueryKind>, registry: LanguageRegistry , limits: TreeSitterQueryLimits )
+func loadSources( languageID: LanguageID, kinds: Set<QueryKind>, registry: LanguageRegistry , limits: TreeSitterQueryLimits , required: Set<QueryKind> )
 func make( range: NSRange, delta: Int, oldSource: String, newSource: String )
 func make(for language: CodeLanguage)
 func point(atUTF16Offset offset: Int, in string: NSString)
@@ -29,33 +36,52 @@ func queryHighlights(in range: NSRange, text: String)
 func reset()
 func resolveProvider() -> (any TreeSitterConfigurationProviding)
 func resolveProviderAsync() async -> (any TreeSitterConfigurationProviding)
+func retainedLanguageID()
+func retainedLanguageRef()
 func setBootstrap(_ bootstrap: (@Sendable () -> Void)?) | sendable=1
 func setDocumentText(_ text: String)
 func setText(_ text: String) | attr=discardableResult
 func setUp(documentLength: Int, languageID: String?)
+func snapshot()
+func tsLanguage(registry: LanguageRegistry )
 func willApplyEdit(range: NSRange)
+init ( documentVersion: UInt64, languageGeneration: UInt64, highlights: [HighlightRange], sourceLengthUTF16: Int )
+init ( documentVersion: UInt64, languageGeneration: UInt64, sourceUTF16Length: Int, hasTree: Bool )
 init ( languageID: LanguageID, sourceRevision: String? , parserContentHash: String? )
 init ( maxCombinedQueryBytes: Int , maxInjectionDepth: Int , maxHighlightCaptures: Int )
 init ()
 init (language: CodeLanguage)
 init (languageID: String)
+init (registry: LanguageRegistry )
 protocol TreeSitterConfigurationProviding | sendable=1
 struct GrammarIdentity | sendable=1
-struct HighlightPublication | sendable=1
+struct HighlightSnapshot | sendable=1
+struct ParseSnapshot | sendable=1
 struct RegistryTreeSitterConfigurationProvider
 struct TreeSitterQueryLimits | sendable=1
+typealias HighlightPublication
+typealias LanguageDocumentActor
+var asLanguagePackError
 var configurationProvider
 var currentGeneration
+var description
+var documentVersion
 var generation
 var hasProvider
+var hasTree
 var highlights
+var languageGeneration
 var languageID
+var lastPublishedGeneration
 var maxCombinedQueryBytes
 var maxHighlightCaptures
 var maxInjectionDepth
 var onDemandBootstrap | sendable=1
+var parseSession
 var parserContentHash
+var registry
 var shared
 var sourceLengthUTF16
 var sourceRevision
+var sourceUTF16Length
 var tsLanguage

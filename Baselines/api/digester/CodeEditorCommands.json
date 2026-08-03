@@ -3427,6 +3427,106 @@
             "moduleName": "CodeEditorCommands"
           },
           {
+            "kind": "Var",
+            "name": "requiresAsyncExecution",
+            "printedName": "requiresAsyncExecution",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandError.Type) -> (Swift.String) -> CodeEditorCommands.CommandError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> CodeEditorCommands.CommandError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandError",
+                        "printedName": "CodeEditorCommands.CommandError",
+                        "usr": "s:18CodeEditorCommands12CommandErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandError",
+                        "printedName": "CodeEditorCommands.CommandError",
+                        "usr": "s:18CodeEditorCommands12CommandErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands12CommandErrorO22requiresAsyncExecutionyACSScACmF",
+            "mangledName": "$s18CodeEditorCommands12CommandErrorO22requiresAsyncExecutionyACSScACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "chordFocusScopeChanged",
+            "printedName": "chordFocusScopeChanged",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandError.Type) -> (Swift.String) -> CodeEditorCommands.CommandError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> CodeEditorCommands.CommandError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandError",
+                        "printedName": "CodeEditorCommands.CommandError",
+                        "usr": "s:18CodeEditorCommands12CommandErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandError",
+                        "printedName": "CodeEditorCommands.CommandError",
+                        "usr": "s:18CodeEditorCommands12CommandErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands12CommandErrorO22chordFocusScopeChangedyACSScACmF",
+            "mangledName": "$s18CodeEditorCommands12CommandErrorO22chordFocusScopeChangedyACSScACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
             "kind": "Function",
             "name": "__derived_enum_equals",
             "printedName": "__derived_enum_equals(_:_:)",
@@ -3876,6 +3976,203 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "onCommandFailure",
+            "printedName": "onCommandFailure",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "((CodeEditorCommands.CommandID, any Swift.Error) -> Swift.Void)?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorCommands.CommandID, any Swift.Error) -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(CodeEditorCommands.CommandID, any Swift.Error)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "CommandID",
+                            "printedName": "CodeEditorCommands.CommandID",
+                            "usr": "s:18CodeEditorCommands9CommandIDV"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Error",
+                            "printedName": "any Swift.Error",
+                            "usr": "s:s5ErrorP"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands17CommandDispatcherC02onD7FailureyAA0D2IDV_s5Error_ptcSgvp",
+            "mangledName": "$s18CodeEditorCommands17CommandDispatcherC02onD7FailureyAA0D2IDV_s5Error_ptcSgvp",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((CodeEditorCommands.CommandID, any Swift.Error) -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(CodeEditorCommands.CommandID, any Swift.Error) -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Tuple",
+                            "printedName": "(CodeEditorCommands.CommandID, any Swift.Error)",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "CommandID",
+                                "printedName": "CodeEditorCommands.CommandID",
+                                "usr": "s:18CodeEditorCommands9CommandIDV"
+                              },
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Error",
+                                "printedName": "any Swift.Error",
+                                "usr": "s:s5ErrorP"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands17CommandDispatcherC02onD7FailureyAA0D2IDV_s5Error_ptcSgvg",
+                "mangledName": "$s18CodeEditorCommands17CommandDispatcherC02onD7FailureyAA0D2IDV_s5Error_ptcSgvg",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((CodeEditorCommands.CommandID, any Swift.Error) -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(CodeEditorCommands.CommandID, any Swift.Error) -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Tuple",
+                            "printedName": "(CodeEditorCommands.CommandID, any Swift.Error)",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "CommandID",
+                                "printedName": "CodeEditorCommands.CommandID",
+                                "usr": "s:18CodeEditorCommands9CommandIDV"
+                              },
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Error",
+                                "printedName": "any Swift.Error",
+                                "usr": "s:s5ErrorP"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands17CommandDispatcherC02onD7FailureyAA0D2IDV_s5Error_ptcSgvs",
+                "mangledName": "$s18CodeEditorCommands17CommandDispatcherC02onD7FailureyAA0D2IDV_s5Error_ptcSgvs",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init(commands:keybindings:)",
@@ -4276,6 +4573,120 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "maxLength",
+            "printedName": "maxLength",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands9CommandIDV9maxLengthSivpZ",
+            "mangledName": "$s18CodeEditorCommands9CommandIDV9maxLengthSivpZ",
+            "moduleName": "CodeEditorCommands",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands9CommandIDV9maxLengthSivgZ",
+                "mangledName": "$s18CodeEditorCommands9CommandIDV9maxLengthSivgZ",
+                "moduleName": "CodeEditorCommands",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "reservedHostNamespacePrefixes",
+            "printedName": "reservedHostNamespacePrefixes",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands9CommandIDV29reservedHostNamespacePrefixesSaySSGvpZ",
+            "mangledName": "$s18CodeEditorCommands9CommandIDV29reservedHostNamespacePrefixesSaySSGvpZ",
+            "moduleName": "CodeEditorCommands",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands9CommandIDV29reservedHostNamespacePrefixesSaySSGvgZ",
+                "mangledName": "$s18CodeEditorCommands9CommandIDV29reservedHostNamespacePrefixesSaySSGvgZ",
+                "moduleName": "CodeEditorCommands",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init(rawValue:)",
@@ -4377,6 +4788,31 @@
             "declKind": "Func",
             "usr": "s:18CodeEditorCommands9CommandIDV7isValidySbSSFZ",
             "mangledName": "$s18CodeEditorCommands9CommandIDV7isValidySbSSFZ",
+            "moduleName": "CodeEditorCommands",
+            "static": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "isReservedHostNamespace",
+            "printedName": "isReservedHostNamespace(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands9CommandIDV23isReservedHostNamespaceySbSSFZ",
+            "mangledName": "$s18CodeEditorCommands9CommandIDV23isReservedHostNamespaceySbSSFZ",
             "moduleName": "CodeEditorCommands",
             "static": true,
             "funcSelfKind": "NonMutating"
@@ -4711,6 +5147,56 @@
             "moduleName": "CodeEditorCommands"
           },
           {
+            "kind": "Var",
+            "name": "ownershipMismatch",
+            "printedName": "ownershipMismatch",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandIdentityError.Type) -> (Swift.String) -> CodeEditorCommands.CommandIdentityError",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(Swift.String) -> CodeEditorCommands.CommandIdentityError",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandIdentityError",
+                        "printedName": "CodeEditorCommands.CommandIdentityError",
+                        "usr": "s:18CodeEditorCommands20CommandIdentityErrorO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandIdentityError.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandIdentityError",
+                        "printedName": "CodeEditorCommands.CommandIdentityError",
+                        "usr": "s:18CodeEditorCommands20CommandIdentityErrorO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands20CommandIdentityErrorO17ownershipMismatchyACSScACmF",
+            "mangledName": "$s18CodeEditorCommands20CommandIdentityErrorO17ownershipMismatchyACSScACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
             "kind": "Function",
             "name": "__derived_enum_equals",
             "printedName": "__derived_enum_equals(_:_:)",
@@ -4773,6 +5259,495 @@
             "printedName": "Error",
             "usr": "s:s5ErrorP",
             "mangledName": "$ss5ErrorP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "CommandRegistrationPolicy",
+        "printedName": "CommandRegistrationPolicy",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "rejectDuplicate",
+            "printedName": "rejectDuplicate",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandRegistrationPolicy.Type) -> CodeEditorCommands.CommandRegistrationPolicy",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CommandRegistrationPolicy",
+                    "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
+                    "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandRegistrationPolicy.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationPolicy",
+                        "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
+                        "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO15rejectDuplicateyA2CmF",
+            "mangledName": "$s18CodeEditorCommands25CommandRegistrationPolicyO15rejectDuplicateyA2CmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "replaceOwnedRegistration",
+            "printedName": "replaceOwnedRegistration",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandRegistrationPolicy.Type) -> (CodeEditorCommands.CommandRegistrationToken.ID) -> CodeEditorCommands.CommandRegistrationPolicy",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorCommands.CommandRegistrationToken.ID) -> CodeEditorCommands.CommandRegistrationPolicy",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationPolicy",
+                        "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
+                        "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(expectedToken: CodeEditorCommands.CommandRegistrationToken.ID)",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "ID",
+                            "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "UUID",
+                                "printedName": "Foundation.UUID",
+                                "usr": "s:10Foundation4UUIDV"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandRegistrationPolicy.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationPolicy",
+                        "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
+                        "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO012replaceOwnedE0yAC10Foundation4UUIDV_tcACmF",
+            "mangledName": "$s18CodeEditorCommands25CommandRegistrationPolicyO012replaceOwnedE0yAC10Foundation4UUIDV_tcACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandRegistrationPolicy",
+                "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
+                "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandRegistrationPolicy",
+                "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
+                "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s18CodeEditorCommands25CommandRegistrationPolicyO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorCommands",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO",
+        "mangledName": "$s18CodeEditorCommands25CommandRegistrationPolicyO",
+        "moduleName": "CodeEditorCommands",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "CommandRegistrationDiagnostic",
+        "printedName": "CommandRegistrationDiagnostic",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "replacedOwnedRegistration",
+            "printedName": "replacedOwnedRegistration",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandRegistrationDiagnostic.Type) -> (CodeEditorCommands.CommandID, CodeEditorCommands.CommandRegistrationToken.ID) -> CodeEditorCommands.CommandRegistrationDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorCommands.CommandID, CodeEditorCommands.CommandRegistrationToken.ID) -> CodeEditorCommands.CommandRegistrationDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(commandID: CodeEditorCommands.CommandID, previousToken: CodeEditorCommands.CommandRegistrationToken.ID)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "CommandID",
+                            "printedName": "CodeEditorCommands.CommandID",
+                            "usr": "s:18CodeEditorCommands9CommandIDV"
+                          },
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "ID",
+                            "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "UUID",
+                                "printedName": "Foundation.UUID",
+                                "usr": "s:10Foundation4UUIDV"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO013replacedOwnedE0yAcA0D2IDV_10Foundation4UUIDVtcACmF",
+            "mangledName": "$s18CodeEditorCommands29CommandRegistrationDiagnosticO013replacedOwnedE0yAcA0D2IDV_10Foundation4UUIDVtcACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "rejectedDuplicate",
+            "printedName": "rejectedDuplicate",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandRegistrationDiagnostic.Type) -> (CodeEditorCommands.CommandID) -> CodeEditorCommands.CommandRegistrationDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorCommands.CommandID) -> CodeEditorCommands.CommandRegistrationDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(commandID: CodeEditorCommands.CommandID)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "CommandID",
+                            "printedName": "CodeEditorCommands.CommandID",
+                            "usr": "s:18CodeEditorCommands9CommandIDV"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO17rejectedDuplicateyAcA0D2IDV_tcACmF",
+            "mangledName": "$s18CodeEditorCommands29CommandRegistrationDiagnosticO17rejectedDuplicateyAcA0D2IDV_tcACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "ownershipMismatch",
+            "printedName": "ownershipMismatch",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandRegistrationDiagnostic.Type) -> (CodeEditorCommands.CommandID, CodeEditorCommands.CommandRegistrationToken.ID, CodeEditorCommands.CommandRegistrationToken.ID?) -> CodeEditorCommands.CommandRegistrationDiagnostic",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorCommands.CommandID, CodeEditorCommands.CommandRegistrationToken.ID, CodeEditorCommands.CommandRegistrationToken.ID?) -> CodeEditorCommands.CommandRegistrationDiagnostic",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(commandID: CodeEditorCommands.CommandID, expected: CodeEditorCommands.CommandRegistrationToken.ID, actual: CodeEditorCommands.CommandRegistrationToken.ID?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "CommandID",
+                            "printedName": "CodeEditorCommands.CommandID",
+                            "usr": "s:18CodeEditorCommands9CommandIDV"
+                          },
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "ID",
+                            "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "UUID",
+                                "printedName": "Foundation.UUID",
+                                "usr": "s:10Foundation4UUIDV"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "CodeEditorCommands.CommandRegistrationToken.ID?",
+                            "children": [
+                              {
+                                "kind": "TypeNameAlias",
+                                "name": "ID",
+                                "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                                "children": [
+                                  {
+                                    "kind": "TypeNominal",
+                                    "name": "UUID",
+                                    "printedName": "Foundation.UUID",
+                                    "usr": "s:10Foundation4UUIDV"
+                                  }
+                                ]
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO17ownershipMismatchyAcA0D2IDV_10Foundation4UUIDVAISgtcACmF",
+            "mangledName": "$s18CodeEditorCommands29CommandRegistrationDiagnosticO17ownershipMismatchyAcA0D2IDV_10Foundation4UUIDVAISgtcACmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandRegistrationDiagnostic",
+                "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandRegistrationDiagnostic",
+                "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s18CodeEditorCommands29CommandRegistrationDiagnosticO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorCommands",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO",
+        "mangledName": "$s18CodeEditorCommands29CommandRegistrationDiagnosticO",
+        "moduleName": "CodeEditorCommands",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
           },
           {
             "kind": "Conformance",
@@ -6125,8 +7100,8 @@
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:18CodeEditorCommands17RegistrationTokenC9onDisposeACyyc_tcfc",
-            "mangledName": "$s18CodeEditorCommands17RegistrationTokenC9onDisposeACyyc_tcfc",
+            "usr": "s:18CodeEditorCommands17RegistrationTokenC9onDisposeACyyYbScMYcc_tcfc",
+            "mangledName": "$s18CodeEditorCommands17RegistrationTokenC9onDisposeACyyYbScMYcc_tcfc",
             "moduleName": "CodeEditorCommands",
             "init_kind": "Designated"
           },
@@ -6179,6 +7154,269 @@
             "printedName": "Escapable",
             "usr": "s:s9EscapableP",
             "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "CommandRegistrationToken",
+        "printedName": "CommandRegistrationToken",
+        "children": [
+          {
+            "kind": "TypeAlias",
+            "name": "ID",
+            "printedName": "ID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UUID",
+                "printedName": "Foundation.UUID",
+                "usr": "s:10Foundation4UUIDV"
+              }
+            ],
+            "declKind": "TypeAlias",
+            "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC2IDa",
+            "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC2IDa",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "id",
+            "printedName": "id",
+            "children": [
+              {
+                "kind": "TypeNameAlias",
+                "name": "ID",
+                "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UUID",
+                    "printedName": "Foundation.UUID",
+                    "usr": "s:10Foundation4UUIDV"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC2id10Foundation4UUIDVvp",
+            "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC2id10Foundation4UUIDVvp",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "Final",
+              "HasStorage"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "ID",
+                    "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "UUID",
+                        "printedName": "Foundation.UUID",
+                        "usr": "s:10Foundation4UUIDV"
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC2id10Foundation4UUIDVvg",
+                "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC2id10Foundation4UUIDVvg",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isDisposed",
+            "printedName": "isDisposed",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC10isDisposedSbvp",
+            "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC10isDisposedSbvp",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "Final"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC10isDisposedSbvg",
+                "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC10isDisposedSbvg",
+                "moduleName": "CodeEditorCommands",
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(id:onDispose:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "CommandRegistrationToken",
+                "printedName": "CodeEditorCommands.CommandRegistrationToken",
+                "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC"
+              },
+              {
+                "kind": "TypeNameAlias",
+                "name": "ID",
+                "printedName": "CodeEditorCommands.CommandRegistrationToken.ID",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UUID",
+                    "printedName": "Foundation.UUID",
+                    "usr": "s:10Foundation4UUIDV"
+                  }
+                ],
+                "hasDefaultArg": true
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "() -> Swift.Void",
+                "children": [
+                  {
+                    "kind": "TypeNameAlias",
+                    "name": "Void",
+                    "printedName": "Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC2id9onDisposeAC10Foundation4UUIDV_yyYbScMYcctcfc",
+            "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC2id9onDisposeAC10Foundation4UUIDV_yyYbScMYcctcfc",
+            "moduleName": "CodeEditorCommands",
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "dispose",
+            "printedName": "dispose()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC7disposeyyF",
+            "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC7disposeyyF",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "Final"
+            ],
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC",
+        "mangledName": "$s18CodeEditorCommands24CommandRegistrationTokenC",
+        "moduleName": "CodeEditorCommands",
+        "declAttributes": [
+          "Final"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "CommandDisposable",
+            "printedName": "CommandDisposable",
+            "usr": "s:18CodeEditorCommands17CommandDisposableP",
+            "mangledName": "$s18CodeEditorCommands17CommandDisposableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
           }
         ]
       },
@@ -6381,6 +7619,164 @@
         "printedName": "CommandRegistry",
         "children": [
           {
+            "kind": "Var",
+            "name": "onRegistrationDiagnostic",
+            "printedName": "onRegistrationDiagnostic",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "((CodeEditorCommands.CommandRegistrationDiagnostic) -> Swift.Void)?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(CodeEditorCommands.CommandRegistrationDiagnostic) -> Swift.Void",
+                    "children": [
+                      {
+                        "kind": "TypeNameAlias",
+                        "name": "Void",
+                        "printedName": "Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandRegistrationDiagnostic",
+                        "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                        "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands15CommandRegistryC24onRegistrationDiagnosticyAA0dgH0OcSgvp",
+            "mangledName": "$s18CodeEditorCommands15CommandRegistryC24onRegistrationDiagnosticyAA0dgH0OcSgvp",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "Custom"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((CodeEditorCommands.CommandRegistrationDiagnostic) -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(CodeEditorCommands.CommandRegistrationDiagnostic) -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "CommandRegistrationDiagnostic",
+                            "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                            "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands15CommandRegistryC24onRegistrationDiagnosticyAA0dgH0OcSgvg",
+                "mangledName": "$s18CodeEditorCommands15CommandRegistryC24onRegistrationDiagnosticyAA0dgH0OcSgvg",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((CodeEditorCommands.CommandRegistrationDiagnostic) -> Swift.Void)?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(CodeEditorCommands.CommandRegistrationDiagnostic) -> Swift.Void",
+                        "children": [
+                          {
+                            "kind": "TypeNameAlias",
+                            "name": "Void",
+                            "printedName": "Swift.Void",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Void",
+                                "printedName": "()"
+                              }
+                            ]
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "CommandRegistrationDiagnostic",
+                            "printedName": "CodeEditorCommands.CommandRegistrationDiagnostic",
+                            "usr": "s:18CodeEditorCommands29CommandRegistrationDiagnosticO"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands15CommandRegistryC24onRegistrationDiagnosticyAA0dgH0OcSgvs",
+                "mangledName": "$s18CodeEditorCommands15CommandRegistryC24onRegistrationDiagnosticyAA0dgH0OcSgvs",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "Transparent"
+                ],
+                "accessorKind": "set"
+              }
+            ]
+          },
+          {
             "kind": "Constructor",
             "name": "init",
             "printedName": "init()",
@@ -6404,13 +7800,13 @@
           {
             "kind": "Function",
             "name": "register",
-            "printedName": "register(_:replaceExisting:)",
+            "printedName": "register(_:policy:)",
             "children": [
               {
                 "kind": "TypeNominal",
-                "name": "CommandDisposable",
-                "printedName": "any CodeEditorCommands.CommandDisposable",
-                "usr": "s:18CodeEditorCommands17CommandDisposableP"
+                "name": "CommandRegistrationToken",
+                "printedName": "CodeEditorCommands.CommandRegistrationToken",
+                "usr": "s:18CodeEditorCommands24CommandRegistrationTokenC"
               },
               {
                 "kind": "TypeNominal",
@@ -6420,15 +7816,15 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "Bool",
-                "printedName": "Swift.Bool",
+                "name": "CommandRegistrationPolicy",
+                "printedName": "CodeEditorCommands.CommandRegistrationPolicy",
                 "hasDefaultArg": true,
-                "usr": "s:Sb"
+                "usr": "s:18CodeEditorCommands25CommandRegistrationPolicyO"
               }
             ],
             "declKind": "Func",
-            "usr": "s:18CodeEditorCommands15CommandRegistryC8register_15replaceExistingAA0D10Disposable_pAA0bD0V_SbtKF",
-            "mangledName": "$s18CodeEditorCommands15CommandRegistryC8register_15replaceExistingAA0D10Disposable_pAA0bD0V_SbtKF",
+            "usr": "s:18CodeEditorCommands15CommandRegistryC8register_6policyAA0D17RegistrationTokenCAA0bD0V_AA0dH6PolicyOtKF",
+            "mangledName": "$s18CodeEditorCommands15CommandRegistryC8register_6policyAA0D17RegistrationTokenCAA0bD0V_AA0dH6PolicyOtKF",
             "moduleName": "CodeEditorCommands",
             "declAttributes": [
               "Final",
@@ -6436,35 +7832,6 @@
               "Custom"
             ],
             "throwing": true,
-            "funcSelfKind": "NonMutating"
-          },
-          {
-            "kind": "Function",
-            "name": "register",
-            "printedName": "register(_:)",
-            "children": [
-              {
-                "kind": "TypeNominal",
-                "name": "CommandDisposable",
-                "printedName": "any CodeEditorCommands.CommandDisposable",
-                "usr": "s:18CodeEditorCommands17CommandDisposableP"
-              },
-              {
-                "kind": "TypeNominal",
-                "name": "EditorCommand",
-                "printedName": "CodeEditorCommands.EditorCommand",
-                "usr": "s:18CodeEditorCommands0B7CommandV"
-              }
-            ],
-            "declKind": "Func",
-            "usr": "s:18CodeEditorCommands15CommandRegistryC8registeryAA0D10Disposable_pAA0bD0VF",
-            "mangledName": "$s18CodeEditorCommands15CommandRegistryC8registeryAA0D10Disposable_pAA0bD0VF",
-            "moduleName": "CodeEditorCommands",
-            "declAttributes": [
-              "Final",
-              "DiscardableResult",
-              "Custom"
-            ],
             "funcSelfKind": "NonMutating"
           },
           {
@@ -10567,6 +11934,412 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "CommandExecutionClass",
+        "printedName": "CommandExecutionClass",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "immediateUI",
+            "printedName": "immediateUI",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandExecutionClass.Type) -> CodeEditorCommands.CommandExecutionClass",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CommandExecutionClass",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass",
+                    "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandExecutionClass",
+                        "printedName": "CodeEditorCommands.CommandExecutionClass",
+                        "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO11immediateUIyA2CmF",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO11immediateUIyA2CmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "asynchronous",
+            "printedName": "asynchronous",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandExecutionClass.Type) -> CodeEditorCommands.CommandExecutionClass",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CommandExecutionClass",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass",
+                    "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandExecutionClass",
+                        "printedName": "CodeEditorCommands.CommandExecutionClass",
+                        "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO12asynchronousyA2CmF",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO12asynchronousyA2CmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "transactionalWorkspace",
+            "printedName": "transactionalWorkspace",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandExecutionClass.Type) -> CodeEditorCommands.CommandExecutionClass",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CommandExecutionClass",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass",
+                    "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandExecutionClass",
+                        "printedName": "CodeEditorCommands.CommandExecutionClass",
+                        "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO22transactionalWorkspaceyA2CmF",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO22transactionalWorkspaceyA2CmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "longRunningCancellable",
+            "printedName": "longRunningCancellable",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(CodeEditorCommands.CommandExecutionClass.Type) -> CodeEditorCommands.CommandExecutionClass",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CommandExecutionClass",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass",
+                    "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "CommandExecutionClass",
+                        "printedName": "CodeEditorCommands.CommandExecutionClass",
+                        "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO22longRunningCancellableyA2CmF",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO22longRunningCancellableyA2CmF",
+            "moduleName": "CodeEditorCommands"
+          },
+          {
+            "kind": "Var",
+            "name": "allowsSynchronousMainActorExecution",
+            "printedName": "allowsSynchronousMainActorExecution",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO026allowsSynchronousMainActorE0Sbvp",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO026allowsSynchronousMainActorE0Sbvp",
+            "moduleName": "CodeEditorCommands",
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO026allowsSynchronousMainActorE0Sbvg",
+                "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO026allowsSynchronousMainActorE0Sbvg",
+                "moduleName": "CodeEditorCommands",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "__derived_enum_equals",
+            "printedName": "__derived_enum_equals(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO21__derived_enum_equalsySbAC_ACtFZ",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO21__derived_enum_equalsySbAC_ACtFZ",
+            "moduleName": "CodeEditorCommands",
+            "static": true,
+            "implicit": true,
+            "declAttributes": [
+              "Implements",
+              "Semantics"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "any Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO6encode2toys7Encoder_p_tKF",
+            "moduleName": "CodeEditorCommands",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "hash",
+            "printedName": "hash(into:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Hasher",
+                "printedName": "Swift.Hasher",
+                "paramValueOwnership": "InOut",
+                "usr": "s:s6HasherV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO4hash4intoys6HasherVz_tF",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO4hash4intoys6HasherVz_tF",
+            "moduleName": "CodeEditorCommands",
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "hashValue",
+            "printedName": "hashValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO9hashValueSivp",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO9hashValueSivp",
+            "moduleName": "CodeEditorCommands",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO9hashValueSivg",
+                "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO9hashValueSivg",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "any Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:18CodeEditorCommands21CommandExecutionClassO4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO4fromACs7Decoder_p_tKcfc",
+            "moduleName": "CodeEditorCommands",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:18CodeEditorCommands21CommandExecutionClassO",
+        "mangledName": "$s18CodeEditorCommands21CommandExecutionClassO",
+        "moduleName": "CodeEditorCommands",
+        "isEnumExhaustive": true,
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
         "name": "CommandContext",
         "printedName": "CommandContext",
         "children": [
@@ -11284,6 +13057,46 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "focusScopeID",
+            "printedName": "focusScopeID",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands14CommandContextV12focusScopeIDSSvp",
+            "mangledName": "$s18CodeEditorCommands14CommandContextV12focusScopeIDSSvp",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "Custom"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands14CommandContextV12focusScopeIDSSvg",
+                "mangledName": "$s18CodeEditorCommands14CommandContextV12focusScopeIDSSvg",
+                "moduleName": "CodeEditorCommands",
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Function",
             "name": "make",
             "printedName": "make(from:services:dependencies:)",
@@ -11734,6 +13547,53 @@
           },
           {
             "kind": "Var",
+            "name": "executionClass",
+            "printedName": "executionClass",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:18CodeEditorCommands0B7CommandV14executionClassAA0d9ExecutionF0Ovp",
+            "mangledName": "$s18CodeEditorCommands0B7CommandV14executionClassAA0d9ExecutionF0Ovp",
+            "moduleName": "CodeEditorCommands",
+            "declAttributes": [
+              "HasStorage",
+              "Custom"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "CommandExecutionClass",
+                    "printedName": "CodeEditorCommands.CommandExecutionClass",
+                    "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:18CodeEditorCommands0B7CommandV14executionClassAA0d9ExecutionF0Ovg",
+                "mangledName": "$s18CodeEditorCommands0B7CommandV14executionClassAA0d9ExecutionF0Ovg",
+                "moduleName": "CodeEditorCommands",
+                "implicit": true,
+                "declAttributes": [
+                  "Transparent"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
             "name": "handler",
             "printedName": "handler",
             "children": [
@@ -11909,7 +13769,7 @@
           {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(id:title:category:defaultKeybindings:enablement:placement:handler:)",
+            "printedName": "init(id:title:category:defaultKeybindings:enablement:placement:executionClass:handler:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -11972,6 +13832,13 @@
                 "printedName": "CodeEditorCommands.CommandPlacement",
                 "hasDefaultArg": true,
                 "usr": "s:18CodeEditorCommands16CommandPlacementV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "hasDefaultArg": true,
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
               },
               {
                 "kind": "TypeFunc",
@@ -12000,8 +13867,8 @@
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement7handlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVyAA0dP0VKctcfc",
-            "mangledName": "$s18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement7handlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVyAA0dP0VKctcfc",
+            "usr": "s:18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement14executionClass7handlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0d9ExecutionM0OyAA0dR0VKctcfc",
+            "mangledName": "$s18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement14executionClass7handlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0d9ExecutionM0OyAA0dR0VKctcfc",
             "moduleName": "CodeEditorCommands",
             "declAttributes": [
               "Custom"
@@ -12011,7 +13878,7 @@
           {
             "kind": "Constructor",
             "name": "init",
-            "printedName": "init(id:title:category:defaultKeybindings:enablement:placement:asyncHandler:)",
+            "printedName": "init(id:title:category:defaultKeybindings:enablement:placement:executionClass:asyncHandler:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -12074,6 +13941,13 @@
                 "printedName": "CodeEditorCommands.CommandPlacement",
                 "hasDefaultArg": true,
                 "usr": "s:18CodeEditorCommands16CommandPlacementV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "hasDefaultArg": true,
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
               },
               {
                 "kind": "TypeFunc",
@@ -12096,8 +13970,8 @@
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement12asyncHandlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0D6ResultOAA0dQ0VYaKctcfc",
-            "mangledName": "$s18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement12asyncHandlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0D6ResultOAA0dQ0VYaKctcfc",
+            "usr": "s:18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement14executionClass12asyncHandlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0d9ExecutionM0OAA0D6ResultOAA0dS0VYaKctcfc",
+            "mangledName": "$s18CodeEditorCommands0B7CommandV2id5title8category18defaultKeybindings10enablement9placement14executionClass12asyncHandlerAcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0d9ExecutionM0OAA0D6ResultOAA0dS0VYaKctcfc",
             "moduleName": "CodeEditorCommands",
             "declAttributes": [
               "Custom"
@@ -12107,7 +13981,7 @@
           {
             "kind": "Function",
             "name": "action",
-            "printedName": "action(id:title:category:defaultKeybindings:enablement:placement:action:)",
+            "printedName": "action(id:title:category:defaultKeybindings:enablement:placement:executionClass:action:)",
             "children": [
               {
                 "kind": "TypeNominal",
@@ -12173,14 +14047,21 @@
               },
               {
                 "kind": "TypeNominal",
+                "name": "CommandExecutionClass",
+                "printedName": "CodeEditorCommands.CommandExecutionClass",
+                "hasDefaultArg": true,
+                "usr": "s:18CodeEditorCommands21CommandExecutionClassO"
+              },
+              {
+                "kind": "TypeNominal",
                 "name": "EditorCommandAction",
                 "printedName": "CodeEditorCommands.EditorCommandAction",
                 "usr": "s:18CodeEditorCommands0B13CommandActionO"
               }
             ],
             "declKind": "Func",
-            "usr": "s:18CodeEditorCommands0B7CommandV6action2id5title8category18defaultKeybindings10enablement9placementAdcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0bD6ActionOtFZ",
-            "mangledName": "$s18CodeEditorCommands0B7CommandV6action2id5title8category18defaultKeybindings10enablement9placementAdcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0bD6ActionOtFZ",
+            "usr": "s:18CodeEditorCommands0B7CommandV6action2id5title8category18defaultKeybindings10enablement9placement14executionClassAdcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0d9ExecutionN0OAA0bD6ActionOtFZ",
+            "mangledName": "$s18CodeEditorCommands0B7CommandV6action2id5title8category18defaultKeybindings10enablement9placement14executionClassAdcA0D2IDV_SSAA0D8CategoryVSgSayAA10KeybindingVGAA17ContextExpressionOAA0D9PlacementVAA0d9ExecutionN0OAA0bD6ActionOtFZ",
             "moduleName": "CodeEditorCommands",
             "static": true,
             "declAttributes": [
@@ -16435,6 +18316,8 @@
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyShim.build",
       "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CGhosttyTestSpool.build",
+      "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CLICommands.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CNIOAtomics.build",
@@ -16506,6 +18389,8 @@
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorViewPackageTests.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngine.build\/include",
+      "-I",
+      "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineTestSupport.build\/include",
       "-I",
       "\/Users\/stanx\/dev\/projects\/CodeEditorView\/.build\/arm64-apple-macosx\/debug\/CodeEditorWasmEngineWasmKit.build\/include",
       "-I",

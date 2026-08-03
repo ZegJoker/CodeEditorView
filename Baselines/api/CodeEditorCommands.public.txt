@@ -1,21 +1,25 @@
 class CommandDependencies | isolation=@MainActor
 class CommandDispatcher | isolation=@MainActor
 class CommandPaletteModel | isolation=@MainActor
+class CommandRegistrationToken | sendable=1
 class CommandRegistry | isolation=@MainActor
 class CommandServiceLocator | isolation=@MainActor
 class KeybindingRegistry | isolation=@MainActor
 class RegistrationBag | isolation=@MainActor
-class RegistrationToken
+class RegistrationToken | sendable=1
 enum BuiltInCommandID
 enum CommandError | sendable=1
+enum CommandExecutionClass | sendable=1
 enum CommandIdentityError | sendable=1
+enum CommandRegistrationDiagnostic | sendable=1
+enum CommandRegistrationPolicy | sendable=1
 enum CommandResult | sendable=1
 enum ContextExpression | sendable=1
 enum ContextExpressionEvaluator
 enum EditorCommandAction | sendable=1
 enum KeybindingSource | sendable=1
 enum WhenClauseParser
-func action( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , action: EditorCommandAction )
+func action( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , executionClass: CommandExecutionClass , action: EditorCommandAction )
 func allBindings() -> [(commandID: CommandID, keybinding: Keybinding, source: KeybindingSource)
 func allCommands()
 func applyOverrides(_ overrides: [KeybindingOverride]) | attr=discardableResult
@@ -35,12 +39,12 @@ func from(error: CommandError)
 func handleKeyPress(_ press: KeyPress, context: CommandContext) | attr=discardableResult
 func hasLongerPrefix(presses: [KeyPress], input: ContextEvaluationInput)
 func hasPrefix(presses: [KeyPress], input: ContextEvaluationInput)
+func isReservedHostNamespace(_ raw: String)
 func isValid(_ raw: String)
 func make( from editor: any EditorCommandClient, services: CommandServiceLocator )
 func make( from editor: any EditorCommandClient, snapshot: CommandContextSnapshot, services: CommandServiceLocator )
 func parse(_ source: String)
-func register(_ command: EditorCommand) | attr=discardableResult
-func register(_ command: EditorCommand, replaceExisting: Bool ) | attr=discardableResult
+func register( _ command: EditorCommand, policy: CommandRegistrationPolicy ) | attr=discardableResult
 func resetChordBuffer()
 func resolve(presses: [KeyPress], input: ContextEvaluationInput)
 func resolvePendingChordTimeout()
@@ -52,18 +56,19 @@ init ( activePart: String , documentURI: DocumentURI? , documentID: DocumentID? 
 init ( commandID: CommandID, keybinding: Keybinding, source: KeybindingSource , priority: Int )
 init ( commands: CommandRegistry )
 init ( documentID: DocumentID?, sessionID: EditorSessionID?, documentSnapshot: DocumentSnapshot?, selections: [CodeEditorCore.TextRange], languageID: String?, isEditable: Bool, isFocused: Bool, services: CommandServiceLocator )
-init ( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , asyncHandler: @escaping (CommandContext)
-init ( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , handler: @escaping (CommandContext)
+init ( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , executionClass: CommandExecutionClass , asyncHandler: @escaping (CommandContext)
+init ( id: CommandID, title: String, category: CommandCategory? , defaultKeybindings: [Keybinding] , enablement: ContextExpression , placement: CommandPlacement , executionClass: CommandExecutionClass , handler: @escaping (CommandContext)
 init ( isEditable: Bool , isFocused: Bool , hasSelection: Bool , hasDocument: Bool , languageID: String? , flags: [String: Bool] )
 init ( menuPath: [String]? , toolbarGroup: String? , paletteHidden: Bool )
 init ()
 init (chord: [KeyPress], when: ContextExpression )
 init (documentRegistry: DocumentRegistry? )
 init (expression: ContextExpression, diagnostics: [WhenClauseDiagnostic] )
+init (id: ID ), onDispose: @escaping @MainActor () -> Void) | isolation=@MainActor
 init (key: String, modifiers: KeyModifier )
 init (key: String, modifiers: KeyModifier , when: ContextExpression )
 init (message: String, offset: Int, length: Int )
-init (onDispose: @escaping () -> Void)
+init (onDispose: @escaping @MainActor () -> Void) | isolation=@MainActor
 init (query: String )
 init (rawValue: Int)
 init (rawValue: String)
@@ -85,7 +90,9 @@ struct KeybindingConflict | sendable=1
 struct KeybindingOverride | sendable=1
 struct WhenClauseDiagnostic | sendable=1
 struct WhenClauseParseResult | sendable=1
+typealias ID
 var activePart
+var allowsSynchronousMainActorExecution
 var asyncHandler
 var cancel
 var category
@@ -117,6 +124,7 @@ var editor
 var empty
 var enablement
 var evaluationInput
+var executionClass
 var expression
 var find
 var findNext
@@ -126,6 +134,7 @@ var findReplaceAll
 var findShow
 var findShowReplace
 var flags
+var focusScopeID
 var foldAll
 var foldToggle
 var general
@@ -151,6 +160,7 @@ var keybinding
 var keybindings
 var languageID
 var length
+var maxLength
 var menuPath
 var message
 var modifiers
@@ -159,6 +169,8 @@ var moveLinesUp
 var navigate
 var offset
 var onChordStateChange
+var onCommandFailure
+var onRegistrationDiagnostic
 var onUndoGroup
 var option
 var outdent
@@ -168,6 +180,7 @@ var priority
 var query
 var rawValue
 var redo
+var reservedHostNamespacePrefixes
 var selectAll
 var selections
 var services

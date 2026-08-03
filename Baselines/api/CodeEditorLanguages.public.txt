@@ -1,5 +1,6 @@
 enum CodeEditorLanguages | sendable=1
 enum LanguageLoadError | sendable=1
+func bootstrap( into registry: LanguageRegistry, installEnvironment: Bool ) | attr=discardableResult
 func bootstrap() | attr=discardableResult
 func installOnDemandBootstrapHook()
 func resetBootstrapForTesting()

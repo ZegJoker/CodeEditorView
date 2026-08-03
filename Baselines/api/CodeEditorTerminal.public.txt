@@ -1,45 +1,81 @@
 actor LocalPTYTransport
 actor MockByteTransport
-actor MockTerminalBackend
-actor ProcessTerminalBackend
+actor MockTerminalBackend | availability=*, deprecated, message: "Legacy dual architecture (TER-N03
+actor ProcessTerminalBackend | availability=*, deprecated, message: "Legacy dual architecture (TER-N03
 actor RemoteTerminalBackend
+actor TerminalOutboundWriteQueue
 actor TerminalService
-actor TerminalSessionManager
-class PTYTerminalBackend | sendable=1
-class TerminalScreen | sendable=1
-class VTParser | sendable=1
+actor TerminalSessionManager | availability=*, deprecated, message: "Legacy dual architecture (TER-N03
+class PTYTerminalBackend | sendable=1 availability=*, deprecated, message: "Legacy dual architecture (TER-N03
+class TerminalScreen | sendable=1 availability=*, deprecated, message: "Legacy custom VT path (TER-N03
+class VTParser | sendable=1 availability=*, deprecated, message: "Legacy custom VT path (TER-N03
 enum ClipboardPolicy | sendable=1
+enum FileTransferPolicy | sendable=1
+enum NotificationPolicy | sendable=1
+enum Profile | sendable=1
 enum RemoteTerminalEvent | sendable=1
 enum State | sendable=1
+enum TerminalCallerRole | sendable=1
+enum TerminalDimension
 enum TerminalError | sendable=1
 enum TerminalOutputEvent | sendable=1
 enum TerminalPaste
+enum TerminalProcessExitReason | sendable=1
 enum TerminalSessionKind | sendable=1
 enum TerminalTerminationReason | sendable=1
+enum TerminalTransportClass | sendable=1
 enum TerminalTransportEvent | sendable=1
 enum UnicodeWidth
-enum VTAction | sendable=1
+enum VTAction | sendable=1 availability=*, deprecated, message: "Legacy custom VT path (TER-N03
 func accessibilityText(includeScrollback: Bool )
 func activeSessionID()
 func allSessions()
+func allowsDesktopNotifications()
+func allowsFileTransfer()
+func allowsHyperlinks()
 func allowsOSC52Write()
 func allowsShellIntegrationInjection()
 func attach(backend: any TerminalBackend)
+func authorizeCreate( transport: TerminalTransportClass, caller: TerminalCallerRole )
+func authorizeDesktopNotification()
+func authorizeFileTransfer()
+func authorizeHyperlinkOpen()
+func authorizeOSC52Write()
+func authorizeRead(caller: TerminalCallerRole)
+func authorizeResize(caller: TerminalCallerRole)
+func authorizeShellIntegrationInjection()
+func authorizeTerminate(caller: TerminalCallerRole)
+func authorizeWrite(caller: TerminalCallerRole)
+func awaitExitReason()
+func bytesReceived(for id: TerminalSessionID)
+func callerRole(for id: TerminalSessionID)
 func cell(row: Int, col: Int)
+func clampCells(_ value: Int)
+func clampPixels(_ value: Int)
+func clear()
+func close( _ id: TerminalSessionID, reason: TerminalTerminationReason , asCaller: TerminalCallerRole )
 func close(_ id: TerminalSessionID)
-func close(_ id: TerminalSessionID, reason: TerminalTerminationReason )
 func closeAll(reason: TerminalTerminationReason )
 func configureOverflow(_ message: String?)
 func create( metadata: TerminalMetadata , configuration: TerminalConfiguration ) | attr=discardableResult
 func create( title: String , configuration: TerminalConfiguration )
 func detectedURLs()
+func dirtyLineIndices(for id: TerminalSessionID)
 func displayWidth(_ ch: Character)
 func encode(_ text: String, bracketed: Bool)
+func enqueue(_ bytes: Data)
+func exited(code: Int32)
+func extensionAllows(_ capability: ExtensionCapabilities)
 func feed(_ data: Data)
 func feed(_ text: String)
+func forProfile(_ profile: Profile)
+func makeEventStream( capacity: Int )
 func panelDescriptor(for id: TerminalSessionID)
 func push(_ data: Data)
 func push(_ string: String)
+func queuedWriteBytes()
+func readScrollbackPage( session id: TerminalSessionID, offset: UInt64, maxBytes: Int )
+func requireExtensionCapability(_ capability: ExtensionCapabilities)
 func reset()
 func resize(cols newCols: Int, rows newRows: Int)
 func resize(cols: Int, rows: Int, session id: TerminalSessionID)
@@ -52,15 +88,23 @@ func setActive(_ id: TerminalSessionID?)
 func snapshot(for id: TerminalSessionID)
 func start(_ request: TerminalLaunchRequest)
 func start(configuration: TerminalConfiguration)
+func subscribe( session id: TerminalSessionID )
+func take(maxChunk: Int )
+func takeAll()
 func terminate(_ reason: TerminalTerminationReason)
 func terminate(session: TerminalSessionID)
+func transportClass(for id: TerminalSessionID)
 func updateSnapshot(_ text: String, for id: TerminalSessionID)
+func updateViewport( plainText: String, generation: UInt64, for id: TerminalSessionID )
+func updateViewportLines( lines: [String], dirtyIndices: [Int], generation: UInt64, for id: TerminalSessionID )
+func viewportGeneration(for id: TerminalSessionID)
+func viewportLines(for id: TerminalSessionID)
 func viewportText()
 func write(_ bytes: Data)
 func write(_ data: Data, to id: TerminalSessionID)
 func write(_ data: Data, to session: TerminalSessionID)
 func write(_ text: String, to id: TerminalSessionID)
-init ( allowLocalPTY: Bool , allowShellIntegrationInjection: Bool , osc52Clipboard: ClipboardPolicy , allowHyperlinkOpen: Bool , workspaceTrusted: Bool )
+init ( allowLocalPTY: Bool , allowRemoteTransport: Bool , allowShellIntegrationInjection: Bool , osc52Clipboard: ClipboardPolicy , allowHyperlinkOpen: Bool , allowOSCFileTransfer: Bool , desktopNotifications: NotificationPolicy , fileTransfer: FileTransferPolicy , workspaceTrusted: Bool , extensionCapabilities: ExtensionCapabilities , profile: Profile )
 init ( character: Character, fg: Int? , bg: Int? , bold: Bool , underline: Bool , inverse: Bool )
 init ( configuration: TerminalConfiguration )
 init ( id: TerminalSessionID )
@@ -72,17 +116,21 @@ init ()
 init (cols: Int , rows: Int , maxScrollback: Int )
 init (id: String, title: String, sessionID: TerminalSessionID)
 init (id: TerminalSessionID ))
+init (maxBytes: Int )
 init (maxOSCLength: Int , maxParams: Int )
 init (platformProfile: PlatformCapabilityProfile ))
 init (processId: Int32, masterFD: Int32 )
+init (rawValue: UInt32)
 init (rawValue: UUID ))
 protocol RemoteTerminalTransport | sendable=1
-protocol TerminalBackend | sendable=1
+protocol TerminalBackend | sendable=1 availability=*, deprecated, message: "Legacy dual architecture (TER-N03
 protocol TerminalByteTransport | sendable=1
+struct ExtensionCapabilities | sendable=1
+struct ScrollbackPage | sendable=1
 struct SessionState | sendable=1
-struct TerminalCell | sendable=1
+struct TerminalCell | sendable=1 availability=*, deprecated, message: "Legacy custom VT path (TER-N03
 struct TerminalConfiguration | sendable=1
-struct TerminalHyperlink | sendable=1
+struct TerminalHyperlink | sendable=1 availability=*, deprecated, message: "Legacy custom VT path (TER-N03
 struct TerminalLaunchRequest | sendable=1
 struct TerminalMetadata | sendable=1
 struct TerminalPanelDescriptor | sendable=1
@@ -91,43 +139,69 @@ struct TerminalSecurityPolicy | sendable=1
 struct TerminalSession | sendable=1
 struct TerminalSessionHandle | sendable=1
 struct TerminalSessionID | sendable=1
+var absoluteOffset
+var all
 var allowHyperlinkOpen
 var allowLocalPTY
+var allowOSCFileTransfer
+var allowRemoteTransport
 var allowShellIntegrationInjection
 var applicationCursor
 var arguments
 var autoWrap
+var availableEnd
+var availableStart
 var bg
 var bold
 var bracketedPaste
+var bytesReceived
 var character
 var colEnd
 var colStart
 var cols
 var configuration
+var create
 var cwd
+var data
 var debugSessionID
+var defaultCaller
+var desktopNotifications
+var dirtyLineIndices
 var empty
 var environment
 var events
+var extensionCapabilities
 var failNextWriteWithOverflow
 var fg
+var fileTransfer
 var id
 var inverse
 var isGhosttyLinked | sendable=1
 var isRunning
 var kind
+var lastExitReason
+var leadingTruncated
 var masterFD
+var maxBytes
+var maxCells
 var maxOSCLength
 var maxParams
+var maxRawSpoolBytes
 var maxScrollback
 var metadata
+var minCells
+var none
 var osc52Clipboard
 var output
 var platformProfile
 var processId
+var profile
+var queuedBytes
 var rawValue
+var read
+var registeredPTYLeaseID
 var requireGhosttyLinked
+var resize
 var restricted
 var row
 var rows
@@ -137,8 +211,15 @@ var sessionID
 var shell
 var snapshotUTF8
 var taskID
+var terminate
 var title
+var totalWriteCount
 var trusted
 var underline
 var uri
+var viewportGeneration
+var viewportLines
+var viewportPlainText
 var workspaceTrusted
+var write
+var writeQueueCapacity

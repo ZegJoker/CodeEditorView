@@ -1,6 +1,14 @@
+actor AsyncBroadcastHub | sendable=1
+actor BoundedByteSpool
+actor FramedRPCConnection
+actor ProcessSupervisor
+actor TestDeadlineClock
+class DeadlineScheduler | sendable=1
 class DocumentStore
 class EditorEventStream | isolation=@MainActor
+class InMemoryByteTransport | sendable=1
 class LineIndex
+class OneShotPromise | sendable=1
 class ProcessHandle | sendable=1
 class SelectionEngine | isolation=@MainActor
 class UndoCoordinator | isolation=@MainActor
@@ -11,56 +19,95 @@ enum BracketPairs | sendable=1
 enum CapabilityAvailability | sendable=1
 enum CodeEditorPlatformError | sendable=1
 enum ColumnSelectionBuilder
+enum ContentLengthFraming
+enum DocumentOwnershipCheckResult | sendable=1
+enum DocumentOwnershipModel | sendable=1
 enum DocumentStoreError | sendable=1
 enum EditOrigin | sendable=1
 enum EditorEvent | sendable=1
+enum EventBufferPolicyError | sendable=1
+enum FramedRPCError | sendable=1
 enum HostPlatform | sendable=1
 enum IndentOption | sendable=1
 enum LineEnding | sendable=1
 enum MultiRangeEdit
 enum NavigationDirection | sendable=1
 enum NavigationGranularity | sendable=1
+enum OneShotPromiseError | sendable=1
+enum OverflowBehavior | sendable=1
+enum OverflowPolicy | sendable=1
 enum PlatformCapabilityKind | sendable=1
 enum ProcessLaunchMode | sendable=1
 enum ProcessOutputEvent | sendable=1
+enum ProcessOutputStream | sendable=1
 enum ProcessServiceError | sendable=1
+enum RPCShutdownReason | sendable=1
+enum ReplayPolicy | sendable=1
 enum SelectionMode | sendable=1
 enum ShellQuoting
 enum ShippingProfileID | sendable=1
+enum StreamFinishReason | sendable=1
+enum StreamItem | sendable=1
 enum StructureCommands | sendable=1
+enum SupervisedExitReason | sendable=1
 enum TextFilters | sendable=1
 enum TextOffsetSemantics | sendable=1
 enum WordNavigationMode | sendable=1
 enum WordSelection | sendable=1
 func addSelection(_ range: NSRange, preferredX: CGFloat? )
+func advance(by duration: Swift.Duration)
 func advanced(by delta: UInt64 )
-func apply( _ transaction: EditTransaction, sortHighToLow: Bool , expectedVersion: DocumentVersion? ) | attr=discardableResult
+func advanced(by duration: Swift.Duration)
+func append(_ data: Data)
+func apply( _ transaction: EditTransaction, sortHighToLow: Bool , expectedVersion: DocumentVersion? , restoreContentState: DocumentContentStateID? ) | attr=discardableResult
 func applyMutation(_ mutation: TextMutation)
 func asTransaction(origin: EditOrigin , id: UUID ))
+func assertOwnership()
 func attach(document: DocumentStore, layout: some CaretLayoutQuerying)
 func attributedSubstring(from range: NSRange)
 func autoPair( inserted: String, nextCharacter: Character? )
 func availability(for kind: PlatformCapabilityKind)
+func awaitExit(_ leaseID: UUID)
+func awaitPTYExit(_ id: PTYLeaseID)
+func awaitTermination()
 func beginGrouping()
 func boundary( fromUTF16Offset offset: Int, in document: String, direction: Int, mode: WordNavigationMode )
 func build( from string: String, estimatedLineHeight: CGFloat, makePayload: (Int)
 func buildUsingSplitLines( from string: String, estimatedLineHeight: CGFloat, makePayload: (Int)
+func cancel( _ leaseID: UUID, escalation: EscalationPolicy )
 func cancel()
+func cancel(_ id: DeadlineScheduleID)
+func cancelPTY(_ id: PTYLeaseID)
 func caretAfterReplace(range: NSRange, replacementUTF16Count: Int)
 func clamp(_ range: NSRange, documentLength: Int)
 func clear()
+func close()
+func close(reason: RPCShutdownReason)
 func collapseToPrimary()
+func complete(_ result: Result<Value, any Error>) | attr=discardableResult
+func decodeError(from body: Data) -> (any Error)
+func decodeResponseID(from body: Data)
+func decodeResult(from body: Data)
 func deleteBackwardRange( caret: Int, in document: String, indent: IndentOption )
 func detect(in string: String, sampleLimit: Int )
 func disable()
 func enable()
+func encode(_ body: Data)
 func encodeAvailability(_ a: CapabilityAvailability)
+func encodeNotification(method: Method, params: Params?)
+func encodeRequest(id: Int, method: Method, params: Params?)
 func endGrouping()
+func endOffset(of range: NSRange)
 func enumerateLines(inYRange minY: CGFloat, maxY: CGFloat, body: (LinePosition<Payload>) -> Void)
+func evaluateOwnership()
 func expandTab(indent: IndentOption)
+func fail(_ error: any Error) | attr=discardableResult
+func finish()
+func finish(_ reason: StreamFinishReason)
 func forEach(_ body: (LinePosition<Payload>) -> Void)
 func graphemeBoundaryAfter( utf16Offset: Int, in text: String )
 func graphemeBoundaryBefore( utf16Offset: Int, in text: String )
+func handle(for leaseID: UUID)
 func indentLine(_ line: String, indent: IndentOption)
 func indentLines( selections: [NSRange], document: String, indent: IndentOption )
 func indentPrefix(forNewlineAfter lineText: String, indent: IndentOption)
@@ -69,6 +116,7 @@ func insertionPoint(_ location: Int)
 func isAtLineStart(location: Int, in document: String)
 func isClosing(_ character: Character)
 func isClosingPair(_ ch: Character)
+func isGraphemeBoundary(utf16Offset: Int, in text: String)
 func isOpening(_ character: Character)
 func isOpening(_ character: Character, mate: Character)
 func isValidUTF16Offset(_ offset: Int, documentUTF16Length length: Int)
@@ -83,7 +131,10 @@ func lineContent(range: NSRange, in document: String)
 func lineEndingRangeBefore( location: Int, in document: String )
 func lineRanges( intersecting selections: [NSRange], in document: String )
 func makeEdit(in range: NSRange, replacement: String)
-func makeEventStream( bufferSize: Int )
+func makeEventStream( capacity: Int )
+func makeEventStream( policy: EventBufferPolicy )
+func makeEventStream(bufferSize: Int)
+func makeEventStream(capacity: Int )
 func makeSelectionStream()
 func makeTextStream()
 func match(aroundUTF16Offset offset: Int, in string: String)
@@ -94,17 +145,23 @@ func moveLines( selections: [NSRange], document: String, up: Bool )
 func newlineInsertion( lineTextBeforeCaret: String, nextCharacter: Character?, indent: IndentOption )
 func normalize(_ ranges: [NSRange], documentLength: Int)
 func normalizeLineEndings(_ text: String, to ending: LineEnding)
+func notify(method: Codec.Method, params: Codec.Params?)
 func outdentLine(_ line: String, indent: IndentOption)
 func outdentLines( selections: [NSRange], document: String, indent: IndentOption )
 func pairOpen(for close: Character)
+func publish(_ event: Event)
+func push(_ data: Data) -> (text: String, consumed: Data) | attr=discardableResult
 func quote(_ argument: String)
 func range( atUTF16Offset offset: Int, in document: String, mode: WordNavigationMode )
 func range(atUTF16Offset offset: Int, in document: String)
 func ranges( in rect: CGRect, fragments: [ColumnSelectionFragment], documentLength: Int )
+func read(from absoluteOffset: UInt64, maxBytes byteCount: Int)
+func readAll()
 func rebuild(lines: [(Payload, LineMetrics)])
-func redo(apply: (TextEdit) throws -> Void)
-func redoGroup(apply: ([TextEdit]) throws -> Void)
+func redoGroup(apply: (RegisteredGroup) throws -> Void)
+func register(applied: AppliedEditTransaction)
 func register(edit: TextEdit)
+func registerPTY(_ callbacks: PTYSessionCallbacks) | attr=discardableResult
 func remap(range: NSRange, editLocation: Int, delta: Int)
 func remap(ranges: [NSRange], editLocation: Int, delta: Int)
 func remove(atIndex index: Int)
@@ -112,14 +169,19 @@ func removeAll()
 func replaceAllSelections(with string: String) | attr=discardableResult
 func replaceCharacters(in range: NSRange, with replacement: String) | attr=discardableResult
 func replaceSelection(with string: String)
+func request( method: Codec.Method, params: Codec.Params?, deadline: ContinuousClock.Instant )
+func request( method: String, params: [String: Any]?, deadline: ContinuousClock.Instant )
+func requestCancellation(escalation: EscalationPolicy)
 func requireFilesystemCapability()
 func requireLocal(_ kind: PlatformCapabilityKind)
 func requireNetworkCapability()
 func requirePTYCapability()
 func requireProcessCapability()
+func reset()
 func resetAttributesToDefaults()
 func runCollecting( _ request: ProcessLaunchRequest )
 func scalarIndex( atUTF16Offset offset: Int, in text: String, policy: BoundaryPolicy )
+func schedule( deadline: ContinuousClock.Instant, action: @escaping @Sendable () | attr=discardableResult
 func selectAll()
 func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange)
 func setFullText(_ string: String)
@@ -129,37 +191,69 @@ func setSelectedRange(_ range: NSRange, preferredX: CGFloat? )
 func setSelectedRanges(_ ranges: [NSRange], preferredX: CGFloat? )
 func shipping(_ id: ShippingProfileID)
 func single( range: NSRange, replacement: String, origin: EditOrigin , id: UUID )
+func sleep(until deadline: Instant, tolerance: Duration?)
+func sleep(until deadline: Instant, tolerance: Swift.Duration?)
 func snapshot()
+func spawn(_ request: ProcessLaunchRequest) | attr=discardableResult
 func splitLines( in string: String, estimatedHeight: CGFloat, includeTrailingEmptyLine: Bool )
+func start()
+func subscribe( policy: AsyncBroadcastHub<Event>.OverflowPolicy? , replay: ReplayPolicy )
+func subscribe( policy: OverflowPolicy , emitGap: true)
 func substring(from range: NSRange)
 func subwordSegments(_ identifier: String)
+func succeed(_ value: Value) | attr=discardableResult
+func termThenKill(grace: Duration ))
 func terminateProcessGroup()
+func terminateProcessGroup(escalation: EscalationPolicy ))
 func toggleBlockComment( selection: NSRange, document: String, open: String, close: String )
 func toggleLineComment( selections: [NSRange], document: String, lineComment: String )
-func undo(apply: (TextEdit) throws -> Void)
-func undoGroup(apply: ([TextEdit]) throws -> Void)
+func trimToMaxGroups()
+func truncateClosedGroups(to count: Int)
+func undoGroup(apply: (RegisteredGroup) throws -> Void)
 func updateMetrics(atIndex index: Int, metrics: LineMetrics)
 func updatePayload(atIndex index: Int, payload: Payload)
+func utf16EndOffset(location: Int, length: Int)
 func utf16Offset( fromUTF8Offset utf8Offset: Int, in text: String, policy: BoundaryPolicy )
 func utf8Offset( fromUTF16Offset utf16Offset: Int, in text: String, policy: BoundaryPolicy )
+func validatedInsertionPoint( utf16Offset: Int, in text: String, policy: BoundaryPolicy )
+func validatedSelectionRange( _ range: NSRange, in text: String, policy: BoundaryPolicy )
 func validatedUTF16Range( _ range: NSRange, documentUTF16Length length: Int )
+func wait( until deadline: ContinuousClock.Instant, clock: ContinuousDeadlineClock )
+func wait( until deadline: TestDeadlineClock.Instant, clock: TestDeadlineClock )
+func wait()
 func waitUntilExit() async -> (code: Int32, timedOut: Bool)
+func write(_ data: Data)
 func yield(_ event: EditorEvent)
 func yieldSelection(_ ranges: [NSRange])
 func yieldText(_ text: String)
-init ( executable: String, arguments: [String] , mode: ProcessLaunchMode , currentDirectory: URL? , environment: [String: String] , mergeEnvironment: Bool , timeout: Duration? , maxStdoutBytes: Int , maxStderrBytes: Int , capabilityKind: PlatformCapabilityKind )
+init ( cancel: @escaping @Sendable ()
+init ( edits: [TextEdit], beforeState: DocumentContentStateID, afterState: DocumentContentStateID )
+init ( executable: String, arguments: [String] , mode: ProcessLaunchMode , currentDirectory: URL? , environment: [String: String] , mergeEnvironment: Bool , timeout: Duration? , maxStdoutBytes: Int , maxStderrBytes: Int , capabilityKind: PlatformCapabilityKind , eventBufferCapacity: Int )
+init ( hub: AsyncBroadcastHub<Event>, defaultPolicy: AsyncBroadcastHub<Event>.OverflowPolicy , emitGap: true)
 init ( id: UUID )
 init ( managedRegistryOnly: Bool , publisherAllowlistRequired: Bool , requireSignedNativeHelpers: Bool )
+init ( maxBodyBytes: Int , maxBufferBytes: Int )
 init ( platform: HostPlatform, name: String, shippingProfileID: ShippingProfileID? , capabilities: [PlatformCapabilityKind: CapabilityAvailability], enterpriseOptions: EnterpriseProfileOptions? )
 init ( profile: PlatformCapabilityProfile )
+init ( requestedOffset: UInt64, absoluteOffset: UInt64, data: Data, leadingTruncated: Bool, availableEnd: UInt64, availableStart: UInt64 )
 init ( string: String , attributes: [NSAttributedString.Key: Any] )
-init ( transaction: EditTransaction, oldVersion: DocumentVersion, newVersion: DocumentVersion, inverse: EditTransaction, textEdits: [TextEdit] )
+init ( transaction: EditTransaction, oldVersion: DocumentVersion, newVersion: DocumentVersion, beforeState: DocumentContentStateID, afterState: DocumentContentStateID, inverse: EditTransaction, textEdits: [TextEdit] )
+init ( version: DocumentVersion, text: String, contentState: DocumentContentStateID )
 init ()
 init (_ nsRange: NSRange)
+init (acceptedBytes: Int, droppedBytes: Int, truncated: Bool)
+init (capacity: Int)
+init (clock: ContinuousDeadlineClock ))
+init (code: Int32, timedOut: Bool)
+init (codec: Codec, transport: Transport)
 init (documentVersion: DocumentVersion)
 init (frame: CGRect, documentRange: NSRange, ctLine: CTLine?)
+init (grace: Duration ))
 init (insert: String, placeCaretInside: Bool, skipOver: Bool )
 init (location: Int, length: Int)
+init (maxBytes: Int, overflow: OverflowBehavior )
+init (maxCarryBytes: Int )
+init (maxHistory: Int )
 init (mutation: TextMutation, inverse: TextMutation)
 init (nsRanges: [NSRange], version: DocumentVersion)
 init (open: NSRange, close: NSRange)
@@ -169,84 +263,135 @@ init (range: NSRange, preferredX: CGFloat? )
 init (range: NSRange, replacement: String)
 init (range: NSRange, string: String)
 init (rawValue: UInt64)
+init (rawValue: UUID ))
 init (replacedRange: TextRange, replacement: String)
 init (selection: TextRangeSelection ))
 init (selections: [TextRange], version: DocumentVersion)
+init (sequence: UInt64, event: Event)
 init (start: TextPosition, end: TextPosition)
 init (utf16Length: Int, height: CGFloat)
 init (utf16Offset: Int)
-init (version: DocumentVersion, text: String)
+protocol ByteTransport | sendable=1
 protocol CaretLayoutQuerying | isolation=@MainActor
 protocol FileSystemAccess | sendable=1
 protocol LinePayload
 protocol NetworkAccess | sendable=1
 protocol PTYAccess | sendable=1
 protocol ProcessLaunching | sendable=1
+protocol RPCCodec | sendable=1
+struct AppendResult | sendable=1
 struct AppliedEditTransaction | sendable=1
 struct AutoPairResult | sendable=1
+struct BroadcastSubscriptionFactory | sendable=1
 struct ColumnSelectionFragment | sendable=1
+struct ContentLengthFrameDecoder | sendable=1
+struct ContinuousDeadlineClock | sendable=1
+struct DeadlineScheduleID | sendable=1
+struct DocumentContentStateID | sendable=1
 struct DocumentSnapshot | sendable=1
 struct DocumentVersion | sendable=1
 struct EditTransaction | sendable=1
 struct EditorContext | sendable=1
 struct EnterpriseProfileOptions | sendable=1
+struct Envelope | sendable=1
+struct EscalationPolicy | sendable=1
+struct EventBufferPolicy | sendable=1
+struct IncrementalUTF8Decoder | sendable=1
+struct Instant | sendable=1
+struct JSONRPCCodec | sendable=1
 struct LineMetrics | sendable=1
 struct LinePosition | sendable=1
 struct Match | sendable=1
 struct NewlineInsertion | sendable=1
+struct PTYLeaseID | sendable=1
+struct PTYSessionCallbacks | sendable=1
 struct PlatformCapabilityProfile | sendable=1
 struct PlatformServices | sendable=1
+struct ProcessExit | sendable=1
 struct ProcessLaunchRequest | sendable=1
 struct ProcessService | sendable=1
 struct ProfileFileSystemAccess | sendable=1
 struct ProfileNetworkAccess | sendable=1
 struct ProfilePTYAccess | sendable=1
 struct ProfileProcessLauncher | sendable=1
+struct RegisteredGroup | sendable=1
 struct SelectionChangeEvent | sendable=1
+struct SubscriptionID | sendable=1
 struct TextChange | sendable=1
 struct TextEdit | sendable=1
 struct TextPosition | sendable=1
 struct TextRange | sendable=1
 struct TextRangeSelection | sendable=1
 struct TextReplacement | sendable=1
-typealias ProcessSupervisor
+struct ViewportRead | sendable=1
+typealias Duration
+typealias Instant
+typealias Method
+typealias Params
+typealias ResultValue
+var absoluteEndOffset
+var absoluteOffset
+var acceptedBytes
+var activeLeaseCount
+var activePTYLeaseCount
+var afterState
 var arguments
 var autoPairs
+var availableEnd
+var availableStart
+var awaitExit | sendable=1
+var beforeState
 var canRedo
 var canUndo
+var cancel | sendable=1
 var capabilities
 var capabilityKind
+var capacity
 var caretOffsetInPayload
 var changes
 var close
+var closedGroupCount
 var closing
+var code
+var contentState
 var ctLine
 var current
 var currentDirectory
+var data
 var defaultAttributes
 var defaultEventBuffer
+var defaultMaxBodyBytes
+var defaultMaxBufferBytes
 var directMacOS
 var displayName
 var documentRange
 var documentVersion
+var droppedBytes
+var edits
 var end
+var endUTF16Offset
 var enterprise
 var enterpriseOptions
 var environment
+var event
+var eventBufferCapacity
 var events
 var executable
 var filesystem
 var first
 var frame
 var fullString
+var grace
 var groupingEnabled
 var height
 var hostPlatform
 var iOS
 var id
+var inbound
 var index
 var insert
 var inverse
+var isCompleted
 var isEmpty
 var isEnabled
 var isInsertionPoint
@@ -254,14 +399,21 @@ var isLocallyAvailable
 var isTerminated
 var kind
 var last
+var lastSequence
+var leadingTruncated
 var length
 var localizedDescription
 var location
 var macAppStore
 var managedRegistryOnly
+var maxBodyBytes
+var maxBufferBytes
+var maxBytes
+var maxGroups
 var maxStderrBytes
 var maxStdoutBytes
 var maxY
+var maximumCapacity
 var mergeEnvironment
 var metrics
 var mode
@@ -269,13 +421,19 @@ var mutation
 var name
 var network
 var newVersion
+var now
 var nsRange
+var offset
 var oldVersion
 var open
 var opening
 var origin
+var overflow
+var ownershipModel
 var pairs
 var payload
+var peer
+var pendingByteCount
 var placeCaretInside
 var platform
 var preferredX
@@ -290,19 +448,26 @@ var rawValue
 var remoteToolingAvailable
 var replacedRange
 var replacement
+var requestedOffset
 var requireSignedNativeHelpers
+var resultIfCompleted
 var selectedRange
 var selectedRanges
 var selections
+var sequence
 var shippingProfileID
 var skipOver
 var start
+var storedByteCount
 var string
+var subscriberCount
 var test
 var text
 var textEdits
+var timedOut
 var timeout
 var transaction
+var truncated
 var utf16Length
 var utf16Offset
 var utf16Range

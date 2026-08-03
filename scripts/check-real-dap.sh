@@ -216,6 +216,10 @@ def pump(wait=3.0, want_cmd=None, want_event=None):
                 end = min(end, time.time() + 0.15)
     return found
 
+# required_commands hard-gate (DAP-N10 / REL-N08):
+# initialize launch setBreakpoints stackTrace variables evaluate disconnect
+# Fail closed when missing DAP responses (silent no-op forbidden).
+
 def require_success(command):
     """Hard-require a success=true DAP response (DAP-N10)."""
     if command not in responses:

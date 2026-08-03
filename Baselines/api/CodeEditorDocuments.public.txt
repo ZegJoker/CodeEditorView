@@ -9,14 +9,16 @@ enum DocumentExternalChangePolicy | sendable=1
 enum DocumentFileChange | sendable=1
 enum DocumentIOError | sendable=1
 enum DocumentIOFaultPoint | sendable=1
+enum DocumentIOWriteResult | sendable=1
 enum DocumentProviderError | sendable=1
+enum DocumentSaveOutcome | sendable=1
 enum LineEndingSavePolicy | sendable=1
 enum SaveConflictPolicy | sendable=1
-enum SaveResult | sendable=1
+enum SaveDurability | sendable=1
 enum SecurityScopedBookmark | sendable=1
 enum TextDocumentEvent | sendable=1
 func access()
-func apply( _ transaction: EditTransaction, sortHighToLow: Bool , registerUndo: Bool , expectedVersion: DocumentVersion? ) | attr=discardableResult
+func apply( _ transaction: EditTransaction, sortHighToLow: Bool , registerUndo: Bool , expectedVersion: DocumentVersion? , restoreContentState: DocumentContentStateID? ) | attr=discardableResult
 func applyExternalContent( _ text: String, policy: DocumentExternalChangePolicy, encoding: DocumentEncoding? ) | attr=discardableResult
 func canonicalized()
 func clear(forPrimary primary: URL, io: any DocumentIO)
@@ -25,6 +27,7 @@ func decode(_ data: Data)
 func decodeLegacy(_ data: Data) throws -> (text: String, encoding: DocumentEncoding, bom: Bool)
 func detect(from data: Data)
 func detectChange( at uri: DocumentURI, known: DocumentFileIdentity? )
+func discoverRecords(io: any DocumentIO)
 func document(id: DocumentID)
 func document(uri: DocumentURI)
 func encode( text: String, encoding: DocumentEncoding, lineEndingPolicy: LineEndingSavePolicy, bomPolicy: BOMPolicy )
@@ -34,7 +37,8 @@ func inMemory(id: DocumentID ))
 func journalURL(forPrimary primary: URL)
 func load( from provider: any DocumentContentProvider, uri: DocumentURI? )
 func load(uri: DocumentURI)
-func makeEventStream(bufferSize: Int )
+func makeEventStream( policy: EventBufferPolicy )
+func makeEventStream(bufferSize: Int)
 func markClean()
 func markDirty()
 func performRedo()
@@ -44,20 +48,14 @@ func read(forPrimary primary: URL, io: any DocumentIO)
 func read(url: URL)
 func read(url: URL, maxBytes: UInt64)
 func readContentAndIdentity( url: URL, maxBytes: UInt64 )
-func recomputeDirtyFromSavedVersion()
+func recomputeDirtyFromContentState()
 func recoverFromJournalIfNeeded(io: any DocumentIO) | attr=discardableResult
-func register(_ document: TextDocument)
-func reindexURI(for document: TextDocument)
-func remove(id: DocumentID) | attr=discardableResult
-func removeAll()
 func removeItem(at url: URL)
 func replaceFullContent( _ string: String, origin: EditOrigin , clearUndo: Bool , markDirty: Bool ) | attr=discardableResult
 func resolve(_ data: Data)
 func resourceIdentity(at url: URL)
-func save( _ snapshot: DocumentSnapshot, to uri: DocumentURI, encoding: DocumentEncoding )
-func save( _ snapshot: DocumentSnapshot, to uri: DocumentURI, encoding: DocumentEncoding, expectedIdentity: DocumentFileIdentity?, policy conflictPolicy: SaveConflictPolicy )
-func save( _ snapshot: DocumentSnapshot, to uri: DocumentURI, encoding: DocumentEncoding, expectedIdentity: DocumentFileIdentity?, policy: SaveConflictPolicy )
-func save( using provider: any DocumentContentProvider, to uri: DocumentURI? , io: (any DocumentIO)
+func save( using provider: any DocumentContentProvider, to uri: DocumentURI? , io: (any DocumentIO) | attr=discardableResult
+func save(_ request: DocumentSaveRequest)
 func setEncoding(_ newEncoding: DocumentEncoding)
 func setFileIdentity(_ identity: DocumentFileIdentity?)
 func setHadBOM(_ value: Bool)
@@ -65,16 +63,19 @@ func setSelectedNSRanges(_ ranges: [NSRange])
 func setURI(_ newURI: DocumentURI)
 func snapshot()
 func store(uri: DocumentURI, text: String, encoding: DocumentEncoding )
-func write( text: String, forPrimary primary: URL, io: any DocumentIO, documentURI: String? )
+func write( text: String, forPrimary primary: URL, io: any DocumentIO, documentURI: String? , contentState: DocumentContentStateID? , baseFileIdentity: DocumentFileIdentity? , encoding: DocumentEncoding? )
 func writeAtomically(data: Data, to url: URL)
+func writeAtomicallyComparingIdentity( data: Data, to url: URL, expectedIdentity: DocumentFileIdentity?, conflictPolicy: SaveConflictPolicy, durability: SaveDurability )
 init ( contentHash: String, size: UInt64, modificationTime: TimeInterval? , fileResourceIdentifier: Data? )
+init ( contentState: DocumentContentStateID, fileIdentity: DocumentFileIdentity? , encoding: DocumentEncoding, lineEnding: LineEnding )
 init ( directory: URL, maxBytesPerDocument: UInt64 , maxBytesGlobal: UInt64 )
 init ( findText: String , replaceText: String , isPanelVisible: Bool )
 init ( id: DocumentID )
 init ( id: EditorSessionID )
 init ( io: (any DocumentIO)
 init ( lineEndingOnSave: LineEndingSavePolicy , bomPolicy: BOMPolicy , maxLoadBytes: UInt64 , writeRecoveryJournal: Bool , isReadOnly: Bool , requireIdentityForSave: Bool , recoveryMaxBytesPerDocument: UInt64 , recoveryMaxBytesGlobal: UInt64 )
-init ( schemaVersion: Int , documentURI: String, contentHash: String, payloadSize: UInt64, payloadChecksum: String, createdAt: TimeInterval, updatedAt: TimeInterval, payloadBase64: String )
+init ( schemaVersion: Int , documentURI: String, contentHash: String, payloadSize: UInt64, payloadChecksum: String, createdAt: TimeInterval, updatedAt: TimeInterval, contentStateRaw: String? , baseFileIdentityHash: String? , encodingName: String? , payloadBase64: String )
+init ( snapshot: DocumentSnapshot, target: DocumentURI, encoding: DocumentEncoding, expectedIdentity: DocumentFileIdentity?, conflictPolicy: SaveConflictPolicy , durability: SaveDurability )
 init ( text: String, encoding: DocumentEncoding , lineEnding: LineEnding? , fileIdentity: DocumentFileIdentity? , hadBOM: Bool )
 init ()
 init (base: LocalDocumentIO ))
@@ -93,6 +94,8 @@ struct DocumentDecodeResult | sendable=1
 struct DocumentFileIdentity | sendable=1
 struct DocumentID | sendable=1
 struct DocumentLifecyclePolicy | sendable=1
+struct DocumentSaveRequest | sendable=1
+struct DocumentSavepoint | sendable=1
 struct DocumentURI | sendable=1
 struct EditorFindState | sendable=1
 struct EditorSessionID | sendable=1
@@ -103,18 +106,26 @@ struct LocalDocumentIO
 struct LocalFileDocumentProvider
 struct RecoveryJournal | sendable=1
 struct RecoveryJournalRecord | sendable=1
+typealias SaveResult
 var base
+var baseFileIdentityHash
 var bomPolicy
 var bookmarkData
+var conflictPolicy
 var contentHash
+var contentState
+var contentStateRaw
 var createdAt
 var currentSchemaVersion
 var directory
 var documentID
 var documentURI
 var documents
+var durability
 var empty
 var encoding
+var encodingName
+var expectedIdentity
 var fault
 var fileIdentity
 var fileResourceIdentifier
@@ -151,11 +162,16 @@ var schemaVersion
 var scrollPosition
 var selectedNSRanges
 var selections
+var sequence
 var shared
 var size
+var snapshot
 var store
+var streamChunkSizeBytes
 var stringEncoding
 var stringEncodingOrNil
+var supportsConflictDetection
+var target
 var text
 var undo
 var updatedAt
