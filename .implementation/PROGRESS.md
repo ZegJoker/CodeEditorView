@@ -25,7 +25,7 @@
 | 9a | extension package/signing | 20 | fixed |
 | 9b | capability broker | 16 | verified |
 | 9c | Wasm | 16 | fixed |
-| 10 | workbench | 7 | fixed |
+| 10 | workbench | 7 | verified |
 | F | final residual gate | all 174 | open |
 
 ## Rules for implementers
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: batch workbench verified — WB-N01, WB-N02, WB-N03, WB-N04, WB-N05, WB-N06, WB-N07 status set to `verified` (all previously fixed with regression tests; WBN filter green, residual closed).
 - 2026-08-03: Phase 10 workbench verifier residual — WB-N04 watcher-driven incremental index (`FileTreeIndexService.startWatching` + debounced root refresh/overflow rescan; `cancelScan` clears `isScanning`; off-main engine probe); WB-N05 bagged all UtilityPanels + WorkbenchEditorArea Tasks (panel/pane TaskBags, terminal `deactivate`); WB-N01 `makeBodyWithErrorPresentation` invocation proof. `swift test --filter WBN`: 30 passed; CodeEditorWorkbenchTests (ex-long perf): 82 passed.
 - 2026-08-03: Phase 10 workbench — fixed WB-N01…WB-N07: makeBodyWithErrorPresentation (not fault isolation) + declarative untrusted contributions; EditorRevealService LineIndex layout reveal (no location/40); WorkbenchMotion.withAnimationIfAvailable (real withAnimation + reduce-motion); FileTreeIndexEngine background actor (no MainActor file-tree expand); WorkbenchTaskBag per model/window cancelled on tearDown/close; WorkbenchWorkflowCoordinator binds TaskService/SourceControlService fail-closed; WorkbenchStableScope.v1 + docs for Stable 1.0 vs Xcode gaps (no fake panels). `swift test --filter 'test_WB_N|Workbench…'`: 66 passed (27 WB-N).
 - 2026-08-03: Phase 9c Wasm verifier residual (3) — hardened weak tests: WASM-N04 callAndMemoryShareSerialRuntime exact-byte marker/write/sequential (removed `|| read2.count == 4`); WASM-N09/N12 exact echo payloads (removed `|| !isEmpty`); WASM-N10 isolated registry at-cap + capabilityCalls hard >0/<=max (removed soft OR). `swift test --filter 'WASMNAuditTests|WASMNSessionAuditTests'`: 25 passed ×2.
