@@ -132,18 +132,20 @@ public enum CoreWasmABI {
 /// runtime so store/memory never race with `Function.invoke`. Implemented as a
 /// dedicated serial queue (not a free-threaded lock + global queue hop).
 public final class WasmSerialRuntime: @unchecked Sendable {
-    private static let queueKey = DispatchSpecificKey<UInt8>()
+    /// Per-instance key so re-entrancy is detected only for *this* queue (WASM-N04).
+    private let queueKey = DispatchSpecificKey<UInt8>()
     private let queue: DispatchQueue
+    private let token: UInt8 = 1
 
     public init(label: String = "codeeditor.wasm.serial") {
         self.queue = DispatchQueue(label: label)
-        self.queue.setSpecific(key: Self.queueKey, value: 1)
+        self.queue.setSpecific(key: queueKey, value: token)
     }
 
     /// Run exclusively on the serial executor (sync). Used by memory read/write/grow.
     /// Re-entrant: if already on this queue, runs inline (avoids deadlock).
     public func runSync<T>(_ body: () throws -> T) rethrows -> T {
-        if DispatchQueue.getSpecific(key: Self.queueKey) != nil {
+        if DispatchQueue.getSpecific(key: queueKey) == token {
             return try body()
         }
         return try queue.sync(execute: body)
