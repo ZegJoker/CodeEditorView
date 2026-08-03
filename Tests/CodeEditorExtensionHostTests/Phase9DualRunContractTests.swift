@@ -26,7 +26,7 @@ struct Phase9DualRunContractTests {
     }
 
     @Test func linkedGuestDualRunStillWorksForSemantics() async throws {
-        let engine = WasmEngineFactory.linkedGuest()
+        let engine = WasmTestEngines.linkedGuest()
         var marker = Data(WasmModuleBuilder.magic + WasmModuleBuilder.version)
         marker.append(Data(repeating: 0xAB, count: 200))
         let session = CoreWasmABISession(

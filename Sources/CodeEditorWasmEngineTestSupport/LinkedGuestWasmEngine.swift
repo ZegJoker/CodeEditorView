@@ -1,6 +1,9 @@
+import CodeEditorWasmEngine
 import Foundation
 
 /// **Simulation / dual-run engine** — links a Swift ``LinkedWasmGuest`` factory.
+///
+/// EXT-N20: this type lives in ``CodeEditorWasmEngineTestSupport`` only — not a production product.
 ///
 /// Module magic/size checks run, but **guest behavior is not determined by Wasm bytecode**.
 /// Do **not** use this type as isolation evidence (audit §16 / Phase 9). Prefer ``WasmKitEngine``.

@@ -1952,7 +1952,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N01_stringEscapesAndDottedKeys",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N01_commentInsideStringPreserved"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N02",
@@ -1964,7 +1964,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N02_compatibilityLevelsNotSingleBoolean"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N03",
@@ -1977,7 +1977,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N03_packageDigestIsSHA256Hex",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N03_hasherRejectsNonCryptoFallback"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N04",
@@ -1990,7 +1990,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N04_hiddenFilesIncludedInInventory",
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N04_hiddenFileBreaksSignatureWhenAddedAfterSign"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N05",
@@ -2003,7 +2003,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N05_codeeditorPackageContentInInventory",
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N05_codeeditorContentBoundInSignature"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N06",
@@ -2015,7 +2015,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N06_canonicalSignedPublisherStatement"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N07",
@@ -2027,7 +2027,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N07_keyWriteIsAtomicAndPreservesPriorOnFailure"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N08",
@@ -2039,7 +2039,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N08_sha256HexThrowsNotFatal"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N09",
@@ -2053,7 +2053,7 @@
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N09_duplicateKeyIDsFail",
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N09_validKeyringLoads"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N10",
@@ -2066,7 +2066,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N10_fileCountQuota",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N10_rejectsSymlink"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N11",
@@ -2078,7 +2078,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N11_verifyBeforeActivateRejectsBadSource"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N12",
@@ -2090,7 +2090,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N12_contentAddressedLayoutAndJournal"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N13",
@@ -2103,7 +2103,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N13_sameVersionReinstallDigestMismatchFails",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N13_sameVersionSameDigestIsIdempotent"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N14",
@@ -2115,7 +2115,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N14_packagesJsonStoresRelativeStoreKeyNotAbsoluteEscape"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N15",
@@ -2128,7 +2128,7 @@
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N15_staleRevocationRejected",
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N15_monotonicSequencePreventsRollback"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N16",
@@ -2140,7 +2140,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N16_snapshotExcludesUnverifiedAndRevoked"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N17",
@@ -2152,7 +2152,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N17_undeclaredWasmFailsClosed"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N18",
@@ -2164,7 +2164,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N18_telemetryRotatesAndReportsFailures"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N19",
@@ -2176,7 +2176,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionsTests/EXTNAuditTests.swift::test_EXT_N19_snapshotUsesBroadcastHub"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "EXT-N20",
@@ -2188,7 +2188,7 @@
       "regression_tests": [
         "Tests/CodeEditorExtensionHostTests/EXTNSigningAuditTests.swift::test_EXT_N20_simulationFactoryNotProductionDefault"
       ],
-      "notes": "2026-08-03: CEML fail-closed TOML subset; S0-S4 compatibility levels; SHA-256-only digests; full inventory incl. hidden/.codeeditor; canonical signed-statement; atomic key write; keyring fail-closed; inventory quotas; verify-before-activate; content-addressed blobs+journal; same-version digest safety; relative store keys; revocation freshness; verified snapshots; declared executables; bounded telemetry; AsyncBroadcastHub snapshots; production WasmKit default; ConformanceGuest not a public product."
+      "notes": "2026-08-03 residual: EXT-N07 fail-after-backup injection preserves prior key; EXT-N08 SecurityDigest.forceUnavailable throw path (no fatalError, no empty digest); EXT-N12 incomplete-tx recovery\u2192rolledBack; EXT-N16 full loadable checklist (live digest, re-verify, host API, capabilities); EXT-N17 content magic classification + manifest entrypoint declared paths; EXT-N18 writeFailureCount inject; EXT-N19 hub gap contract; EXT-N20 LinkedGuest moved to CodeEditorWasmEngineTestSupport."
     },
     {
       "id": "WASM-N01",

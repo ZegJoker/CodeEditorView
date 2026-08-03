@@ -20,6 +20,8 @@ public actor ExtensionPackageManager {
     private var revocation: RevocationListDocument = .init()
     private var verifier: (any PackageVerifying)?
     private var installPolicy: ShippingInstallPolicy?
+    /// Host environment used for loadable snapshot filtering (EXT-N16).
+    public var hostEnvironment: HostEnvironment = .full
     /// Maximum age for revocation list freshness (EXT-N15).
     public var revocationMaxAge: TimeInterval = 7 * 24 * 3600
 
@@ -285,10 +287,23 @@ public actor ExtensionPackageManager {
         }
         plan.digest = sourceDigest
 
-        // EXT-N17: data-only packages cannot ship undeclared executables.
-        if sourceContainsDataOnlyMarker(source) {
-            try PackageInventoryBuilder.assertNoUndeclaredExecutables(
-                inventory: sourceInventory, declaredPaths: [])
+        // EXT-N17: bind declared executables from signed manifest; fail closed on undeclared.
+        let declared = PackageInventoryBuilder.declaredExecutablePaths(
+            runtimeKind: plan.manifestRuntimeKind,
+            runtimeEntrypoint: plan.manifestRuntimeEntrypoint,
+            packageRoot: source
+        )
+        // Re-build inventory with declaration binding so declared wasm/native are typed correctly.
+        let boundInventory = try PackageInventoryBuilder.build(
+            packageRoot: source, limits: limits, declaredExecutablePaths: declared)
+        try PackageInventoryBuilder.assertNoUndeclaredExecutables(
+            inventory: boundInventory, declaredPaths: declared
+        )
+        // Data-only runtimes must declare no executables at all.
+        if plan.isDataOnlyRuntime, !boundInventory.executableEntries.isEmpty, declared.isEmpty {
+            throw ExtensionError.dataLoad(
+                "data-only package contains undeclared executable content (EXT-N17)"
+            )
         }
 
         let version = plan.version.description
@@ -872,14 +887,6 @@ public actor ExtensionPackageManager {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     }
 
-    private func sourceContainsDataOnlyMarker(_ source: URL) -> Bool {
-        guard
-            let text = try? String(
-                contentsOf: source.appendingPathComponent("extension.toml"), encoding: .utf8)
-        else { return false }
-        return text.contains("data-only")
-    }
-
     private func assertRevocationFresh() throws {
         // Empty list is fine; non-zero sequence lists must be fresh (EXT-N15).
         if revocation.sequence > 0 || revocation.expiresAt != nil {
@@ -1114,23 +1121,89 @@ public actor ExtensionPackageManager {
         }
         generation &+= 1
         // EXT-N16: only fully loadable records enter the contribution snapshot.
-        let loadable = packages.values.filter { pkg in
-            guard pkg.enabled, !pkg.quarantined, pkg.state == .installed else { return false }
-            if storeQuarantined { return false }
-            if pkg.isDev { return true }
-            guard let digest = pkg.contentDigest, !digest.isEmpty else { return false }
-            guard FileManager.default.fileExists(atPath: pkg.installPath.path) else { return false }
-            // Reject revoked.
-            if revocation.entries.contains(where: {
-                $0.matches(packageID: pkg.plan.packageID.rawValue, version: pkg.currentVersion)
-            }) {
-                return false
-            }
-            return true
-        }.map(\.plan)
+        let loadable = packages.values.filter { isLoadableForSnapshot($0) }.map(\.plan)
         snapshot = ImmutableContributionRegistry.build(packages: loadable, generation: generation)
         continuation?.yield(snapshot)
         Task { await snapshotHub.publish(snapshot) }
+    }
+
+    /// Full loadable checklist (EXT-N16):
+    /// installed ∧ bytes exist ∧ digest matches ∧ trust re-verify ∧ not revoked ∧ enabled
+    /// ∧ host/platform compatible ∧ capabilities granted ∧ store not quarantined.
+    public func isLoadableForSnapshot(_ pkg: InstalledPackage) -> Bool {
+        guard pkg.enabled, !pkg.quarantined, pkg.state == .installed else { return false }
+        if storeQuarantined { return false }
+        // Reject revoked immediately.
+        if revocation.entries.contains(where: {
+            $0.matches(packageID: pkg.plan.packageID.rawValue, version: pkg.currentVersion)
+        }) {
+            return false
+        }
+        // Host API compatibility.
+        if !pkg.plan.manifest.requiredAPIVersion.contains(hostEnvironment.apiVersion) {
+            return false
+        }
+        // Capabilities granted (required ⊆ host capabilities).
+        if !pkg.plan.manifest.requiredHostCapabilities.isSubset(of: hostEnvironment.capabilities) {
+            return false
+        }
+        if pkg.isDev {
+            guard FileManager.default.fileExists(atPath: pkg.installPath.path) else { return false }
+            return true
+        }
+        guard let digest = pkg.contentDigest, !digest.isEmpty else { return false }
+        guard FileManager.default.fileExists(atPath: pkg.installPath.path) else { return false }
+        // Live digest match under store root.
+        guard
+            let live = try? PackageInventoryBuilder.build(packageRoot: pkg.installPath).packageSHA256,
+            live == digest
+        else { return false }
+        // Signature/trust re-verify under current policy when a verifier is configured.
+        if let verifier {
+            do {
+                let result = try verifier.verify(packageRoot: pkg.installPath)
+                if result.quarantined { return false }
+                if result.trustClass == .untrusted { return false }
+            } catch {
+                return false
+            }
+        } else if !allowMissingSecurity {
+            // Production path: no verifier ⇒ not loadable.
+            return false
+        }
+        return true
+    }
+
+    /// Public recovery entry for incomplete install transactions (EXT-N12).
+    public func recoverIncompleteTransactions() {
+        recoverTransactions()
+    }
+
+    /// Recompute contribution snapshot (used by tests after filesystem mutation).
+    public func rebuildSnapshotForTests() {
+        rebuildSnapshot()
+    }
+
+    public func setHostEnvironmentForTests(_ env: HostEnvironment) {
+        hostEnvironment = env
+    }
+
+    /// Count of transaction journal files currently marked rolledBack or incomplete.
+    public func transactionJournalPhases() throws -> [(id: String, phase: String)] {
+        guard
+            let files = try? FileManager.default.contentsOfDirectory(
+                at: transactionsRoot, includingPropertiesForKeys: nil)
+        else { return [] }
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .iso8601
+        var out: [(String, String)] = []
+        for url in files where url.pathExtension == "json" {
+            guard let data = try? Data(contentsOf: url),
+                let tx = try? dec.decode(InstallTransaction.self, from: data)
+            else { continue }
+            out.append((tx.id, tx.phase.rawValue))
+        }
+        return out
     }
 
     private func record(_ event: StoreTelemetryEvent) {
@@ -1340,6 +1413,8 @@ public final class StoreTelemetrySink: @unchecked Sendable {
     public let maxTotalBytes: Int
     public private(set) var writeFailureCount: Int = 0
     public private(set) var rotationCount: Int = 0
+    /// Test-only fault injection: next append fails closed and increments writeFailureCount.
+    public var failNextWriteForTests: Bool = false
 
     public init(
         fileURL: URL,
@@ -1358,6 +1433,11 @@ public final class StoreTelemetrySink: @unchecked Sendable {
     public func append(_ event: StoreTelemetryEvent) {
         lock.lock()
         defer { lock.unlock() }
+        if failNextWriteForTests {
+            failNextWriteForTests = false
+            writeFailureCount += 1
+            return
+        }
         let enc = JSONEncoder()
         enc.dateEncodingStrategy = .iso8601
         guard let data = try? enc.encode(event),

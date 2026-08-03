@@ -12,24 +12,27 @@ public actor CoreWasmABISession {
     private let engine: any CodeEditorWasmEngine
     private let module: Data
     private var instance: (any CodeEditorWasmInstance)?
-    private var linked: WasmGuestLink?
     private var pending: [UUID: CheckedContinuation<Data, Error>] = [:]
     private var started = false
     private let tracer = ConformanceTracer()
     private let deadline: Date
     private var cancelIDs: Set<UUID> = []
+    /// Optional test hook for dual-run slow-work injection (LinkedGuest only via tests).
+    private var slowWorkInjector: ((Int) -> Void)?
 
     public init(
         engine: any CodeEditorWasmEngine,
         module: Data,
         limits: WasmResourceLimits = .default,
-        generation: UInt64 = 1
+        generation: UInt64 = 1,
+        slowWorkInjector: ((Int) -> Void)? = nil
     ) {
         self.engine = engine
         self.module = module
         self.limits = limits
         self.generation = generation
         self.deadline = Date().addingTimeInterval(Self.seconds(limits.maxWallTime))
+        self.slowWorkInjector = slowWorkInjector
     }
 
     public func start() async throws {
@@ -63,9 +66,6 @@ public actor CoreWasmABISession {
 
         let inst = try await engine.instantiate(module: module, imports: imports, limits: limits)
         instance = inst
-        if let lg = inst as? LinkedGuestWasmInstance, let link = lg.guest as? WasmGuestLink {
-            linked = link
-        }
 
         let config = CBORCodec.encode(
             CBORValue.stringMap([
@@ -147,7 +147,6 @@ public actor CoreWasmABISession {
         _ = try? await callI32(CoreWasmExport.stop.rawValue, [.i32(0)])
         instance?.interrupt()
         instance = nil
-        linked = nil
         started = false
         for (_, c) in pending { c.resume(throwing: ExtensionWireError.transportClosed) }
         pending.removeAll()
@@ -156,7 +155,8 @@ public actor CoreWasmABISession {
     public func conformanceTrace() -> [ConformanceEvent] { tracer.snapshot() }
 
     public func setSlowWork(_ n: Int) {
-        linked?.runtime.pendingSlowWork = n
+        // EXT-N20: LinkedGuest is test-support only; production sessions use the optional injector.
+        slowWorkInjector?(n)
     }
 
     public func pollOnce() async throws {

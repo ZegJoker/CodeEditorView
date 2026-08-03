@@ -164,6 +164,15 @@ let package = Package(
             name: "CodeEditorWasmEngine",
             dependencies: []
         ),
+        // EXT-N20: LinkedGuest simulation is test-support only (not a public product).
+        .target(
+            name: "CodeEditorWasmEngineTestSupport",
+            dependencies: [
+                "CodeEditorWasmEngine",
+                "CodeEditorExtensionWasmGuest",
+            ],
+            path: "Sources/CodeEditorWasmEngineTestSupport"
+        ),
         .target(
             name: "CodeEditorWasmEngineWasmKit",
             dependencies: [
@@ -534,6 +543,7 @@ let package = Package(
             dependencies: [
                 "CodeEditorWasmEngine",
                 "CodeEditorWasmEngineWasmKit",
+                "CodeEditorWasmEngineTestSupport",
                 "CodeEditorExtensionWasmGuest",
                 "CodeEditorExtensionProtocol",
             ],
@@ -548,6 +558,7 @@ let package = Package(
                 "CodeEditorExtensionWasmGuest",
                 "CodeEditorWasmEngine",
                 "CodeEditorWasmEngineWasmKit",
+                "CodeEditorWasmEngineTestSupport",
                 "CodeEditorExtensions",
                 "CodeEditorExtensionAPI",
                 "CodeEditorLanguageServices",

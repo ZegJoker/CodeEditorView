@@ -385,7 +385,9 @@ public enum ExtensionPackageLoader {
             assets: assets.sorted { $0.relativePath < $1.relativePath },
             diagnostics: diagnostics,
             unsupportedFields: toml.unsupportedFields,
-            parityProfile: parity
+            parityProfile: parity,
+            manifestRuntimeKind: toml.runtimeKind,
+            manifestRuntimeEntrypoint: toml.runtimeEntrypoint
         )
     }
 

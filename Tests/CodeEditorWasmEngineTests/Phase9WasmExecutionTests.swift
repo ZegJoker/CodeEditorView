@@ -2,6 +2,7 @@ import Foundation
 import Testing
 
 @testable import CodeEditorWasmEngine
+@testable import CodeEditorWasmEngineTestSupport
 @testable import CodeEditorWasmEngineWasmKit
 
 @Suite("Phase9 real WasmKit execution")

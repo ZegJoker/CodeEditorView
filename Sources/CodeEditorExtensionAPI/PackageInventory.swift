@@ -49,6 +49,78 @@ public enum PackageContentKind: String, Sendable, Hashable, Codable {
     case signatureMeta
 }
 
+/// Content-based executable classification (magic bytes + mode), not path-extension alone (EXT-N17).
+public enum PackageExecutableClassifier {
+    /// Wasm binary magic `\0asm`.
+    public static let wasmMagic = Data([0x00, 0x61, 0x73, 0x6D])
+    /// Mach-O 64-bit magic (little-endian `0xFEEDFACF`).
+    public static let macho64LE = Data([0xCF, 0xFA, 0xED, 0xFE])
+    /// Mach-O 32-bit magic.
+    public static let macho32LE = Data([0xCE, 0xFA, 0xED, 0xFE])
+    /// Mach-O fat / universal.
+    public static let machoFatLE = Data([0xCA, 0xFE, 0xBA, 0xBE])
+    /// ELF magic.
+    public static let elfMagic = Data([0x7F, 0x45, 0x4C, 0x46])
+    /// PE/COFF `MZ`.
+    public static let peMagic = Data([0x4D, 0x5A])
+
+    /// Classify by header magic, optional Unix execute bits, and declared path membership.
+    public static func classify(
+        relativePath: String,
+        header: Data,
+        isMeta: Bool,
+        declaredExecutable: Bool,
+        unixExecutable: Bool
+    ) -> PackageContentKind {
+        if isMeta { return .signatureMeta }
+        if relativePath == "extension.toml" || relativePath == "extension.json" {
+            return .manifest
+        }
+        if header.starts(with: wasmMagic) {
+            return .wasm
+        }
+        if header.starts(with: macho64LE) || header.starts(with: macho32LE)
+            || header.starts(with: machoFatLE) || header.starts(with: elfMagic)
+            || header.starts(with: peMagic)
+        {
+            return .nativeExecutable
+        }
+        // Shebang scripts.
+        if header.starts(with: Data([0x23, 0x21])) {  // #!
+            return .script
+        }
+        if declaredExecutable || unixExecutable {
+            return .nativeExecutable
+        }
+        // Extension hints only as secondary signal after magic inspection.
+        let lower = relativePath.lowercased()
+        if lower.hasSuffix(".wasm") { return .wasm }
+        if lower.hasSuffix(".dylib") || lower.hasSuffix(".so") || lower.hasSuffix(".dll") {
+            return .nativeExecutable
+        }
+        if lower.hasSuffix(".sh") || lower.hasSuffix(".command") || lower.hasSuffix(".bash") {
+            return .script
+        }
+        let base = (relativePath as NSString).lastPathComponent.lowercased()
+        if base == "native-helper" { return .nativeExecutable }
+        return .data
+    }
+
+    public static func readHeader(of url: URL, maxBytes: Int = 16) throws -> Data {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        return try handle.read(upToCount: maxBytes) ?? Data()
+    }
+
+    public static func hasUnixExecuteBit(at url: URL) -> Bool {
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+            let perms = attrs[.posixPermissions] as? NSNumber
+        else { return false }
+        let mode = perms.uint16Value
+        return (mode & 0o111) != 0
+    }
+}
+
 // MARK: - Inventory entry
 
 public struct PackageInventoryEntry: Sendable, Hashable, Codable {
@@ -237,10 +309,13 @@ public enum PackageInventoryBuilder {
                 }
 
                 let digest = try streamSHA256(of: url)
-                let kind = classify(
+                let header = try PackageExecutableClassifier.readHeader(of: url)
+                let kind = PackageExecutableClassifier.classify(
                     relativePath: rel,
+                    header: header,
                     isMeta: isMeta,
-                    declaredExecutable: declaredExecutablePaths.contains(rel)
+                    declaredExecutable: declaredExecutablePaths.contains(rel),
+                    unixExecutable: PackageExecutableClassifier.hasUnixExecuteBit(at: url)
                 )
                 entries.append(
                     PackageInventoryEntry(
@@ -254,13 +329,13 @@ public enum PackageInventoryBuilder {
             entries.sort { $0.relativePath < $1.relativePath }
 
             // Package digest: content files only (exclude signature meta).
+            // EXT-N10: stream file bytes — never whole-file Data(contentsOf:).
             var packageHasher = SHA256()
             for e in entries where e.kind != .signatureMeta {
                 packageHasher.update(data: Data(e.relativePath.utf8))
                 packageHasher.update(data: Data([0]))
-                // Re-stream content for package digest binding path+bytes.
                 let url = root.appendingPathComponent(e.relativePath)
-                packageHasher.update(data: try Data(contentsOf: url))
+                try streamIntoHasher(url: url, hasher: &packageHasher)
                 packageHasher.update(data: Data([0]))
             }
             let packageSHA256 = hex(packageHasher.finalize())
@@ -294,32 +369,32 @@ public enum PackageInventoryBuilder {
         }
     }
 
-    // MARK: - Helpers
-
-    private static func classify(
-        relativePath: String,
-        isMeta: Bool,
-        declaredExecutable: Bool
-    ) -> PackageContentKind {
-        if isMeta { return .signatureMeta }
-        if relativePath == "extension.toml" || relativePath == "extension.json" {
-            return .manifest
+    /// Declared executable paths from a validated plan + package layout (EXT-N17).
+    /// Binds runtime entrypoint, native-helper, and explicit inventory declarations — not heuristics alone.
+    public static func declaredExecutablePaths(
+        runtimeKind: String?,
+        runtimeEntrypoint: String?,
+        packageRoot: URL,
+        additionalDeclared: Set<String> = []
+    ) -> Set<String> {
+        var paths = additionalDeclared
+        if let ep = runtimeEntrypoint, !ep.isEmpty {
+            paths.insert(ep)
         }
-        let lower = relativePath.lowercased()
-        if lower.hasSuffix(".wasm") { return .wasm }
-        if declaredExecutable { return .nativeExecutable }
-        // Executable bit / known helper names
-        let base = (relativePath as NSString).lastPathComponent.lowercased()
-        if base == "native-helper" || base.hasSuffix(".dylib") || base.hasSuffix(".so")
-            || base.hasSuffix(".dll")
+        let nativeHelper = packageRoot.appendingPathComponent("native-helper")
+        if FileManager.default.fileExists(atPath: nativeHelper.path) {
+            paths.insert("native-helper")
+        }
+        // Non-data-only runtimes that name a wasm entrypoint.
+        if let kind = runtimeKind?.lowercased(),
+            kind.contains("wasm") || kind == "swift-wasm" || kind == "native"
         {
-            return .nativeExecutable
+            if let ep = runtimeEntrypoint { paths.insert(ep) }
         }
-        if lower.hasSuffix(".sh") || lower.hasSuffix(".command") || lower.hasSuffix(".bash") {
-            return .script
-        }
-        return .data
+        return paths
     }
+
+    // MARK: - Helpers
 
     #if canImport(CryptoKit)
         private static func streamSHA256(of url: URL) throws -> String {
@@ -332,6 +407,16 @@ public enum PackageInventoryBuilder {
                 hasher.update(data: chunk)
             }
             return hex(hasher.finalize())
+        }
+
+        private static func streamIntoHasher(url: URL, hasher: inout SHA256) throws {
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            while true {
+                let chunk = try handle.read(upToCount: 64 * 1024) ?? Data()
+                if chunk.isEmpty { break }
+                hasher.update(data: chunk)
+            }
         }
 
         private static func hex(_ digest: SHA256Digest) -> String {

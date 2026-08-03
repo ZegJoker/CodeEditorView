@@ -26,6 +26,10 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
     public var unsupportedFields: [String]
     public var parityProfile: String
     public var generation: UInt64
+    /// Manifest `[runtime].kind` (EXT-N17 declaration binding).
+    public var manifestRuntimeKind: String?
+    /// Manifest `[runtime].entrypoint` path relative to package root (EXT-N17).
+    public var manifestRuntimeEntrypoint: String?
 
     public init(
         packageID: ExtensionID,
@@ -51,7 +55,9 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
         diagnostics: [ExtensionPackageDiagnostic] = [],
         unsupportedFields: [String] = [],
         parityProfile: String = "codeeditor-data-s1",
-        generation: UInt64 = 0
+        generation: UInt64 = 0,
+        manifestRuntimeKind: String? = nil,
+        manifestRuntimeEntrypoint: String? = nil
     ) {
         self.packageID = packageID
         self.displayName = displayName
@@ -77,6 +83,14 @@ public struct ValidatedContributionPlan: Sendable, Hashable {
         self.unsupportedFields = unsupportedFields
         self.parityProfile = parityProfile
         self.generation = generation
+        self.manifestRuntimeKind = manifestRuntimeKind
+        self.manifestRuntimeEntrypoint = manifestRuntimeEntrypoint
+    }
+
+    /// Whether this plan declares a data-only runtime (no executable material allowed undeclared).
+    public var isDataOnlyRuntime: Bool {
+        let kind = (manifestRuntimeKind ?? "data-only").lowercased()
+        return kind == "data-only" || kind == "dataonly" || kind == "data_only"
     }
 
     public var hasErrors: Bool {

@@ -314,14 +314,14 @@ public actor CapabilityBroker {
 
     public func storageGet(handle: BrokerHandleID, key: String) throws -> Data? {
         let h = try resolve(handle, kind: "storage", op: "get")
-        let url = storageURL(extensionID: h.extensionID, key: key)
+        let url = try storageURL(extensionID: h.extensionID, key: key)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         return try Data(contentsOf: url)
     }
 
     public func storageSet(handle: BrokerHandleID, key: String, value: Data) throws {
         let h = try resolve(handle, kind: "storage", op: "set")
-        let url = storageURL(extensionID: h.extensionID, key: key)
+        let url = try storageURL(extensionID: h.extensionID, key: key)
         let existing = (try? Data(contentsOf: url))?.count ?? 0
         // Prefer live disk reconciliation so restarts cannot zero quotas (EXT-010).
         let used = max(storageBytes[h.extensionID] ?? 0, usageOnDisk(extensionID: h.extensionID))
@@ -432,7 +432,7 @@ public actor CapabilityBroker {
             }
         }
         if let expectedDigest {
-            let actual = sha256Hex(data)
+            let actual = try sha256Hex(data)
             if actual != expectedDigest {
                 throw BrokerError.invalidRequest("digest mismatch")
             }
@@ -459,7 +459,7 @@ public actor CapabilityBroker {
         }
         if data.count > config.maxDownloadBytes { throw BrokerError.quotaExceeded }
         if let expectedDigest {
-            let actual = sha256Hex(data)
+            let actual = try sha256Hex(data)
             if actual != expectedDigest {
                 throw BrokerError.invalidRequest("digest mismatch")
             }
@@ -701,8 +701,8 @@ public actor CapabilityBroker {
     }
 
     /// Collision-free key encoding (EXT-010) — never sanitize by replacing `/` with `_`.
-    private func storageURL(extensionID: ExtensionID, key: String) -> URL {
-        let encoded = sha256Hex(Data(key.utf8))
+    private func storageURL(extensionID: ExtensionID, key: String) throws -> URL {
+        let encoded = try sha256Hex(Data(key.utf8))
         return config.storageRoot
             .appendingPathComponent(extensionID.directoryKey, isDirectory: true)
             .appendingPathComponent("kv", isDirectory: true)
@@ -854,13 +854,13 @@ public actor CapabilityBroker {
         ])
     }
 
-    private func sha256Hex(_ data: Data) -> String {
-        #if canImport(CryptoKit)
-            let d = SHA256.hash(data: data)
-            return d.map { String(format: "%02x", $0) }.joined()
-        #else
-            fatalError("CryptoKit unavailable: broker digests require SHA-256 (fail closed)")
-        #endif
+    /// EXT-N08: throw — never `fatalError` without CryptoKit.
+    private func sha256Hex(_ data: Data) throws -> String {
+        do {
+            return try SecurityDigest.sha256Hex(data)
+        } catch SecurityDigestError.cryptoUnavailable {
+            throw BrokerError.invalidRequest("cryptoUnavailable: SHA-256 required")
+        }
     }
 }
 

@@ -21,7 +21,7 @@ private func fixtureModule() -> Data {
 struct Phase11ABITests {
     @Test func linkedGuestEchoAndActivate() async throws {
         // LinkedGuest: module bytes are markers only — not isolation proof (Phase 9).
-        let engine = WasmEngineFactory.linkedGuest()
+        let engine = WasmTestEngines.linkedGuest()
         let session = CoreWasmABISession(
             engine: engine,
             module: fixtureModule(),
@@ -42,7 +42,7 @@ struct Phase11ABITests {
     }
 
     @Test func cancellationStopsSlowWork() async throws {
-        let engine = WasmEngineFactory.linkedGuest()
+        let engine = WasmTestEngines.linkedGuest()
         let session = CoreWasmABISession(
             engine: engine,
             module: fixtureModule(),
@@ -73,7 +73,7 @@ struct Phase11ABITests {
     }
 
     @Test func maliciousMalformedDoesNotCrashHost() throws {
-        let engine = WasmEngineFactory.linkedGuest()
+        let engine = WasmTestEngines.linkedGuest()
         #expect(throws: WasmEngineError.self) {
             try engine.validate(module: WasmModuleBuilder.malformedModule(), limits: .default)
         }
@@ -156,7 +156,7 @@ struct Phase11DualRunTests {
         await biInst.stop(reason: .user)
 
         // Wasm
-        let wasmDriver = SwiftWasmRuntimeDriver(engine: WasmEngineFactory.linkedGuest())
+        let wasmDriver = SwiftWasmRuntimeDriver(engine: WasmTestEngines.linkedGuest())
         let wasmPkg = PreparedExtensionPackage(
             packageID: "com.codeeditor.conformance",
             displayName: "C",

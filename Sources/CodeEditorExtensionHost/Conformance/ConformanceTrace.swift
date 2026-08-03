@@ -1,9 +1,6 @@
+import CodeEditorExtensionAPI
 import CodeEditorExtensionProtocol
 import Foundation
-
-#if canImport(CryptoKit)
-    import CryptoKit
-#endif
 
 public struct ConformanceEvent: Sendable, Equatable, Hashable, Codable {
     public var method: String
@@ -26,12 +23,13 @@ public struct ConformanceEvent: Sendable, Equatable, Hashable, Codable {
         self.generation = generation
     }
 
-    public static func payloadDigest(_ data: Data) -> String {
-        #if canImport(CryptoKit)
-            return SHA256.hash(data: data).prefix(8).map { String(format: "%02x", $0) }.joined()
-        #else
-            fatalError("CryptoKit unavailable: conformance digests require SHA-256")
-        #endif
+    /// EXT-N08: throw when CryptoKit is unavailable — never `fatalError`.
+    public static func payloadDigest(
+        _ data: Data,
+        availability: CryptoAvailability = .system
+    ) throws -> String {
+        let full = try SecurityDigest.sha256Hex(data, availability: availability)
+        return String(full.prefix(16))
     }
 }
 
@@ -54,11 +52,18 @@ public final class ConformanceTracer: @unchecked Sendable {
         errorCode: Int? = nil,
         generation: UInt64 = 0
     ) {
+        let digest: String
+        do {
+            digest = try ConformanceEvent.payloadDigest(payload)
+        } catch {
+            // EXT-N08: fail closed without process death — mark digest unusable.
+            digest = "crypto-unavailable"
+        }
         record(
             ConformanceEvent(
                 method: method.rawValue,
                 direction: direction,
-                payloadDigest: ConformanceEvent.payloadDigest(payload),
+                payloadDigest: digest,
                 errorCode: errorCode,
                 generation: generation
             ))

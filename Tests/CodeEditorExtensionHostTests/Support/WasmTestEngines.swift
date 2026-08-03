@@ -1,5 +1,6 @@
 import CodeEditorExtensionHost
 import CodeEditorWasmEngine
+import CodeEditorWasmEngineTestSupport
 import CodeEditorWasmEngineWasmKit
 import Foundation
 
@@ -10,10 +11,12 @@ public enum WasmTestEngines {
     }
 
     public static func simulation() -> LinkedGuestWasmEngine {
-        WasmEngineFactory.linkedGuest()
+        linkedGuest()
     }
 
     public static func linkedGuest() -> LinkedGuestWasmEngine {
-        WasmEngineFactory.linkedGuest()
+        LinkedGuestWasmEngine {
+            WasmGuestLink()
+        }
     }
 }

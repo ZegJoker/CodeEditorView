@@ -1,5 +1,7 @@
 import CodeEditorExtensionAPI
 import CodeEditorExtensions
+import CodeEditorWasmEngine
+import CodeEditorWasmEngineWasmKit
 import Foundation
 import Testing
 
@@ -135,16 +137,25 @@ struct EXT_N07_Tests {
         let original = try Data(contentsOf: privateURL)
         #expect(original == kp1.privateKeyRaw)
 
-        // Second write succeeds atomically (rename over).
+        // Failure injection: backup of prior key, live key preserved (EXT-N07).
+        ExtensionPackageSigner.failNextAtomicWriteAfterBackupForTests = true
+        let kpFail = try ExtensionPackageSigner.generateKeyPair(keyID: "k-fail")
+        #expect(throws: PackageSignatureError.self) {
+            try ExtensionPackageSigner.writeKeyPair(kpFail, to: dir)
+        }
+        let afterFail = try Data(contentsOf: privateURL)
+        #expect(afterFail == original, "prior private key must survive failed replacement")
+        let backup = dir.appendingPathComponent("ed25519.private.bak")
+        #expect(FileManager.default.fileExists(atPath: backup.path))
+        #expect(try Data(contentsOf: backup) == original)
+
+        // Successful atomic replace + backup of previous live key.
         let kp2 = try ExtensionPackageSigner.generateKeyPair(keyID: "k2")
         try ExtensionPackageSigner.writeKeyPair(kp2, to: dir)
         let updated = try Data(contentsOf: privateURL)
         #expect(updated == kp2.privateKeyRaw)
-        // Backup rotation metadata retained.
-        let backup = dir.appendingPathComponent("ed25519.private.bak")
-        #expect(FileManager.default.fileExists(atPath: backup.path))
-        let bakData = try Data(contentsOf: backup)
-        #expect(bakData == original)
+        let bakAfterSuccess = try Data(contentsOf: backup)
+        #expect(bakAfterSuccess == original || bakAfterSuccess == kp1.privateKeyRaw)
     }
 }
 
@@ -153,11 +164,20 @@ struct EXT_N07_Tests {
 @Suite("EXT-N08 crypto unavailable throws")
 struct EXT_N08_Tests {
     @Test func test_EXT_N08_sha256HexThrowsNotFatal() throws {
-        // Public API surfaces cryptoUnavailable rather than process death.
-        // On Apple platforms CryptoKit is present; verify API still uses throw path in signature.
-        let err = PackageSignatureError.cryptoUnavailable
-        #expect(err == .cryptoUnavailable)
-        // SBOM and signer entry points must be throwing.
+        // Force cryptoUnavailable path even when CryptoKit is present (EXT-N08).
+        #expect(throws: PackageSignatureError.cryptoUnavailable) {
+            _ = try ExtensionPackageSigner.sha256Hex(Data("x".utf8), availability: .unavailable)
+        }
+        #expect(throws: SecurityDigestError.cryptoUnavailable) {
+            _ = try SecurityDigest.sha256Hex(Data("y".utf8), availability: .unavailable)
+        }
+        #expect(throws: SecurityDigestError.cryptoUnavailable) {
+            _ = try ConformanceEvent.payloadDigest(Data("z".utf8), availability: .unavailable)
+        }
+        // Happy path still works with system crypto.
+        let hex = try ExtensionPackageSigner.sha256Hex(Data("abc".utf8), availability: .system)
+        #expect(hex.count == 64)
+        #expect(hex != "")
         let root = try SigningFixtures.tempRoot("crypto")
         defer { try? FileManager.default.removeItem(at: root) }
         try SigningFixtures.writeMinimalPackage(at: root)
@@ -221,9 +241,20 @@ struct EXT_N09_Tests {
 @Suite("EXT-N20 no mocks in production defaults")
 struct EXT_N20_Tests {
     @Test func test_EXT_N20_simulationFactoryNotProductionDefault() {
-        // simulation() must not be the production engine path.
+        // Production factory has only WasmKit — no linkedGuest kind/factory.
         #expect(WasmEngineFactory.productionEngineKind == .wasmKit)
-        // Conformance guest is fixture-only (not a Stable library product).
+        #expect(WasmEngineFactory.production() is WasmKitEngine)
+        #expect(WasmEngineFactory.wasmKit() is WasmKitEngine)
+        #expect(ExtensionProductionSurface.linkedGuestSimulationIsProductionDefault == false)
+        #expect(ExtensionProductionSurface.productionWasmFactoryKinds == ["wasmKit"])
         #expect(ExtensionProductionSurface.conformanceGuestIsPublicLibraryProduct == false)
+        // LinkedGuest simulation types live in test-support target only — production Host
+        // must not expose a linkedGuest() factory (compile-time removed; runtime kinds closed).
+        let kinds = ExtensionProductionSurface.productionWasmFactoryKinds
+        #expect(!kinds.contains("linkedGuest"))
+        #expect(!kinds.contains("simulation"))
+        // Test-support path still available for dual-run semantics tests.
+        let sim = WasmTestEngines.linkedGuest()
+        #expect(type(of: sim as Any) != type(of: WasmEngineFactory.production() as Any))
     }
 }

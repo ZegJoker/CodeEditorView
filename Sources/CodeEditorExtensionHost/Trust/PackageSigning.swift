@@ -277,7 +277,12 @@ public enum ExtensionPackageSigner {
         )
     }
 
-    private static func atomicWrite(
+    /// Test/fault-injection hook for EXT-N07: when true, atomic write fails after backup and before rename.
+    /// Production code never sets this; only tests may.
+    nonisolated(unsafe) public static var failNextAtomicWriteAfterBackupForTests: Bool = false
+
+    /// Atomic key/material write (EXT-N07). On failure after backup, the original destination is preserved.
+    public static func atomicWrite(
         data: Data,
         to url: URL,
         mode: mode_t,
@@ -294,22 +299,25 @@ public enum ExtensionPackageSigner {
         if FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
             let attrs = try FileManager.default.attributesOfItem(atPath: path)
             if attrs[.type] as? FileAttributeType == .typeSymbolicLink {
-                throw PackageSignatureError.cryptoUnavailable
+                throw PackageSignatureError.invalidKeyring("refusing symlink key destination")
             }
             if retainBackup {
                 let bak = url.path + ".bak"
-                // Best-effort rotate previous key.
+                // Rotate previous key before any mutation of the live file.
                 _ = try? FileManager.default.removeItem(atPath: bak)
-                try? FileManager.default.copyItem(atPath: path, toPath: bak)
+                try FileManager.default.copyItem(atPath: path, toPath: bak)
             }
+        }
+
+        // Injected failure (tests): backup already exists; live key untouched.
+        if failNextAtomicWriteAfterBackupForTests {
+            failNextAtomicWriteAfterBackupForTests = false
+            throw PackageSignatureError.invalidKeyring("injected atomic write failure")
         }
 
         let fd = open(tmpPath, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, mode)
         guard fd >= 0 else {
-            throw PackageSignatureError.cryptoUnavailable
-        }
-        defer {
-            // If still open somehow, close.
+            throw PackageSignatureError.invalidKeyring("exclusive create failed for key material")
         }
         var remaining = data
         while !remaining.isEmpty {
@@ -322,12 +330,12 @@ public enum ExtensionPackageSigner {
                 if err == EINTR { continue }
                 close(fd)
                 try? FileManager.default.removeItem(at: tmpURL)
-                throw PackageSignatureError.cryptoUnavailable
+                throw PackageSignatureError.invalidKeyring("short/interrupted key write")
             }
             if written == 0 {
                 close(fd)
                 try? FileManager.default.removeItem(at: tmpURL)
-                throw PackageSignatureError.cryptoUnavailable
+                throw PackageSignatureError.invalidKeyring("zero-length key write")
             }
             remaining = remaining.dropFirst(written)
         }
@@ -335,10 +343,10 @@ public enum ExtensionPackageSigner {
         fsync(fd)
         close(fd)
 
-        // Atomic replace.
+        // Atomic replace — destination is only replaced on successful rename.
         if rename(tmpPath, path) != 0 {
             try? FileManager.default.removeItem(at: tmpURL)
-            throw PackageSignatureError.cryptoUnavailable
+            throw PackageSignatureError.invalidKeyring("atomic rename failed; prior key preserved")
         }
         // Fsync directory.
         let dirFd = open(dir, O_RDONLY | O_DIRECTORY)
@@ -371,7 +379,7 @@ public enum ExtensionPackageSigner {
                 let jsonURL = packageRoot.appendingPathComponent("extension.json")
                 manifestData = try Data(contentsOf: jsonURL)
             }
-            let manifestSHA = sha256Hex(manifestData)
+            let manifestSHA = try sha256Hex(manifestData)
 
             // Load extension id / version for statement.
             let plan = try ExtensionPackageLoader.load(
@@ -454,13 +462,16 @@ public enum ExtensionPackageSigner {
         #endif
     }
 
-    private static func sha256Hex(_ data: Data) -> String {
-        #if canImport(CryptoKit)
-            SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-        #else
-            // EXT-N08: never fatalError — callers only hit this under #else.
-            ""
-        #endif
+    /// EXT-N08: throw `cryptoUnavailable` — never empty digest, never `fatalError`.
+    public static func sha256Hex(
+        _ data: Data,
+        availability: CryptoAvailability = .system
+    ) throws -> String {
+        do {
+            return try SecurityDigest.sha256Hex(data, availability: availability)
+        } catch SecurityDigestError.cryptoUnavailable {
+            throw PackageSignatureError.cryptoUnavailable
+        }
     }
 }
 
@@ -504,18 +515,15 @@ public enum ExtensionPackageVerifier {
                 } catch let e as PackageSBOM.SBOMError {
                     throw PackageSignatureError.license(String(describing: e))
                 }
-                // EXT-N17: data-only runtime cannot carry undeclared executables.
-                if plan.manifest.requiredHostCapabilities.isEmpty || true {
-                    let inv = try PackageInventoryBuilder.build(packageRoot: packageRoot)
-                    let declared = declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
-                    let isDataOnly =
-                        (try? String(contentsOf: packageRoot.appendingPathComponent("extension.toml"), encoding: .utf8))?
-                        .contains("data-only") == true
-                    if isDataOnly {
-                        try PackageInventoryBuilder.assertNoUndeclaredExecutables(
-                            inventory: inv, declaredPaths: declared)
-                    }
-                }
+                // EXT-N17: every package must declare all executable material; data-only must declare none.
+                let inv = try PackageInventoryBuilder.build(
+                    packageRoot: packageRoot,
+                    declaredExecutablePaths: declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
+                )
+                let declared = declaredExecutablePaths(plan: plan, packageRoot: packageRoot)
+                try PackageInventoryBuilder.assertNoUndeclaredExecutables(
+                    inventory: inv, declaredPaths: declared
+                )
             }
 
             if !hasChecksums && !hasSig {
@@ -637,17 +645,16 @@ public enum ExtensionPackageVerifier {
         #endif
     }
 
-    private static func declaredExecutablePaths(
+    /// Bind declared executables from signed manifest runtime fields + known helpers (EXT-N17).
+    public static func declaredExecutablePaths(
         plan: ValidatedContributionPlan,
         packageRoot: URL
     ) -> Set<String> {
-        var paths = Set<String>()
-        if FileManager.default.fileExists(atPath: packageRoot.appendingPathComponent("native-helper").path) {
-            paths.insert("native-helper")
-        }
-        // Manifest runtime entrypoint if present.
-        _ = plan
-        return paths
+        PackageInventoryBuilder.declaredExecutablePaths(
+            runtimeKind: plan.manifestRuntimeKind,
+            runtimeEntrypoint: plan.manifestRuntimeEntrypoint,
+            packageRoot: packageRoot
+        )
     }
 
     public static func assertNativeLaunchAllowed(
@@ -702,8 +709,14 @@ public enum NativeProcessTrustNotice {
         """
 }
 
-/// EXT-N20: production surface flags for release gates.
+/// EXT-N20: production surface gates for release / API freeze.
 public enum ExtensionProductionSurface {
-    /// Conformance guest is a fixture executable, not a Stable library product.
+    /// Conformance guest is a fixture executable target only (not a library product).
     public static let conformanceGuestIsPublicLibraryProduct = false
+    /// Linked-guest simulation engine is not part of production host defaults.
+    public static let linkedGuestSimulationIsProductionDefault = false
+    /// Public production Wasm factory kinds (must not include simulation).
+    public static var productionWasmFactoryKinds: Set<String> {
+        ["wasmKit"]
+    }
 }
