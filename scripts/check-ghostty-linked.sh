@@ -163,10 +163,30 @@ if [[ "${CODEEDITOR_GHOSTTY_LINKED:-}" != "1" ]]; then
 fi
 
 # TER-N10: symbol probe on built library
+#
+# CRITICAL: under `set -o pipefail`, `nm | grep -q` is a false-negative trap:
+# when grep finds a match it exits early, nm gets SIGPIPE (exit 141), and the
+# pipeline fails even though the symbol *is* present. Always consume the full
+# nm stream (grep without -q → /dev/null) or buffer first.
+library_has_symbol() {
+  local lib="$1" sym="$2"
+  command -v nm >/dev/null 2>&1 || return 1
+  # Prefer global symbols; fall back to full table (static archives).
+  # grep without -q so the producer is not SIGPIPE'd under pipefail.
+  if nm -g "$lib" 2>/dev/null | grep -E "_?${sym}" >/dev/null; then
+    return 0
+  fi
+  if nm "$lib" 2>/dev/null | grep -F "$sym" >/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
 LIB=""
+# Prefer dylib for cleaner nm tables; still accept static archive.
 for candidate in \
-  Vendor/ghostty/zig-out/lib/libghostty-vt.a \
   Vendor/ghostty/zig-out/lib/libghostty-vt.dylib \
+  Vendor/ghostty/zig-out/lib/libghostty-vt.a \
   Vendor/ghostty/zig-out/lib/libghostty.a; do
   if [[ -f "$candidate" ]]; then
     LIB="$candidate"
@@ -183,17 +203,31 @@ if [[ -z "$LIB" ]]; then
 fi
 echo "OK: Ghostty library at $LIB"
 if command -v nm >/dev/null 2>&1; then
-  if ! nm -g "$LIB" 2>/dev/null | grep -q 'ghostty_terminal_new'; then
-    if [[ "$REQUIRE" == "1" ]]; then
-      echo "FAIL: ghostty_terminal_new not found in $LIB"
-      exit 1
-    fi
-    echo "WARN: symbol probe inconclusive for $LIB"
-  else
+  if library_has_symbol "$LIB" "ghostty_terminal_new"; then
     echo "OK: ghostty_terminal_new present (ABI symbol probe)"
+  else
+    # Also try the sibling artifact if the preferred one missed the symbol.
+    FOUND_ALT=0
+    for alt in \
+      Vendor/ghostty/zig-out/lib/libghostty-vt.dylib \
+      Vendor/ghostty/zig-out/lib/libghostty-vt.a; do
+      if [[ -f "$alt" && "$alt" != "$LIB" ]] && library_has_symbol "$alt" "ghostty_terminal_new"; then
+        echo "OK: ghostty_terminal_new present in $alt (ABI symbol probe)"
+        LIB="$alt"
+        FOUND_ALT=1
+        break
+      fi
+    done
+    if [[ "$FOUND_ALT" != "1" ]]; then
+      if [[ "$REQUIRE" == "1" ]]; then
+        echo "FAIL: ghostty_terminal_new not found in $LIB"
+        exit 1
+      fi
+      echo "WARN: symbol probe inconclusive for $LIB"
+    fi
   fi
   for sym in ghostty_key_encoder_encode ghostty_mouse_encoder_encode ghostty_focus_encode ghostty_paste_encode; do
-    if nm -g "$LIB" 2>/dev/null | grep -q "$sym"; then
+    if library_has_symbol "$LIB" "$sym"; then
       echo "OK: $sym present"
     else
       echo "WARN: $sym not found via nm (may be static)"
@@ -303,6 +337,12 @@ fi
 # Linked build + behavior corpus
 export CODEEDITOR_GHOSTTY_LINKED=1
 export DYLD_LIBRARY_PATH="${LIBDIR}:${DYLD_LIBRARY_PATH:-}"
+# Nested unit tests set CE_GHOSTTY_GATE_SKIP_SWIFT_TEST=1 to avoid package-lock
+# deadlock while still asserting hard REQUIRE_GHOSTTY symbol+linked C probes.
+if [[ "${CE_GHOSTTY_GATE_SKIP_SWIFT_TEST:-0}" == "1" ]]; then
+  echo "OK: hard gate symbol+linked-probe complete (swift test skipped by CE_GHOSTTY_GATE_SKIP_SWIFT_TEST=1)"
+  exit 0
+fi
 swift build --product CodeEditorTerminalGhostty
 REQUIRE_GHOSTTY=1 CODEEDITOR_GHOSTTY_LINKED=1 GHOSTTY_SOAK_MIB="${GHOSTTY_SOAK_MIB:-1}" \
   swift test --filter 'Ghostty|TerminalGhostty|CodeEditorTerminalTests|TERNAudit' || {

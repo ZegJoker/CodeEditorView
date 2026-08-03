@@ -304,6 +304,48 @@ struct GhosttyConformanceTests {
         #expect(scriptBody.contains("ghostty_terminal_new") || scriptBody.contains("nm "))
         #expect(scriptBody.contains("CE_GHOSTTY_SHIM_ABI") || scriptBody.contains("shim ABI") || scriptBody.contains("ce_ghostty_shim_abi"))
         #expect(scriptBody.contains("ce_ghostty_surface_encode_mouse") || scriptBody.contains("encode_mouse"))
+        #expect(
+            !scriptBody.contains("nm -g \"$LIB\" 2>/dev/null | grep -q"),
+            "TER-N10: nm|grep -q under pipefail false-negatives on match"
+        )
+    }
+
+    @Test func test_TER_N09_accessibilityAndKeyboardSurfaceProjection() {
+        let a = GhosttyAccessibilityAdapter.from(
+            snapshot: "row0\nrow1",
+            title: "zsh",
+            isRunning: true
+        )
+        #expect(a.accessibilityLabel == "zsh, running")
+        #expect(a.accessibilityValue.contains("row1"))
+        #expect(a.cursorLine == 1)
+        // Keyboard mapping corpus (VoiceOver/keyboard UI path inputs).
+        let up = GhosttyNativeInput.keyEvent(macOSKeyCode: 126, modifierFlagsRaw: 0)
+        #expect(up.key == GhosttyPhysicalKey.arrowUp.rawValue)
+        #expect(up.key != 0)
+        let paste = GhosttyNativeInput.encodePaste("vo", bracketed: true)
+        #expect(String(decoding: paste, as: UTF8.self).contains("vo"))
+    }
+
+    @Test func test_TER_N09_resourceLeakCreateDestroyWhenLinked() async throws {
+        try await requireLinkedGhostty("leak-create-destroy") { _ in
+            // Create/destroy many surfaces; each must shutdown cleanly without trapping.
+            for i in 0..<40 {
+                let c = try GhosttySessionController(cols: 20, rows: 8, requireLinked: true)
+                try await c.write(Data("leak-\(i)\n".utf8))
+                _ = try await c.snapshotUTF8()
+                if i % 5 == 0 {
+                    try await c.resize(cols: 40, rows: 12)
+                }
+                await c.shutdown()
+            }
+            // One final surface proves allocator still works after churn.
+            let final = try GhosttySessionController(cols: 10, rows: 4, requireLinked: true)
+            try await final.write(Data("ok\n".utf8))
+            let snap = try await final.snapshotUTF8()
+            #expect(snap.contains("ok") || !snap.isEmpty)
+            await final.shutdown()
+        }
     }
 
     @Test func test_TER_N10_linkedLibrarySymbolAndBehaviorWhenLinked() async throws {

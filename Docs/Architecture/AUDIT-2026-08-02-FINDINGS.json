@@ -1620,7 +1620,7 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N03_legacyManagerStillFunctionsForMigration",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N03_workbenchUsesTerminalServiceNotLegacyManager"
       ],
-      "notes": "Legacy VTParser/TerminalScreen/TerminalSessionManager deprecated; TerminalService+Ghostty production facade; workbench uses TerminalService."
+      "notes": "2026-08-03 verifier residual: @available(*, deprecated) on all legacy VT/backend types with TerminalService pointer; TerminalService not deprecated; workbench forbids VTParser/TerminalScreen/PTYTerminalBackend construction; dual-path coexistence exercised at runtime."
     },
     {
       "id": "TER-N04",
@@ -1646,7 +1646,7 @@
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_mouseAndFocusEncodeWhenLinked",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_keyEncodeWhenLinked"
       ],
-      "notes": "2026-08-03 residual: encodeKey/Mouse/Focus/Paste route via ce_ghostty_surface_encode_* (Ghostty encoders); offline maps only for unlinked unit tests; surface emits structured events only."
+      "notes": "2026-08-03 verifier residual: controllerRoutesMouseFocusPaste is behavioral (live encodeMouse/Focus/Paste when linked), not source-token only; Ghostty encoders mandatory on production path."
     },
     {
       "id": "TER-N05",
@@ -1697,7 +1697,7 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_writeQueueSerializesConcurrentEnqueues",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N07_localPTYDeniesWhenPolicyDisallows"
       ],
-      "notes": "2026-08-03 residual: real LocalPTYTransport spawn of /bin/echo and /bin/cat; descriptor F_GETFL lifecycle; user cancel → cancelled; ProcessSupervisor+hub+spool+write queue."
+      "notes": "2026-08-03 verifier residual: echo lifecycle requires payload on hub AND exited(0) AND closed master FD after terminate (no soft OR success); hub/spool runtime API exercised; ProcessSupervisor lease owned."
     },
     {
       "id": "TER-N08",
@@ -1734,6 +1734,8 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N09_linkedOrFailClosedSurfaceLifecycle",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N09_conformanceFixturesPresent",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N09_requireGhosttyEnvHardFailsWhenUnlinked",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N09_accessibilityAdapterVoiceOverProjection",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N09_surfaceViewKeyboardAndAccessibilityTree",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_shimABIAndIntegrationLevel",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_requireLinkedFailsClosedWhenUnlinked",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_ansiAndUTF8WhenLinked",
@@ -1748,9 +1750,11 @@
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_testSpoolAvailableForHarness",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_fixturesCorpusFilesExist",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_fixturesWrittenIntoGhosttyWhenLinked",
-        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_inputMappingCorpusOffline"
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_inputMappingCorpusOffline",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_accessibilityAndKeyboardSurfaceProjection",
+        "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N09_resourceLeakCreateDestroyWhenLinked"
       ],
-      "notes": "2026-08-03 residual: fixtures written into Ghostty when linked; *WhenLinked corpus non-vacuous under CODEEDITOR_GHOSTTY_LINKED=1; default 100MiB soak (GHOSTTY_SOAK_MIB override); REQUIRE_GHOSTTY=1 hard; ABI 3 mouse/focus/paste/line."
+      "notes": "2026-08-03 verifier residual: dedicated VoiceOver/AX adapter + surface keyboard/focus/paste/accessibilityValue tests; create/destroy leak churn when linked; full WhenLinked corpus retained."
     },
     {
       "id": "TER-N10",
@@ -1766,13 +1770,15 @@
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_checkGhosttyLinkedScriptIsHardGate",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_publicAPIUsesCodeEditorOwnedShimOnly",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_executesCheckGhosttyLinkedScriptSoftMode",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_executesCheckGhosttyLinkedScriptHardMode",
+        "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_nmSymbolProbeIsPipefailSafe",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_abiProbeSymbolInHeader",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_linkedLibraryPresentWhenStampExists",
         "Tests/CodeEditorTerminalTests/TERNAuditTests.swift::test_TER_N10_gateScriptRequiresLinkedSymbolAndBehaviorProbes",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N10_hardGateScriptExists",
         "Tests/CodeEditorTerminalGhosttyTests/GhosttyConformanceTests.swift::test_TER_N10_linkedLibrarySymbolAndBehaviorWhenLinked"
       ],
-      "notes": "2026-08-03 residual: linked C ABI+behavior probe against libghostty-vt; nm symbol checks; fixtures; pin; build-ghostty curl-seed; REQUIRE_GHOSTTY hard gate; no Ghostty types in public Swift."
+      "notes": "2026-08-03 verifier residual: library_has_symbol SIGPIPE-safe (no nm|grep -q under pipefail); hard-mode REQUIRE_GHOSTTY=1 regression asserts exit 0 + LINKED=1 + LINKED_BEHAVIOR=ok; CE_GHOSTTY_GATE_SKIP_SWIFT_TEST for nested unit tests; prefer dylib for nm."
     },
     {
       "id": "BROKER-N01",

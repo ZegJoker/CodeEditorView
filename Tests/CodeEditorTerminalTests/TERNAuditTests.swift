@@ -194,11 +194,30 @@ struct TERN03Tests {
             "Sources/CodeEditorTerminal/VTParser.swift",
             "Sources/CodeEditorTerminal/TerminalScreen.swift",
             "Sources/CodeEditorTerminal/TerminalSessionManager.swift",
+            "Sources/CodeEditorTerminal/TerminalBackend.swift",
+            "Sources/CodeEditorTerminal/PTYTerminalBackend.swift",
         ] {
             let src = try String(contentsOf: root.appendingPathComponent(rel), encoding: .utf8)
-            #expect(src.contains("@available(*, deprecated") || src.contains("deprecated"), "\(rel) must be deprecated")
+            #expect(
+                src.contains("@available(*, deprecated"),
+                "\(rel) must use @available(*, deprecated) (not a soft comment)"
+            )
             #expect(src.contains("TER-N03") || src.contains("TerminalService"))
+            #expect(
+                src.contains("Use TerminalService") || src.contains("Use LocalPTYTransport")
+                    || src.contains("Use TerminalByteTransport") || src.contains("Use MockByteTransport")
+                    || src.contains("CodeEditorTerminalGhostty"),
+                "\(rel) deprecation must point at production facade"
+            )
         }
+        // Production facade must NOT be deprecated.
+        let service = try String(
+            contentsOf: root.appendingPathComponent("Sources/CodeEditorTerminal/TerminalService.swift"),
+            encoding: .utf8
+        )
+        #expect(!service.contains("@available(*, deprecated"))
+        #expect(service.contains("public actor TerminalService") || service.contains("public final class TerminalService")
+            || service.contains("public class TerminalService") || service.contains("actor TerminalService"))
     }
 
     @Test func test_TER_N03_legacyManagerStillFunctionsForMigration() async throws {
@@ -208,6 +227,16 @@ struct TERN03Tests {
         let session = try await manager.create(title: "legacy")
         #expect(await manager.allSessions().count == 1)
         await manager.close(session.id)
+        // Dual-architecture coexistence: TerminalService is the non-deprecated path.
+        let service = TerminalService(requireGhosttyLinked: false)
+        let id = try await service.create(
+            transport: MockByteTransport(),
+            transportClass: .inMemory,
+            caller: .host
+        )
+        #expect(await service.allSessions().contains(where: { $0.id == id }))
+        try await service.close(id)
+        #expect(await service.allSessions().isEmpty)
     }
 
     @Test func test_TER_N03_workbenchUsesTerminalServiceNotLegacyManager() throws {
@@ -219,6 +248,10 @@ struct TERN03Tests {
         #expect(util.contains("TerminalService"))
         #expect(!util.contains("TerminalSessionManager("))
         #expect(util.contains("GhosttySessionController") || util.contains("requireGhosttyLinked"))
+        // No legacy VTParser / TerminalScreen construction in workbench.
+        #expect(!util.contains("VTParser("))
+        #expect(!util.contains("TerminalScreen("))
+        #expect(!util.contains("PTYTerminalBackend("))
     }
 }
 
@@ -343,7 +376,7 @@ struct TERN04Tests {
         #expect(GhosttyMouseEvent(reportingMode: .off).encode().isEmpty)
     }
 
-    @Test func test_TER_N04_controllerRoutesMouseFocusPasteToGhosttyEncoder() throws {
+    @Test func test_TER_N04_controllerRoutesMouseFocusPasteToGhosttyEncoder() async throws {
         let root = packageRoot()
         let src = try String(
             contentsOf: root.appendingPathComponent(
@@ -365,6 +398,31 @@ struct TERN04Tests {
         #expect(hdr.contains("ce_ghostty_surface_encode_mouse"))
         #expect(hdr.contains("ce_ghostty_surface_encode_focus"))
         #expect(hdr.contains("ce_ghostty_surface_encode_paste"))
+        // Behavioral: live encode path via controller (not source tokens alone).
+        if GhosttySessionController.isLinked {
+            let c = try GhosttySessionController(cols: 40, rows: 12, requireLinked: true)
+            let mouse = try await c.encodeMouse(
+                GhosttyMouseEvent(button: .left, action: .press, col: 2, row: 3, reportingMode: .sgr)
+            )
+            #expect(!mouse.isEmpty, "linked Ghostty mouse encoder must emit bytes")
+            #expect(mouse.first == 0x1b || mouse.contains(0x1b), "mouse report should be CSI-framed")
+            let focusIn = try await c.encodeFocus(GhosttyFocusEvent(focused: true, reportingEnabled: true))
+            #expect(!focusIn.isEmpty)
+            let focusOut = try await c.encodeFocus(GhosttyFocusEvent(focused: false, reportingEnabled: true))
+            #expect(!focusOut.isEmpty)
+            #expect(focusIn != focusOut)
+            let paste = try await c.encodePaste("tern04", bracketed: true)
+            #expect(!paste.isEmpty)
+            let pasteStr = String(decoding: paste, as: UTF8.self)
+            #expect(pasteStr.contains("tern04") || paste.contains(UInt8(ascii: "t")))
+            await c.shutdown()
+        } else if ProcessInfo.processInfo.environment["REQUIRE_GHOSTTY"] == "1" {
+            Issue.record("REQUIRE_GHOSTTY=1 but Ghostty unlinked — encode corpus required")
+        } else {
+            #expect(throws: TerminalError.self) {
+                _ = try GhosttySessionController(requireLinked: true)
+            }
+        }
     }
 
     @Test func test_TER_N04_imeCompositionDoesNotWriteUntilCommit() {
@@ -695,7 +753,8 @@ struct TERN07Tests {
         try? await Task.sleep(nanoseconds: 20_000_000)
     }
 
-    @Test func test_TER_N07_localPTYTransportUsesHubAndSpool() throws {
+    @Test func test_TER_N07_localPTYTransportUsesHubAndSpool() async throws {
+        // Structural substrate wiring (source contract).
         let root = packageRoot()
         let src = try String(
             contentsOf: root.appendingPathComponent("Sources/CodeEditorTerminal/LocalPTYTransport.swift"),
@@ -708,6 +767,16 @@ struct TERN07Tests {
         #expect(src.contains(".cancelled"))
         #expect(src.contains("clampCells") || src.contains("TerminalDimension"))
         #expect(src.contains("ce_pty_spawn"))
+        // Runtime: hub multicast + write queue capacity are live API, not tokens only.
+        #if os(macOS)
+            let transport = LocalPTYTransport(securityPolicy: .forProfile(.macOSDirect))
+            #expect(await transport.writeQueueCapacity >= 64 * 1024)
+            let streamA = await transport.makeEventStream(capacity: 8)
+            let streamB = await transport.makeEventStream(capacity: 8)
+            _ = streamA
+            _ = streamB
+            #expect(TerminalDimension.clampCells(0) == 1)
+        #endif
     }
 
     @Test func test_TER_N07_realPTYSpawnEchoExitAndDescriptorLifecycle() async throws {
@@ -735,6 +804,7 @@ struct TERN07Tests {
             // Descriptor must be open (F_GETFL succeeds).
             let flags = fcntl(info.masterFD, F_GETFL)
             #expect(flags >= 0, "master FD must be open after spawn")
+            #expect(await supervisor.activePTYLeaseCount >= 1, "ProcessSupervisor must own PTY lease")
 
             // Collect output until terminate / exit via multicast stream (actor-safe).
             final class Box: @unchecked Sendable {
@@ -756,26 +826,34 @@ struct TERN07Tests {
                     }
                 }
             }
-            // Allow echo to write and exit.
-            try await Task.sleep(nanoseconds: 300_000_000)
-            let exitReason = await transport.awaitExitReason()
-            collector.cancel()
-            // Natural exit of /bin/echo should be exited(0), not cancelled.
-            switch exitReason {
-            case .exited(let code):
-                #expect(code == 0)
-            case .cancelled:
-                break
-            default:
-                break
+            // Allow echo to write and exit (retry window for scheduler latency).
+            var exitReason = await transport.awaitExitReason()
+            for _ in 0..<20 where box.output.isEmpty {
+                try await Task.sleep(nanoseconds: 50_000_000)
+                if box.reason != nil { break }
             }
+            // Prefer collected terminate event if await returned early.
+            if case .exited = exitReason { /* keep */ } else if let r = box.reason {
+                exitReason = r
+            }
+            collector.cancel()
+            // Natural exit of /bin/echo must be exited(0) — never soft-accept cancelled/any reason.
+            guard case .exited(let code) = exitReason else {
+                Issue.record("echo must exit cleanly, got \(exitReason)")
+                return
+            }
+            #expect(code == 0, "echo exit code must be 0, got \(code)")
             let out = String(decoding: box.output, as: UTF8.self)
             #expect(
-                out.contains("hello-pty-n07") || exitReason == .exited(code: 0) || box.reason != nil,
-                "echo must produce output or clean exit, got out=\(out.prefix(80)) reason=\(exitReason)"
+                out.contains("hello-pty-n07"),
+                "echo must produce payload on hub stream, got out=\(out.prefix(120)) reason=\(exitReason)"
             )
             // Ensure terminate is idempotent after exit.
             await transport.terminate(.user)
+            // Master FD must be closed after lifecycle end (F_GETFL fails).
+            try await Task.sleep(nanoseconds: 50_000_000)
+            let flagsAfter = fcntl(info.masterFD, F_GETFL)
+            #expect(flagsAfter < 0, "master FD must be closed after exit/terminate")
         #else
             // Non-macOS: LocalPTY must fail closed.
             let transport = LocalPTYTransport(securityPolicy: .forProfile(.iOS))
@@ -1151,6 +1229,88 @@ struct TERN09Tests {
             #expect(GhosttySessionController.currentIntegrationLevel == .unavailable)
         }
     }
+
+    @Test func test_TER_N09_accessibilityAdapterVoiceOverProjection() {
+        let running = GhosttyAccessibilityAdapter.from(
+            snapshot: "prompt>\nhello world",
+            title: "bash",
+            isRunning: true
+        )
+        #expect(running.accessibilityLabel == "bash, running")
+        #expect(running.accessibilityValue.contains("hello world"))
+        #expect(running.cursorLine == 1)
+        #expect(running.cursorColumn == "hello world".count)
+        let exited = GhosttyAccessibilityAdapter(
+            screenText: "done",
+            cursorLine: 0,
+            cursorColumn: 4,
+            title: "Shell",
+            isRunning: false
+        )
+        #expect(exited.accessibilityLabel == "Shell, exited")
+        #expect(exited.accessibilityValue == "done")
+    }
+
+    @Test @MainActor func test_TER_N09_surfaceViewKeyboardAndAccessibilityTree() {
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+            // Unavailable surface: honest AX, not a fake terminal.
+            let unavailable = GhosttySurfaceView(
+                sessionID: TerminalSessionID(),
+                integrationLevel: .unavailable
+            )
+            #expect(unavailable.accessibilityIdentifier() == "ghostty.surface.unavailable")
+            let unavailLabel = unavailable.accessibilityLabel() ?? ""
+            #expect(unavailLabel.contains("unavailable") || unavailLabel.contains("Ghostty"))
+            #expect(unavailable.acceptsFirstResponder == false)
+
+            // Available surface: keyboard first-responder + AX value + paste/focus routing.
+            let surface = GhosttySurfaceView(
+                sessionID: TerminalSessionID(),
+                integrationLevel: .vtEngine
+            )
+            #expect(surface.accessibilityIdentifier() == "ghostty.surface")
+            #expect(surface.acceptsFirstResponder == true)
+            #expect(surface.usesDirtyLineRendering)
+
+            var keys: [GhosttyKeyEvent] = []
+            surface.onKeyEvent = { keys.append($0) }
+            // Structured key path (same as keyDown → GhosttyNativeInput.keyEvent).
+            let arrow = GhosttyNativeInput.keyEvent(macOSKeyCode: 126, modifierFlagsRaw: 0)
+            surface.onKeyEvent?(arrow)
+            #expect(keys.count == 1)
+            #expect(keys[0].key == GhosttyPhysicalKey.arrowUp.rawValue)
+            #expect(keys[0].key != 0)
+
+            surface.applySnapshot("line-a\nline-b", generation: 1)
+            #expect(surface.cachedLineCount == 2)
+            let axValue = surface.accessibilityValue() as? String ?? ""
+            #expect(axValue.contains("line-a") && axValue.contains("line-b"))
+
+            var pasteChunks: [Data] = []
+            surface.onPasteData = { pasteChunks.append($0) }
+            surface.bracketedPasteEnabled = true
+            surface.performPaste("paste-n09")
+            #expect(pasteChunks.count == 1)
+            let pasteStr = String(decoding: pasteChunks[0], as: UTF8.self)
+            #expect(pasteStr.contains("paste-n09"))
+            #expect(pasteStr.contains("200~") || pasteStr.contains("\u{1b}"))
+
+            var focusEvents: [GhosttyFocusEvent] = []
+            surface.onFocusEvent = { focusEvents.append($0) }
+            surface.focusReportingEnabled = true
+            _ = surface.becomeFirstResponder()
+            #expect(focusEvents.contains(where: { $0.focused == true }))
+            _ = surface.resignFirstResponder()
+            #expect(focusEvents.contains(where: { $0.focused == false }))
+        #else
+            let adapter = GhosttyAccessibilityAdapter.from(
+                snapshot: "ios",
+                title: "t",
+                isRunning: true
+            )
+            #expect(adapter.accessibilityLabel.contains("t"))
+        #endif
+    }
 }
 
 // MARK: - TER-N10
@@ -1240,6 +1400,128 @@ struct TERN10Tests {
         #expect(combined.contains("encode_mouse") || combined.contains("encode_key"))
     }
 
+    /// Hard gate (REQUIRE_GHOSTTY=1) must succeed through symbol + linked C probe.
+    ///
+    /// Regression for pipefail + `nm | grep -q` SIGPIPE false-negative
+    /// ("ghostty_terminal_new not found" while the symbol is present).
+    @Test func test_TER_N10_executesCheckGhosttyLinkedScriptHardMode() throws {
+        let root = packageRoot()
+        let script = root.appendingPathComponent("scripts/check-ghostty-linked.sh")
+        #expect(FileManager.default.fileExists(atPath: script.path))
+        let libA = root.appendingPathComponent("Vendor/ghostty/zig-out/lib/libghostty-vt.a")
+        let libD = root.appendingPathComponent("Vendor/ghostty/zig-out/lib/libghostty-vt.dylib")
+        let vendor = root.appendingPathComponent("Vendor/ghostty")
+        let hasLib =
+            FileManager.default.fileExists(atPath: libA.path)
+            || FileManager.default.fileExists(atPath: libD.path)
+        let hasVendor = FileManager.default.fileExists(atPath: vendor.path)
+        // Hard gate is mandatory when vendor/lib is present (CI builds Ghostty first).
+        #expect(
+            hasVendor,
+            "Vendor/ghostty required for TER-N10 hard-gate regression (run scripts/build-ghostty.sh)"
+        )
+        #expect(
+            hasLib,
+            "libghostty-vt artifact required for TER-N10 hard-gate regression"
+        )
+
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/bin/bash")
+        proc.arguments = [script.path]
+        var env = ProcessInfo.processInfo.environment
+        env["REQUIRE_GHOSTTY"] = "1"
+        // Avoid nested `swift test` under the package test lock.
+        env["CE_GHOSTTY_GATE_SKIP_SWIFT_TEST"] = "1"
+        env["CE_GHOSTTY_GATE_LIGHT"] = "0"
+        env["PATH"] = env["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"
+        proc.environment = env
+        proc.currentDirectoryURL = root
+        let out = Pipe()
+        let err = Pipe()
+        proc.standardOutput = out
+        proc.standardError = err
+        try proc.run()
+        proc.waitUntilExit()
+        let stdout = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let stderr = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let combined = stdout + stderr
+        #expect(
+            proc.terminationStatus == 0,
+            "REQUIRE_GHOSTTY=1 hard gate must pass (symbol+linked probe): \(combined.suffix(900))"
+        )
+        #expect(
+            !combined.contains("ghostty_terminal_new not found"),
+            "SIGPIPE false-negative must not fire: \(combined.suffix(400))"
+        )
+        #expect(
+            combined.contains("ghostty_terminal_new") || combined.contains("ABI symbol"),
+            "must report symbol probe evidence"
+        )
+        #expect(
+            combined.contains("LINKED=1") || combined.contains("LINKED_BEHAVIOR=ok"),
+            "must run linked C ABI probe: \(combined.suffix(500))"
+        )
+        #expect(combined.contains("OK:"), "must emit OK evidence lines")
+    }
+
+    /// Direct nm symbol probe must not false-negative under bash pipefail (TER-N10).
+    @Test func test_TER_N10_nmSymbolProbeIsPipefailSafe() throws {
+        let root = packageRoot()
+        let libA = root.appendingPathComponent("Vendor/ghostty/zig-out/lib/libghostty-vt.a")
+        let libD = root.appendingPathComponent("Vendor/ghostty/zig-out/lib/libghostty-vt.dylib")
+        let lib: URL
+        if FileManager.default.fileExists(atPath: libD.path) {
+            lib = libD
+        } else if FileManager.default.fileExists(atPath: libA.path) {
+            lib = libA
+        } else {
+            Issue.record("libghostty-vt missing — cannot probe nm symbol safety")
+            return
+        }
+        // Broken pattern (historical): set -o pipefail; nm | grep -q → SIGPIPE when match found.
+        // Gate helper must find the symbol with a SIGPIPE-safe probe.
+        let probe = """
+        set -euo pipefail
+        LIB=\(lib.path)
+        library_has_symbol() {
+          local lib="$1" sym="$2"
+          # grep without -q: consume full nm stream so pipefail never sees SIGPIPE on match.
+          if nm -g "$lib" 2>/dev/null | grep -E "_?${sym}" >/dev/null; then return 0; fi
+          if nm "$lib" 2>/dev/null | grep -F "$sym" >/dev/null; then return 0; fi
+          return 1
+        }
+        library_has_symbol "$LIB" ghostty_terminal_new
+        echo SAFE_PROBE_OK
+        """
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/bin/bash")
+        proc.arguments = ["-c", probe]
+        let out = Pipe()
+        let err = Pipe()
+        proc.standardOutput = out
+        proc.standardError = err
+        try proc.run()
+        proc.waitUntilExit()
+        let stdout = String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let stderr = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        #expect(proc.terminationStatus == 0, "safe nm probe must succeed: \(stderr)\(stdout)")
+        #expect(stdout.contains("SAFE_PROBE_OK"))
+
+        // Script source must not use the broken `nm ... | grep -q` form under pipefail.
+        let script = try String(
+            contentsOf: root.appendingPathComponent("scripts/check-ghostty-linked.sh"),
+            encoding: .utf8
+        )
+        #expect(
+            !script.contains("nm -g \"$LIB\" 2>/dev/null | grep -q"),
+            "gate must not use nm|grep -q (SIGPIPE false-negative under pipefail)"
+        )
+        #expect(
+            script.contains("library_has_symbol") || script.contains("grep -E") || script.contains(">/dev/null"),
+            "gate must use SIGPIPE-safe symbol probe"
+        )
+    }
+
     @Test func test_TER_N10_linkedLibraryPresentWhenStampExists() throws {
         let root = packageRoot()
         let stamp = root.appendingPathComponent("Vendor/ghostty-build.stamp")
@@ -1274,6 +1556,8 @@ struct TERN10Tests {
         #expect(script.contains("ce_ghostty_surface_encode_mouse"))
         #expect(script.contains("ce_ghostty_surface_line_utf8"))
         #expect(script.contains("REQUIRE_GHOSTTY=1") || script.contains("REQUIRE_GHOSTTY"))
+        #expect(script.contains("CE_GHOSTTY_GATE_SKIP_SWIFT_TEST") || script.contains("SKIP_SWIFT"))
+        #expect(script.contains("set -euo pipefail") || script.contains("pipefail"))
     }
 
     @Test func test_TER_N10_abiProbeSymbolInHeader() throws {
