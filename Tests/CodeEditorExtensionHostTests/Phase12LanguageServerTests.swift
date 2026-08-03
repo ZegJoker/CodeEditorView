@@ -90,8 +90,8 @@ struct MockLSProvider: LanguageServerProvider {
     }
 }
 
-private func makeBrokerForLS(tmp: URL, processAllow: [CapabilityBroker.ProcessAllow]? = nil) -> CapabilityBroker {
-    CapabilityBroker(
+private func makeBrokerForLS(tmp: URL, processAllow: [CapabilityBroker.ProcessAllow]? = nil) throws -> CapabilityBroker {
+    try CapabilityBroker(
         config: .init(
             worktreeRoots: [tmp],
             storageRoot: tmp.appendingPathComponent("storage"),
@@ -125,7 +125,7 @@ struct Phase12ValidationTests {
             .appendingPathComponent("p12v-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.ls"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses, .network, .readWorkspace])
         let exec = LanguageServerLaunchPlanExecutor(broker: broker)
@@ -154,7 +154,7 @@ struct Phase12ValidationTests {
             .appendingPathComponent("p12d-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.ls"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
         let exec = LanguageServerLaunchPlanExecutor(broker: broker)
@@ -181,7 +181,7 @@ struct Phase12ValidationTests {
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
         // Only allow sleep — not true
-        let broker = makeBrokerForLS(
+        let broker = try makeBrokerForLS(
             tmp: tmp,
             processAllow: [
                 .init(command: "/bin/sleep"),
@@ -212,12 +212,13 @@ struct Phase12ValidationTests {
             .appendingPathComponent("p12dig-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.dig"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses, .network])
         let handle = try await broker.downloadHandle(extensionID: id)
         do {
             _ = try await broker.downloadWriteFixture(
+                caller: id,
                 handle: handle.id,
                 host: "cdn.example",
                 path: "/tool",
@@ -245,11 +246,11 @@ struct Phase12WorktreeAPITests {
         try "#!/bin/sh\nexit 0\n".write(to: tool, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tool.path)
 
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.which"
         await broker.registerExtension(id: id, generation: 1, granted: [.readWorkspace])
         let handle = try await broker.worktreeHandle(extensionID: id)
-        let found = try await broker.worktreeWhich(handle: handle.id, name: "my-ls")
+        let found = try await broker.worktreeWhich(caller: id, handle: handle.id, name: "my-ls")
         #expect(found == tool.path)
     }
 
@@ -258,11 +259,12 @@ struct Phase12WorktreeAPITests {
             .appendingPathComponent("p12env-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.env"
         await broker.registerExtension(id: id, generation: 1, granted: [.readWorkspace])
         let handle = try await broker.worktreeHandle(extensionID: id)
         let env = try await broker.worktreeEnvironment(
+            caller: id,
             handle: handle.id,
             names: ["PATH", "HOME", "SECRET_TOKEN_SHOULD_NOT_LEAK"]
         )
@@ -275,11 +277,11 @@ struct Phase12WorktreeAPITests {
             .appendingPathComponent("p12ctx-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.ctx"
         await broker.registerExtension(id: id, generation: 1, granted: [.readWorkspace, .startProcesses])
         let settings = try await broker.settingsHandle(extensionID: id)
-        try await broker.settingsSet(handle: settings.id, key: "toolchain", value: "swift-6.0")
+        try await broker.settingsSet(caller: id, handle: settings.id, key: "toolchain", value: "swift-6.0")
         let ctx = try await LanguageServerResolveContextBuilder.build(
             extensionID: id,
             broker: broker,
@@ -307,7 +309,7 @@ struct Phase12ExecutorE2ETests {
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
 
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let extID: ExtensionID = "com.codeeditor.fixtures.ls-procedural"
         await broker.registerExtension(
             id: extID,
@@ -426,7 +428,7 @@ struct Phase12ExecutorE2ETests {
             .appendingPathComponent("p12pool-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let extID: ExtensionID = "ext.pool"
         await broker.registerExtension(id: extID, generation: 1, granted: [.startProcesses])
 
@@ -481,7 +483,7 @@ struct Phase12ExecutorE2ETests {
             .appendingPathComponent("p12coord-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let extID: ExtensionID = "ext.coord"
         await broker.registerExtension(id: extID, generation: 1, granted: [.startProcesses, .readWorkspace])
 
@@ -539,7 +541,7 @@ struct Phase12ExecutorE2ETests {
             .appendingPathComponent("p12mat-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.mat"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses, .network])
         let exec = LanguageServerLaunchPlanExecutor(broker: broker)
@@ -727,7 +729,7 @@ struct Phase12MultiRuntimeTests {
             .appendingPathComponent("p12bi-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let services = ExtensionHostServices()
         let instance = BuiltInExtensionInstance(
             ext: MiniExt(),
@@ -758,7 +760,7 @@ struct Phase12MultiRuntimeTests {
             .appendingPathComponent("p12n-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBrokerForLS(tmp: tmp)
+        let broker = try makeBrokerForLS(tmp: tmp)
         let id: ExtensionID = "ext.native"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
         let exec = LanguageServerLaunchPlanExecutor(broker: broker)

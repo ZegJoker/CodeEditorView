@@ -87,7 +87,7 @@ struct Phase16ConformanceTests {
             .appendingPathComponent("p16conf-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 worktreeRoots: [tmp],
                 storageRoot: tmp.appendingPathComponent("s"),
@@ -135,7 +135,7 @@ struct Phase16OrchestratorSoakTests {
             .appendingPathComponent("p16os-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 worktreeRoots: [tmp],
                 storageRoot: tmp.appendingPathComponent("s"),

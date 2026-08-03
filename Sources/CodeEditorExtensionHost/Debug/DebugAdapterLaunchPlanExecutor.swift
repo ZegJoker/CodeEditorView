@@ -248,11 +248,19 @@ public actor DebugAdapterLaunchPlanExecutor {
                     let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
                 {
                     dest = try await broker.downloadWriteFixture(
-                        handle: handle.id, host: "cdn.example", path: "/\(cacheKey)", data: b64, expectedDigest: digest
+                        caller: extensionID,
+                        handle: handle.id,
+                        host: "cdn.example",
+                        path: "/\(cacheKey)",
+                        data: b64,
+                        expectedDigest: digest
                     )
                 } else {
                     dest = try await broker.downloadFetch(
-                        handle: handle.id, urlString: urlString, expectedDigest: digest
+                        caller: extensionID,
+                        handle: handle.id,
+                        urlString: urlString,
+                        expectedDigest: digest
                     )
                 }
                 try await ensureProcess(dest.path, extensionID: extensionID, adapterID: plan.adapterID)
@@ -272,7 +280,9 @@ public actor DebugAdapterLaunchPlanExecutor {
             }
         case .npm(let package, let version, let bin):
             let handle = try await broker.npmHandle(extensionID: extensionID)
-            let dest = try await broker.npmInstall(handle: handle.id, package: package, version: version)
+            let dest = try await broker.npmInstall(
+                caller: extensionID, handle: handle.id, package: package, version: version
+            )
             let exec = dest.appendingPathComponent(bin)
             // Do not invent binaries — package install must provide the declared bin.
             guard FileManager.default.fileExists(atPath: exec.path) else {

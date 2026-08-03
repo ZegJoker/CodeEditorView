@@ -9,8 +9,8 @@ import Testing
 
 @testable import CodeEditorExtensionHost
 
-private func makeBroker(tmp: URL) -> CapabilityBroker {
-    CapabilityBroker(
+private func makeBroker(tmp: URL) throws -> CapabilityBroker {
+    try CapabilityBroker(
         config: .init(
             worktreeRoots: [tmp],
             storageRoot: tmp.appendingPathComponent("storage"),
@@ -28,7 +28,7 @@ struct Phase13DAPHostTests {
             .appendingPathComponent("p13dap-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBroker(tmp: tmp)
+        let broker = try makeBroker(tmp: tmp)
         let id: ExtensionID = "ext.dap"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
         let exec = DebugAdapterLaunchPlanExecutor(broker: broker)
@@ -51,7 +51,7 @@ struct Phase13DAPHostTests {
             .appendingPathComponent("p13pool-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBroker(tmp: tmp)
+        let broker = try makeBroker(tmp: tmp)
         let id: ExtensionID = "ext.dap2"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
 
@@ -338,7 +338,7 @@ struct Phase13NoSoftStubTests {
             .appendingPathComponent("p13ns-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = makeBroker(tmp: tmp)
+        let broker = try makeBroker(tmp: tmp)
         let instance = BuiltInExtensionInstance(
             ext: MiniExt(),
             services: ExtensionHostServices(),

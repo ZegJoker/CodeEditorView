@@ -216,6 +216,112 @@ public enum DescriptorRelativeIO: Sendable {
         return (dirfd, name, true)
     }
 
+    /// Open a nested regular file component-by-component with `O_NOFOLLOW` (BROKER-N06).
+    /// Parent segments use `O_DIRECTORY`; the final segment is opened as a file (not a directory).
+    public static func openNestedFile(rootDirfd: Int32, relativePath: String) throws -> Int32 {
+        #if canImport(Darwin)
+            let parts = relativePath.split(separator: "/").map(String.init).filter { !$0.isEmpty }
+            guard !parts.isEmpty else {
+                throw DescriptorRelativeIOError.pathEscape(relativePath)
+            }
+            if parts.count == 1 {
+                return try openAt(
+                    dirfd: rootDirfd,
+                    relativePath: parts[0],
+                    flags: O_RDONLY | O_NOFOLLOW
+                )
+            }
+            let parent = try openNestedDirectory(rootDirfd: rootDirfd, segments: Array(parts.dropLast()))
+            defer { close(parent) }
+            return try openAt(
+                dirfd: parent,
+                relativePath: parts.last!,
+                flags: O_RDONLY | O_NOFOLLOW
+            )
+        #else
+            throw DescriptorRelativeIOError.notSupported
+        #endif
+    }
+
+    /// List directory entries via `fdopendir`/`readdir` (no path re-walk). Includes hidden names.
+    public static func listDirectory(dirfd: Int32) throws -> [String] {
+        #if canImport(Darwin)
+            let duped = dup(dirfd)
+            guard duped >= 0 else {
+                throw DescriptorRelativeIOError.operationFailed(String(cString: strerror(errno)))
+            }
+            guard let dir = fdopendir(duped) else {
+                let err = errno
+                Darwin.close(duped)
+                throw DescriptorRelativeIOError.operationFailed(String(cString: strerror(err)))
+            }
+            defer { closedir(dir) }
+            var names: [String] = []
+            while let ent = readdir(dir) {
+                let name = withUnsafePointer(to: &ent.pointee.d_name) { ptr in
+                    ptr.withMemoryRebound(to: CChar.self, capacity: Int(NAME_MAX) + 1) {
+                        String(cString: $0)
+                    }
+                }
+                if name == "." || name == ".." { continue }
+                names.append(name)
+            }
+            return names.sorted()
+        #else
+            throw DescriptorRelativeIOError.notSupported
+        #endif
+    }
+
+    /// Read up to `maxBytes` from an open file descriptor. Throws when size exceeds the cap.
+    public static func readFile(fd: Int32, maxBytes: Int) throws -> Data {
+        #if canImport(Darwin)
+            var st = stat()
+            guard fstat(fd, &st) == 0 else {
+                throw DescriptorRelativeIOError.operationFailed(String(cString: strerror(errno)))
+            }
+            if st.st_size > maxBytes {
+                throw DescriptorRelativeIOError.operationFailed("quotaExceeded")
+            }
+            // Refuse non-regular files (symlink already refused by O_NOFOLLOW open).
+            guard (st.st_mode & S_IFMT) == S_IFREG else {
+                throw DescriptorRelativeIOError.operationFailed("not a regular file")
+            }
+            var data = Data()
+            let chunkSize = min(max(maxBytes, 1), 64 * 1024)
+            var buffer = [UInt8](repeating: 0, count: chunkSize)
+            while true {
+                let n = read(fd, &buffer, buffer.count)
+                if n < 0 {
+                    throw DescriptorRelativeIOError.operationFailed(String(cString: strerror(errno)))
+                }
+                if n == 0 { break }
+                if data.count + n > maxBytes {
+                    throw DescriptorRelativeIOError.operationFailed("quotaExceeded")
+                }
+                data.append(contentsOf: buffer.prefix(n))
+            }
+            return data
+        #else
+            throw DescriptorRelativeIOError.notSupported
+        #endif
+    }
+
+    /// Split a relative path into validated components (no `.` / `..` / empty / absolute).
+    public static func relativeComponents(_ relativePath: String) throws -> [String] {
+        if relativePath.contains("\0") {
+            throw DescriptorRelativeIOError.pathEscape(relativePath)
+        }
+        let cleaned = relativePath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if cleaned.isEmpty { return [] }
+        let parts = cleaned.split(separator: "/").map(String.init)
+        for part in parts {
+            if part.isEmpty || part == "." || part == ".." {
+                throw DescriptorRelativeIOError.pathEscape(relativePath)
+            }
+        }
+        return parts
+    }
+
     private static func validateRelativeComponentPath(_ path: String) throws {
         if path.isEmpty || path.hasPrefix("/") || path.contains("\0") {
             throw DescriptorRelativeIOError.pathEscape(path)

@@ -152,7 +152,7 @@ struct Phase15RemoteFallbackTests {
             .appendingPathComponent("p15ls-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tmp) }
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 worktreeRoots: [tmp],
                 storageRoot: tmp.appendingPathComponent("s"),

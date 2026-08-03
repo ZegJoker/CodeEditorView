@@ -23,7 +23,7 @@
 | 7 | DAP | 10 | verified |
 | 8 | terminal/Ghostty | 10 | fixed |
 | 9a | extension package/signing | 20 | fixed |
-| 9b | capability broker | 16 | open |
+| 9b | capability broker | 16 | fixed |
 | 9c | Wasm | 16 | open |
 | 10 | workbench | 7 | open |
 | F | final residual gate | all 174 | open |
@@ -40,6 +40,7 @@
 
 ## Log
 
+- 2026-08-03: Phase 9b capability broker — fixed BROKER-N01…BROKER-N16: caller+generation-bound resolve; unregistered mint denied; strict Codable wire schemas (unknown fields/base64 fail closed); throwing init for storage/cache roots; typed worktree I/O errors; DescriptorRelativeIO O_NOFOLLOW list/read; executable revalidation + worktree spawn deny; BrokerProjectInfo roots array (no `:` join); key/value/count/settings quotas + durable quota-ledger; ProcessArgumentMatcher (not argsGlob); ProcessSupervisor lease events/exit/kill; streaming download with HTTPS/redirect/Content-Length/meta digest; component path allowlist; scoped npm + recursive size + hidden files + immutable package.json; nonblocking revoke via supervisor cancel Task. `swift test --filter BROKER_N`: 22 passed; CodeEditorExtensionHostTests: 146 passed.
 - 2026-08-03: Phase 9a verifier residual (3) — EXT-N17 closed soft fail-open: `declaredExecutablePaths` no longer auto-inserts `native-helper` from disk (signed runtime kind only); `assertDataOnlyHasNoExecutables` requires zero executables for data-only (not `declared.isEmpty`); install maps inventory policy errors; test_EXT_N17_dataOnlyNativeHelperFailsClosed. EXT-N03 `SHA256Hasher(availability:)` forces cryptoUnavailable (not happy-path-only). EXT-N06 publisher.json subject mutation hard-throws (no soft OR). `swift test --filter 'EXT_N|Phase14SigningAndTrustTests'`: 40 passed.
 - 2026-08-03: Phase 9a verifier residual (2) — EXT-N15 signed revocation (Ed25519 `RevocationListCrypto`, required issuer/keyID/signature/expiresAt, authority keyring, monotonic+fresh) + `onPackagesRevoked` immediate driver terminate via orchestrator attach; EXT-N01 dotted `[language_servers.swift]` exercised; EXT-N16 hard `capabilities = ["panels"]` loadable fail; EXT-N19 gaps via `packageSnapshotStream` consumer backlog; CLI `productionManager` (never `insecureForTests`); `SHA256Hasher.finalizeHex` throws not `preconditionFailure`; atomic write fault via parameter; recover re-verify throw quarantines. `swift test --filter 'test_EXT_N'`: 33 passed; Extension* suites 209 passed.
 - 2026-08-03: Phase 9a verifier residual — EXT-N07/N08/N12/N16/N17/N18/N19/N20: `SecurityDigest` throw-on-unavailable (no empty digest/fatalError in PackageSigning/Broker/ConformanceTrace); atomic key write failure injection preserves prior; incomplete install journal recovery→rolledBack; `isLoadableForSnapshot` full checklist (live digest, re-verify, host API, capabilities, revocation); content-magic executable classification + manifest entrypoint declared paths; telemetry writeFailureCount inject; AsyncBroadcastHub gap contract; LinkedGuest/`CodeEditorWasmSimulationEngine` moved to non-product `CodeEditorWasmEngineTestSupport`; production `WasmEngineFactory` WasmKit-only. `swift test --filter 'test_EXT_N'`: 30 passed; Extension/Host/Wasm filter 224 passed.

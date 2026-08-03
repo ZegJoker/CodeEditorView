@@ -154,7 +154,9 @@ public actor MCPLaunchPlanExecutor {
         if !plan.secretEnvironment.isEmpty {
             if let sh = try? await broker.settingsHandle(extensionID: extensionID) {
                 for (key, secret) in plan.secretEnvironment {
-                    if let value = try? await broker.settingsGet(handle: sh.id, key: "secret.\(secret.name)") {
+                    if let value = try? await broker.settingsGet(
+                        caller: extensionID, handle: sh.id, key: "secret.\(secret.name)"
+                    ) {
                         env[key] = value
                     }
                 }
@@ -186,16 +188,28 @@ public actor MCPLaunchPlanExecutor {
                 let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
             {
                 dest = try await broker.downloadWriteFixture(
-                    handle: handle.id, host: "cdn.example", path: "/\(cacheKey)", data: b64, expectedDigest: digest
+                    caller: extensionID,
+                    handle: handle.id,
+                    host: "cdn.example",
+                    path: "/\(cacheKey)",
+                    data: b64,
+                    expectedDigest: digest
                 )
             } else {
-                dest = try await broker.downloadFetch(handle: handle.id, urlString: urlString, expectedDigest: digest)
+                dest = try await broker.downloadFetch(
+                    caller: extensionID,
+                    handle: handle.id,
+                    urlString: urlString,
+                    expectedDigest: digest
+                )
             }
             try await ensureProcess(dest.path, extensionID: extensionID)
             return Materialized(kind: .process(dest, plan.arguments, cwd, env))
         case .npm(let package, let version, let bin):
             let handle = try await broker.npmHandle(extensionID: extensionID)
-            let dest = try await broker.npmInstall(handle: handle.id, package: package, version: version)
+            let dest = try await broker.npmInstall(
+                caller: extensionID, handle: handle.id, package: package, version: version
+            )
             let exec = dest.appendingPathComponent(bin)
             // Do not invent executables: require the package to provide the bin.
             guard FileManager.default.fileExists(atPath: exec.path) else {

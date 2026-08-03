@@ -202,6 +202,7 @@ let package = Package(
                 "CodeEditorCommands",
                 "CodeEditorLanguageSupport",
                 "CodeEditorLanguageServices",
+                "CodeEditorWorkspace",
                 "CodeEditorLSP",
                 "CodeEditorDAP",
                 "CodeEditorTasks",

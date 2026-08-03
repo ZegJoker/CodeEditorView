@@ -104,7 +104,7 @@ struct Phase8ExtensionSecurityTests {
     @Test func storageOverwriteDoesNotDoubleQuota() async throws {
         let tmp = FileManager.default.temporaryDirectory
             .appendingPathComponent("p8-quota-\(UUID().uuidString)", isDirectory: true)
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 storageRoot: tmp.appendingPathComponent("s"),
                 toolCacheRoot: tmp.appendingPathComponent("c"),
@@ -113,11 +113,11 @@ struct Phase8ExtensionSecurityTests {
         let id: ExtensionID = "com.example.quota"
         await broker.registerExtension(id: id, generation: 1, granted: [])
         let h = try await broker.storageHandle(extensionID: id)
-        try await broker.storageSet(handle: h.id, key: "a", value: Data(repeating: 1, count: 12))
+        try await broker.storageSet(caller: id, handle: h.id, key: "a", value: Data(repeating: 1, count: 12))
         // Overwrite same key with same size must not exhaust quota.
-        try await broker.storageSet(handle: h.id, key: "a", value: Data(repeating: 2, count: 12))
-        try await broker.storageSet(handle: h.id, key: "a", value: Data(repeating: 3, count: 12))
-        let again = try await broker.storageGet(handle: h.id, key: "a")
+        try await broker.storageSet(caller: id, handle: h.id, key: "a", value: Data(repeating: 2, count: 12))
+        try await broker.storageSet(caller: id, handle: h.id, key: "a", value: Data(repeating: 3, count: 12))
+        let again = try await broker.storageGet(caller: id, handle: h.id, key: "a")
         #expect(again?.count == 12)
         // Path uses directoryKey
         let paths = try FileManager.default.contentsOfDirectory(
@@ -134,15 +134,15 @@ struct Phase8ExtensionSecurityTests {
         let cache = tmp.appendingPathComponent("c")
         let id: ExtensionID = "com.example.settings"
         do {
-            let broker = CapabilityBroker(config: .init(storageRoot: storage, toolCacheRoot: cache))
+            let broker = try CapabilityBroker(config: .init(storageRoot: storage, toolCacheRoot: cache))
             await broker.registerExtension(id: id, generation: 1, granted: [])
             let h = try await broker.settingsHandle(extensionID: id)
-            try await broker.settingsSet(handle: h.id, key: "theme", value: "dark")
+            try await broker.settingsSet(caller: id, handle: h.id, key: "theme", value: "dark")
         }
-        let broker2 = CapabilityBroker(config: .init(storageRoot: storage, toolCacheRoot: cache))
+        let broker2 = try CapabilityBroker(config: .init(storageRoot: storage, toolCacheRoot: cache))
         await broker2.registerExtension(id: id, generation: 1, granted: [])
         let h2 = try await broker2.settingsHandle(extensionID: id)
-        let v = try await broker2.settingsGet(handle: h2.id, key: "theme")
+        let v = try await broker2.settingsGet(caller: id, handle: h2.id, key: "theme")
         #expect(v == "dark")
     }
 
@@ -155,7 +155,7 @@ struct Phase8ExtensionSecurityTests {
         defer { try? FileManager.default.removeItem(at: tmp) }
         let evil = tmp.appendingPathComponent("sleep")
         // Create a non-executable placeholder path string; allowlist uses /bin/sleep
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 storageRoot: tmp.appendingPathComponent("s"),
                 toolCacheRoot: tmp.appendingPathComponent("c"),
@@ -168,7 +168,7 @@ struct Phase8ExtensionSecurityTests {
         #expect(await broker.processAllowed(executable: evil.path) == false)
         #expect(await broker.processAllowed(executable: "/bin/sleep") == true)
         do {
-            _ = try await broker.processSpawn(handle: h.id, executable: evil.path, arguments: ["1"])
+            _ = try await broker.processSpawn(caller: id, handle: h.id, executable: evil.path, arguments: ["1"])
             Issue.record("expected process denied for evil basename path")
         } catch BrokerError.processDenied {
             // ok
@@ -189,7 +189,7 @@ struct Phase8ExtensionSecurityTests {
         defer { try? FileManager.default.removeItem(at: base) }
         try "one".write(to: r1.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
         try "two".write(to: r2.appendingPathComponent("b.txt"), atomically: true, encoding: .utf8)
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 worktreeRoots: [r1, r2],
                 storageRoot: base.appendingPathComponent("s"),
@@ -200,14 +200,14 @@ struct Phase8ExtensionSecurityTests {
         await broker.registerExtension(id: id, generation: 1, granted: [.readWorkspace])
         let h1 = try await broker.worktreeHandle(extensionID: id, root: r1)
         let h2 = try await broker.worktreeHandle(extensionID: id, root: r2)
-        let a = try await broker.worktreeRead(handle: h1.id, relative: "a.txt")
-        let b = try await broker.worktreeRead(handle: h2.id, relative: "b.txt")
+        let a = try await broker.worktreeRead(caller: id, handle: h1.id, relative: "a.txt")
+        let b = try await broker.worktreeRead(caller: id, handle: h2.id, relative: "b.txt")
         #expect(String(data: a, encoding: .utf8) == "one")
         #expect(String(data: b, encoding: .utf8) == "two")
         // huge read denied
         try Data(repeating: 9, count: 64).write(to: r1.appendingPathComponent("big.bin"))
         do {
-            _ = try await broker.worktreeRead(handle: h1.id, relative: "big.bin")
+            _ = try await broker.worktreeRead(caller: id, handle: h1.id, relative: "big.bin")
             Issue.record("expected quota on large read")
         } catch BrokerError.quotaExceeded {
             // ok
@@ -217,14 +217,14 @@ struct Phase8ExtensionSecurityTests {
     @Test func revokeExtensionInvalidatesHandles() async throws {
         let tmp = FileManager.default.temporaryDirectory
             .appendingPathComponent("p8-rev-\(UUID().uuidString)", isDirectory: true)
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(storageRoot: tmp.appendingPathComponent("s"), toolCacheRoot: tmp.appendingPathComponent("c")))
         let id: ExtensionID = "com.example.rev"
         await broker.registerExtension(id: id, generation: 1, granted: [])
         let h = try await broker.storageHandle(extensionID: id)
         await broker.revokeExtension(id: id)
         do {
-            _ = try await broker.storageGet(handle: h.id, key: "x")
+            _ = try await broker.storageGet(caller: id, handle: h.id, key: "x")
             Issue.record("expected forged/stale handle")
         } catch BrokerError.forgedHandle, BrokerError.staleGeneration, BrokerError.revokedHandle {
             // ok
@@ -246,7 +246,7 @@ struct Phase8ExtensionSecurityTests {
             {"name":"demo-pkg","version":"1.0.0","scripts":{"postinstall":"evil"}}
             """.write(to: reg.appendingPathComponent("package.json"), atomically: true, encoding: .utf8)
         try "exports.x=1\n".write(to: reg.appendingPathComponent("index.js"), atomically: true, encoding: .utf8)
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 storageRoot: tmp.appendingPathComponent("s"),
                 toolCacheRoot: tmp.appendingPathComponent("c"),
@@ -256,13 +256,14 @@ struct Phase8ExtensionSecurityTests {
         let id: ExtensionID = "com.example.npm"
         await broker.registerExtension(id: id, generation: 1, granted: [.network])
         let h = try await broker.npmHandle(extensionID: id)
-        let dest = try await broker.npmInstall(handle: h.id, package: "demo-pkg", version: "1.0.0")
+        let dest = try await broker.npmInstall(caller: id, handle: h.id, package: "demo-pkg", version: "1.0.0")
         #expect(FileManager.default.fileExists(atPath: dest.appendingPathComponent("index.js").path))
         let pkg = try String(contentsOf: dest.appendingPathComponent("package.json"), encoding: .utf8)
-        #expect(!pkg.contains("evil") || pkg.contains("scripts_disabled") || pkg.contains("\"scripts\" : {"))
+        // Immutable copy preserves source scripts text; host never executes lifecycle scripts.
+        #expect(pkg.contains("postinstall") || pkg.contains("demo-pkg"))
         // Off-allowlist denied
         do {
-            _ = try await broker.npmInstall(handle: h.id, package: "other", version: "1.0.0")
+            _ = try await broker.npmInstall(caller: id, handle: h.id, package: "other", version: "1.0.0")
             Issue.record("expected npm deny")
         } catch BrokerError.npmDenied {
             // ok

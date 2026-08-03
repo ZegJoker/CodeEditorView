@@ -12,19 +12,19 @@ import Testing
 
 // MARK: - Helpers
 
-private func makeBroker(roots: [URL] = []) -> CapabilityBroker {
+private func makeBroker(roots: [URL] = []) throws -> CapabilityBroker {
     let tmp = FileManager.default.temporaryDirectory
         .appendingPathComponent("broker-\(UUID().uuidString)", isDirectory: true)
-    try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
     // Host-owned npm fixture registry for left-pad@1.0.0
     let npmReg = tmp.appendingPathComponent("npm-registry/left-pad/1.0.0", isDirectory: true)
-    try? FileManager.default.createDirectory(at: npmReg, withIntermediateDirectories: true)
-    try? """
+    try FileManager.default.createDirectory(at: npmReg, withIntermediateDirectories: true)
+    try """
         {"name":"left-pad","version":"1.0.0","main":"index.js"}
         """.write(to: npmReg.appendingPathComponent("package.json"), atomically: true, encoding: .utf8)
-    try? "module.exports=function(){}\n".write(
+    try "module.exports=function(){}\n".write(
         to: npmReg.appendingPathComponent("index.js"), atomically: true, encoding: .utf8)
-    return CapabilityBroker(
+    return try CapabilityBroker(
         config: .init(
             worktreeRoots: roots,
             storageRoot: tmp.appendingPathComponent("storage"),
@@ -67,7 +67,7 @@ private struct ConformanceExt: CodeEditorExtension {
 struct Phase10DualRunTests {
     @Test func builtInConformanceTrace() async throws {
         let services = await MainActor.run { ExtensionHostServices.makeFull() }
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let env = HostEnvironment(
             capabilities: Set(HostCapability.allCases),
             grantedPermissions: [.readWorkspace, .startProcesses, .network, .presentUI]
@@ -194,14 +194,14 @@ struct Phase10BrokerTests {
         try "hello".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let broker = makeBroker(roots: [root])
+        let broker = try makeBroker(roots: [root])
         let id: ExtensionID = "ext.wt"
         await broker.registerExtension(id: id, generation: 1, granted: [.readWorkspace])
         let handle = try await broker.worktreeHandle(extensionID: id)
-        let data = try await broker.worktreeRead(handle: handle.id, relative: "a.txt")
+        let data = try await broker.worktreeRead(caller: id, handle: handle.id, relative: "a.txt")
         #expect(String(data: data, encoding: .utf8) == "hello")
         do {
-            _ = try await broker.worktreeRead(handle: handle.id, relative: "../etc/passwd")
+            _ = try await broker.worktreeRead(caller: id, handle: handle.id, relative: "../etc/passwd")
             Issue.record("expected path escape")
         } catch BrokerError.pathEscape {
             // ok
@@ -209,12 +209,14 @@ struct Phase10BrokerTests {
     }
 
     @Test func forgedAndStaleHandlesRejected() async throws {
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let id: ExtensionID = "ext.h"
         await broker.registerExtension(id: id, generation: 1, granted: [.readWorkspace])
         let handle = try await broker.worktreeHandle(extensionID: id)
         do {
-            _ = try await broker.worktreeList(handle: BrokerHandleID(rawValue: "forged"), relative: "")
+            _ = try await broker.worktreeList(
+                caller: id, handle: BrokerHandleID(rawValue: "forged"), relative: ""
+            )
             Issue.record("expected forged")
         } catch BrokerError.forgedHandle {
             // ok
@@ -222,7 +224,7 @@ struct Phase10BrokerTests {
         // Stale generation
         await broker.registerExtension(id: id, generation: 2, granted: [.readWorkspace])
         do {
-            _ = try await broker.worktreeList(handle: handle.id, relative: "")
+            _ = try await broker.worktreeList(caller: id, handle: handle.id, relative: "")
             Issue.record("expected stale")
         } catch BrokerError.staleGeneration {
             // ok
@@ -230,29 +232,31 @@ struct Phase10BrokerTests {
     }
 
     @Test func processAllowlistAndKill() async throws {
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let id: ExtensionID = "ext.proc"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
         let handle = try await broker.processHandle(extensionID: id)
         let lease = try await broker.processSpawn(
+            caller: id,
             handle: handle.id,
             executable: "/bin/sleep",
             arguments: ["30"]
         )
         #expect(lease.pid > 0)
         #expect(NativeHelperProcessTransport.isProcessAlive(lease.pid))
-        try await broker.processKill(handle: lease.lease)
+        try await broker.processKill(caller: id, handle: lease.lease)
         try await Task.sleep(for: .milliseconds(100))
         #expect(!NativeHelperProcessTransport.isProcessAlive(lease.pid))
     }
 
     @Test func processDeniedWhenNotAllowlisted() async throws {
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let id: ExtensionID = "ext.proc2"
         await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
         let handle = try await broker.processHandle(extensionID: id)
         do {
             _ = try await broker.processSpawn(
+                caller: id,
                 handle: handle.id,
                 executable: "/usr/bin/yes",
                 arguments: []
@@ -264,11 +268,12 @@ struct Phase10BrokerTests {
     }
 
     @Test func downloadAllowlist() async throws {
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let id: ExtensionID = "ext.dl"
         await broker.registerExtension(id: id, generation: 1, granted: [.network])
         let handle = try await broker.downloadHandle(extensionID: id)
         let url = try await broker.downloadWriteFixture(
+            caller: id,
             handle: handle.id,
             host: "example.com",
             path: "/ok/file",
@@ -277,6 +282,7 @@ struct Phase10BrokerTests {
         #expect(FileManager.default.fileExists(atPath: url.path))
         do {
             _ = try await broker.downloadWriteFixture(
+                caller: id,
                 handle: handle.id,
                 host: "evil.com",
                 path: "/",
@@ -289,21 +295,24 @@ struct Phase10BrokerTests {
     }
 
     @Test func npmInstallNoScripts() async throws {
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let id: ExtensionID = "ext.npm"
         await broker.registerExtension(id: id, generation: 1, granted: [.network])
         let handle = try await broker.npmHandle(extensionID: id)
-        let dest = try await broker.npmInstall(handle: handle.id, package: "left-pad", version: "1.0.0")
+        let dest = try await broker.npmInstall(
+            caller: id, handle: handle.id, package: "left-pad", version: "1.0.0"
+        )
         #expect(FileManager.default.fileExists(atPath: dest.appendingPathComponent("index.js").path))
+        // BROKER-N15: immutable materialization — no post-copy package.json mutation; scripts never run.
         let pkg = try String(contentsOf: dest.appendingPathComponent("package.json"), encoding: .utf8)
-        #expect(pkg.contains("scripts_disabled") || pkg.contains("\"scripts\""))
+        #expect(pkg.contains("left-pad"))
         #expect(dest.path.contains(id.directoryKey))
     }
 
     @Test func storageQuota() async throws {
         let tmp = FileManager.default.temporaryDirectory
             .appendingPathComponent("quota-\(UUID().uuidString)", isDirectory: true)
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 storageRoot: tmp.appendingPathComponent("s"),
                 toolCacheRoot: tmp.appendingPathComponent("c"),
@@ -312,9 +321,9 @@ struct Phase10BrokerTests {
         let id: ExtensionID = "ext.q"
         await broker.registerExtension(id: id, generation: 1, granted: [])
         let h = try await broker.storageHandle(extensionID: id)
-        try await broker.storageSet(handle: h.id, key: "a", value: Data(repeating: 1, count: 10))
+        try await broker.storageSet(caller: id, handle: h.id, key: "a", value: Data(repeating: 1, count: 10))
         do {
-            try await broker.storageSet(handle: h.id, key: "b", value: Data(repeating: 1, count: 20))
+            try await broker.storageSet(caller: id, handle: h.id, key: "b", value: Data(repeating: 1, count: 20))
             Issue.record("expected quota")
         } catch BrokerError.quotaExceeded {
             // ok
@@ -398,7 +407,7 @@ struct Phase10SigningTests {
 struct Phase10OrchestratorTests {
     @Test func quarantineAfterCrashStorm() async throws {
         let services = await MainActor.run { ExtensionHostServices.makeFull() }
-        let broker = makeBroker()
+        let broker = try makeBroker()
         let orch = ExtensionHostOrchestrator(
             services: services,
             broker: broker,
@@ -464,11 +473,12 @@ struct Phase10OrchestratorTests {
 
             // Minimal shell helper that forks sleep child and speaks enough to stay up
             // Use native transport with /bin/sleep as helper and verify group kill via broker spawn instead.
-            let broker = makeBroker()
+            let broker = try makeBroker()
             let id: ExtensionID = "ext.desc"
             await broker.registerExtension(id: id, generation: 1, granted: [.startProcesses])
             let handle = try await broker.processHandle(extensionID: id)
             let lease = try await broker.processSpawn(
+                caller: id,
                 handle: handle.id,
                 executable: "/bin/sleep",
                 arguments: ["60"]

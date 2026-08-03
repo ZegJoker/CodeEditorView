@@ -27,22 +27,25 @@ public enum LanguageServerResolveContextBuilder {
             if !environmentNames.isEmpty {
                 environmentValues =
                     (try? await broker.worktreeEnvironment(
+                        caller: extensionID,
                         handle: wh.id,
                         names: environmentNames
                     )) ?? [:]
             }
             for name in whichNames {
-                if let path = try? await broker.worktreeWhich(handle: wh.id, name: name) {
+                if let path = try? await broker.worktreeWhich(
+                    caller: extensionID, handle: wh.id, name: name
+                ) {
                     whichResults[name] = path
                 }
             }
         }
         if let ph = try? await broker.projectHandle(extensionID: extensionID) {
             project = ProjectHandleID(rawValue: ph.id.rawValue)
-            if let info = try? await broker.projectInfo(handle: ph.id) {
+            if let info = try? await broker.projectInfo(caller: extensionID, handle: ph.id) {
                 projectMetadata = ProjectMetadataSnapshot(
-                    name: info["name"] ?? "project",
-                    rootPaths: (info["roots"] ?? "").split(separator: ":").map(String.init)
+                    name: info.name,
+                    rootPaths: info.roots.map(\.path)
                 )
             }
         }
@@ -50,7 +53,9 @@ public enum LanguageServerResolveContextBuilder {
             settings = SettingsHandleID(rawValue: sh.id.rawValue)
             // Snapshot common LS keys if present
             for key in ["toolchain", "languageServer.path", "lsp.path", "server.path"] {
-                if let v = try? await broker.settingsGet(handle: sh.id, key: key) {
+                if let v = try? await broker.settingsGet(
+                    caller: extensionID, handle: sh.id, key: key
+                ) {
                     settingsValues[key] = v
                 }
             }

@@ -108,7 +108,7 @@ struct Phase11DualRunTests {
         let brokerRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("p11-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: brokerRoot, withIntermediateDirectories: true)
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 storageRoot: brokerRoot.appendingPathComponent("s"),
                 toolCacheRoot: brokerRoot.appendingPathComponent("c")

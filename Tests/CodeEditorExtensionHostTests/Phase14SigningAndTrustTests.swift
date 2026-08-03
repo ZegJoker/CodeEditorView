@@ -124,7 +124,7 @@ struct Phase14ActivationGateTests {
             .appendingPathComponent("p14orch-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
         let services = ExtensionHostServices()
-        let broker = CapabilityBroker(
+        let broker = try CapabilityBroker(
             config: .init(
                 worktreeRoots: [tmp],
                 storageRoot: tmp.appendingPathComponent("storage"),

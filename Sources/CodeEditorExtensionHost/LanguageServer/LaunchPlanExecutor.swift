@@ -416,6 +416,7 @@ public actor LanguageServerLaunchPlanExecutor {
                     let b64 = urlString.split(separator: "/").last.flatMap({ Data(base64Encoded: String($0)) })
                 {
                     dest = try await broker.downloadWriteFixture(
+                        caller: extensionID,
                         handle: handle.id,
                         host: "cdn.example",
                         path: "/\(cacheKey)",
@@ -425,6 +426,7 @@ public actor LanguageServerLaunchPlanExecutor {
                 } else if urlString.hasPrefix("file://"), let fileURL = URL(string: urlString) {
                     let data = try Data(contentsOf: fileURL)
                     dest = try await broker.downloadWriteFixture(
+                        caller: extensionID,
                         handle: handle.id,
                         host: "cdn.example",
                         path: "/\(cacheKey)",
@@ -433,6 +435,7 @@ public actor LanguageServerLaunchPlanExecutor {
                     )
                 } else {
                     dest = try await broker.downloadFetch(
+                        caller: extensionID,
                         handle: handle.id,
                         urlString: urlString,
                         expectedDigest: digest
@@ -463,7 +466,9 @@ public actor LanguageServerLaunchPlanExecutor {
         case .npm(let package, let version, let bin):
             do {
                 let handle = try await broker.npmHandle(extensionID: extensionID)
-                let dest = try await broker.npmInstall(handle: handle.id, package: package, version: version)
+                let dest = try await broker.npmInstall(
+                    caller: extensionID, handle: handle.id, package: package, version: version
+                )
                 let exec = dest.appendingPathComponent(bin)
                 // Do not invent binaries — npm materialize must produce the declared bin.
                 guard FileManager.default.fileExists(atPath: exec.path) else {
