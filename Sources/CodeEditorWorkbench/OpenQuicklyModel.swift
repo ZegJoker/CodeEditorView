@@ -109,24 +109,37 @@ public final class OpenQuicklyModel {
         scanGeneration &+= 1
         let generation = scanGeneration
         isScanning = true
-        defer {
-            if generation == scanGeneration {
-                isScanning = false
+        let work = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let service = self.indexService
+            do {
+                let items = try await service.rebuild(workspace: workspace)
+                guard generation == self.scanGeneration else { return }
+                self.allItems = items
+                self.applyFilter()
+            } catch is CancellationError {
+                return
+            } catch {
+                guard generation == self.scanGeneration else { return }
+                // Keep previous index on failure.
+                self.applyFilter()
             }
         }
+        scanTask = work
+        await work.value
+        if generation == scanGeneration {
+            isScanning = false
+        }
+    }
 
-        let service = indexService
-        do {
-            let items = try await service.rebuild(workspace: workspace)
-            guard generation == scanGeneration else { return }
-            allItems = items
-            applyFilter()
-        } catch is CancellationError {
-            return
-        } catch {
-            guard generation == scanGeneration else { return }
-            // Keep previous index on failure.
-            applyFilter()
+    /// Cancel an in-flight recompute and clear scanning state (WB-N04).
+    public func cancelScan() {
+        scanGeneration &+= 1
+        scanTask?.cancel()
+        scanTask = nil
+        isScanning = false
+        if let service = indexService as? FileTreeIndexService {
+            service.cancelScan()
         }
     }
 

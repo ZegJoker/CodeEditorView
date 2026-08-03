@@ -345,7 +345,7 @@ struct WorkbenchTabBar: View {
                     }
                     Divider()
                     Button("Close Pane", role: .destructive) {
-                        Task { @MainActor in
+                        model.paneTaskBag(for: pane.id).store(Task { @MainActor in
                             let result = await model.requestClosePane(pane.id)
                             if result == .closed {
                                 withAnimation(WorkbenchMotion.pane) {
@@ -353,7 +353,7 @@ struct WorkbenchTabBar: View {
                                     _ = model.workspace.revision
                                 }
                             }
-                        }
+                        })
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -390,12 +390,12 @@ struct WorkbenchTabBar: View {
                     .transition(.scale.combined(with: .opacity))
             }
             Button {
-                Task { @MainActor in
+                model.paneTaskBag(for: pane.id).store(Task { @MainActor in
                     let result = await model.workspace.requestCloseTab(tab.id, in: pane.id)
                     if result == .closed {
                         withAnimation(WorkbenchMotion.tab) {}
                     }
-                }
+                })
             } label: {
                 Image(systemName: "xmark")
                     .font(.caption2)
@@ -465,28 +465,28 @@ struct WorkbenchTabBar: View {
                 }
             }
             Button("Close") {
-                Task { @MainActor in
+                model.paneTaskBag(for: pane.id).store(Task { @MainActor in
                     let _: CloseTransactionResult = await model.workspace.requestCloseTab(
                         tab.id,
                         in: pane.id
                     )
-                }
+                })
             }
             Button("Close Others") {
-                Task { @MainActor in
+                model.paneTaskBag(for: pane.id).store(Task { @MainActor in
                     let _: CloseTransactionResult = await model.workspace.requestCloseOtherTabs(
                         keeping: tab.id,
                         in: pane.id
                     )
-                }
+                })
             }
             Button("Close to the Right") {
-                Task { @MainActor in
+                model.paneTaskBag(for: pane.id).store(Task { @MainActor in
                     let _: CloseTransactionResult = await model.workspace.requestCloseTabsToTheRight(
                         of: tab.id,
                         in: pane.id
                     )
-                }
+                })
             }
         }
     }

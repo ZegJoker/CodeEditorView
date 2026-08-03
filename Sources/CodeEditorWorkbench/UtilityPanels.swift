@@ -166,12 +166,14 @@ struct WorkbenchProblemsPanelView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         let url = URL(fileURLWithPath: item.path)
-                        Task { @MainActor in
-                            _ = try? await context.workspace.openInActivePane(
-                                uri: DocumentURI(fileURL: url),
-                                preview: true
-                            )
-                        }
+                        // Panel-scoped bag: cancelled on workbench tear-down (WB-N05).
+                        context.model.panelTaskBag(for: "workbench.utility.problems")
+                            .store(Task { @MainActor in
+                                _ = try? await context.workspace.openInActivePane(
+                                    uri: DocumentURI(fileURL: url),
+                                    preview: true
+                                )
+                            })
                     }
                 }
                 .listStyle(.plain)
@@ -197,8 +199,10 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
     @Published public private(set) var isRunning: Bool = false
 
     public let service: TerminalService
+    /// Panel-scoped TaskBag — all IO/start/poll/paste tasks are stored here (WB-N05).
+    public let taskBag = WorkbenchTaskBag(scope: "panel.workbench.utility.terminal")
     private var controller: GhosttySessionController?
-    private var pollTask: Task<Void, Never>?
+    private var pollTaskID: UUID?
 
     public init(service: TerminalService? = nil) {
         // REL-N08: production workbench terminal fails closed unless Ghostty is linked.
@@ -212,10 +216,20 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
     public func startIfNeeded() {
         guard sessionID == nil else { return }
         #if os(macOS)
-            Task { await self.startMacSession() }
+            taskBag.store(Task { await self.startMacSession() })
         #else
             errorMessage = "Local PTY is unavailable on this platform profile; use remote transport."
         #endif
+    }
+
+    /// Cancel panel-owned tasks (deactivation / workbench tear-down) (WB-N05).
+    public func deactivate() {
+        if let pollTaskID {
+            taskBag.cancel(pollTaskID)
+            self.pollTaskID = nil
+        }
+        taskBag.cancelAll()
+        isRunning = false
     }
 
     #if os(macOS)
@@ -278,7 +292,7 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                     self.errorMessage = nil
                     // Generation-only poll: pull dirty lines only when gen advances (TER-N06).
                     // Never copy full snapshotUTF8 on every 50ms tick.
-                    self.pollTask = Task { @MainActor in
+                    self.pollTaskID = self.taskBag.store(Task { @MainActor in
                         var lastGen: UInt64 = 0
                         while !Task.isCancelled {
                             if let c = self.controller {
@@ -299,7 +313,7 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                             }
                             try? await Task.sleep(nanoseconds: 50_000_000)
                         }
-                    }
+                    })
                 }
             } catch {
                 await MainActor.run {
@@ -311,11 +325,11 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
 
     public func writeKey(_ data: Data) {
         guard let id = sessionID else { return }
-        Task {
-            if let c = controller {
+        taskBag.store(Task {
+            if let c = self.controller {
                 do {
                     let encoded = try await c.keyInput(data)
-                    try await service.write(encoded, to: id)
+                    try await self.service.write(encoded, to: id)
                 } catch {
                     await MainActor.run { self.errorMessage = String(describing: error) }
                 }
@@ -324,17 +338,17 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                     self.errorMessage = "Terminal unavailable: Ghostty not linked"
                 }
             }
-        }
+        })
     }
 
     public func writeKeyEvent(_ event: GhosttyKeyEvent) {
         guard let id = sessionID else { return }
-        Task {
-            if let c = controller {
+        taskBag.store(Task {
+            if let c = self.controller {
                 do {
                     let encoded = try await c.encodeKey(event)
                     if !encoded.isEmpty {
-                        try await service.write(encoded, to: id)
+                        try await self.service.write(encoded, to: id)
                     }
                 } catch {
                     await MainActor.run { self.errorMessage = String(describing: error) }
@@ -344,57 +358,69 @@ public final class WorkbenchTerminalPanelModel: ObservableObject {
                     self.errorMessage = "Terminal unavailable: Ghostty not linked"
                 }
             }
-        }
+        })
     }
 
     /// Mouse → Ghostty mouse encoder → PTY (TER-N04; not hand-built CSI).
     public func writeMouseEvent(_ event: GhosttyMouseEvent) {
         guard let id = sessionID else { return }
-        Task {
-            if let c = controller {
+        taskBag.store(Task {
+            if let c = self.controller {
                 do {
                     let encoded = try await c.encodeMouse(event)
                     if !encoded.isEmpty {
-                        try await service.write(encoded, to: id)
+                        try await self.service.write(encoded, to: id)
                     }
                 } catch {
                     await MainActor.run { self.errorMessage = String(describing: error) }
                 }
             }
-        }
+        })
     }
 
     /// Focus → Ghostty focus encoder → PTY (TER-N04).
     public func writeFocusEvent(_ event: GhosttyFocusEvent) {
         guard let id = sessionID else { return }
-        Task {
-            if let c = controller {
+        taskBag.store(Task {
+            if let c = self.controller {
                 do {
                     let encoded = try await c.encodeFocus(event)
                     if !encoded.isEmpty {
-                        try await service.write(encoded, to: id)
+                        try await self.service.write(encoded, to: id)
                     }
                 } catch {
                     await MainActor.run { self.errorMessage = String(describing: error) }
                 }
             }
-        }
+        })
+    }
+
+    public func writePasteData(_ data: Data, to id: TerminalSessionID) {
+        taskBag.store(Task {
+            try? await self.service.write(data, to: id)
+        })
     }
 
     public func killSession() {
         guard let id = sessionID else { return }
-        Task {
-            try? await service.close(id, reason: .user, asCaller: .host)
-            await controller?.shutdown()
+        taskBag.store(Task {
+            try? await self.service.close(id, reason: .user, asCaller: .host)
+            await self.controller?.shutdown()
             await MainActor.run {
                 self.sessionID = nil
                 self.isRunning = false
-                self.pollTask?.cancel()
+                if let pollTaskID = self.pollTaskID {
+                    self.taskBag.cancel(pollTaskID)
+                    self.pollTaskID = nil
+                }
             }
-        }
+        })
     }
 
-    deinit { pollTask?.cancel() }
+    deinit {
+        // WorkbenchTaskBag is thread-safe; cancel panel work if the model is released.
+        taskBag.cancelAll()
+    }
 }
 
 @MainActor
@@ -447,7 +473,7 @@ struct WorkbenchTerminalPanelView: View {
                         onMouseEvent: { model.writeMouseEvent($0) },
                         onFocusEvent: { model.writeFocusEvent($0) },
                         onPasteData: { data in
-                            Task { try? await model.service.write(data, to: id) }
+                            model.writePasteData(data, to: id)
                         }
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

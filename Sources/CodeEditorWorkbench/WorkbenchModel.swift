@@ -37,7 +37,11 @@ public final class WorkbenchModel {
     /// Production service bindings for advertised workflows (WB-N06).
     public let workflows: WorkbenchWorkflowCoordinator
     /// Primary lifecycle TaskBag — cancel on tear-down (WB-N05).
-    public let taskBag = WorkbenchTaskBag()
+    public let taskBag = WorkbenchTaskBag(scope: "workbench.model")
+    /// Per-pane TaskBag scopes — cancelled when the pane closes or the workbench tears down (WB-N05).
+    private var paneTaskBags: [EditorPaneID: WorkbenchTaskBag] = [:]
+    /// Per-panel TaskBag scopes (utility/contribution ids) (WB-N05).
+    private var panelTaskBags: [String: WorkbenchTaskBag] = [:]
     /// When true, chrome show/hide skips animation (tests may override; UI uses environment).
     public var reduceMotion: Bool = false
     /// Estimated line height for layout-based reveal when full layout is unavailable (WB-N02).
@@ -212,10 +216,44 @@ public final class WorkbenchModel {
 
     public func beginTearDown() {
         lifecyclePhase = .tearingDown
+        openQuickly.cancelScan()
+        if let index = openQuickly.indexService as? FileTreeIndexService {
+            index.stopWatching()
+        }
         taskBag.cancelAll()
+        for bag in paneTaskBags.values { bag.cancelAll() }
+        paneTaskBags.removeAll()
+        for bag in panelTaskBags.values { bag.cancelAll() }
+        panelTaskBags.removeAll()
         windowRegistry.cancelAllTaskBags()
         registrationBag.disposeAll()
         builtInCommandToken = nil
+    }
+
+    /// Task bag for a pane. Created on first use; cancelled via ``cancelPaneTaskBag(_:)`` / tear-down.
+    public func paneTaskBag(for paneID: EditorPaneID) -> WorkbenchTaskBag {
+        if let bag = paneTaskBags[paneID] { return bag }
+        let bag = WorkbenchTaskBag(scope: "pane.\(paneID.rawValue.uuidString)")
+        paneTaskBags[paneID] = bag
+        return bag
+    }
+
+    public func cancelPaneTaskBag(_ paneID: EditorPaneID) {
+        paneTaskBags[paneID]?.cancelAll()
+        paneTaskBags.removeValue(forKey: paneID)
+    }
+
+    /// Task bag for a utility/contribution panel id (WB-N05).
+    public func panelTaskBag(for panelID: String) -> WorkbenchTaskBag {
+        if let bag = panelTaskBags[panelID] { return bag }
+        let bag = WorkbenchTaskBag(scope: "panel.\(panelID)")
+        panelTaskBags[panelID] = bag
+        return bag
+    }
+
+    public func cancelPanelTaskBag(_ panelID: String) {
+        panelTaskBags[panelID]?.cancelAll()
+        panelTaskBags.removeValue(forKey: panelID)
     }
 
     // MARK: - Focus
@@ -381,7 +419,11 @@ public final class WorkbenchModel {
         _ id: EditorPaneID,
         policy: DirtyTabClosePolicy? = nil
     ) async -> CloseTransactionResult {
-        await workspace.requestClosePane(id, policy: policy)
+        let result = await workspace.requestClosePane(id, policy: policy)
+        if result == .closed {
+            cancelPaneTaskBag(id)
+        }
+        return result
     }
 
     public func presentCommandPalette() {

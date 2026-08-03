@@ -433,6 +433,7 @@ let package = Package(
                 "CodeEditorTasks",
                 "CodeEditorSourceControl",
                 "CodeEditorCommands",
+                "CodeEditorTerminal",
             ]
         ),
         .testTarget(

@@ -2446,7 +2446,7 @@
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N01_untrustedContributionsAreDeclarativeOnly",
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N01_noFaultIsolationWordingInContributionAPI"
       ],
-      "notes": "2026-08-03: renamed makeBodyIsolated→makeBodyWithErrorPresentation; WorkbenchContributionTrust trustedInProcess|declarativeUntrusted; declarative view models host-rendered only."
+      "notes": "2026-08-03 verifier residual: test_WB_N01 invokes makeBodyWithErrorPresentation for success+fault paths (not enum smoke)."
     },
     {
       "id": "WB-N02",
@@ -2487,9 +2487,10 @@
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_indexDoesNotExpandMainActorFileTree",
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_indexEngineIsBackgroundActor",
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_indexCancellationAndBudget",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_watcherDrivenIncrementalUpdates",
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N04_snapshotIsImmutableAndDiffable"
       ],
-      "notes": "2026-08-03: FileTreeIndexEngine actor walks WorkspaceFileSystem only (not WorkspaceFileTree.expand); immutable FileTreeIndexSnapshot."
+      "notes": "2026-08-03 verifier residual: FileTreeIndexService startWatching/handleWatchSignal debounced incremental root refresh + overflow rescan; cancelScan clears isScanning; engine isRunningOffMainActor + SlowProbeFileSystem off-main children proof."
     },
     {
       "id": "WB-N05",
@@ -2502,9 +2503,11 @@
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_taskBagCancelsStoredTasks",
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_workbenchTearDownCancelsTaskBag",
         "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_openURIUsesTaskBag",
-        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_windowScopedTaskBag"
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_windowScopedTaskBag",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_panelAndPaneTaskBagsCancelOnDeactivate",
+        "Tests/CodeEditorWorkbenchTests/WBNAuditTests.swift::test_WB_N05_utilityAndEditorTasksAreBaggedInSource"
       ],
-      "notes": "2026-08-03: WorkbenchTaskBag on model + per-window registry bags; open/create/delete/openQuickly stored; cancel on tearDown/close."
+      "notes": "2026-08-03 verifier residual: UtilityPanels terminal/problems Tasks bagged (WorkbenchTerminalPanelModel.taskBag + panelTaskBag); WorkbenchEditorArea close pane/tab/others/right via paneTaskBag; tearDown cancels pane/panel bags."
     },
     {
       "id": "WB-N06",
